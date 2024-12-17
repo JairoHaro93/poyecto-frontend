@@ -1,10 +1,11 @@
 import { Component, inject } from '@angular/core';
 import { UsuariosService } from '../../services/usuarios.service';
+import { RouterLink } from '@angular/router';
 
 @Component({
   selector: 'app-login',
   standalone: true,
-  imports: [],
+  imports: [RouterLink],
   templateUrl: './login.component.html',
   styleUrl: './login.component.css',
 })
