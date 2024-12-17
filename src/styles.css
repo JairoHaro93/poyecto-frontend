@@ -1,1 +1,77 @@
-/* You can add global styles to this file, and also import other style files */
+/* Estilos generales app, guardadas en custom properties */
+@import url("https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css");
+
+:root {
+  --color-text-main: #020202;
+  --color-text-secondary: #3f3f44;
+  --color-text-tertiary: #b2b2b4;
+  --color-background-main: #ffffff;
+  --color-background-secondary: #f6f6f6;
+  --color-button1: #ce2929;
+  --color-button2: #cceabb;
+  --color-button3: #fcf5ee;
+  --color-highlight: #f2f9ee;
+  --color-link-verde: #cceabb;
+  --color-chat-recibido: #f1f1f1;
+  --color-chat-enviado: #3f3f44;
+  --font-family: Work Sans, Arial, sans-serif;
+  --font-size-base: 16px;
+  --line-height-base: 1.5;
+  --margin-base: 0;
+  --padding-base: 0;
+}
+
+html,
+body {
+  /* height: 100%; */
+  color: var(--color-text-main);
+  background-color: var(--color-background-main);
+  font-family: var(--font-family);
+  font-size: var(--font-size-base);
+  line-height: var(--line-height-base);
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: var(--font-family);
+  color: var(--color-text-main);
+  margin-bottom: 0.5em;
+}
+
+.wrapper {
+  max-width: 1300px;
+  margin: 60px auto 0;
+  overflow: auto;
+  min-height: calc(100vh - 172px);
+}
+
+/* Enlaces */
+a {
+  color: var(--color-link-verde);
+  text-decoration: none;
+}
+
+a:hover {
+  color: var(--color-button2);
+  text-decoration: underline;
+}
+
+/* Botones */
+
+.button-primary {
+  background-color: var(--color-button1);
+  color: var(--color-text-secondary);
+  padding: 0.5em 1em;
+  width: 100%;
+  border: none;
+  border-radius: 3px;
+  transition: background-color 0.5s ease, box-shadow 0.5s ease;
+}
+
+.button-primary:hover {
+  box-shadow: 4px 4px 5px rgba(0, 0.3, 0, 0.3); /* Sombra cuando el cursor está sobre el botón */
+}

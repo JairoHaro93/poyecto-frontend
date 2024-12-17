@@ -1,1 +1,43 @@
-<p>login works!</p>
+<main>
+  <section
+    class="wrapper d-flex justify-content-center login-wrapper bg-body flex-column p-3 align-items-center"
+  >
+    <div>
+      <img
+        src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSYY4zaHX5-LOjAC8X0ztzsxLQAWxVzCwJU7Q&s"
+        alt=""
+      />
+      <h1>
+        <p class="fw-light text-center mt-4">
+          <span class="fw-bold">¡bienvenido!</span>
+        </p>
+        <p class="fw-light text-center">Inicia Sesion</p>
+      </h1>
+      <form>
+        <div class="my-2 fw-light">
+          <input
+            class="form-control"
+            type="email"
+            id="email"
+            name="email"
+            placeholder="Tu usuario"
+            ngModel
+          />
+        </div>
+        <div class="my-2 fw-light">
+          <input
+            class="form-control"
+            type="password"
+            id="password"
+            name="password"
+            placeholder="Tu contraseña"
+            ngModel
+          />
+        </div>
+        <div class="mt-4 mb-3 fw-semibold">
+          <input class="button-primary" type="submit" value="Entrar" />
+        </div>
+      </form>
+    </div>
+  </section>
+</main>
