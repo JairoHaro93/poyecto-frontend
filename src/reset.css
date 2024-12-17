@@ -1,0 +1,59 @@
+/* Para eliminar padding y margen predeterminados de listas, encabezados y otros elementos */
+ul, ol, li, h1, h2, h3, h4, h5, h6, p, figure, blockquote {
+    margin: 0;
+    padding: 0;
+}
+
+/* Para manejar tablas de manera más consistente */
+table {
+    border-collapse: collapse;
+    border-spacing: 0;
+    width: 100%;
+}
+
+/* Estilos predeterminados de botones */
+button, input, textarea, select {
+    font: inherit; /* Usa la fuente del elemento padre */
+    margin: 0;
+    padding: 0;
+    border: none;
+    background: none;
+}
+
+/* Para mejorar la accesibilidad visual de enlaces */
+a:not([class]) {
+    text-decoration-skip-ink: auto;
+}
+
+/* Añadir una transición suave para links en general */
+a {
+    transition: color 0.3s ease;
+}
+
+/* Estilos generales para formularios y elementos de entrada */
+input, button, textarea, select {
+    font-family: inherit;
+    font-size: inherit;
+}
+
+/* Para que los botones no se puedan seleccionar al hacer clic */
+button {
+    user-select: none;
+}
+
+/* Remueve estilos predeterminados de todos los formularios */
+input[type="search"] {
+    -webkit-appearance: none;
+    appearance: none;
+}
+
+/* Para imágenes y multimedia responsive */
+img, picture, video, canvas, svg {
+    display: block;
+    max-width: 100%;
+}
+
+/* Asegura que todos los elementos respeten el box-sizing */
+*, *::before, *::after {
+    box-sizing: border-box;
+}
