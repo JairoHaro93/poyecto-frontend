@@ -2,16 +2,46 @@
   class="navbar p navbar-expand-lg border-1 text-white shadow px-2 fixed-top z-1 bg-white"
 >
   <div class="container-fluid px-4">
-    <div class="text-black">
-      <a
-        class="nav-link"
-        routerLinkActive="active"
-        aria-current="page"
-        [routerLink]="['/home']"
-        title="Inicio"
-      >
-        <img class="img-fluid logo" src="./img/logoredecom.png" alt="logo" />
-      </a>
+    <a
+      class="nav-link"
+      routerLinkActive="active"
+      aria-current="page"
+      [routerLink]="['/home']"
+      title="Inicio"
+    >
+      <img class="img-fluid logo" src="./img/logoredecom.png" alt="logo" />
+    </a>
+    <button
+      class="navbar-toggler"
+      type="button"
+      data-bs-toggle="collapse"
+      data-bs-target="#navbarNav"
+      aria-controls="navbarNav"
+      aria-expanded="false"
+      aria-label="Toggle navigation"
+    >
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarNav">
+      <ul class="navbar-nav ms-auto">
+        <li class="nav-item">
+          <a
+            class="nav-link fs-5"
+            routerLinkActive="text-danger"
+            aria-current="page"
+            [routerLink]="['/home']"
+            >Inicio</a
+          >
+        </li>
+        <li class="nav-item fs-5">
+          <a
+            class="nav-link"
+            routerLinkActive="text-danger"
+            [routerLink]="['/login']"
+            >Cerrar Sesion</a
+          >
+        </li>
+      </ul>
     </div>
   </div>
 </nav>
