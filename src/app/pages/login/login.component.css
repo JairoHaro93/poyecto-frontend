@@ -11,6 +11,10 @@ input {
   color: white;
 }
 
+img {
+  width: 20rem;
+}
+
 a {
   color: black;
   font-weight: 500;
