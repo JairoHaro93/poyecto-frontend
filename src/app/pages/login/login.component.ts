@@ -1,22 +1,40 @@
 import { Component, inject } from '@angular/core';
-import { UsuariosService } from '../../services/usuarios.service';
-import { RouterLink } from '@angular/router';
+import { Router } from '@angular/router';
+import { FormControl, FormGroup, ReactiveFormsModule } from  '@angular/forms';
+import { AutenticacionService } from '../../services/autenticacion.service';
+import Swal from 'sweetalert2';
 
 @Component({
   selector: 'app-login',
   standalone: true,
-  imports: [RouterLink],
+  imports: [ReactiveFormsModule],
   templateUrl: './login.component.html',
   styleUrl: './login.component.css',
 })
 export class LoginComponent {
+
+
+
   //variables
-
+  formLogin : FormGroup = new FormGroup({
+    usuario: new FormControl(),
+    password : new FormControl()
+  })
   //injectables
-  usuariosServices = inject(UsuariosService);
+  autenservice=inject(AutenticacionService)
+  router = inject(Router)
+  
+async onSubmit(){
 
-  async ngOnInit() {
-    const usuarios = await this.usuariosServices.getAll();
-    console.log(usuarios);
+  try {
+    const response = await  this.autenservice.login(this.formLogin.value)
+    localStorage.setItem('token_proyecto',response.token)
+    this.router.navigateByUrl('/home')
+    console.log(response)
+  } catch ({error}:any) {
+    Swal.fire('Error',error.message,'error')
+    console.log(error)
   }
+}
+  
 }
