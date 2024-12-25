@@ -10,19 +10,21 @@
         </p>
         <p class="fw-light text-center">Inicia Sesion</p>
       </h1>
-      <form>
+      <form [formGroup]="formLogin" (ngSubmit)="onSubmit()">
         <div class="my-2 fw-light">
           <input
             class="form-control"
-            type="email"
-            id="email"
-            name="email"
+            formControlName="usuario"
+            type="text"
+            id="usuario"
+            name="usuario"
             placeholder="Tu usuario"
           />
         </div>
         <div class="my-2 fw-light">
           <input
             class="form-control"
+            formControlName="password"
             type="password"
             id="password"
             name="password"
@@ -35,7 +37,7 @@
             class="button-primary"
             type="submit"
             value="Entrar"
-            [routerLink]="['/home']"
+
           />
         </div>
       </form>
