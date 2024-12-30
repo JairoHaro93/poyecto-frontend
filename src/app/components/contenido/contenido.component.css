@@ -1,0 +1,7 @@
+.full-screen-vertical {
+  height: 100vh; /* 100% de la altura de la ventana */
+}
+
+section {
+  height: 100%;
+}
