@@ -13,6 +13,7 @@
 }
 
 .sidebar {
+  position: fixed;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
@@ -21,11 +22,12 @@
   height: 100%;
   padding: 20px 20px;
   background-color: var(--color-barra-lateral);
+  transition: left 0.5s ease;
 }
 
 .logo {
   max-width: 40vw;
-  object-fit: contain;
+
   height: 40px;
   cursor: pointer;
 }
@@ -64,6 +66,10 @@
   .sidebar {
     position: absolute;
     left: -250px;
+    height: auto;
+  }
+  .mostrar-sidebar {
+    left: 0;
   }
   .menu {
     display: flex;

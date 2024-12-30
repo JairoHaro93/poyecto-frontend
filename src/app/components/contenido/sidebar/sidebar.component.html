@@ -1,9 +1,14 @@
 <!-- https://www.youtube.com/watch?v=nvh51c4UfmM -->
-<div class="menu">
+<div (click)="onClickMenu()" class="menu">
+  @if(!isMenu){
   <i class="fa-solid fa-bars"></i>
+
+  } @if(isMenu){
+  <i class="fa-solid fa-xmark"></i>
+  }
 </div>
 
-<div class="sidebar">
+<div [class.mostrar-sidebar]="isMenu" class="sidebar">
   <div class="div1 my-2">
     <a>
       <img
