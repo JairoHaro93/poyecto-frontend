@@ -1,0 +1,51 @@
+:root {
+  --color-barra-lateral: rgb(255, 255, 255);
+  --color-texto: rgb(0, 0, 0);
+  --color-texto-menu: rgb(134: 136: 144);
+  --color-boton: rgb(0, 0, 0);
+  --color-boton-texto: rgb(255, 255, 255);
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+.sidebar {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+
+  width: 250px;
+  height: 100%;
+  padding: 20px 20px;
+  background-color: var(--color-barra-lateral);
+}
+
+.div1 {
+}
+
+.logo {
+  max-width: 40vw;
+  object-fit: contain;
+  height: 40px;
+  cursor: pointer;
+}
+
+.div2 {
+  /* display: grid;*/
+  overflow-y: auto;
+}
+
+/*lista de opciones*/
+
+.div3 {
+}
+
+.buton-bottom {
+  margin-top: auto; /* Empuja el botón al fondo */
+
+  bottom: 10px; /* Asegura que el botón se quede pegado al fondo */
+  width: 100%; /* Ajusta el ancho para alinearlo con otros elementos */
+}
