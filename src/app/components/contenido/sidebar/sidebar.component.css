@@ -23,9 +23,6 @@
   background-color: var(--color-barra-lateral);
 }
 
-.div1 {
-}
-
 .logo {
   max-width: 40vw;
   object-fit: contain;
@@ -40,12 +37,35 @@
 
 /*lista de opciones*/
 
-.div3 {
-}
-
 .buton-bottom {
   margin-top: auto; /* Empuja el botón al fondo */
-
   bottom: 10px; /* Asegura que el botón se quede pegado al fondo */
   width: 100%; /* Ajusta el ancho para alinearlo con otros elementos */
+}
+
+/* MENU*/
+
+.menu {
+  color: red;
+  width: 50px;
+  height: 50px;
+  position: fixed;
+  font-size: 30px;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  right: 15px;
+  top: 15px;
+  display: none;
+}
+
+/*    movil  */
+@media (max-width: 600px) {
+  .sidebar {
+    position: absolute;
+    left: -250px;
+  }
+  .menu {
+    display: flex;
+  }
 }
