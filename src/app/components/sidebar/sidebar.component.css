@@ -74,3 +74,21 @@
     display: flex;
   }
 }
+
+/* lista de opciones*/
+ul {
+  list-style-type: none;
+  justify-content: center;
+
+  li {
+    margin-left: 10px;
+    width: 80%;
+    background-color: darkred;
+    border-radius: 10px;
+    padding: 2px;
+    text-align: center;
+    margin-top: 10px;
+    cursor: pointer;
+    color: white;
+  }
+}

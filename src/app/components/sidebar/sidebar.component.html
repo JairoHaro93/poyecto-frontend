@@ -11,23 +11,26 @@
 <div [class.mostrar-sidebar]="isMenu" class="sidebar">
   <div class="div2">
     <button
-      (click)="onClickMenu()"
       class="button-primary btn-toggle rounded collapsed my-2"
       data-bs-toggle="collapse"
       data-bs-target="#home-collapse"
     >
-      <i class="fa-solid fa-gear"></i> Sistema
+      <i class="fa-solid fa-gear"> </i> Sistema
     </button>
 
-    <div class="collapse" id="home-collapse">
+    <div class="collapse show" id="home-collapse">
       <ul class="btn-toggle-nav list-unstyled fw-normal pb-1 small gap-5">
-        <li><a href="#" class="link-dark">FUNCION 1 SISTEMA</a></li>
-        <li><a href="#" class="link-dark">FUNCION 2 SISTEMA</a></li>
-        <li><a href="#" class="link-dark">FUNCION 3 SISTEMA</a></li>
+        <li
+          (click)="onClickMenu()"
+          [routerLink]="['/home/sistema/crearusuario']"
+        >
+          Crear Usuario nuevo
+        </li>
+        <li (click)="onClickMenu()">FUNCION 2 SISTEMA</li>
+        <li (click)="onClickMenu()">FUNCION 3 SISTEMA</li>
       </ul>
     </div>
     <button
-      (click)="onClickMenu()"
       class="button-primary my-2 btn-toggle align-items-center rounded collapsed"
       data-bs-toggle="collapse"
       data-bs-target="#dashboard-collapse"
@@ -36,14 +39,13 @@
     </button>
     <div class="collapse" id="dashboard-collapse">
       <ul class="btn-toggle-nav list-unstyled fw-normal pb-1 small">
-        <li><a href="#" class="link-dark rounded">FUNCION 1 BODEGA</a></li>
-        <li><a href="#" class="link-dark rounded">FUNCION 2 BODEGA</a></li>
-        <li><a href="#" class="link-dark rounded">FUNCION 3 BODEGA</a></li>
-        <li><a href="#" class="link-dark rounded">FUNCION 4 BODEGA</a></li>
+        <li (click)="onClickMenu()">FUNCION 1 BODEGA</li>
+        <li (click)="onClickMenu()">FUNCION 2 BODEGA</li>
+        <li (click)="onClickMenu()">FUNCION 3 BODEGA</li>
+        <li (click)="onClickMenu()">FUNCION 4 BODEGA</li>
       </ul>
     </div>
     <button
-      (click)="onClickMenu()"
       class="button-primary my-2 btn-toggle align-items-center rounded collapsed"
       data-bs-toggle="collapse"
       data-bs-target="#noc-collapse"
@@ -53,15 +55,11 @@
     </button>
     <div class="collapse" id="noc-collapse">
       <ul class="btn-toggle-nav list-unstyled fw-normal pb-1 small">
-        <li><a href="#" class="link-dark rounded">FUNCION 1 NOC</a></li>
-        <li><a href="#" class="link-dark rounded">FUNCION 2 NOC</a></li>
-        <li><a href="#" class="link-dark rounded">FUNCION 3 NOC</a></li>
-        <li><a href="#" class="link-dark rounded">FUNCION 4 NOC</a></li>
+        <li (click)="onClickMenu()">FUNCION 1 NOC</li>
       </ul>
     </div>
 
     <button
-      (click)="onClickMenu()"
       class="button-primary my-2 btn-toggle align-items-center rounded collapsed"
       data-bs-toggle="collapse"
       data-bs-target="#tecnico-collapse"
@@ -71,10 +69,10 @@
     </button>
     <div class="collapse" id="tecnico-collapse">
       <ul class="btn-toggle-nav list-unstyled fw-normal pb-1 small">
-        <li><a href="#" class="link-dark rounded">FUNCION 1 TECNICO</a></li>
-        <li><a href="#" class="link-dark rounded">FUNCION 2 TECNICO</a></li>
-        <li><a href="#" class="link-dark rounded">FUNCION 3 TECNICO</a></li>
-        <li><a href="#" class="link-dark rounded">FUNCION 4 TECNICO</a></li>
+        <li (click)="onClickMenu()">FUNCION 1 TECNICO</li>
+        <li (click)="onClickMenu()">FUNCION 2 TECNICO</li>
+        <li (click)="onClickMenu()">FUNCION 3 TECNICO</li>
+        <li (click)="onClickMenu()">FUNCION 4 TECNICO</li>
       </ul>
     </div>
   </div>
