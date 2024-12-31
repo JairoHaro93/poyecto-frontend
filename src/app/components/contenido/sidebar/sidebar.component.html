@@ -10,25 +10,78 @@
 
 <div [class.mostrar-sidebar]="isMenu" class="sidebar">
   <div class="div2">
-    <button (click)="onClickMenu()" class="button-primary my-2">
+    <button
+      (click)="onClickMenu()"
+      class="button-primary btn-toggle rounded collapsed my-2"
+      data-bs-toggle="collapse"
+      data-bs-target="#home-collapse"
+    >
       <i class="fa-solid fa-gear"></i> Sistema
     </button>
-    <button (click)="onClickMenu()" class="button-primary my-2">
+
+    <div class="collapse" id="home-collapse">
+      <ul class="btn-toggle-nav list-unstyled fw-normal pb-1 small gap-5">
+        <li><a href="#" class="link-dark">FUNCION 1 SISTEMA</a></li>
+        <li><a href="#" class="link-dark">FUNCION 2 SISTEMA</a></li>
+        <li><a href="#" class="link-dark">FUNCION 3 SISTEMA</a></li>
+      </ul>
+    </div>
+    <button
+      (click)="onClickMenu()"
+      class="button-primary my-2 btn-toggle align-items-center rounded collapsed"
+      data-bs-toggle="collapse"
+      data-bs-target="#dashboard-collapse"
+    >
       <i class="fa-solid fa-box-open"></i> Bodega
     </button>
-    <button (click)="onClickMenu()" class="button-primary my-2">
+    <div class="collapse" id="dashboard-collapse">
+      <ul class="btn-toggle-nav list-unstyled fw-normal pb-1 small">
+        <li><a href="#" class="link-dark rounded">FUNCION 1 BODEGA</a></li>
+        <li><a href="#" class="link-dark rounded">FUNCION 2 BODEGA</a></li>
+        <li><a href="#" class="link-dark rounded">FUNCION 3 BODEGA</a></li>
+        <li><a href="#" class="link-dark rounded">FUNCION 4 BODEGA</a></li>
+      </ul>
+    </div>
+    <button
+      (click)="onClickMenu()"
+      class="button-primary my-2 btn-toggle align-items-center rounded collapsed"
+      data-bs-toggle="collapse"
+      data-bs-target="#noc-collapse"
+      aria-expanded="false"
+    >
       <i class="fa-solid fa-circle-nodes"></i> Noc
     </button>
-    <button (click)="onClickMenu()" class="button-primary my-2">
+    <div class="collapse" id="noc-collapse">
+      <ul class="btn-toggle-nav list-unstyled fw-normal pb-1 small">
+        <li><a href="#" class="link-dark rounded">FUNCION 1 NOC</a></li>
+        <li><a href="#" class="link-dark rounded">FUNCION 2 NOC</a></li>
+        <li><a href="#" class="link-dark rounded">FUNCION 3 NOC</a></li>
+        <li><a href="#" class="link-dark rounded">FUNCION 4 NOC</a></li>
+      </ul>
+    </div>
+
+    <button
+      (click)="onClickMenu()"
+      class="button-primary my-2 btn-toggle align-items-center rounded collapsed"
+      data-bs-toggle="collapse"
+      data-bs-target="#tecnico-collapse"
+      aria-expanded="false"
+    >
       <i class="fa-solid fa-screwdriver-wrench"></i> Tecnico
     </button>
+    <div class="collapse" id="tecnico-collapse">
+      <ul class="btn-toggle-nav list-unstyled fw-normal pb-1 small">
+        <li><a href="#" class="link-dark rounded">FUNCION 1 TECNICO</a></li>
+        <li><a href="#" class="link-dark rounded">FUNCION 2 TECNICO</a></li>
+        <li><a href="#" class="link-dark rounded">FUNCION 3 TECNICO</a></li>
+        <li><a href="#" class="link-dark rounded">FUNCION 4 TECNICO</a></li>
+      </ul>
+    </div>
   </div>
 
-  <div class="div3 buton-bottom">
+  <div class="my-3 buton-bottom">
     <hr />
-    <button (click)="onClickMenu()" class="button-primary usuario my-2">
-      <i class="fa-regular fa-user"></i> Usuario
-    </button>
+
     <button (click)="onClickLogout()" class="button-primary usuario my-2">
       <i class="fa-solid fa-right-from-bracket"> </i> Cerrar Sesion
     </button>
