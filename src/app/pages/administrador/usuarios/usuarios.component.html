@@ -1,4 +1,59 @@
-<h3>Lista de Usuarios</h3>
+<main>
+  <!-- Lista de empleados que viende de la api cargando cada empleado en una card con un input -->
+
+  <section class="container mt-3">
+    <h2>Lista de Usuarios</h2>
+    <hr />
+
+    <div>
+      <table class="table table-hover">
+        <thead>
+          <tr>
+            <th scope="col">Nombre</th>
+            <th scope="col" class="d-none d-sm-table-cell">Email</th>
+            <th scope="col">Ver Detalle</th>
+            <th scope="col">Actualizar</th>
+            <th scope="col">Borrar</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (employee of arrUsuarios; track employee._id) {
+
+          <tr>
+            <td>{{ employee.nombre }} {{ employee.apellidos }}</td>
+            <td class="d-none d-sm-table-cell">{{ employee.usuario }}</td>
+            <td>
+              <a
+                class="btn btn-info"
+                [routerLink]="['/dashboard', 'empleado', employee._id]"
+                ><i class="fa-solid fa-eye"></i
+              ></a>
+            </td>
+            <td>
+              <a
+                class="btn btn-warning"
+                [routerLink]="[
+                  '/dashboard',
+                  'actualizar-empleado',
+                  employee._id
+                ]"
+                ><i class="fa-solid fa-pen-to-square"></i>
+              </a>
+            </td>
+            <td>
+              <!-- <button class="btn btn-danger" (click)="delete(employee._id)">  -->
+              <button class="btn btn-danger">
+                <i class="fa-solid fa-trash"></i>
+              </button>
+            </td>
+          </tr>
+
+          }
+        </tbody>
+      </table>
+    </div>
+  </section>
+</main>
 
 <button
   class="btn btn-danger"
