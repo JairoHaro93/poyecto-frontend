@@ -10,7 +10,8 @@
         <thead>
           <tr>
             <th scope="col">Nombre</th>
-            <th scope="col" class="d-none d-sm-table-cell">Email</th>
+            <th scope="col" class="d-none d-sm-table-cell">Usuario</th>
+            <th scope="col" class="d-none d-sm-table-cell">Ci</th>
             <th scope="col">Ver Detalle</th>
             <th scope="col">Actualizar</th>
             <th scope="col">Borrar</th>
@@ -20,8 +21,10 @@
           @for (employee of arrUsuarios; track employee._id) {
 
           <tr>
-            <td>{{ employee.nombre }} {{ employee.apellidos }}</td>
+            <td>{{ employee.nombre }} {{ employee.apellido }}</td>
             <td class="d-none d-sm-table-cell">{{ employee.usuario }}</td>
+            <td class="d-none d-sm-table-cell">{{ employee.ci }}</td>
+
             <td>
               <a
                 class="btn btn-info"
@@ -52,12 +55,12 @@
         </tbody>
       </table>
     </div>
+
+    <button
+      class="btn btn-danger"
+      [routerLink]="['/home/administrador/crearusuario']"
+    >
+      Crear Usuario
+    </button>
   </section>
 </main>
-
-<button
-  class="btn btn-danger"
-  [routerLink]="['/home/administrador/crearusuario']"
->
-  Crear Usuario
-</button>
