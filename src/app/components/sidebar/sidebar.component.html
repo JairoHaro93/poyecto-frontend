@@ -18,7 +18,7 @@
       <i class="fa-solid fa-gear"> </i> Administrador
     </button>
 
-    <div class="collapse show" id="home-collapse">
+    <div class="collapse" id="home-collapse">
       <ul class="btn-toggle-nav list-unstyled fw-normal pb-1 small gap-5">
         <li
           (click)="onClickMenu()"
@@ -26,14 +26,7 @@
         >
           Usuarios
         </li>
-        <li
-          (click)="onClickMenu()"
-          [routerLink]="['/home/administrador/crearusuario']"
-        >
-          Crear Usuario nuevo
-        </li>
-
-        <li (click)="onClickMenu()">FUNCION 3 SISTEMA</li>
+        <li (click)="onClickMenu()">Crear Usuario nuevo</li>
       </ul>
     </div>
     <button
@@ -46,9 +39,6 @@
     <div class="collapse" id="dashboard-collapse">
       <ul class="btn-toggle-nav list-unstyled fw-normal pb-1 small">
         <li (click)="onClickMenu()">FUNCION 1 BODEGA</li>
-        <li (click)="onClickMenu()">FUNCION 2 BODEGA</li>
-        <li (click)="onClickMenu()">FUNCION 3 BODEGA</li>
-        <li (click)="onClickMenu()">FUNCION 4 BODEGA</li>
       </ul>
     </div>
     <button
@@ -68,6 +58,20 @@
     <button
       class="button-primary my-2 btn-toggle align-items-center rounded collapsed"
       data-bs-toggle="collapse"
+      data-bs-target="#clientes-collapse"
+      aria-expanded="false"
+    >
+      <i class="fa-solid fa-users"></i> Clientes
+    </button>
+    <div class="collapse" id="clientes-collapse">
+      <ul class="btn-toggle-nav list-unstyled fw-normal pb-1 small">
+        <li (click)="onClickMenu()">FUNCION 1 Clientes</li>
+      </ul>
+    </div>
+
+    <button
+      class="button-primary my-2 btn-toggle align-items-center rounded collapsed"
+      data-bs-toggle="collapse"
       data-bs-target="#tecnico-collapse"
       aria-expanded="false"
     >
@@ -76,9 +80,6 @@
     <div class="collapse" id="tecnico-collapse">
       <ul class="btn-toggle-nav list-unstyled fw-normal pb-1 small">
         <li (click)="onClickMenu()">FUNCION 1 TECNICO</li>
-        <li (click)="onClickMenu()">FUNCION 2 TECNICO</li>
-        <li (click)="onClickMenu()">FUNCION 3 TECNICO</li>
-        <li (click)="onClickMenu()">FUNCION 4 TECNICO</li>
       </ul>
     </div>
   </div>

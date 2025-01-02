@@ -16,7 +16,10 @@ export const routes: Routes = [
     path: 'home/administrador',
     component: AdministradorComponent,
     children: [
-      { path: 'usuarios', component: UsuariosComponent },
+      {
+        path: 'usuarios',
+        component: UsuariosComponent,
+      },
       { path: 'crearusuario', component: CrearusuarioComponent },
     ],
   },
