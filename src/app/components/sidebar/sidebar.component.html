@@ -15,18 +15,24 @@
       data-bs-toggle="collapse"
       data-bs-target="#home-collapse"
     >
-      <i class="fa-solid fa-gear"> </i> Sistema
+      <i class="fa-solid fa-gear"> </i> Administrador
     </button>
 
     <div class="collapse show" id="home-collapse">
       <ul class="btn-toggle-nav list-unstyled fw-normal pb-1 small gap-5">
         <li
           (click)="onClickMenu()"
-          [routerLink]="['/home/sistema/crearusuario']"
+          [routerLink]="['/home/administrador/usuarios']"
+        >
+          Usuarios
+        </li>
+        <li
+          (click)="onClickMenu()"
+          [routerLink]="['/home/administrador/crearusuario']"
         >
           Crear Usuario nuevo
         </li>
-        <li (click)="onClickMenu()">FUNCION 2 SISTEMA</li>
+
         <li (click)="onClickMenu()">FUNCION 3 SISTEMA</li>
       </ul>
     </div>
