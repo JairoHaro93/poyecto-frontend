@@ -18,7 +18,7 @@
           </tr>
         </thead>
         <tbody>
-          @for (employee of arrUsuarios; track employee._id) {
+          @for (employee of arrUsuarios; track employee.id) {
 
           <tr>
             <td>{{ employee.nombre }} {{ employee.apellido }}</td>
@@ -28,7 +28,7 @@
             <td>
               <a
                 class="btn btn-info"
-                [routerLink]="['/dashboard', 'empleado', employee._id]"
+                [routerLink]="['/dashboard', 'empleado', employee.id]"
                 ><i class="fa-solid fa-eye"></i
               ></a>
             </td>
@@ -38,7 +38,7 @@
                 [routerLink]="[
                   '/dashboard',
                   'actualizar-empleado',
-                  employee._id
+                  employee.id
                 ]"
                 ><i class="fa-solid fa-pen-to-square"></i>
               </a>

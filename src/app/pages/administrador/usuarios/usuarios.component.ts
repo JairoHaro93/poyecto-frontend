@@ -1,6 +1,7 @@
 import { Component, inject } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { UsuariosService } from '../../../services/usuarios.service';
+import { Iusuarios } from '../../../interfaces/iusuarios.interface';
 
 @Component({
   selector: 'app-usuarios',
@@ -10,7 +11,7 @@ import { UsuariosService } from '../../../services/usuarios.service';
   styleUrl: './usuarios.component.css',
 })
 export class UsuariosComponent {
-  arrUsuarios: any = [];
+  arrUsuarios: Iusuarios[] = [];
 
   usuarioServices = inject(UsuariosService);
 

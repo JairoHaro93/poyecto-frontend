@@ -18,4 +18,7 @@ export class UsuariosService {
   getAll() {
     return lastValueFrom(this.httpClient.get<Iusuarios[]>(this.baseUrl));
   }
+  update() {}
+
+  insert(body: Iusuarios) {}
 }

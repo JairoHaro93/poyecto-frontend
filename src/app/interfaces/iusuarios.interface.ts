@@ -1,7 +1,7 @@
 export interface Iusuarios {
-  idUsuarios: number;
+  id: number;
   nombre: string;
-  aoellido: string;
+  apellido: string;
   ci: string;
   usuario: string;
   password: string;

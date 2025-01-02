@@ -2,9 +2,10 @@ import { Routes } from '@angular/router';
 import { LoginComponent } from './pages/login/login.component';
 import { HomeComponent } from './pages/home/home.component';
 import { tokenGuard } from './guards/token.guard';
-import { CrearusuarioComponent } from './pages/administrador/crearusuario/crearusuario.component';
+
 import { AdministradorComponent } from './pages/administrador/administrador.component';
 import { UsuariosComponent } from './pages/administrador/usuarios/usuarios.component';
+import { FormusuariosComponent } from './pages/administrador/formusuarios/formusuarios.component';
 
 export const routes: Routes = [
   { path: '', pathMatch: 'full', redirectTo: 'login' },
@@ -20,7 +21,7 @@ export const routes: Routes = [
         path: 'usuarios',
         component: UsuariosComponent,
       },
-      { path: 'crearusuario', component: CrearusuarioComponent },
+      { path: 'crearusuario', component: FormusuariosComponent },
     ],
   },
 
