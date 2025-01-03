@@ -1,12 +1,12 @@
 import { Component, inject } from '@angular/core';
 import { Iusuarios } from '../../../interfaces/iusuarios.interface';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import { UsuariosService } from '../../../services/usuarios.service';
 
 @Component({
   selector: 'app-vistausuarios',
   standalone: true,
-  imports: [],
+  imports: [RouterLink],
   templateUrl: './vistausuarios.component.html',
   styleUrl: './vistausuarios.component.css',
 })
