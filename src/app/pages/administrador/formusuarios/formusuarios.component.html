@@ -1,76 +1,118 @@
-<section class="container mt-3">
-  <div class="card shadow p-5">
-    <h2>{{ tipo }} Empleado</h2>
-    <form [formGroup]="usuarioForm">
-      <div class="my-3">
-        <label class="form-label" for="nombre">Nombre</label>
-        <input
-          class="form-control"
-          type="text"
-          id="nombre"
-          formControlName="nombre"
-          placeholder="Ingese el nombre"
-        />
-      </div>
-      <div class="my-3">
-        <label class="form-label" for="apellidos">Apellidos</label>
-        <input
-          class="form-control"
-          type="text"
-          id="apellidos"
-          formControlName="apellidos"
-          placeholder="Ingese apellidos"
-        />
-      </div>
-      <div class="my-3">
-        <label class="form-label" for="telefono">Telefono</label>
-        <input
-          class="form-control"
-          type="text"
-          id="teleono"
-          formControlName="telefono"
-          placeholder="Ingese el telefono"
-        />
-      </div>
-      <div class="my-3">
-        <label class="form-label" for="email">Email</label>
-        <input
-          class="form-control"
-          type="email"
-          id="email"
-          formControlName="email"
-          placeholder="Ingese el email"
-        />
-      </div>
-      <div class="my-3">
-        <label class="form-label" for="salario">Saalrio</label>
-        <input
-          class="form-control"
-          type="number"
-          min="0"
-          id="salario"
-          formControlName="salario"
-          placeholder="Ingese el salario"
-        />
-      </div>
+<main>
+  <section class="container mt-3">
+    <div class="shadow p-5">
+      <h2>{{ tipo }} Usuario</h2>
+      <form [formGroup]="usuarioForm" (ngSubmit)="getDataForm()">
+        <div class="my-3">
+          <label class="form-label" for="nombre">Nombre</label>
+          <input
+            class="form-control"
+            type="text"
+            id="nombre"
+            formControlName="nombre"
+            placeholder="Ingese el nombre"
+          />
+        </div>
+        <div class="my-3">
+          <label class="form-label" for="apellido">Apellidos</label>
+          <input
+            class="form-control"
+            type="text"
+            id="apellido"
+            formControlName="apellido"
+            placeholder="Ingese apellidos"
+          />
+        </div>
+        <div class="my-3">
+          <label class="form-label" for="telefono">Ci:</label>
+          <input
+            class="form-control"
+            type="text"
+            id="ci"
+            formControlName="ci"
+            placeholder="Ingese la cedula"
+          />
+        </div>
+        <div class="my-3">
+          <label class="form-label" for="email">Usuario:</label>
+          <input
+            class="form-control"
+            type="text"
+            id="usuario"
+            formControlName="usuario"
+            placeholder="Ingese el usuario"
+          />
+        </div>
+        <div class="my-3">
+          <label class="form-label" for="salario">Password</label>
+          <input
+            class="form-control"
+            type="password"
+            id="password"
+            formControlName="password"
+            placeholder="Ingrese el password"
+          />
+        </div>
 
-      <div class="my-3">
-        <label class="form-label" for="departamento">Departamento</label>
-        <input
-          class="form-control"
-          type="text"
-          id="departamento"
-          formControlName="departamento"
-          placeholder="Ingese el departamento"
-        />
-      </div>
+        <div class="my-3">
+          <label class="form-label" for="fecha_nac">Fecha de nacimiento</label>
+          <input
+            class="form-control"
+            type="text"
+            id="fecha_nac"
+            formControlName="fecha_nac"
+            placeholder="Ingese el fecha nacimiento"
+          />
+        </div>
 
-      <div class="my-3">
-        <input type="submit" [value]="tipo" class="btn btn-danger" />
-      </div>
-    </form>
-    @for(error of errorForm ;track $index ){
-    <p class="text-danger">{{ error.field }}: {{ error.message }}</p>
-    }
-  </div>
-</section>
+        <div class="my-3">
+          <label class="form-label" for="fecha_cont"
+            >Fecha de contratacion</label
+          >
+          <input
+            class="form-control"
+            type="text"
+            id="fecha_cont"
+            formControlName="fecha_cont"
+            placeholder="Ingese fecha contratacion"
+          />
+        </div>
+
+        <div class="my-3">
+          <label class="form-label" for="genero">genero</label>
+          <input
+            class="form-control"
+            type="text"
+            id="genero"
+            formControlName="genero"
+            placeholder="Ingese el genero"
+          />
+        </div>
+
+        <div class="my-3">
+          <label class="form-label" for="rol">Rol</label>
+          <input
+            class="form-control"
+            type="text"
+            id="rol"
+            formControlName="rol"
+            placeholder="Ingrese el rol"
+          />
+        </div>
+
+        <div class="d-flex my-3 justify-content-around">
+          <input type="submit" [value]="tipo" class="btn btn-danger" />
+          <input
+            type="submit"
+            value="Cancelar "
+            class="btn btn-danger"
+            [routerLink]="['/home', 'administrador', 'usuarios']"
+          />
+        </div>
+      </form>
+      @for(error of errorForm ;track $index ){
+      <p class="text-danger">{{ error.field }}: {{ error.message }}</p>
+      }
+    </div>
+  </section>
+</main>

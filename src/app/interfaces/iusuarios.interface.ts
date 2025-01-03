@@ -1,5 +1,5 @@
 export interface Iusuarios {
-  id: number;
+  id?: number;
   nombre: string;
   apellido: string;
   ci: string;
@@ -8,5 +8,5 @@ export interface Iusuarios {
   fecha_nac: Date;
   fecha_cont: Date;
   genero: string;
-  rot: string;
+  rol: string;
 }

@@ -1,0 +1,15 @@
+<section class="container mt-3">
+  <h3>{{ employee?.nombre }} {{ employee?.apellido }}</h3>
+  <hr />
+
+  <h4>
+    <strong> Email: </strong
+    ><a [href]="'mailto:' + employee?.usuario"> {{ employee?.usuario }} </a>
+  </h4>
+  <h4><strong> Salario: </strong> {{ employee?.ci }} $/anuales</h4>
+  <h4>
+    <strong> Telefono: </strong>
+    <a [href]="'tel:' + employee?.fecha_cont"> {{ employee?.fecha_nac }} </a>
+  </h4>
+  <h4><strong> Departamento: </strong> {{ employee?.genero }}</h4>
+</section>

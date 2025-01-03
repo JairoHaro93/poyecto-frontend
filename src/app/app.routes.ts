@@ -6,6 +6,7 @@ import { tokenGuard } from './guards/token.guard';
 import { AdministradorComponent } from './pages/administrador/administrador.component';
 import { UsuariosComponent } from './pages/administrador/usuarios/usuarios.component';
 import { FormusuariosComponent } from './pages/administrador/formusuarios/formusuarios.component';
+import { VistausuariosComponent } from './pages/administrador/vistausuarios/vistausuarios.component';
 
 export const routes: Routes = [
   { path: '', pathMatch: 'full', redirectTo: 'login' },
@@ -21,7 +22,9 @@ export const routes: Routes = [
         path: 'usuarios',
         component: UsuariosComponent,
       },
+      { path: 'usuario/:id', component: VistausuariosComponent },
       { path: 'crearusuario', component: FormusuariosComponent },
+      { path: 'actualizarusuario/:id', component: FormusuariosComponent },
     ],
   },
 

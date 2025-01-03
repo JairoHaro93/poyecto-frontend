@@ -10,8 +10,7 @@
         <thead>
           <tr>
             <th scope="col">Nombre</th>
-            <th scope="col" class="d-none d-sm-table-cell">Usuario</th>
-            <th scope="col" class="d-none d-sm-table-cell">Ci</th>
+
             <th scope="col">Ver Detalle</th>
             <th scope="col">Actualizar</th>
             <th scope="col">Borrar</th>
@@ -22,13 +21,16 @@
 
           <tr>
             <td>{{ employee.nombre }} {{ employee.apellido }}</td>
-            <td class="d-none d-sm-table-cell">{{ employee.usuario }}</td>
-            <td class="d-none d-sm-table-cell">{{ employee.ci }}</td>
 
             <td>
               <a
                 class="btn btn-info"
-                [routerLink]="['/dashboard', 'empleado', employee.id]"
+                [routerLink]="[
+                  '/home',
+                  'administrador',
+                  'usuario',
+                  employee.id
+                ]"
                 ><i class="fa-solid fa-eye"></i
               ></a>
             </td>
@@ -36,16 +38,16 @@
               <a
                 class="btn btn-warning"
                 [routerLink]="[
-                  '/dashboard',
-                  'actualizar-empleado',
+                  '/home',
+                  'administrador',
+                  'actualizarusuario',
                   employee.id
                 ]"
                 ><i class="fa-solid fa-pen-to-square"></i>
               </a>
             </td>
             <td>
-              <!-- <button class="btn btn-danger" (click)="delete(employee._id)">  -->
-              <button class="btn btn-danger">
+              <button class="btn btn-danger" (click)="delete(employee.id)">
                 <i class="fa-solid fa-trash"></i>
               </button>
             </td>
