@@ -3,6 +3,7 @@ import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { UsuariosService } from '../../../services/usuarios.service';
 import { Iusuarios } from '../../../interfaces/iusuarios.interface';
+import { format } from 'date-fns';
 
 @Component({
   selector: 'app-formusuarios',
@@ -43,22 +44,34 @@ export class FormusuariosComponent {
         this.tipo = 'Actualizar';
         //pedimos por id los datos de empleado
 
-        const employee: Iusuarios = await this.usuarioServices.getbyId(
+        const usuario: Iusuarios = await this.usuarioServices.getbyId(
           params.id
         );
 
+        // Convertimos fecha_nac y fecha_cont a objetos de tipo Date
+
+        // const fechaNac = employee.fecha_nac?new Date(employee.fecha_nac): null;
+
+        const fechaNac = usuario.fecha_nac ? new Date(usuario.fecha_nac) : null;
+
+        const fechaNac1 = format(fechaNac!, 'yyyy-MM-dd');
+
+        const fechaCont = usuario.fecha_cont
+          ? new Date(usuario.fecha_cont)
+          : null;
+        const fechaCont1 = format(fechaCont!, 'yyyy-MM-dd');
         this.usuarioForm = new FormGroup(
           {
-            id: new FormControl(employee.id, []),
-            nombre: new FormControl(employee.nombre, []),
-            apellido: new FormControl(employee.apellido, []),
-            ci: new FormControl(employee.ci, []),
-            usuario: new FormControl(employee.usuario, []),
-            password: new FormControl(employee.password, []),
-            fecha_nac: new FormControl(employee.fecha_nac, []),
-            fecha_cont: new FormControl(employee.fecha_cont, []),
-            genero: new FormControl(employee.genero, []),
-            rol: new FormControl(employee.rol, []),
+            id: new FormControl(usuario.id, []),
+            nombre: new FormControl(usuario.nombre, []),
+            apellido: new FormControl(usuario.apellido, []),
+            ci: new FormControl(usuario.ci, []),
+            usuario: new FormControl(usuario.usuario, []),
+            password: new FormControl(usuario.password, []),
+            fecha_nac: new FormControl(fechaNac1, []),
+            fecha_cont: new FormControl(fechaCont1, []),
+            genero: new FormControl(usuario.genero, []),
+            rol: new FormControl(usuario.rol, []),
           },
           []
         );

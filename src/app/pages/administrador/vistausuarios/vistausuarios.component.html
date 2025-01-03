@@ -4,8 +4,14 @@
 
   <h4><strong> Usuario: </strong> {{ employee?.usuario }}</h4>
   <h4><strong> Ci: </strong> {{ employee?.ci }}</h4>
-  <h4><strong> Fecha de nacimiento: </strong> {{ employee?.fecha_nac }}</h4>
-  <h4><strong> Fecha de contrato: </strong> {{ employee?.fecha_cont }}</h4>
+  <h4>
+    <strong> Fecha de nacimiento: </strong>
+    {{ employee?.fecha_nac | date : "EEEE dd MMMM YYYY " }}
+  </h4>
+  <h4>
+    <strong> Fecha de contrato: </strong>
+    {{ employee?.fecha_cont | date : "EEEE dd MMMM YYYY " }}
+  </h4>
   <h4><strong> Genero: </strong> {{ employee?.genero }}</h4>
   <h4><strong> Rol: </strong> {{ employee?.rol }}</h4>
 </section>
