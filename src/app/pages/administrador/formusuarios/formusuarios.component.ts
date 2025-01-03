@@ -77,7 +77,7 @@ export class FormusuariosComponent {
 
         if (response.id) {
           alert('Usuario Actualizado');
-          this.router.navigate(['/dashboard', 'empleados']);
+          this.router.navigate(['/home', 'administrador', 'usuarios']);
         }
       } catch ({ error }: any) {
         this.errorForm = error;
