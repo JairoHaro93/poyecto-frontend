@@ -15,6 +15,7 @@ import Swal from 'sweetalert2';
 })
 export class FormusuariosComponent {
   tipo: string = 'Crear';
+  selectedGender: string = '';
   usuarioForm: FormGroup;
   errorForm: any[] = [];
   router = inject(Router);
@@ -35,6 +36,11 @@ export class FormusuariosComponent {
       },
       []
     );
+  }
+
+  onGenderChange(gender: string): void {
+    this.selectedGender = gender;
+    console.log(`Género seleccionado: ${gender}`);
   }
 
   ngOnInit() {
