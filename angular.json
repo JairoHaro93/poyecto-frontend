@@ -7,7 +7,7 @@
       "i18n": {
         "sourceLocale" :"en-US",
         "locales": { 
-          "es-ES":"src/locale/messages.es.xlf"
+          "es":"src/locale/messages.es.xlf"
         }
       },
       "projectType": "application",
@@ -19,7 +19,7 @@
         "build": {
           "builder": "@angular-devkit/build-angular:application",
           "options": {
-            "localize":["es-ES"],
+            "localize":["es"],
             "outputPath": "dist/frontend",
             "index": "src/index.html",
             "browser": "src/main.ts",
