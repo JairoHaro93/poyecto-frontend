@@ -1,0 +1,68 @@
+<main>
+  <!-- Lista de empleados que viende de la api cargando cada empleado en una card con un input -->
+
+  <section class="container mt-3">
+    <h2>Lista de Usuarios</h2>
+    <hr />
+
+    <div>
+      <table class="table table-hover">
+        <thead>
+          <tr>
+            <th scope="col">Nombre</th>
+
+            <th scope="col">Ver Detalle</th>
+            <th scope="col">Actualizar</th>
+            <th scope="col">Borrar</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (employee of arrUsuarios; track employee.id) {
+
+          <tr>
+            <td>{{ employee.nombre }} {{ employee.apellido }}</td>
+
+            <td>
+              <a
+                class="btn btn-info"
+                [routerLink]="[
+                  '/home',
+                  'administrador',
+                  'usuario',
+                  employee.id
+                ]"
+                ><i class="fa-solid fa-eye"></i
+              ></a>
+            </td>
+            <td>
+              <a
+                class="btn btn-warning"
+                [routerLink]="[
+                  '/home',
+                  'administrador',
+                  'actualizarusuario',
+                  employee.id
+                ]"
+                ><i class="fa-solid fa-pen-to-square"></i>
+              </a>
+            </td>
+            <td>
+              <button class="btn btn-danger" (click)="delete(employee.id)">
+                <i class="fa-solid fa-trash"></i>
+              </button>
+            </td>
+          </tr>
+
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <button
+      class="btn btn-danger"
+      [routerLink]="['/home/administrador/crearusuario']"
+    >
+      Crear Usuario
+    </button>
+  </section>
+</main>

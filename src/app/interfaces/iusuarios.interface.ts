@@ -1,12 +1,12 @@
 export interface Iusuarios {
-  idUsuarios: number;
+  id?: number;
   nombre: string;
-  aoellido: string;
+  apellido: string;
   ci: string;
   usuario: string;
   password: string;
   fecha_nac: Date;
   fecha_cont: Date;
   genero: string;
-  rot: string;
+  rol: string;
 }

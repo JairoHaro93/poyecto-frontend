@@ -24,6 +24,7 @@ export class LoginComponent {
   async onSubmit() {
     try {
       const response = await this.autenservice.login(this.formLogin.value);
+      console.log(response);
       localStorage.setItem('token_proyecto', response.token);
       this.router.navigateByUrl('/home');
     } catch ({ error }: any) {

@@ -1,0 +1,94 @@
+:root {
+  --color-barra-lateral: rgb(255, 255, 255);
+  --color-texto: rgb(0, 0, 0);
+  --color-texto-menu: rgb(134: 136: 144);
+  --color-boton: rgb(0, 0, 0);
+  --color-boton-texto: rgb(255, 255, 255);
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+.sidebar {
+  position: fixed;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  width: 250px;
+  height: 90%;
+  padding: 0px 20px;
+  background-color: var(--color-barra-lateral);
+  transition: left 0.5s ease;
+}
+
+.logo {
+  max-width: 40vw;
+  height: 40px;
+  cursor: pointer;
+}
+
+.div2 {
+  /* display: grid;*/
+  overflow-y: auto;
+}
+
+/*lista de opciones*/
+
+.buton-bottom {
+  margin-top: auto; /* Empuja el botón al fondo */
+  bottom: 10px; /* Asegura que el botón se quede pegado al fondo */
+  width: 100%; /* Ajusta el ancho para alinearlo con otros elementos */
+}
+
+/* MENU*/
+
+.menu {
+  color: red;
+  width: 50px;
+  height: 50px;
+  position: fixed;
+  font-size: 30px;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  right: 15px;
+  top: 10px;
+  display: none;
+}
+
+/*    movil  */
+@media (max-width: 1000px) {
+  .sidebar {
+    position: absolute;
+    left: -250px;
+    height: auto;
+    overflow-y: auto;
+  }
+  .mostrar-sidebar {
+    left: 0;
+  }
+  .menu {
+    display: flex;
+  }
+}
+
+/* lista de opciones*/
+ul {
+  list-style-type: none;
+  justify-content: center;
+
+  li {
+    margin-left: 10px;
+    width: 80%;
+    background-color: darkred;
+    border-radius: 10px;
+    padding: 2px;
+    text-align: center;
+    margin-top: 10px;
+    cursor: pointer;
+    color: white;
+  }
+}
