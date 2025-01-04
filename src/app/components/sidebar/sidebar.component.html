@@ -1,0 +1,98 @@
+<!-- https://www.youtube.com/watch?v=nvh51c4UfmM -->
+<div (click)="onClickMenu()" class="menu">
+  @if(!isMenu){
+  <i class="fa-solid fa-bars"></i>
+
+  } @if(isMenu){
+  <i class="fa-solid fa-xmark"></i>
+  }
+</div>
+
+<div [class.mostrar-sidebar]="isMenu" class="sidebar">
+  <div class="div2">
+    <h4 class="my-2">Yo:</h4>
+
+    <button
+      class="button-primary btn-toggle rounded collapsed my-2"
+      data-bs-toggle="collapse"
+      data-bs-target="#home-collapse"
+    >
+      <i class="fa-solid fa-gear"> </i> Administrador
+    </button>
+
+    <div class="collapse" id="home-collapse">
+      <ul class="btn-toggle-nav list-unstyled fw-normal pb-1 small gap-5">
+        <li
+          (click)="onClickMenu()"
+          [routerLink]="['/home/administrador/usuarios']"
+        >
+          Usuarios
+        </li>
+      </ul>
+    </div>
+    <button
+      class="button-primary my-2 btn-toggle align-items-center rounded collapsed"
+      data-bs-toggle="collapse"
+      data-bs-target="#bodega-collapse"
+    >
+      <i class="fa-solid fa-box-open"></i> Bodega
+    </button>
+    <div class="collapse" id="bodega-collapse">
+      <ul class="btn-toggle-nav list-unstyled fw-normal pb-1 small">
+        <li (click)="onClickMenu()">Inventario</li>
+        <li (click)="onClickMenu()">Ingresar equipos</li>
+        <li (click)="onClickMenu()">Entregar equipos</li>
+      </ul>
+    </div>
+    <button
+      class="button-primary my-2 btn-toggle align-items-center rounded collapsed"
+      data-bs-toggle="collapse"
+      data-bs-target="#noc-collapse"
+      aria-expanded="false"
+    >
+      <i class="fa-solid fa-circle-nodes"></i> Noc
+    </button>
+    <div class="collapse" id="noc-collapse">
+      <ul class="btn-toggle-nav list-unstyled fw-normal pb-1 small">
+        <li (click)="onClickMenu()">Ingresar cajas</li>
+        <li (click)="onClickMenu()">Informe diario</li>
+      </ul>
+    </div>
+
+    <button
+      class="button-primary my-2 btn-toggle align-items-center rounded collapsed"
+      data-bs-toggle="collapse"
+      data-bs-target="#clientes-collapse"
+      aria-expanded="false"
+    >
+      <i class="fa-solid fa-users"></i> Clientes
+    </button>
+    <div class="collapse" id="clientes-collapse">
+      <ul class="btn-toggle-nav list-unstyled fw-normal pb-1 small">
+        <li (click)="onClickMenu()">FUNCION 1 Clientes</li>
+      </ul>
+    </div>
+
+    <button
+      class="button-primary my-2 btn-toggle align-items-center rounded collapsed"
+      data-bs-toggle="collapse"
+      data-bs-target="#tecnico-collapse"
+      aria-expanded="false"
+    >
+      <i class="fa-solid fa-screwdriver-wrench"></i> Tecnico
+    </button>
+    <div class="collapse" id="tecnico-collapse">
+      <ul class="btn-toggle-nav list-unstyled fw-normal pb-1 small">
+        <li (click)="onClickMenu()">FUNCION 1 TECNICO</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="my-3 buton-bottom">
+    <hr />
+
+    <button (click)="onClickLogout()" class="button-primary usuario my-2">
+      <i class="fa-solid fa-right-from-bracket"> </i> Cerrar Sesion
+    </button>
+  </div>
+</div>

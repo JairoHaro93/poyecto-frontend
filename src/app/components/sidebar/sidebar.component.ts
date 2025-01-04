@@ -9,10 +9,18 @@ import { Router, RouterLink } from '@angular/router';
   styleUrl: './sidebar.component.css',
 })
 export class SidebarComponent {
+  //variables
+  isMenu = false;
+
+  //injetcables
   router = inject(Router);
 
   onClickLogout() {
     localStorage.removeItem('token_proyecto');
     this.router.navigateByUrl('/login');
+  }
+
+  onClickMenu() {
+    this.isMenu = !this.isMenu;
   }
 }
