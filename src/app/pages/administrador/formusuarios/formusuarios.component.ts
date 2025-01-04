@@ -4,6 +4,7 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { UsuariosService } from '../../../services/usuarios.service';
 import { Iusuarios } from '../../../interfaces/iusuarios.interface';
 import { format } from 'date-fns';
+import Swal from 'sweetalert2';
 
 @Component({
   selector: 'app-formusuarios',
@@ -89,7 +90,7 @@ export class FormusuariosComponent {
         );
 
         if (response.id) {
-          alert('Usuario Actualizado');
+          Swal.fire('Realizado', 'Usuario Actualizado', 'success');
           this.router.navigate(['/home', 'administrador', 'usuarios']);
         }
       } catch ({ error }: any) {
