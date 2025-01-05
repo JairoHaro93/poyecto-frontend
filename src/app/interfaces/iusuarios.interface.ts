@@ -8,5 +8,5 @@ export interface Iusuarios {
   fecha_nac: Date;
   fecha_cont: Date;
   genero: string;
-  rol: string;
+  rol: [{}];
 }

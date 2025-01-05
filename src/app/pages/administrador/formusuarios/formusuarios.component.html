@@ -102,18 +102,62 @@
           </div>
         </div>
 
-        <div class="my-3">
-          <label class="form-label" for="rol">Rol</label>
-          <input
-            class="form-control"
-            type="text"
-            id="rol"
-            formControlName="rol"
-            placeholder="Ingrese el rol"
-          />
+        <hr />
+        <!-- <label class="form-label">Funciones</label>
+        <div class="d-flex justify-content-around">
+          @for (roles of arrfunciones; track $index) {
+          <div>
+            <h3>{{ roles.nombre }}</h3>
+            <label>
+              @for (funciones of roles.result; track $index) {
+              <p>
+                <input type="checkbox" formControlName="rol" value="s" />
+                {{ funciones.nombre }}
+              </p>
+              }
+            </label>
+          </div>
+
+          }
+        </div>
+        <button (click)="mostrar()">mostrar</button> -->
+
+        <div>
+          <label class="form-label">Funciones</label>
+          <div>
+            <form class="d-flex justify-content-around">
+              @for (roles of arrfunciones; track $index) {
+
+              <div class="border border-dark border-3 rounded-2 p-2">
+                <h4>{{ roles.nombre }}</h4>
+                <label>
+                  @for (funciones of roles.result; track $index) {
+                  <p>
+                    <input
+                      (change)="
+                        addStatus(
+                          { rol: roles.nombre, funcion: funciones.id },
+                          $event
+                        )
+                      "
+                      type="checkbox"
+                      formControlName="rol"
+                    />
+                    {{ funciones.nombre }}
+                  </p>
+                  }
+                </label>
+              </div>
+
+              }
+            </form>
+          </div>
+          <!-- <button (click)="mostrar()">enviar</button> -->
         </div>
 
-        <div class="d-flex my-3 justify-content-around">
+        <!-- BUTONS ///////////////////////// -->
+        <hr />
+        <div class="d-flex justify-content-around">
           <input type="submit" [value]="tipo" class="btn btn-danger" />
           <input
             type="submit"
