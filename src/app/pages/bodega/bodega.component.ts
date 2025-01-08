@@ -1,5 +1,5 @@
 import { Component } from '@angular/core';
-import { Ifunciones } from '../../interfaces/ifunciones.interface';
+
 import { FormBuilder, FormGroup } from '@angular/forms';
 
 @Component({

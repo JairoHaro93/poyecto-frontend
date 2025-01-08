@@ -1,7 +1,6 @@
 import { inject, Injectable } from '@angular/core';
 import { environment } from '../../environments/environment';
 import { HttpClient } from '@angular/common/http';
-import { Ifunciones } from '../interfaces/ifunciones.interface';
 import { lastValueFrom } from 'rxjs';
 
 @Injectable({
@@ -16,6 +15,6 @@ export class FuncionesService {
 
   //metodos
   getAll() {
-    return lastValueFrom(this.httpClient.get<Ifunciones[]>(this.baseUrl));
+    return lastValueFrom(this.httpClient.get<[]>(this.baseUrl));
   }
 }

@@ -103,56 +103,23 @@
         </div>
 
         <hr />
-        <!-- <label class="form-label">Funciones</label>
+
         <div class="d-flex justify-content-around">
-          @for (roles of arrfunciones; track $index) {
+          @for (rol of ['Administrador', 'Bodega', 'Noc']; track $index) {
           <div>
-            <h3>{{ roles.nombre }}</h3>
-            <label>
-              @for (funciones of roles.result; track $index) {
-              <p>
-                <input type="checkbox" formControlName="rol" value="s" />
-                {{ funciones.nombre }}
-              </p>
-              }
-            </label>
+            @for (item of arrfunciones; track $index) { @if
+            (item.nombre.startsWith(rol[0])) {
+            <p>
+              {{ item.nombre.slice(1) }}
+              <input
+                (change)="addStatus({ funcion: item.id }, $event)"
+                type="checkbox"
+                formControlName="rol"
+              />
+            </p>
+            } }
           </div>
-
           }
-        </div>
-        <button (click)="mostrar()">mostrar</button> -->
-
-        <div>
-          <label class="form-label">Funciones</label>
-          <div>
-            <form class="d-flex justify-content-around">
-              @for (roles of arrfunciones; track $index) {
-
-              <div class="border border-dark border-3 rounded-2 p-2">
-                <h4>{{ roles.nombre }}</h4>
-                <label>
-                  @for (funciones of roles.result; track $index) {
-                  <p>
-                    <input
-                      (change)="
-                        addStatus(
-                          { rol: roles.nombre, funcion: funciones.id },
-                          $event
-                        )
-                      "
-                      type="checkbox"
-                      formControlName="rol"
-                    />
-                    {{ funciones.nombre }}
-                  </p>
-                  }
-                </label>
-              </div>
-
-              }
-            </form>
-          </div>
-          <!-- <button (click)="mostrar()">enviar</button> -->
         </div>
 
         <!-- BUTONS ///////////////////////// -->
@@ -160,7 +127,7 @@
         <div class="d-flex justify-content-around">
           <input type="submit" [value]="tipo" class="btn btn-danger" />
           <input
-            type="submit"
+            type="button"
             value="Cancelar "
             class="btn btn-danger"
             [routerLink]="['/home', 'administrador', 'usuarios']"
