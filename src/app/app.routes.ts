@@ -7,6 +7,7 @@ import { AdministradorComponent } from './pages/administrador/administrador.comp
 import { UsuariosComponent } from './pages/administrador/usuarios/usuarios.component';
 import { FormusuariosComponent } from './pages/administrador/formusuarios/formusuarios.component';
 import { VistausuariosComponent } from './pages/administrador/vistausuarios/vistausuarios.component';
+import { BodegaComponent } from './pages/bodega/bodega.component';
 
 export const routes: Routes = [
   { path: '', pathMatch: 'full', redirectTo: 'login' },
@@ -27,6 +28,9 @@ export const routes: Routes = [
       { path: 'actualizarusuario/:id', component: FormusuariosComponent },
     ],
   },
+
+  //bodega
+  { path: 'home/bodega', component: BodegaComponent },
 
   { path: '**', redirectTo: 'home' }, //ruta 404
 ];

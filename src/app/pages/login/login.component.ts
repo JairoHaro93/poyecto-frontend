@@ -26,6 +26,7 @@ export class LoginComponent {
       const response = await this.autenservice.login(this.formLogin.value);
       console.log(response);
       localStorage.setItem('token_proyecto', response.token);
+      console.log('bienvenido');
       this.router.navigateByUrl('/home');
     } catch ({ error }: any) {
       Swal.fire('Error', error.message, 'error');
