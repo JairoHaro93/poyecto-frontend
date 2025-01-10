@@ -54,30 +54,6 @@
           />
         </div>
 
-        <!-- <div class="my-3">
-          <label class="form-label" for="fecha_nac">Fecha de nacimiento</label>
-          <input
-            class="form-control"
-            type="date"
-            id="fecha_nac"
-            formControlName="fecha_nac"
-            placeholder="Ingese el fecha nacimiento"
-          />
-        </div>
-
-        <div class="my-3">
-          <label class="form-label" for="fecha_cont"
-            >Fecha de contratacion</label
-          >
-          <input
-            class="form-control"
-            type="date"
-            id="fecha_cont"
-            formControlName="fecha_cont"
-            placeholder="Ingese fecha contratacion"
-          />
-        </div> -->
-
         <div class="my-3">
           <label class="form-label" for="fecha_nac">Fecha de nacimiento</label>
           <input
@@ -103,31 +79,55 @@
         </div>
 
         <div class="my-3">
-          <label class="form-label" for="genero">genero</label>
-          <input
-            class="form-control"
-            type="text"
-            id="genero"
-            formControlName="genero"
-            placeholder="Ingese el genero"
-          />
+          <label class="form-label">Género</label>
+          <div class="d-flex justify-content-around">
+            <label>
+              <input
+                type="radio"
+                id="generoM"
+                formControlName="genero"
+                value="M"
+              />
+              Masculino
+            </label>
+            <label class="ms-3">
+              <input
+                type="radio"
+                id="generoF"
+                formControlName="genero"
+                value="F"
+              />
+              Femenino
+            </label>
+          </div>
         </div>
 
-        <div class="my-3">
-          <label class="form-label" for="rol">Rol</label>
-          <input
-            class="form-control"
-            type="text"
-            id="rol"
-            formControlName="rol"
-            placeholder="Ingrese el rol"
-          />
+        <hr />
+
+        <div class="d-flex justify-content-around">
+          @for (rol of ['Administrador', 'Bodega', 'Noc']; track $index) {
+          <div>
+            @for (item of arrfunciones; track $index) { @if
+            (item.nombre.startsWith(rol[0])) {
+            <p>
+              {{ item.nombre.slice(1) }}
+              <input
+                (change)="addStatus({ funcion: item.id }, $event)"
+                type="checkbox"
+                formControlName="rol"
+              />
+            </p>
+            } }
+          </div>
+          }
         </div>
 
-        <div class="d-flex my-3 justify-content-around">
+        <!-- BUTONS ///////////////////////// -->
+        <hr />
+        <div class="d-flex justify-content-around">
           <input type="submit" [value]="tipo" class="btn btn-danger" />
           <input
-            type="submit"
+            type="button"
             value="Cancelar "
             class="btn btn-danger"
             [routerLink]="['/home', 'administrador', 'usuarios']"
