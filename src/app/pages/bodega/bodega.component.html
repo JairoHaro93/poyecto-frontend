@@ -1,1 +1,17 @@
-<h1>componenteBodega</h1>
+<div class="d-flex justify-content-around">
+  @for (rol of ['Administrador', 'Bodega', 'Noc']; track $index) {
+  <div>
+    @for (item of arrfunciones; track $index) { @if
+    (item.nombre.startsWith(rol[0])) {
+    <p>
+      {{ item.nombre.slice(1) }}
+      <input
+        (change)="addStatus({ funcion: item.id }, $event)"
+        type="checkbox"
+        formControlName="rol"
+      />
+    </p>
+    } }
+  </div>
+  }
+</div>
