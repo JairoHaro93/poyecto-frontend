@@ -9,4 +9,8 @@ import { FormBuilder, FormGroup } from '@angular/forms';
   templateUrl: './bodega.component.html',
   styleUrl: './bodega.component.css',
 })
-export class BodegaComponent {}
+export class BodegaComponent {
+  arrfunciones: any[] = [];
+
+  addStatus(item: { funcion: number }, event: Event): void {}
+}
