@@ -64,10 +64,18 @@ export class FormusuariosComponent {
       if (params.id) {
         this.tipo = 'Actualizar';
         await this.loadUsuario(params.id);
+        this.syncFuncionesWithRoles();
       }
     });
   }
-
+  private syncFuncionesWithRoles() {
+    this.selectedIds.forEach((id) => {
+      const funcion = this.arrfunciones.find((f) => f.id === id);
+      if (funcion) {
+        funcion.selected = true; // Si tienes una propiedad para el estado seleccionado
+      }
+    });
+  }
   private async loadFunciones() {
     try {
       this.arrfunciones = await this.funcionesServices.getAll();
@@ -88,6 +96,8 @@ export class FormusuariosComponent {
           ? format(new Date(usuario.fecha_cont), 'yyyy-MM-dd')
           : null,
       });
+      this.selectedIds = usuario.rol || [];
+      //console.log(usuario);
     } catch (error) {
       console.error('Error loading usuario:', error);
     }
@@ -103,7 +113,9 @@ export class FormusuariosComponent {
       this.selectedIds = this.selectedIds.filter((id) => id !== item.funcion);
     }
     this.usuarioForm.value.rol = this.selectedIds;
-    //  this.usuarioForm.patchValue({ rol: this.selectedIds });
+
+    //this.usuarioForm.patchValue({ rol: this.selectedIds });
+    // console.log(this.usuarioForm.value.rol);
   }
 
   async getDataForm() {
@@ -111,6 +123,7 @@ export class FormusuariosComponent {
       const usuarioData = this.usuarioForm.value;
 
       if (usuarioData.id) {
+        // console.log(usuarioData);
         // Actualizar
         const response = await this.usuarioServices.update(usuarioData);
         Swal.fire('Realizado', 'Usuario Actualizado', 'success');
