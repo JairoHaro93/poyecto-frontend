@@ -20,7 +20,7 @@ export class VistausuariosComponent {
     this.activatedRoute.params.subscribe(async (params: any) => {
       let id = params.id;
       this.employee = await this.employeeService.getbyId(id);
-      console.table(this.employee);
+      // console.table(this.employee);
     });
   }
 }
