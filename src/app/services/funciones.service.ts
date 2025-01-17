@@ -23,6 +23,6 @@ export class FuncionesService {
    * return
    */
   getbyId(id: string) {
-    return firstValueFrom(this.httpClient.get(`${this.baseUrl}/${id}`));
+    return firstValueFrom(this.httpClient.get<[]>(`${this.baseUrl}/${id}`));
   }
 }
