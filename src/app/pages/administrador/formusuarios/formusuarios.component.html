@@ -102,29 +102,44 @@
           </div>
         </div>
 
-        <hr />
-
-        <div class="d-flex justify-content-around">
-          @for (rol of ['Administrador', 'Bodega', 'Noc']; track $index) {
-          <div>
-            @for (funcion of arrfunciones; track $index) { @if
-            (funcion.nombre.startsWith(rol[0])) {
-            <p>
-              {{ funcion.nombre.slice(1) }}
-              <input
-                type="checkbox"
-                [value]="funcion.id"
-                [checked]="selectedIds.includes(funcion.id)"
-                (change)="addStatus({ funcion: funcion.id }, $event)"
-              />
-            </p>
-            } }
-          </div>
-          }
-        </div>
+        <table class="table border border-1">
+          <thead>
+            <tr>
+              <!-- Encabezados basados en los roles -->
+              @for (rol of ['Administrador', 'Bodega', 'Noc', 'Clientes',
+              'Técnico']; track $index) {
+              <th>{{ rol }}</th>
+              }
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <!-- Iteración de roles -->
+              @for (rol of ['Administrador', 'Bodega', 'Noc', 'Clientes',
+              'Técnico']; track $index) {
+              <td>
+                <!-- Iteración de funcionalidades -->
+                @for (funcion of arrfunciones; track $index) {
+                <!-- Mostrar funcionalidades que comiencen con la inicial del rol -->
+                @if (funcion.nombre.startsWith(rol[0])) {
+                <p>
+                  {{ funcion.nombre.slice(1) }}
+                  <input
+                    type="checkbox"
+                    [value]="funcion.id"
+                    [checked]="selectedIds.includes(funcion.id)"
+                    (change)="addStatus({ funcion: funcion.id }, $event)"
+                  />
+                </p>
+                } }
+              </td>
+              }
+            </tr>
+          </tbody>
+        </table>
 
         <!-- BUTONS ///////////////////////// -->
-        <hr />
+
         <div class="d-flex justify-content-around">
           <input type="submit" [value]="tipo" class="btn btn-danger" />
           <input
