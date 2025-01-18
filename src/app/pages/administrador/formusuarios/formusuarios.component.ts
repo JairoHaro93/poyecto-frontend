@@ -35,6 +35,13 @@ export class FormusuariosComponent {
   private usuarioServices = inject(UsuariosService);
   private funcionesServices = inject(FuncionesService);
 
+  convertToUppercase(controlName: string): void {
+    const control = this.usuarioForm.get(controlName);
+    if (control) {
+      control.setValue(control.value.toUpperCase(), { emitEvent: false });
+    }
+  }
+
   constructor(private fb: FormBuilder) {
     this.initializeForms();
   }

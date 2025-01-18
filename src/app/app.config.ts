@@ -12,3 +12,7 @@ export const appConfig: ApplicationConfig = {
     provideHttpClient(withInterceptors([tokenInterceptor])),
   ],
 };
+
+//           scp -r es// root@192.168.0.180:/var/www/html/poyecto-frontend/dist/frontend/browser
+//            piroot68
+//            sudo systemctl restart nginx

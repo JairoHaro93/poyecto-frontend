@@ -5,13 +5,15 @@
       <form [formGroup]="usuarioForm" (ngSubmit)="getDataForm()">
         <!-- VALIDADOR NOMBRE -->
         <div class="my-3">
-          <label class="form-label" for="nombre">Nombre</label>
+          <label class="form-label" for="nombre">Nombres</label>
           <input
             class="form-control"
             type="text"
             id="nombre"
             formControlName="nombre"
-            placeholder="Ingese el nombre"
+            placeholder="INGRESE LOS NOMBRES"
+            style="text-transform: uppercase"
+            (input)="convertToUppercase('nombre')"
           />
           @if(checkControl('nombre','required')){
           <p class="error">El campo es requerido</p>
@@ -21,13 +23,15 @@
         </div>
         <!-- VALIDADOR APELLIDOS -->
         <div class="my-3">
-          <label class="form-label" for="apellido">Apellidos</label>
+          <label class="form-label" for="apellidos">Apellidos</label>
           <input
             class="form-control"
             type="text"
             id="apellido"
             formControlName="apellido"
-            placeholder="Ingese apellidos"
+            placeholder="INGRESE LOS APELLIDOS"
+            style="text-transform: uppercase"
+            (input)="convertToUppercase('apellido')"
           />
           @if(checkControl('apellido','required')){
           <p class="error">El campo es requerido</p>
@@ -43,7 +47,7 @@
             type="text"
             id="ci"
             formControlName="ci"
-            placeholder="Ingese la cedula"
+            placeholder="INGRESE LA CÉDULA"
           />
           @if(checkControl('ci','required')){
           <p class="error">El campo es requerido</p>
@@ -61,7 +65,7 @@
             type="text"
             id="usuario"
             formControlName="usuario"
-            placeholder="Ingese el usuario"
+            placeholder="INGRESE EL USUARIO"
           />
           @if(checkControl('usuario','required')){
           <p class="error">El campo es requerido</p>
@@ -77,7 +81,7 @@
             type="password"
             id="password"
             formControlName="password"
-            placeholder="Ingrese el password"
+            placeholder="INGRESE EL PASSWORD"
           />
           @if(checkControl('password','required')){
           <p class="error">El campo es requerido</p>
