@@ -2,6 +2,7 @@ import { Component, inject } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { UsuariosService } from '../../../services/usuarios.service';
 import { Iusuarios } from '../../../interfaces/iusuarios.interface';
+import Swal from 'sweetalert2';
 
 @Component({
   selector: 'app-usuarios',
@@ -26,20 +27,44 @@ export class UsuariosComponent {
 
   async delete(id: number | undefined) {
     if (id) {
-      let borrado = confirm('Deseas Borrar el empleado ' + id);
-      if (borrado) {
-        //llamo al servicio y hago el borrado
-        try {
-          const response: Iusuarios = await this.usuarioServices.delete(id);
-          if (response.id) {
-            const response = await this.usuarioServices.getAll();
-            this.arrUsuarios = response;
-            alert('Empleado borrado correctamente');
+      Swal.fire({
+        title: '¿Estás seguro?',
+        text: 'El usuario será eliminado permanentemente.',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#3085d6',
+        cancelButtonColor: '#d33',
+        confirmButtonText: 'Sí, borrar!',
+      }).then(async (result) => {
+        if (result.isConfirmed) {
+          try {
+            const response: Iusuarios = await this.usuarioServices.delete(id);
+            if (response.id) {
+              Swal.fire({
+                title: 'Eliminado!',
+                text: 'El usuario ha sido eliminado.',
+                icon: 'success',
+              });
+              // Actualizamos la lista de usuarios después de eliminar
+              const usuariosActualizados = await this.usuarioServices.getAll();
+              this.arrUsuarios = usuariosActualizados;
+            } else {
+              Swal.fire({
+                title: 'Error!',
+                text: 'No se pudo eliminar el usuario.',
+                icon: 'error',
+              });
+            }
+          } catch (error) {
+            console.error(error);
+            Swal.fire({
+              title: 'Error!',
+              text: 'Ocurrió un error al eliminar el usuario.',
+              icon: 'error',
+            });
           }
-        } catch (error) {
-          console.log(error);
         }
-      }
+      });
     }
   }
 }
