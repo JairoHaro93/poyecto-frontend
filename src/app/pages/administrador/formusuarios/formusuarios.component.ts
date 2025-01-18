@@ -25,7 +25,7 @@ export class FormusuariosComponent {
   tipo: string = 'Crear';
   usuarioForm!: FormGroup;
   funcionesForm!: FormGroup;
-  errorForm: any[] = [];
+
   arrfunciones: any[] = [];
   selectedIds: number[] = [];
 
@@ -235,8 +235,7 @@ export class FormusuariosComponent {
 
       this.router.navigate(['/home', 'administrador', 'usuarios']);
     } catch ({ error }: any) {
-      this.errorForm = error || [];
-      console.error('Error guardando usuario:', this.errorForm);
+      Swal.fire('Error guardando usuario', error.message, 'error');
     }
   }
 }
