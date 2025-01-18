@@ -3,6 +3,7 @@
     <div class="shadow p-5">
       <h2>{{ tipo }} Usuario</h2>
       <form [formGroup]="usuarioForm" (ngSubmit)="getDataForm()">
+        <!-- VALIDADOR NOMBRE -->
         <div class="my-3">
           <label class="form-label" for="nombre">Nombre</label>
           <input
@@ -12,7 +13,13 @@
             formControlName="nombre"
             placeholder="Ingese el nombre"
           />
+          @if(checkControl('nombre','required')){
+          <p class="error">El campo es requerido</p>
+          } @if( checkControl('nombre','minlength')){
+          <p class="error">minimo 3 caracteres requerido</p>
+          }
         </div>
+        <!-- VALIDADOR APELLIDOS -->
         <div class="my-3">
           <label class="form-label" for="apellido">Apellidos</label>
           <input
@@ -22,7 +29,13 @@
             formControlName="apellido"
             placeholder="Ingese apellidos"
           />
+          @if(checkControl('apellido','required')){
+          <p class="error">El campo es requerido</p>
+          } @if( checkControl('apellido','minlength')){
+          <p class="error">minimo 3 caracteres requerido</p>
+          }
         </div>
+        <!-- VALIDADOR CI -->
         <div class="my-3">
           <label class="form-label" for="telefono">Ci:</label>
           <input
@@ -32,7 +45,15 @@
             formControlName="ci"
             placeholder="Ingese la cedula"
           />
+          @if(checkControl('ci','required')){
+          <p class="error">El campo es requerido</p>
+          } @if( checkControl('ci','civalidator')){
+          <p class="error">
+            {{usuarioForm.get('ci')?.errors?.['civalidator']}}
+          </p>
+          }
         </div>
+        <!-- VALIDADOR USUARIO -->
         <div class="my-3">
           <label class="form-label" for="email">Usuario:</label>
           <input
@@ -42,7 +63,13 @@
             formControlName="usuario"
             placeholder="Ingese el usuario"
           />
+          @if(checkControl('usuario','required')){
+          <p class="error">El campo es requerido</p>
+          } @if( checkControl('usuario','minlength')){
+          <p class="error">minimo 3 caracteres requerido</p>
+          }
         </div>
+        <!-- VALIDADOR PASSWORD -->
         <div class="my-3">
           <label class="form-label" for="salario">Password</label>
           <input
@@ -52,6 +79,11 @@
             formControlName="password"
             placeholder="Ingrese el password"
           />
+          @if(checkControl('password','required')){
+          <p class="error">El campo es requerido</p>
+          } @if( checkControl('password','minlength')){
+          <p class="error">minimo 6 caracteres requerido</p>
+          }
         </div>
 
         <div class="my-3">
@@ -63,6 +95,9 @@
             formControlName="fecha_nac"
             placeholder="Ingese el fecha nacimiento"
           />
+          @if(checkControl('fecha_nac','required')){
+          <p class="error">El campo es requerido</p>
+          }
         </div>
 
         <div class="my-3">
@@ -76,6 +111,9 @@
             formControlName="fecha_cont"
             placeholder="Ingese fecha contratacion"
           />
+          @if(checkControl('fecha_cont','required')){
+          <p class="error">El campo es requerido</p>
+          }
         </div>
 
         <div class="my-3">
@@ -87,6 +125,7 @@
                 id="generoM"
                 formControlName="genero"
                 value="M"
+                name="genero"
               />
               Masculino
             </label>
@@ -96,6 +135,7 @@
                 id="generoF"
                 formControlName="genero"
                 value="F"
+                name="genero"
               />
               Femenino
             </label>
@@ -141,7 +181,12 @@
         <!-- BUTONS ///////////////////////// -->
 
         <div class="d-flex justify-content-around">
-          <input type="submit" [value]="tipo" class="btn btn-danger" />
+          <input
+            type="submit"
+            [value]="tipo"
+            class="btn btn-danger"
+            [disabled]="!usuarioForm.valid"
+          />
           <input
             type="button"
             value="Cancelar "

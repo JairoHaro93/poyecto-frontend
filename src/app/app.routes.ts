@@ -8,11 +8,16 @@ import { UsuariosComponent } from './pages/administrador/usuarios/usuarios.compo
 import { FormusuariosComponent } from './pages/administrador/formusuarios/formusuarios.component';
 import { VistausuariosComponent } from './pages/administrador/vistausuarios/vistausuarios.component';
 import { BodegaComponent } from './pages/bodega/bodega.component';
+import { roleGuard } from './guards/role.guard';
 
 export const routes: Routes = [
   { path: '', pathMatch: 'full', redirectTo: 'login' },
   { path: 'login', component: LoginComponent },
-  { path: 'home', component: HomeComponent, canActivate: [tokenGuard] },
+  {
+    path: 'home',
+    component: HomeComponent,
+    canActivate: [tokenGuard, roleGuard],
+  },
 
   //administrador
   {
@@ -22,6 +27,7 @@ export const routes: Routes = [
       {
         path: 'usuarios',
         component: UsuariosComponent,
+        canActivate: [roleGuard],
       },
       { path: 'usuario/:id', component: VistausuariosComponent },
       { path: 'crearusuario', component: FormusuariosComponent },
@@ -30,7 +36,7 @@ export const routes: Routes = [
   },
 
   //bodega
-  { path: 'home/bodega', component: BodegaComponent },
+  { path: 'home/bodega', component: BodegaComponent, canActivate: [roleGuard] },
 
   { path: '**', redirectTo: 'home' }, //ruta 404
 ];
