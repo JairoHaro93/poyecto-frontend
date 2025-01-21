@@ -16,22 +16,31 @@ export const routes: Routes = [
   {
     path: 'home',
     component: HomeComponent,
-    canActivate: [tokenGuard, roleGuard],
+    canActivate: [tokenGuard],
   },
 
   //administrador
   {
     path: 'home/administrador',
     component: AdministradorComponent,
+
     children: [
       {
         path: 'usuarios',
         component: UsuariosComponent,
-        canActivate: [roleGuard],
       },
-      { path: 'usuario/:id', component: VistausuariosComponent },
-      { path: 'crearusuario', component: FormusuariosComponent },
-      { path: 'actualizarusuario/:id', component: FormusuariosComponent },
+      {
+        path: 'usuario/:id',
+        component: VistausuariosComponent,
+      },
+      {
+        path: 'crearusuario',
+        component: FormusuariosComponent,
+      },
+      {
+        path: 'actualizarusuario/:id',
+        component: FormusuariosComponent,
+      },
     ],
   },
 

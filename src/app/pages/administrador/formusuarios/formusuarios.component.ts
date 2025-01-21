@@ -13,6 +13,7 @@ import { Iusuarios } from '../../../interfaces/iusuarios.interface';
 import { format } from 'date-fns';
 import Swal from 'sweetalert2';
 import { FuncionesService } from '../../../services/funciones.service';
+import { AutenticacionService } from '../../../services/autenticacion.service';
 
 @Component({
   selector: 'app-formusuarios',
@@ -28,6 +29,8 @@ export class FormusuariosComponent {
 
   arrfunciones: any[] = [];
   selectedIds: number[] = [];
+
+  authService = inject(AutenticacionService);
 
   // Injectables
   private router = inject(Router);
