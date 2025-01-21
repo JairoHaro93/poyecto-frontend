@@ -8,7 +8,7 @@ import { UsuariosComponent } from './pages/administrador/usuarios/usuarios.compo
 import { FormusuariosComponent } from './pages/administrador/formusuarios/formusuarios.component';
 import { VistausuariosComponent } from './pages/administrador/vistausuarios/vistausuarios.component';
 import { BodegaComponent } from './pages/bodega/bodega.component';
-import { roleGuard } from './guards/role.guard';
+
 import { InventarioComponent } from './pages/bodega/inventario/inventario.component';
 import { RecupcartComponent } from './pages/bodega/recupcart/recupcart.component';
 import { NocComponent } from './pages/noc/noc.component';
@@ -16,6 +16,9 @@ import { InformediarioComponent } from './pages/noc/informediario/informediario.
 import { DatosclientesComponent } from './pages/clientes/datosclientes/datosclientes.component';
 import { AgendatecnicosComponent } from './pages/tecnico/agendatecnicos/agendatecnicos.component';
 import { MorososComponent } from './pages/bodega/morosos/morosos.component';
+import { usuariosGuard } from './guards/usuarios.guard';
+import { inventarioGuard } from './guards/inventario.guard';
+import { recupcartGuard } from './guards/recupcart.guard';
 
 export const routes: Routes = [
   { path: '', pathMatch: 'full', redirectTo: 'login' },
@@ -35,22 +38,22 @@ export const routes: Routes = [
       {
         path: 'usuarios',
         component: UsuariosComponent,
-        canActivate: [roleGuard],
+        canActivate: [usuariosGuard],
       },
       {
         path: 'usuario/:id',
         component: VistausuariosComponent,
-        canActivate: [roleGuard],
+        canActivate: [usuariosGuard],
       },
       {
         path: 'crearusuario',
         component: FormusuariosComponent,
-        canActivate: [roleGuard],
+        canActivate: [usuariosGuard],
       },
       {
         path: 'actualizarusuario/:id',
         component: FormusuariosComponent,
-        canActivate: [roleGuard],
+        canActivate: [usuariosGuard],
       },
     ],
   },
@@ -60,8 +63,16 @@ export const routes: Routes = [
     path: 'home/bodega',
     component: BodegaComponent,
     children: [
-      { path: 'inventario', component: InventarioComponent },
-      { path: 'recupcart', component: RecupcartComponent },
+      {
+        path: 'inventario',
+        component: InventarioComponent,
+        canActivate: [inventarioGuard],
+      },
+      {
+        path: 'recupcart',
+        component: RecupcartComponent,
+        canActivate: [recupcartGuard],
+      },
       { path: 'morosos', component: MorososComponent },
     ],
   },
