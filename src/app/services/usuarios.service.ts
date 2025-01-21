@@ -1,6 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
-import { environment } from '../../../src/environments/environment.development';
+import { environment } from '../../../src/environments/environment';
 import { firstValueFrom, lastValueFrom } from 'rxjs';
 import { Iusuarios } from '../interfaces/iusuarios.interface';
 

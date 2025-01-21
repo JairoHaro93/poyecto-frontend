@@ -8,29 +8,44 @@ import { UsuariosComponent } from './pages/administrador/usuarios/usuarios.compo
 import { FormusuariosComponent } from './pages/administrador/formusuarios/formusuarios.component';
 import { VistausuariosComponent } from './pages/administrador/vistausuarios/vistausuarios.component';
 import { BodegaComponent } from './pages/bodega/bodega.component';
+import { roleGuard } from './guards/role.guard';
 
 export const routes: Routes = [
   { path: '', pathMatch: 'full', redirectTo: 'login' },
   { path: 'login', component: LoginComponent },
-  { path: 'home', component: HomeComponent, canActivate: [tokenGuard] },
+  {
+    path: 'home',
+    component: HomeComponent,
+    canActivate: [tokenGuard],
+  },
 
   //administrador
   {
     path: 'home/administrador',
     component: AdministradorComponent,
+
     children: [
       {
         path: 'usuarios',
         component: UsuariosComponent,
       },
-      { path: 'usuario/:id', component: VistausuariosComponent },
-      { path: 'crearusuario', component: FormusuariosComponent },
-      { path: 'actualizarusuario/:id', component: FormusuariosComponent },
+      {
+        path: 'usuario/:id',
+        component: VistausuariosComponent,
+      },
+      {
+        path: 'crearusuario',
+        component: FormusuariosComponent,
+      },
+      {
+        path: 'actualizarusuario/:id',
+        component: FormusuariosComponent,
+      },
     ],
   },
 
   //bodega
-  { path: 'home/bodega', component: BodegaComponent },
+  { path: 'home/bodega', component: BodegaComponent, canActivate: [roleGuard] },
 
   { path: '**', redirectTo: 'home' }, //ruta 404
 ];
