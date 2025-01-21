@@ -3,6 +3,7 @@ import { Iusuarios } from '../../../interfaces/iusuarios.interface';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { UsuariosService } from '../../../services/usuarios.service';
 import { DatePipe } from '@angular/common';
+import { FuncionesService } from '../../../services/funciones.service';
 
 @Component({
   selector: 'app-vistausuarios',
@@ -13,14 +14,18 @@ import { DatePipe } from '@angular/common';
 })
 export class VistausuariosComponent {
   employee: Iusuarios | null = null;
+  arrfunciones: any[] = [];
   activatedRoute = inject(ActivatedRoute);
   employeeService = inject(UsuariosService);
+  private funcionesServices = inject(FuncionesService);
 
-  ngOnInit() {
+  async ngOnInit() {
     this.activatedRoute.params.subscribe(async (params: any) => {
       let id = params.id;
       this.employee = await this.employeeService.getbyId(id);
-      // console.table(this.employee);
+
+      this.arrfunciones = await this.funcionesServices.getbyId(id);
+      console.table(this.arrfunciones);
     });
   }
 }

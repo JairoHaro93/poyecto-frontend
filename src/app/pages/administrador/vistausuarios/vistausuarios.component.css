@@ -1,0 +1,62 @@
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 0;
+  padding: 0;
+}
+
+.table th,
+.table td {
+  padding: 8px;
+  text-align: left;
+  border: 1px solid #ddd;
+}
+
+/* Estilo responsivo para tablets y PC */
+@media (min-width: 768px) {
+  .table {
+    display: table;
+  }
+
+  .table th,
+  .table td {
+    display: table-cell;
+  }
+
+  .table th {
+    background-color: #f8f9fa;
+    font-weight: bold;
+  }
+}
+
+/* Estilo responsivo para celulares */
+@media (max-width: 767px) {
+  .table {
+    display: block;
+  }
+
+  .table thead {
+    display: none;
+  }
+
+  .table tr {
+    display: block;
+    margin-bottom: 15px;
+  }
+
+  .table td {
+    display: flex;
+    justify-content: space-between;
+    border-bottom: 1px solid #ddd;
+  }
+
+  .table td::before {
+    content: attr(data-label);
+    font-weight: bold;
+    text-transform: capitalize;
+  }
+
+  .table td:last-child {
+    border-bottom: 0;
+  }
+}

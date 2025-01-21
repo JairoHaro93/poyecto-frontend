@@ -3,26 +3,43 @@
     <div class="shadow p-5">
       <h2>{{ tipo }} Usuario</h2>
       <form [formGroup]="usuarioForm" (ngSubmit)="getDataForm()">
+        <!-- VALIDADOR NOMBRE -->
         <div class="my-3">
-          <label class="form-label" for="nombre">Nombre</label>
+          <label class="form-label" for="nombre">Nombres</label>
           <input
             class="form-control"
             type="text"
             id="nombre"
             formControlName="nombre"
-            placeholder="Ingese el nombre"
+            placeholder="INGRESE LOS NOMBRES"
+            style="text-transform: uppercase"
+            (input)="convertToUppercase('nombre')"
           />
+          @if(checkControl('nombre','required')){
+          <p class="error">El campo es requerido</p>
+          } @if( checkControl('nombre','minlength')){
+          <p class="error">minimo 3 caracteres requerido</p>
+          }
         </div>
+        <!-- VALIDADOR APELLIDOS -->
         <div class="my-3">
-          <label class="form-label" for="apellido">Apellidos</label>
+          <label class="form-label" for="apellidos">Apellidos</label>
           <input
             class="form-control"
             type="text"
             id="apellido"
             formControlName="apellido"
-            placeholder="Ingese apellidos"
+            placeholder="INGRESE LOS APELLIDOS"
+            style="text-transform: uppercase"
+            (input)="convertToUppercase('apellido')"
           />
+          @if(checkControl('apellido','required')){
+          <p class="error">El campo es requerido</p>
+          } @if( checkControl('apellido','minlength')){
+          <p class="error">minimo 3 caracteres requerido</p>
+          }
         </div>
+        <!-- VALIDADOR CI -->
         <div class="my-3">
           <label class="form-label" for="telefono">Ci:</label>
           <input
@@ -30,9 +47,17 @@
             type="text"
             id="ci"
             formControlName="ci"
-            placeholder="Ingese la cedula"
+            placeholder="INGRESE LA CÉDULA"
           />
+          @if(checkControl('ci','required')){
+          <p class="error">El campo es requerido</p>
+          } @if( checkControl('ci','civalidator')){
+          <p class="error">
+            {{usuarioForm.get('ci')?.errors?.['civalidator']}}
+          </p>
+          }
         </div>
+        <!-- VALIDADOR USUARIO -->
         <div class="my-3">
           <label class="form-label" for="email">Usuario:</label>
           <input
@@ -40,9 +65,15 @@
             type="text"
             id="usuario"
             formControlName="usuario"
-            placeholder="Ingese el usuario"
+            placeholder="INGRESE EL USUARIO"
           />
+          @if(checkControl('usuario','required')){
+          <p class="error">El campo es requerido</p>
+          } @if( checkControl('usuario','minlength')){
+          <p class="error">minimo 3 caracteres requerido</p>
+          }
         </div>
+        <!-- VALIDADOR PASSWORD -->
         <div class="my-3">
           <label class="form-label" for="salario">Password</label>
           <input
@@ -50,8 +81,13 @@
             type="password"
             id="password"
             formControlName="password"
-            placeholder="Ingrese el password"
+            placeholder="INGRESE EL PASSWORD"
           />
+          @if(checkControl('password','required')){
+          <p class="error">El campo es requerido</p>
+          } @if( checkControl('password','minlength')){
+          <p class="error">minimo 6 caracteres requerido</p>
+          }
         </div>
 
         <div class="my-3">
@@ -63,6 +99,9 @@
             formControlName="fecha_nac"
             placeholder="Ingese el fecha nacimiento"
           />
+          @if(checkControl('fecha_nac','required')){
+          <p class="error">El campo es requerido</p>
+          }
         </div>
 
         <div class="my-3">
@@ -76,6 +115,9 @@
             formControlName="fecha_cont"
             placeholder="Ingese fecha contratacion"
           />
+          @if(checkControl('fecha_cont','required')){
+          <p class="error">El campo es requerido</p>
+          }
         </div>
 
         <div class="my-3">
@@ -87,6 +129,7 @@
                 id="generoM"
                 formControlName="genero"
                 value="M"
+                name="genero"
               />
               Masculino
             </label>
@@ -96,37 +139,58 @@
                 id="generoF"
                 formControlName="genero"
                 value="F"
+                name="genero"
               />
               Femenino
             </label>
           </div>
         </div>
 
-        <hr />
-
-        <div class="d-flex justify-content-around">
-          @for (rol of ['Administrador', 'Bodega', 'Noc']; track $index) {
-          <div>
-            @for (funcion of arrfunciones; track $index) { @if
-            (funcion.nombre.startsWith(rol[0])) {
-            <p>
-              {{ funcion.nombre.slice(1) }}
-              <input
-                type="checkbox"
-                [value]="funcion.id"
-                [checked]="selectedIds.includes(funcion.id)"
-                (change)="addStatus({ funcion: funcion.id }, $event)"
-              />
-            </p>
-            } }
-          </div>
-          }
-        </div>
+        <table class="table border border-1">
+          <thead>
+            <tr>
+              <!-- Encabezados basados en los roles -->
+              @for (rol of ['Administrador', 'Bodega', 'Noc', 'Clientes',
+              'Técnico']; track $index) {
+              <th>{{ rol }}</th>
+              }
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <!-- Iteración de roles -->
+              @for (rol of ['Administrador', 'Bodega', 'Noc', 'Clientes',
+              'Técnico']; track $index) {
+              <td>
+                <!-- Iteración de funcionalidades -->
+                @for (funcion of arrfunciones; track $index) {
+                <!-- Mostrar funcionalidades que comiencen con la inicial del rol -->
+                @if (funcion.nombre.startsWith(rol[0])) {
+                <p>
+                  {{ funcion.nombre.slice(1) }}
+                  <input
+                    type="checkbox"
+                    [value]="funcion.id"
+                    [checked]="selectedIds.includes(funcion.id)"
+                    (change)="addStatus({ funcion: funcion.id }, $event)"
+                  />
+                </p>
+                } }
+              </td>
+              }
+            </tr>
+          </tbody>
+        </table>
 
         <!-- BUTONS ///////////////////////// -->
-        <hr />
+
         <div class="d-flex justify-content-around">
-          <input type="submit" [value]="tipo" class="btn btn-danger" />
+          <input
+            type="submit"
+            [value]="tipo"
+            class="btn btn-danger"
+            [disabled]="!usuarioForm.valid"
+          />
           <input
             type="button"
             value="Cancelar "
@@ -135,9 +199,6 @@
           />
         </div>
       </form>
-      @for(error of errorForm ;track $index ){
-      <p class="text-danger">{{ error.field }}: {{ error.message }}</p>
-      }
     </div>
   </section>
 </main>

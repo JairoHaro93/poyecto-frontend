@@ -10,26 +10,36 @@
 
 <div [class.mostrar-sidebar]="isMenu" class="sidebar">
   <div class="div2">
-    <h4 class="my-2">Yo:</h4>
+    <h4 class="my-2">Yo: {{ data.usuario_usuario }}</h4>
 
+    <!-- BOTON ADMINISTRADOR -->
+    @if (arrAdmin.length>0) {
     <button
       class="button-primary btn-toggle rounded collapsed my-2"
       data-bs-toggle="collapse"
       data-bs-target="#home-collapse"
     >
-      <i class="fa-solid fa-gear"> </i> Administrador
+      <i class="fa-solid fa-gear"></i> Administrador
     </button>
+    }
+    <!-- OPCIONES BOTONES ADMINISTRADOR -->
 
     <div class="collapse" id="home-collapse">
       <ul class="btn-toggle-nav list-unstyled fw-normal pb-1 small gap-5">
+        @if (arrAdmin.includes("AUsuarios")) {
         <li
           (click)="onClickMenu()"
           [routerLink]="['/home/administrador/usuarios']"
         >
           Usuarios
         </li>
+        }
       </ul>
     </div>
+
+    <!-- BOTON BODEGA -->
+
+    @if (arrBodega.length>0) {
     <button
       class="button-primary my-2 btn-toggle align-items-center rounded collapsed"
       data-bs-toggle="collapse"
@@ -37,13 +47,33 @@
     >
       <i class="fa-solid fa-box-open"></i> Bodega
     </button>
+    }
+
+    <!-- OPCIONES BOTONES ADMINISTRADOR -->
     <div class="collapse" id="bodega-collapse">
       <ul class="btn-toggle-nav list-unstyled fw-normal pb-1 small">
+        @if (arrBodega.includes("BInventario")) {
+
         <li (click)="onClickMenu()">Inventario</li>
+
+        } @if (arrBodega.includes("BIngresar equipos")) {
+
         <li (click)="onClickMenu()">Ingresar equipos</li>
+
+        } @if (arrBodega.includes("BEntregar equipos")) {
+
         <li (click)="onClickMenu()">Entregar equipos</li>
+
+        } @if (arrBodega.includes("BRecuperacion de Cartera")) {
+
+        <li (click)="onClickMenu()">Recuperacion de Cartera</li>
+
+        }
       </ul>
     </div>
+
+    <!-- BOTON NOC -->
+    @if (arrNoc.length>0) {
     <button
       class="button-primary my-2 btn-toggle align-items-center rounded collapsed"
       data-bs-toggle="collapse"
@@ -52,13 +82,21 @@
     >
       <i class="fa-solid fa-circle-nodes"></i> Noc
     </button>
+    }
+    <!-- OPCIONES BOTONES NOC -->
+
     <div class="collapse" id="noc-collapse">
       <ul class="btn-toggle-nav list-unstyled fw-normal pb-1 small">
-        <li (click)="onClickMenu()">Ingresar cajas</li>
+        @if (arrNoc.includes("NInforme Diario")) {
         <li (click)="onClickMenu()">Informe diario</li>
+        } @if (arrNoc.includes("NMapeo cajas")) {
+        <li (click)="onClickMenu()">Mapeo cajas</li>
+        }
       </ul>
     </div>
 
+    <!-- BOTON CLIENTES -->
+    @if (arrClientes.length>0) {
     <button
       class="button-primary my-2 btn-toggle align-items-center rounded collapsed"
       data-bs-toggle="collapse"
@@ -67,12 +105,18 @@
     >
       <i class="fa-solid fa-users"></i> Clientes
     </button>
+    }
+    <!-- OPCIONES BOTONES CLIENTES -->
+
     <div class="collapse" id="clientes-collapse">
       <ul class="btn-toggle-nav list-unstyled fw-normal pb-1 small">
-        <li (click)="onClickMenu()">FUNCION 1 Clientes</li>
+        @if (arrClientes.includes("CDatos de Clientes")) {
+        <li (click)="onClickMenu()">Datos clientes</li>
+        }
       </ul>
     </div>
 
+    @if (arrTecnico.length>0) {
     <button
       class="button-primary my-2 btn-toggle align-items-center rounded collapsed"
       data-bs-toggle="collapse"
@@ -81,13 +125,17 @@
     >
       <i class="fa-solid fa-screwdriver-wrench"></i> Tecnico
     </button>
+    }
     <div class="collapse" id="tecnico-collapse">
       <ul class="btn-toggle-nav list-unstyled fw-normal pb-1 small">
-        <li (click)="onClickMenu()">FUNCION 1 TECNICO</li>
+        @if (arrTecnico.includes("TMis Clientes")) {
+        <li (click)="onClickMenu()">Mis Clientes</li>
+        }
       </ul>
     </div>
   </div>
 
+  <!-- CERRA SESION -->
   <div class="my-3 buton-bottom">
     <hr />
 
