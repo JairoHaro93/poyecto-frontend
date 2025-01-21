@@ -39,11 +39,9 @@ export class SidebarComponent {
       this.arrAdmin = this.data.usuario_rol.filter((rol: string) =>
         rol.startsWith('A')
       );
-
       this.arrBodega = this.data.usuario_rol.filter((rol: string) =>
         rol.startsWith('B')
       );
-
       this.arrNoc = this.data.usuario_rol.filter((rol: string) =>
         rol.startsWith('N')
       );

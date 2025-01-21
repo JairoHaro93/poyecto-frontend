@@ -1,24 +1,25 @@
-import { CanActivateFn } from '@angular/router';
+import { inject } from '@angular/core';
+import { CanActivateFn, Router } from '@angular/router';
 import { jwtDecode, JwtPayload } from 'jwt-decode';
+import Swal from 'sweetalert2';
 
 interface CustomPayload extends JwtPayload {
   usuario_id: number;
   usuario_usuario: string;
-  usuario_rol: number[];
+  usuario_rol: string[];
 }
 
 export const roleGuard: CanActivateFn = (route, state) => {
-  let funciones: number[] = [];
+  const router = inject(Router);
   const token = localStorage.getItem('token_proyecto');
   const data = jwtDecode<CustomPayload>(token!);
-  //console.log(data);
 
-  funciones = data.usuario_rol;
-
-  //tiene funcion USUARIO
-  if (funciones.some((rol) => rol === 1)) {
-    return true;
+  //tiene funcion USUARIOS?
+  if (!data.usuario_rol.includes('AUsuarios')) {
+    Swal.fire('Error usuario no autorizado', 'error');
+    router.navigateByUrl('/home');
+    return false;
   }
 
-  return false;
+  return true;
 };
