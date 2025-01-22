@@ -49,12 +49,14 @@
     </button>
     }
 
-    <!-- OPCIONES BOTONES ADMINISTRADOR -->
+    <!-- OPCIONES BOTONES BODEGA -->
     <div class="collapse" id="bodega-collapse">
       <ul class="btn-toggle-nav list-unstyled fw-normal pb-1 small">
         @if (arrBodega.includes("BInventario")) {
 
-        <li (click)="onClickMenu()">Inventario</li>
+        <li (click)="onClickMenu()" [routerLink]="['/home/bodega/inventario']">
+          Inventario
+        </li>
 
         } @if (arrBodega.includes("BIngresar equipos")) {
 
@@ -66,7 +68,15 @@
 
         } @if (arrBodega.includes("BRecuperacion de Cartera")) {
 
-        <li (click)="onClickMenu()">Recuperacion de Cartera</li>
+        <li (click)="onClickMenu()" [routerLink]="['/home/bodega/recupcart']">
+          Recuperacion de Cartera
+        </li>
+
+        } @if (arrBodega.includes("BMorosos")) {
+
+        <li (click)="onClickMenu()" [routerLink]="['/home/bodega/morosos']">
+          Morosos
+        </li>
 
         }
       </ul>
@@ -88,7 +98,9 @@
     <div class="collapse" id="noc-collapse">
       <ul class="btn-toggle-nav list-unstyled fw-normal pb-1 small">
         @if (arrNoc.includes("NInforme Diario")) {
-        <li (click)="onClickMenu()">Informe diario</li>
+        <li (click)="onClickMenu()" [routerLink]="['/home/noc/informediario']">
+          Informe diario
+        </li>
         } @if (arrNoc.includes("NMapeo cajas")) {
         <li (click)="onClickMenu()">Mapeo cajas</li>
         }
@@ -111,11 +123,13 @@
     <div class="collapse" id="clientes-collapse">
       <ul class="btn-toggle-nav list-unstyled fw-normal pb-1 small">
         @if (arrClientes.includes("CDatos de Clientes")) {
-        <li (click)="onClickMenu()">Datos clientes</li>
+        <li (click)="onClickMenu()" [routerLink]="['/home/clientes/datos']">
+          Datos clientes
+        </li>
         }
       </ul>
     </div>
-
+    <!-- BOTON TECNICO -->
     @if (arrTecnico.length>0) {
     <button
       class="button-primary my-2 btn-toggle align-items-center rounded collapsed"
@@ -126,10 +140,13 @@
       <i class="fa-solid fa-screwdriver-wrench"></i> Tecnico
     </button>
     }
+    <!-- OPCIONES BOTONES TECNICO -->
     <div class="collapse" id="tecnico-collapse">
       <ul class="btn-toggle-nav list-unstyled fw-normal pb-1 small">
-        @if (arrTecnico.includes("TMis Clientes")) {
-        <li (click)="onClickMenu()">Mis Clientes</li>
+        @if (arrTecnico.includes("TMi Agenda")) {
+        <li (click)="onClickMenu()" [routerLink]="['/home/tecnico/agendatec']">
+          Mi Agenda
+        </li>
         }
       </ul>
     </div>
