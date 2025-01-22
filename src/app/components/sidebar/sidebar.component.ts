@@ -52,7 +52,7 @@ export class SidebarComponent {
         rol.startsWith('C')
       );
     }
-    console.table(this.data?.usuario_rol);
+    //console.table(this.data?.usuario_rol);
   }
 
   onClickLogout() {

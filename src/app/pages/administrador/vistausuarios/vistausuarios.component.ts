@@ -25,7 +25,7 @@ export class VistausuariosComponent {
       this.employee = await this.employeeService.getbyId(id);
 
       this.arrfunciones = await this.funcionesServices.getbyId(id);
-      console.table(this.arrfunciones);
+      //   console.table(this.arrfunciones);
     });
   }
 }
