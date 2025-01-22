@@ -1,17 +1,11 @@
-<div class="d-flex justify-content-around">
-  @for (rol of ['Administrador', 'Bodega', 'Noc']; track $index) {
-  <div>
-    @for (item of arrfunciones; track $index) { @if
-    (item.nombre.startsWith(rol[0])) {
-    <p>
-      {{ item.nombre.slice(1) }}
-      <input
-        (change)="addStatus({ funcion: item.id }, $event)"
-        type="checkbox"
-        formControlName="rol"
-      />
-    </p>
-    } }
-  </div>
-  }
+<header class="border-bottom border-3 pb-2">
+  <app-navbar></app-navbar>
+</header>
+
+<div class="flex">
+  <aside>
+    <app-sidebar></app-sidebar>
+  </aside>
+
+  <section><router-outlet /></section>
 </div>

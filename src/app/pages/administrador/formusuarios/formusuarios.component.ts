@@ -178,11 +178,12 @@ export class FormusuariosComponent {
       }
     });
   }
+
   private syncFuncionesWithRoles() {
     this.selectedIds.forEach((id) => {
       const funcion = this.arrfunciones.find((f) => f.id === id);
       if (funcion) {
-        funcion.selected = true; // Si tienes una propiedad para el estado seleccionado
+        funcion.selected = true;
       }
     });
   }

@@ -8,7 +8,17 @@ import { UsuariosComponent } from './pages/administrador/usuarios/usuarios.compo
 import { FormusuariosComponent } from './pages/administrador/formusuarios/formusuarios.component';
 import { VistausuariosComponent } from './pages/administrador/vistausuarios/vistausuarios.component';
 import { BodegaComponent } from './pages/bodega/bodega.component';
-import { roleGuard } from './guards/role.guard';
+
+import { InventarioComponent } from './pages/bodega/inventario/inventario.component';
+import { RecupcartComponent } from './pages/bodega/recupcart/recupcart.component';
+import { NocComponent } from './pages/noc/noc.component';
+import { InformediarioComponent } from './pages/noc/informediario/informediario.component';
+import { DatosclientesComponent } from './pages/clientes/datosclientes/datosclientes.component';
+import { AgendatecnicosComponent } from './pages/tecnico/agendatecnicos/agendatecnicos.component';
+import { MorososComponent } from './pages/bodega/morosos/morosos.component';
+import { usuariosGuard } from './guards/usuarios.guard';
+import { inventarioGuard } from './guards/inventario.guard';
+import { recupcartGuard } from './guards/recupcart.guard';
 
 export const routes: Routes = [
   { path: '', pathMatch: 'full', redirectTo: 'login' },
@@ -28,24 +38,65 @@ export const routes: Routes = [
       {
         path: 'usuarios',
         component: UsuariosComponent,
+        canActivate: [usuariosGuard],
       },
       {
         path: 'usuario/:id',
         component: VistausuariosComponent,
+        canActivate: [usuariosGuard],
       },
       {
         path: 'crearusuario',
         component: FormusuariosComponent,
+        canActivate: [usuariosGuard],
       },
       {
         path: 'actualizarusuario/:id',
         component: FormusuariosComponent,
+        canActivate: [usuariosGuard],
       },
     ],
   },
 
   //bodega
-  { path: 'home/bodega', component: BodegaComponent, canActivate: [roleGuard] },
+  {
+    path: 'home/bodega',
+    component: BodegaComponent,
+    children: [
+      {
+        path: 'inventario',
+        component: InventarioComponent,
+        canActivate: [inventarioGuard],
+      },
+      {
+        path: 'recupcart',
+        component: RecupcartComponent,
+        canActivate: [recupcartGuard],
+      },
+      { path: 'morosos', component: MorososComponent },
+    ],
+  },
+
+  //NOC
+  {
+    path: 'home/noc',
+    component: NocComponent,
+    children: [{ path: 'informediario', component: InformediarioComponent }],
+  },
+
+  //NOC
+  {
+    path: 'home/clientes',
+    component: NocComponent,
+    children: [{ path: 'datos', component: DatosclientesComponent }],
+  },
+
+  //TECNICO
+  {
+    path: 'home/tecnico',
+    component: NocComponent,
+    children: [{ path: 'agendatec', component: AgendatecnicosComponent }],
+  },
 
   { path: '**', redirectTo: 'home' }, //ruta 404
 ];
