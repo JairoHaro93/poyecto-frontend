@@ -1,4 +1,14 @@
 <!-- https://www.youtube.com/watch?v=nvh51c4UfmM -->
+
+<div class="border-bottom border-3 pb-2">
+  <img
+    [routerLink]="['/home']"
+    class="img-fluid logo"
+    src="./img/logoredecom.png"
+    alt="logo"
+  />
+</div>
+
 <div (click)="onClickMenu()" class="menu">
   @if(!isMenu){
   <i class="fa-solid fa-bars"></i>
@@ -33,6 +43,13 @@
         >
           Usuarios
         </li>
+        } @if (arrAdmin.includes("AInformación Clientes")) {
+        <li
+          (click)="onClickMenu()"
+          [routerLink]="['/home/administrador/clientes']"
+        >
+          Información Clientes
+        </li>
         }
       </ul>
     </div>
@@ -58,18 +75,18 @@
           Inventario
         </li>
 
-        } @if (arrBodega.includes("BIngresar equipos")) {
+        } @if (arrBodega.includes("BIngresar Equipos")) {
 
-        <li (click)="onClickMenu()">Ingresar equipos</li>
+        <li (click)="onClickMenu()">Ingresar Equipos</li>
 
-        } @if (arrBodega.includes("BEntregar equipos")) {
+        } @if (arrBodega.includes("BDespachar Equipos")) {
 
-        <li (click)="onClickMenu()">Entregar equipos</li>
+        <li (click)="onClickMenu()">Despachar Equipos</li>
 
-        } @if (arrBodega.includes("BRecuperacion de Cartera")) {
+        } @if (arrBodega.includes("BAsignar Equipos")) {
 
         <li (click)="onClickMenu()" [routerLink]="['/home/bodega/recupcart']">
-          Recuperacion de Cartera
+          Asignar Equipos
         </li>
 
         } @if (arrBodega.includes("BMorosos")) {
@@ -78,31 +95,6 @@
           Morosos
         </li>
 
-        }
-      </ul>
-    </div>
-
-    <!-- BOTON NOC -->
-    @if (arrNoc.length>0) {
-    <button
-      class="button-primary my-2 btn-toggle align-items-center rounded collapsed"
-      data-bs-toggle="collapse"
-      data-bs-target="#noc-collapse"
-      aria-expanded="false"
-    >
-      <i class="fa-solid fa-circle-nodes"></i> Noc
-    </button>
-    }
-    <!-- OPCIONES BOTONES NOC -->
-
-    <div class="collapse" id="noc-collapse">
-      <ul class="btn-toggle-nav list-unstyled fw-normal pb-1 small">
-        @if (arrNoc.includes("NInforme Diario")) {
-        <li (click)="onClickMenu()" [routerLink]="['/home/noc/informediario']">
-          Informe diario
-        </li>
-        } @if (arrNoc.includes("NMapeo cajas")) {
-        <li (click)="onClickMenu()">Mapeo cajas</li>
         }
       </ul>
     </div>
@@ -129,6 +121,65 @@
         }
       </ul>
     </div>
+
+    <!-- BOTON NOC -->
+    @if (arrNoc.length>0) {
+    <button
+      class="button-primary my-2 btn-toggle align-items-center rounded collapsed"
+      data-bs-toggle="collapse"
+      data-bs-target="#noc-collapse"
+      aria-expanded="false"
+    >
+      <i class="fa-solid fa-circle-nodes"></i> Noc
+    </button>
+    }
+    <!-- OPCIONES BOTONES NOC -->
+
+    <div class="collapse" id="noc-collapse">
+      <ul class="btn-toggle-nav list-unstyled fw-normal pb-1 small">
+        @if (arrNoc.includes("NInforme Diario")) {
+        <li (click)="onClickMenu()" [routerLink]="['/home/noc/informediario']">
+          Informe diario
+        </li>
+        } @if (arrNoc.includes("NMapeo Cajas")) {
+        <li (click)="onClickMenu()">Mapeo cajas</li>
+        } @if (arrNoc.includes("NSoporte Tecnico")) {
+        <li (click)="onClickMenu()">Soporte Tecnico</li>
+        }
+      </ul>
+    </div>
+
+    <!-- BOTON RECUPERACION -->
+    @if (arrRecuperacion.length>0) {
+    <button
+      class="button-primary my-2 btn-toggle align-items-center rounded collapsed"
+      data-bs-toggle="collapse"
+      data-bs-target="#recuperacion-collapse"
+      aria-expanded="false"
+    >
+      <i class="fa-solid fa-rotate-left"></i> Recuperacion
+    </button>
+    }
+    <!-- OPCIONES BOTONES RECUPERACION -->
+
+    <div class="collapse" id="recuperacion-collapse">
+      <ul class="btn-toggle-nav list-unstyled fw-normal pb-1 small">
+        @if (arrRecuperacion.includes("RMorosos")) {
+        <li (click)="onClickMenu()" [routerLink]="['/home/noc/informediario']">
+          Morosos
+        </li>
+        } @if (arrRecuperacion.includes("RMapa Morosos")) {
+        <li (click)="onClickMenu()" [routerLink]="['/home/noc/informediario']">
+          Mapa Morosos
+        </li>
+        } @if (arrRecuperacion.includes("RGestion")) {
+        <li (click)="onClickMenu()" [routerLink]="['/home/noc/informediario']">
+          Gestion
+        </li>
+        }
+      </ul>
+    </div>
+
     <!-- BOTON TECNICO -->
     @if (arrTecnico.length>0) {
     <button
@@ -146,6 +197,13 @@
         @if (arrTecnico.includes("TMi Agenda")) {
         <li (click)="onClickMenu()" [routerLink]="['/home/tecnico/agendatec']">
           Mi Agenda
+        </li>
+        } @if (arrTecnico.includes("TRegistro Soporte")) {
+        <li
+          (click)="onClickMenu()"
+          [routerLink]="['/home/tecnico/registrosop']"
+        >
+          Registro Soporte
         </li>
         }
       </ul>

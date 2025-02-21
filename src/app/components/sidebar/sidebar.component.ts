@@ -1,6 +1,6 @@
 import { Component, inject } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
-import { AutenticacionService } from '../../services/autenticacion.service';
+import { AutenticacionService } from '../../services/sistema/autenticacion.service';
 import { JwtPayload } from 'jwt-decode';
 interface CustomPayload extends JwtPayload {
   usuario_id: number;
@@ -29,7 +29,7 @@ export class SidebarComponent {
   arrNoc: string[] = [];
   arrTecnico: string[] = [];
   arrClientes: string[] = [];
-
+  arrRecuperacion: string[] = [];
   ngOnInit() {
     // Intentamos obtener los datos del usuario
     const datosUsuario = this.authService.datosLogged();
@@ -50,6 +50,9 @@ export class SidebarComponent {
       );
       this.arrClientes = this.data.usuario_rol.filter((rol: string) =>
         rol.startsWith('C')
+      );
+      this.arrRecuperacion = this.data.usuario_rol.filter((rol: string) =>
+        rol.startsWith('R')
       );
     }
     //console.table(this.data?.usuario_rol);

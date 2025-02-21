@@ -1,0 +1,16 @@
+<map-marker
+  #miMaker="mapMarker"
+  [position]="getposition(myCoordenada.coordenadas)"
+  (mapClick)="openInfoWindow(miMaker, infoWindow)"
+>
+  <map-info-window #infoWindow="mapInfoWindow">
+    <p class="text-center">{{ myCoordenada.nombre }}</p>
+    <p class="text-center mt-2">Deuda: {{ myCoordenada.deuda }} $</p>
+    <p class="text-center mt-2">Meses: {{ myCoordenada.meses_deuda }} $</p>
+    <p class="text-center mt-2" style="color: red; font-weight: bold">
+      {{ myCoordenada.ip }}
+    </p>
+
+    <hr />
+  </map-info-window>
+</map-marker>

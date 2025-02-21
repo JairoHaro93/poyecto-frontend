@@ -1,24 +1,25 @@
 import { Routes } from '@angular/router';
-import { LoginComponent } from './pages/login/login.component';
-import { HomeComponent } from './pages/home/home.component';
+import { LoginComponent } from './pages/sistema/login/login.component';
+import { HomeComponent } from './pages/sistema/home/home.component';
 import { tokenGuard } from './guards/token.guard';
-
-import { AdministradorComponent } from './pages/administrador/administrador.component';
-import { UsuariosComponent } from './pages/administrador/usuarios/usuarios.component';
-import { FormusuariosComponent } from './pages/administrador/formusuarios/formusuarios.component';
-import { VistausuariosComponent } from './pages/administrador/vistausuarios/vistausuarios.component';
-import { BodegaComponent } from './pages/bodega/bodega.component';
-
-import { InventarioComponent } from './pages/bodega/inventario/inventario.component';
-import { RecupcartComponent } from './pages/bodega/recupcart/recupcart.component';
-import { NocComponent } from './pages/noc/noc.component';
-import { InformediarioComponent } from './pages/noc/informediario/informediario.component';
-import { DatosclientesComponent } from './pages/clientes/datosclientes/datosclientes.component';
-import { AgendatecnicosComponent } from './pages/tecnico/agendatecnicos/agendatecnicos.component';
-import { MorososComponent } from './pages/bodega/morosos/morosos.component';
-import { usuariosGuard } from './guards/usuarios.guard';
-import { inventarioGuard } from './guards/inventario.guard';
-import { recupcartGuard } from './guards/recupcart.guard';
+import { AdministradorComponent } from './pages/negocio/administrador/administrador.component';
+import { UsuariosComponent } from './pages/negocio/administrador/usuarios/usuarios.component';
+import { FormusuariosComponent } from './pages/negocio/administrador/formusuarios/formusuarios.component';
+import { VistausuariosComponent } from './pages/negocio/administrador/vistausuarios/vistausuarios.component';
+import { BodegaComponent } from './pages/negocio/bodega/bodega.component';
+import { InventarioComponent } from './pages/negocio/bodega/inventario/inventario.component';
+import { RecupcartComponent } from './pages/negocio/bodega/recupcart/recupcart.component';
+import { NocComponent } from './pages/negocio/noc/noc.component';
+import { InformediarioComponent } from './pages/negocio/noc/informediario/informediario.component';
+import { DatosclientesComponent } from './pages/negocio/clientes/datosclientes/datosclientes.component';
+import { AgendatecnicosComponent } from './pages/negocio/tecnico/agendatecnicos/agendatecnicos.component';
+import { MorososComponent } from './pages/negocio/bodega/morosos/morosos.component';
+import { usuariosGuard } from './guards/administrador/usuarios.guard';
+import { inventarioGuard } from './guards/bodega/inventario.guard';
+import { recupcartGuard } from './guards/Recuperacion/recupcart.guard';
+import { ClientesComponent } from './pages/negocio/clientes/clientes.component';
+import { DataclientesComponent } from './pages/negocio/administrador/dataclientes/dataclientes.component';
+import { RegistrosoporteComponent } from './pages/negocio/tecnico/registrosoporte/registrosoporte.component';
 
 export const routes: Routes = [
   { path: '', pathMatch: 'full', redirectTo: 'login' },
@@ -29,7 +30,7 @@ export const routes: Routes = [
     canActivate: [tokenGuard],
   },
 
-  //administrador
+  //ADMINISTRADOR
   {
     path: 'home/administrador',
     component: AdministradorComponent,
@@ -39,6 +40,10 @@ export const routes: Routes = [
         path: 'usuarios',
         component: UsuariosComponent,
         canActivate: [usuariosGuard],
+      },
+      {
+        path: 'clientes',
+        component: DataclientesComponent,
       },
       {
         path: 'usuario/:id',
@@ -58,7 +63,7 @@ export const routes: Routes = [
     ],
   },
 
-  //bodega
+  //BODEGA
   {
     path: 'home/bodega',
     component: BodegaComponent,
@@ -84,7 +89,7 @@ export const routes: Routes = [
     children: [{ path: 'informediario', component: InformediarioComponent }],
   },
 
-  //NOC
+  //CLIENTES
   {
     path: 'home/clientes',
     component: NocComponent,
@@ -95,7 +100,10 @@ export const routes: Routes = [
   {
     path: 'home/tecnico',
     component: NocComponent,
-    children: [{ path: 'agendatec', component: AgendatecnicosComponent }],
+    children: [
+      { path: 'agendatec', component: AgendatecnicosComponent },
+      { path: 'registrosop', component: RegistrosoporteComponent },
+    ],
   },
 
   { path: '**', redirectTo: 'home' }, //ruta 404

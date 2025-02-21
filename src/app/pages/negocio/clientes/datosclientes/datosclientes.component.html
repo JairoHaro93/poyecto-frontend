@@ -1,0 +1,80 @@
+<main>
+  <section class="container mt-3">
+    <h2>DATOS CLIENTE</h2>
+  </section>
+
+  <hr />
+
+  <!-- Campo de búsqueda con autocompletado usando datalist -->
+  <div class="mb-3">
+    <label for="cliente-input" class="form-label">Nombre:</label>
+    <input
+      id="cliente-input"
+      type="text"
+      class="form-control"
+      list="clientes-sugerencias"
+      [(ngModel)]="busqueda"
+      (input)="actualizarSugerencias()"
+      (change)="buscarClienteSeleccionado()"
+      placeholder="Ingrese el nombre del cliente"
+      style="width: 100%; max-width: 500px"
+    />
+    <datalist id="clientes-sugerencias" *ngIf="nombresFiltrados.length > 0">
+      <option *ngFor="let nombre of nombresFiltrados" [value]="nombre"></option>
+    </datalist>
+  </div>
+
+  <!-- Mostrar la información del cliente en una tabla -->
+  <div *ngIf="clienteSeleccionado">
+    <h3>Información del Cliente</h3>
+    <table border="1" class="table">
+      <thead>
+        <tr>
+          <th>Cédula</th>
+          <th>Nombre</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>{{ clienteSeleccionado.cedula }}</td>
+          <td>{{ clienteSeleccionado.nombre_completo }}</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h3>Servicios del Cliente</h3>
+    <table border="1" class="table">
+      <thead>
+        <tr>
+          <th>Orden Instalación</th>
+          <th>Coordenadas</th>
+          <th>Deuda</th>
+          <th>Meses de Deuda</th>
+          <th>Enlace</th>
+          <th>IP</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let servicio of clienteSeleccionado.servicios">
+          <td>{{ servicio.orden_instalacion }}</td>
+          <td>{{ servicio.coordenadas }}</td>
+          <td>{{ servicio.deuda | currency }}</td>
+          <td>{{ servicio.meses_deuda }}</td>
+          <td>
+            {{ servicio.enlace }}
+          </td>
+
+          <td>
+            <a
+              [href]="'http://' + servicio.ip"
+              style="color: red; font-weight: bold"
+              target="_blank"
+              >Ver Enlace</a
+            >
+            {{ servicio.ip }}
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</main>

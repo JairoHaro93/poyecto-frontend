@@ -1,0 +1,77 @@
+<div>
+  <label>Filtrar por tipo de enlace:</label>
+  <select [(ngModel)]="filtro" (change)="filtrarClientes()">
+    <option value="TODOS">Todos</option>
+    <option value="WIFI">WIFI</option>
+    <option value="FTTH">FTTH</option>
+  </select>
+</div>
+
+<div class="d-flex">
+  <h6>Filtrar por deuda:</h6>
+  <div class="d-flex justify-content-between gap-1">
+    <label>
+      <input
+        type="radio"
+        name="filtroDeuda"
+        value="TODOS"
+        [(ngModel)]="filtroDeuda"
+        (change)="filtrarClientes()"
+        checked
+      />
+      Todos
+    </label>
+    <br />
+    <label>
+      <input
+        type="radio"
+        name="filtroDeuda"
+        value="CON_DEUDA"
+        [(ngModel)]="filtroDeuda"
+        (change)="filtrarClientes()"
+      />
+      Con más de 1 mes de deuda
+    </label>
+  </div>
+</div>
+
+<!-- Campo de búsqueda -->
+<!-- Campo de búsqueda con autocompletado usando datalist -->
+<div>
+  <label>Buscar cliente:</label>
+  <input
+    type="text"
+    list="clientes-sugerencias"
+    [(ngModel)]="busqueda"
+    (input)="actualizarSugerencias()"
+    (change)="buscarClienteSeleccionado()"
+    placeholder="Ingrese el nombre del cliente"
+    style="width: 100%; max-width: 500px"
+  />
+  <datalist id="clientes-sugerencias" *ngIf="nombresFiltrados.length > 0">
+    <option *ngFor="let nombre of nombresFiltrados" [value]="nombre"></option>
+  </datalist>
+</div>
+
+<section class="mapa">
+  @if (isGoogleMapsLoaded) { @if (cargando) {
+  <div class="loading-overlay">
+    <div class="spinner"></div>
+    <p>Cargando ubicaciones...</p>
+  </div>
+  } @else {
+  <google-map
+    width="100%"
+    height="80vh"
+    [zoom]="zoom()"
+    [center]="myposition()"
+    [options]="{ mapTypeId: 'satellite' }"
+  >
+    @for (marca of marcasList; track $index ) {
+    <app-mapaclientes [myCoordenada]="marca"></app-mapaclientes>
+    }
+  </google-map>
+  } } @else {
+  <div>Cargando mapa...</div>
+  }
+</section>
