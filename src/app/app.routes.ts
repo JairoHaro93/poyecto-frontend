@@ -8,18 +8,27 @@ import { FormusuariosComponent } from './pages/negocio/administrador/formusuario
 import { VistausuariosComponent } from './pages/negocio/administrador/vistausuarios/vistausuarios.component';
 import { BodegaComponent } from './pages/negocio/bodega/bodega.component';
 import { InventarioComponent } from './pages/negocio/bodega/inventario/inventario.component';
-import { RecupcartComponent } from './pages/negocio/bodega/recupcart/recupcart.component';
+
 import { NocComponent } from './pages/negocio/noc/noc.component';
 import { InformediarioComponent } from './pages/negocio/noc/informediario/informediario.component';
 import { DatosclientesComponent } from './pages/negocio/clientes/datosclientes/datosclientes.component';
 import { AgendatecnicosComponent } from './pages/negocio/tecnico/agendatecnicos/agendatecnicos.component';
-import { MorososComponent } from './pages/negocio/bodega/morosos/morosos.component';
+import { MorososComponent } from './pages/negocio/recuperacion/morosos/morosos.component';
 import { usuariosGuard } from './guards/administrador/usuarios.guard';
 import { inventarioGuard } from './guards/bodega/inventario.guard';
 import { recupcartGuard } from './guards/Recuperacion/recupcart.guard';
 import { ClientesComponent } from './pages/negocio/clientes/clientes.component';
 import { DataclientesComponent } from './pages/negocio/administrador/dataclientes/dataclientes.component';
 import { RegistrosoporteComponent } from './pages/negocio/tecnico/registrosoporte/registrosoporte.component';
+import { RecuperacionComponent } from './pages/negocio/recuperacion/recuperacion.component';
+import { IngresarEquiposComponent } from './pages/negocio/bodega/ingresar-equipos/ingresar-equipos.component';
+import { DespacharEquiposComponent } from './pages/negocio/bodega/despachar-equipos/despachar-equipos.component';
+import { AsignarEquiposComponent } from './pages/negocio/bodega/asignar-equipos/asignar-equipos.component';
+import { MapeoCajasComponent } from './pages/negocio/noc/mapeo-cajas/mapeo-cajas.component';
+import { SoporteTecnicoComponent } from './pages/negocio/noc/soporte-tecnico/soporte-tecnico.component';
+import { MapaMorososComponent } from './pages/negocio/recuperacion/mapa-morosos/mapa-morosos.component';
+import { GestionMorososComponent } from './pages/negocio/recuperacion/gestion-morosos/gestion-morosos.component';
+import { ingresarEquiposGuard } from './guards/bodega/ingresar-equipos.guard';
 
 export const routes: Routes = [
   { path: '', pathMatch: 'full', redirectTo: 'login' },
@@ -73,20 +82,15 @@ export const routes: Routes = [
         component: InventarioComponent,
         canActivate: [inventarioGuard],
       },
-      {
-        path: 'recupcart',
-        component: RecupcartComponent,
-        canActivate: [recupcartGuard],
-      },
-      { path: 'morosos', component: MorososComponent },
-    ],
-  },
 
-  //NOC
-  {
-    path: 'home/noc',
-    component: NocComponent,
-    children: [{ path: 'informediario', component: InformediarioComponent }],
+      {
+        path: 'ingresar-equipos',
+        component: IngresarEquiposComponent,
+        canActivate: [ingresarEquiposGuard],
+      },
+      { path: 'despachar-equipos', component: DespacharEquiposComponent },
+      { path: 'asignar-equipos', component: AsignarEquiposComponent },
+    ],
   },
 
   //CLIENTES
@@ -94,6 +98,28 @@ export const routes: Routes = [
     path: 'home/clientes',
     component: NocComponent,
     children: [{ path: 'datos', component: DatosclientesComponent }],
+  },
+
+  //NOC
+  {
+    path: 'home/noc',
+    component: NocComponent,
+    children: [
+      { path: 'informediario', component: InformediarioComponent },
+      { path: 'mapeo-cajas', component: MapeoCajasComponent },
+      { path: 'soporte-tecnico', component: SoporteTecnicoComponent },
+    ],
+  },
+
+  //RECUPERACION
+  {
+    path: 'home/recuperacion',
+    component: RecuperacionComponent,
+    children: [
+      { path: 'morosos', component: MorososComponent },
+      { path: 'mapa-morosos', component: MapaMorososComponent },
+      { path: 'gestion-morosos', component: GestionMorososComponent },
+    ],
   },
 
   //TECNICO

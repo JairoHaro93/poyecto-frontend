@@ -77,15 +77,28 @@
 
         } @if (arrBodega.includes("BIngresar Equipos")) {
 
-        <li (click)="onClickMenu()">Ingresar Equipos</li>
+        <li
+          (click)="onClickMenu()"
+          [routerLink]="['/home/bodega/ingresar-equipos']"
+        >
+          Ingresar Equipos
+        </li>
 
         } @if (arrBodega.includes("BDespachar Equipos")) {
 
-        <li (click)="onClickMenu()">Despachar Equipos</li>
+        <li
+          (click)="onClickMenu()"
+          [routerLink]="['/home/bodega/despachar-equipos']"
+        >
+          Despachar Equipos
+        </li>
 
         } @if (arrBodega.includes("BAsignar Equipos")) {
 
-        <li (click)="onClickMenu()" [routerLink]="['/home/bodega/recupcart']">
+        <li
+          (click)="onClickMenu()"
+          [routerLink]="['/home/bodega/asignar-equipos']"
+        >
           Asignar Equipos
         </li>
 
@@ -142,9 +155,16 @@
           Informe diario
         </li>
         } @if (arrNoc.includes("NMapeo Cajas")) {
-        <li (click)="onClickMenu()">Mapeo cajas</li>
+        <li (click)="onClickMenu()" [routerLink]="['/home/noc/mapeo-cajas']">
+          Mapeo cajas
+        </li>
         } @if (arrNoc.includes("NSoporte Tecnico")) {
-        <li (click)="onClickMenu()">Soporte Tecnico</li>
+        <li
+          (click)="onClickMenu()"
+          [routerLink]="['/home/noc/soporte-tecnico']"
+        >
+          Soporte Tecnico
+        </li>
         }
       </ul>
     </div>
@@ -165,15 +185,24 @@
     <div class="collapse" id="recuperacion-collapse">
       <ul class="btn-toggle-nav list-unstyled fw-normal pb-1 small">
         @if (arrRecuperacion.includes("RMorosos")) {
-        <li (click)="onClickMenu()" [routerLink]="['/home/noc/informediario']">
+        <li
+          (click)="onClickMenu()"
+          [routerLink]="['/home/recuperacion/morosos']"
+        >
           Morosos
         </li>
         } @if (arrRecuperacion.includes("RMapa Morosos")) {
-        <li (click)="onClickMenu()" [routerLink]="['/home/noc/informediario']">
+        <li
+          (click)="onClickMenu()"
+          [routerLink]="['/home/recuperacion/mapa-morosos']"
+        >
           Mapa Morosos
         </li>
         } @if (arrRecuperacion.includes("RGestion")) {
-        <li (click)="onClickMenu()" [routerLink]="['/home/noc/informediario']">
+        <li
+          (click)="onClickMenu()"
+          [routerLink]="['/home/recuperacion/gestion-morosos']"
+        >
           Gestion
         </li>
         }
