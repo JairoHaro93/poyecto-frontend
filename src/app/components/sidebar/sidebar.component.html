@@ -46,7 +46,7 @@
         } @if (arrAdmin.includes("AInformación Clientes")) {
         <li
           (click)="onClickMenu()"
-          [routerLink]="['/home/administrador/clientes']"
+          [routerLink]="['/home/administrador/data-clientes']"
         >
           Información Clientes
         </li>
@@ -224,7 +224,10 @@
     <div class="collapse" id="tecnico-collapse">
       <ul class="btn-toggle-nav list-unstyled fw-normal pb-1 small">
         @if (arrTecnico.includes("TMi Agenda")) {
-        <li (click)="onClickMenu()" [routerLink]="['/home/tecnico/agendatec']">
+        <li
+          (click)="onClickMenu()"
+          [routerLink]="['/home/tecnico/mi-agenda-tec']"
+        >
           Mi Agenda
         </li>
         } @if (arrTecnico.includes("TRegistro Soporte")) {
