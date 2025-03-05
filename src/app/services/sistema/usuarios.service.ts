@@ -14,47 +14,43 @@ export class UsuariosService {
   //injectables
   private httpClient = inject(HttpClient);
 
-  //metodos
+  //METODOS
+
+  //OBTENER TODOS LOS USUARIOS
   getAll() {
     return lastValueFrom(this.httpClient.get<Iusuarios[]>(this.baseUrl));
   }
 
-  /**
-   * GETBYID()
-   * return Promise <IEmployee>
-   */
+  //OBTENER TODOS LOS USUARIOS CON AGENDA - TECNICOS
+  getAllAgendaTecnicos() {
+    return lastValueFrom(
+      this.httpClient.get<Iusuarios[]>(`${this.baseUrl}/agenda-tecnicos`)
+    );
+  }
+
+  //OBTENER USUARIO POR ID
   getbyId(id: string): Promise<Iusuarios> {
     return firstValueFrom(
       this.httpClient.get<Iusuarios>(`${this.baseUrl}/${id}`)
     );
   }
 
-  /**
-   * UPDATE(body: Iemployee)
-   * return Promise <IEmployee>
-   */
+  //ACTUALIZAR USUARIO
   update(body: Iusuarios): Promise<Iusuarios> {
-    //esta Anpi no encesito enviar el Id edl usuario solo pasarlo por parametri, si lo envio me da un error asi q lo elimino
     let id = body.id;
-    //esto sirve para eliminar de un objeto una clave con su valor
+
     delete body.id;
+    console.log(`${this.baseUrl}/${id}`, body);
     return firstValueFrom(
       this.httpClient.put<Iusuarios>(`${this.baseUrl}/${id}`, body)
     );
   }
-
-  /**
-   * INSERT(body: Iemployee)
-   * return Promise <IEmployee>
-   */
+  //CREAR USUARIOS
   insert(body: Iusuarios): Promise<Iusuarios> {
     return firstValueFrom(this.httpClient.post<Iusuarios>(this.baseUrl, body));
   }
 
-  /**
-   * DELETE(id: string)
-   * return Promise <IEmployee>
-   */
+  //BORRAR USUARUIOS
   delete(id: number): Promise<Iusuarios> {
     return firstValueFrom(
       this.httpClient.delete<Iusuarios>(`${this.baseUrl}/${id}`)

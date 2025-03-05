@@ -6,6 +6,7 @@ interface CustomPayload extends JwtPayload {
   usuario_id: number;
   usuario_usuario: string;
   usuario_rol: [];
+  usuario_nombre: string;
 }
 @Component({
   selector: 'app-sidebar',
@@ -22,7 +23,12 @@ export class SidebarComponent {
   authService = inject(AutenticacionService);
 
   // Inicializamos `data` con valores predeterminados
-  data: CustomPayload = { usuario_id: 0, usuario_usuario: '', usuario_rol: [] };
+  data: CustomPayload = {
+    usuario_id: 0,
+    usuario_usuario: '',
+    usuario_rol: [],
+    usuario_nombre: '',
+  };
 
   arrAdmin: string[] = [];
   arrBodega: string[] = [];

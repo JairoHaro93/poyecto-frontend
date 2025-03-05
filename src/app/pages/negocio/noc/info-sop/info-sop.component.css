@@ -1,0 +1,46 @@
+body {
+  font-family: Arial, sans-serif;
+}
+
+.Datos-usuario,
+.Datos-soporte,
+.Datos-servicio {
+  background: #f8f9fa;
+  margin-left: 12px;
+  border-radius: 8px;
+  font-size: 13px;
+}
+
+.table {
+  font-size: 13px;
+}
+
+.Datos-usuario p,
+.Datos-soporte p,
+.Datos-servicio p {
+  margin-bottom: 8px;
+}
+
+.text-danger {
+  font-weight: bold;
+}
+
+.btn-outline-secondary {
+  margin-left: 10px;
+}
+
+.text-center {
+  margin-top: 20px;
+}
+
+.custom-header th {
+  background-color: #ce2929 !important;
+  color: #ffffff !important;
+}
+
+.opciones-resolucion {
+  background-color: #d5d7c9 !important;
+  color: black !important;
+  border-radius: 10px;
+  font-size: 13px;
+}

@@ -1,0 +1,94 @@
+.container {
+  max-width: 100%;
+  overflow-x: hidden; /* Evita scroll no deseado */
+}
+
+.table-container {
+  width: 100%;
+  overflow-x: auto; /* Asegura que solo haya scroll horizontal si es necesario */
+  max-height: 250px;
+  overflow-y: auto;
+  min-height: 200px;
+}
+
+.table {
+  table-layout: auto; /* Permite que las columnas se ajusten */
+  width: 100%;
+  font-size: 12px;
+  border: 1px solid #252323;
+  border-collapse: separate; /* Necesario para que el border-radius funcione */
+  border-spacing: 0; /* Elimina el espacio entre celdas */
+  border-radius: 13px; /* Ajusta según el diseño deseado */
+}
+
+.table th:first-child {
+  border-top-left-radius: 10px;
+}
+
+.table th:last-child {
+  border-top-right-radius: 10px;
+}
+
+.table tr:last-child td:first-child {
+  border-bottom-left-radius: 10px;
+}
+
+.table tr:last-child td:last-child {
+  border-bottom-right-radius: 10px;
+}
+
+.custom-header th {
+  background-color: #ce2929 !important;
+  color: #ffffff !important;
+}
+
+/* Estilo para las filas y celdas */
+.table th,
+.table td {
+  word-wrap: break-word; /* Permite que las palabras largas se rompan */
+  text-align: left;
+  border: 1px solid #252323;
+  white-space: nowrap; /* Evita que el texto haga salto de línea */
+  overflow: hidden;
+  text-overflow: ellipsis; /* Si el texto es largo, muestra "..." */
+}
+
+/* Centrar contenido en las celdas */
+.table td {
+  text-align: center; /* Alinea el contenido horizontalmente */
+}
+
+/* Centrar el botón dentro de la celda */
+.table td a {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+/* Estilo para el botón "Revisar" */
+.btn-revisar {
+  background-color: red; /* Color de fondo rojo */
+  color: white; /* Texto en color blanco */
+  border: none; /* Elimina el borde */
+  padding: 5px 10px; /* Ajusta el tamaño del botón */
+  border-radius: 5px; /* Bordes redondeados */
+  cursor: pointer; /* Cambio de cursor al pasar por encima */
+  transition: background-color 0.3s ease-in-out; /* Efecto suave al pasar el mouse */
+}
+
+/* Cambio de color al pasar el mouse */
+.btn-revisar:hover {
+  background-color: darkred;
+}
+
+@media (min-width: 800px) {
+  .flex {
+    flex-direction: row;
+  }
+}
+
+.custom-btn {
+  padding: 1px 10px;
+  font-size: 13px;
+  border-radius: 12px;
+}

@@ -1,14 +1,5 @@
 <!-- https://www.youtube.com/watch?v=nvh51c4UfmM -->
 
-<div class="border-bottom border-3 pb-2">
-  <img
-    [routerLink]="['/home']"
-    class="img-fluid logo"
-    src="./img/logoredecom.png"
-    alt="logo"
-  />
-</div>
-
 <div (click)="onClickMenu()" class="menu">
   @if(!isMenu){
   <i class="fa-solid fa-bars"></i>
@@ -19,8 +10,16 @@
 </div>
 
 <div [class.mostrar-sidebar]="isMenu" class="sidebar">
+  <img
+    [routerLink]="['/home']"
+    class="img-fluid logo"
+    src="./img/logoredecom.png"
+    alt="logo"
+  />
+  <div class="border-bottom border-3 pb-2"></div>
+
   <div class="div2">
-    <h4 class="my-2">Yo: {{ data.usuario_usuario }}</h4>
+    <p class="my-2 texto-amarillo">{{ data.usuario_nombre }}</p>
 
     <!-- BOTON ADMINISTRADOR -->
     @if (arrAdmin.length>0) {
@@ -158,6 +157,13 @@
         <li (click)="onClickMenu()" [routerLink]="['/home/noc/mapeo-cajas']">
           Mapeo cajas
         </li>
+        } @if (arrNoc.includes("NAsignar Trabajos")) {
+        <li
+          (click)="onClickMenu()"
+          [routerLink]="['/home/noc/asignar-trabajos']"
+        >
+          Asignar Trabajos
+        </li>
         } @if (arrNoc.includes("NSoporte Tecnico")) {
         <li
           (click)="onClickMenu()"
@@ -243,11 +249,10 @@
   </div>
 
   <!-- CERRA SESION -->
-  <div class="my-3 buton-bottom">
+  <div class="buton-bottom">
     <hr />
-
     <button (click)="onClickLogout()" class="button-primary usuario my-2">
-      <i class="fa-solid fa-right-from-bracket"> </i> Cerrar Sesion
+      <i class="fa-solid fa-right-from-bracket"></i> Cerrar Sesion
     </button>
   </div>
 </div>

@@ -21,4 +21,8 @@ export class ClientesService {
   getInfoClientesMapa() {
     return lastValueFrom(this.httpClient.get<[]>(`${this.baseUrl}/mapas`));
   }
+
+  getInfoServicioByOrdId(ord_ins: number) {
+    return lastValueFrom(this.httpClient.get<[]>(`${this.baseUrl}/${ord_ins}`));
+  }
 }

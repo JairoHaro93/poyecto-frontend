@@ -15,7 +15,7 @@ export const datosClientesGuard: CanActivateFn = (route, state) => {
   const data = jwtDecode<CustomPayload>(token!);
 
   //tiene funcion USUARIOS?
-  if (!data.usuario_rol.includes('CDatos Clientes')) {
+  if (!data.usuario_rol.includes('CDatos de Clientes')) {
     Swal.fire('Error usuario no autorizado', 'error');
     router.navigateByUrl('/home');
     return false;

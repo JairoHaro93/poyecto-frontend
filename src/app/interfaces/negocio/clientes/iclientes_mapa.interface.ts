@@ -4,7 +4,9 @@ export interface Iclientes_mapa {
   servicios: [
     {
       orden_instalacion: number;
+
       coordenadas: string;
+
       deuda: number;
       meses_deuda: number;
       enlace: string;

@@ -1,80 +1,142 @@
 <main>
-  <section class="container mt-3">
-    <h2>DATOS CLIENTE</h2>
+  <!-- Datos generales -->
+  <section
+    class="container m-3 border border-1 border-black p-2 datos_generales shadow"
+  >
+    <h3>Datos Generales</h3>
+    <!-- Campo de búsqueda por nombre -->
+    <!-- Campo de búsqueda por nombre -->
+    <div class="mb-3 d-flex gap-2 align-items-center">
+      <label for="cliente-input" style="min-width: 100px">Nombre</label>
+      <input
+        id="cliente-input"
+        type="text"
+        class="form-control"
+        [(ngModel)]="busqueda"
+        (input)="actualizarSugerencias()"
+        (change)="buscarClienteSeleccionado()"
+        placeholder="Ingrese el nombre del cliente"
+        style="width: 100%; max-width: 500px"
+      />
+    </div>
+
+    <!-- Lista personalizada de sugerencias -->
+    <!-- Lista personalizada de sugerencias -->
+    <div *ngIf="nombresFiltrados.length > 0" class="sugerencias">
+      <div
+        *ngFor="let nombre of nombresFiltrados"
+        (click)="seleccionarNombre(nombre)"
+        [ngClass]="{ selected: nombre === busqueda }"
+        class="sugerencia-item"
+      >
+        {{ nombre }}
+      </div>
+    </div>
+
+    <!-- Campo de búsqueda por cédula (sin sugerencias) -->
+    <div class="mb-3 d-flex gap-2 align-items-center">
+      <label for="cliente-cedula-input" style="min-width: 100px">Cédula</label>
+      <input
+        id="cliente-cedula-input"
+        type="text"
+        class="form-control"
+        [(ngModel)]="busquedaCedula"
+        (change)="buscarClientePorCedula()"
+        placeholder="Ingrese la cédula del cliente"
+        style="width: 100%; max-width: 500px"
+      />
+    </div>
   </section>
 
-  <hr />
-
-  <!-- Campo de búsqueda con autocompletado usando datalist -->
-  <div class="mb-3">
-    <label for="cliente-input" class="form-label">Nombre:</label>
-    <input
-      id="cliente-input"
-      type="text"
-      class="form-control"
-      list="clientes-sugerencias"
-      [(ngModel)]="busqueda"
-      (input)="actualizarSugerencias()"
-      (change)="buscarClienteSeleccionado()"
-      placeholder="Ingrese el nombre del cliente"
-      style="width: 100%; max-width: 500px"
-    />
-    <datalist id="clientes-sugerencias" *ngIf="nombresFiltrados.length > 0">
-      <option *ngFor="let nombre of nombresFiltrados" [value]="nombre"></option>
-    </datalist>
-  </div>
-
-  <!-- Mostrar la información del cliente en una tabla -->
-  <div *ngIf="clienteSeleccionado">
-    <h3>Información del Cliente</h3>
-    <table border="1" class="table">
+  <!-- Mostrar la información de los servicios del cliente seleccionado -->
+  <section
+    class="container mt-3"
+    *ngIf="clienteSeleccionado && clienteSeleccionado.servicios?.length"
+  >
+    <table border="2" class="table tabla-servicios">
       <thead>
-        <tr>
-          <th>Cédula</th>
-          <th>Nombre</th>
+        <tr class="custom-header">
+          <th></th>
+          <th>Orden</th>
+          <th>Dirección</th>
+          <th>Referencia</th>
+          <th>Plan Contratado</th>
+          <th>Precio</th>
+          <th>Pago</th>
         </tr>
       </thead>
       <tbody>
-        <tr>
-          <td>{{ clienteSeleccionado.cedula }}</td>
-          <td>{{ clienteSeleccionado.nombre_completo }}</td>
+        <tr
+          *ngFor="let servicio of clienteSeleccionado.servicios"
+          [ngClass]="{ 'selected-row': servicio === servicioSeleccionado }"
+        >
+          <td class="align-items-center text-center">
+            <input
+              type="radio"
+              name="servicioSeleccionado"
+              [value]="servicio"
+              [(ngModel)]="servicioSeleccionado"
+            />
+          </td>
+          <td>{{ servicio.orden_instalacion }}</td>
+          <td>{{ servicio.direccion }}</td>
+          <td>{{ servicio.referencia }}</td>
+          <td>{{ servicio.plan_nombre }}</td>
+          <td>{{ servicio.precio }}</td>
+          <td>{{ servicio.estado }}</td>
         </tr>
       </tbody>
     </table>
+  </section>
 
-    <h3>Servicios del Cliente</h3>
-    <table border="1" class="table">
-      <thead>
-        <tr>
-          <th>Orden Instalación</th>
-          <th>Coordenadas</th>
-          <th>Deuda</th>
-          <th>Meses de Deuda</th>
-          <th>Enlace</th>
-          <th>IP</th>
-        </tr>
-      </thead>
+  <!-- Mostrar información del servicio seleccionado -->
+  <section class="container mt-3 shadow" *ngIf="servicioSeleccionado">
+    <table class="table tabla-informacion">
       <tbody>
-        <tr *ngFor="let servicio of clienteSeleccionado.servicios">
-          <td>{{ servicio.orden_instalacion }}</td>
-          <td>{{ servicio.coordenadas }}</td>
-          <td>{{ servicio.deuda | currency }}</td>
-          <td>{{ servicio.meses_deuda }}</td>
+        <tr>
+          <td>Ip Equipo</td>
           <td>
-            {{ servicio.enlace }}
+            {{ servicioSeleccionado.ip }}
+            <button (click)="copyIp(servicioSeleccionado.ip)">Copiar</button>
           </td>
-
+        </tr>
+        <tr>
+          <td>Coordenadas</td>
           <td>
             <a
-              [href]="'http://' + servicio.ip"
-              style="color: red; font-weight: bold"
+              [href]="
+                'https://www.google.com/maps/search/' +
+                servicioSeleccionado.coordenadas
+              "
+              style="color: red"
               target="_blank"
-              >Ver Enlace</a
             >
-            {{ servicio.ip }}
+              {{ servicioSeleccionado.coordenadas }}
+            </a>
+          </td>
+        </tr>
+        <tr>
+          <td>Fecha Instalación</td>
+          <td>
+            {{
+              servicioSeleccionado.fecha_instalacion
+                | date : "EEEE dd MMMM YYYY "
+            }}
+          </td>
+        </tr>
+        <tr>
+          <td>Tecnico Instalador</td>
+          <td>
+            {{ servicioSeleccionado.instalado_por }}
+          </td>
+        </tr>
+        <tr>
+          <td>Telefonos</td>
+          <td>
+            {{ servicioSeleccionado.telefonos }}
           </td>
         </tr>
       </tbody>
     </table>
-  </div>
+  </section>
 </main>

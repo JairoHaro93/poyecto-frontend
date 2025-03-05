@@ -17,9 +17,9 @@
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  width: 250px;
-  height: 90%;
-  padding: 0px 20px;
+  width: 220px;
+  height: 100%;
+  padding: 0px 10px;
   background-color: var(--color-barra-lateral);
   transition: left 0.5s ease;
 }
@@ -39,14 +39,14 @@
 
 .buton-bottom {
   margin-top: auto; /* Empuja el botón al fondo */
-  bottom: 10px; /* Asegura que el botón se quede pegado al fondo */
+  bottom: 0px; /* Asegura que el botón se quede pegado al fondo */
   width: 100%; /* Ajusta el ancho para alinearlo con otros elementos */
 }
 
 /* MENU*/
 
 .menu {
-  color: red;
+  color: #ce2929;
   width: 50px;
   height: 50px;
   position: fixed;
@@ -83,7 +83,7 @@ ul {
   li {
     margin-left: 10px;
     width: 80%;
-    background-color: darkred;
+    background-color: #cc2929;
     border-radius: 10px;
     padding: 2px;
     text-align: center;
@@ -93,8 +93,8 @@ ul {
   }
 }
 .logo {
-  margin-top: 15px;
-  margin-left: 20px;
+  margin: 10px 10px;
+
   max-width: 40vw;
   height: 40px;
   cursor: pointer;
@@ -104,4 +104,12 @@ ul {
   .logo {
     max-width: 60vw;
   }
+}
+
+.texto-amarillo {
+  color: yellow;
+  font-size: 17px;
+  text-align: center;
+  background-color: #ce2929;
+  border-radius: 10px;
 }

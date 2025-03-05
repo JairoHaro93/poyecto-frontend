@@ -1,3 +1,43 @@
+/* Aplica el fondo rojo y texto blanco a todas las celdas de la fila seleccionada */
+.selected-row td {
+  background-color: #ce2929 !important;
+  color: white !important;
+}
+.custom-header th {
+  white-space: nowrap;
+}
+
+.table {
+  width: 100%;
+  /* Permite que se apliquen bordes redondeados */
+  border-collapse: separate;
+  border-spacing: 0;
+  /* Borde de la tabla */
+  border: 1px solid black;
+  border-radius: 7px;
+  /* Asegura que el contenido no se desborde del borde redondeado */
+  overflow: hidden;
+}
+
+.table th,
+.table td {
+  padding: 8px;
+  text-align: left;
+  /* Si deseas bordes internos en cada celda, puedes mantenerlos */
+  border: 1px gray;
+}
+
+/* Opcional: fondo para los encabezados */
+.table th {
+  background-color: #f8f8f8;
+}
+
+.custom-header th {
+  background-color: #000 !important;
+  color: #fff !important;
+  padding: 1rem;
+}
+
 .flex {
   display: flex;
   flex-direction: column;
@@ -6,13 +46,31 @@
 aside {
   width: 300px;
 }
-section {
-  width: 100%;
-  height: 100%;
+
+.datos_generales {
+  width: 60%;
+  border-radius: 10px;
 }
 
 @media (min-width: 800px) {
   .flex {
     flex-direction: row;
   }
+}
+
+.sugerencias {
+  border: 1px solid #ccc;
+  max-width: 500px;
+  background-color: #fff;
+  position: absolute; /* Posiciona la lista debajo del input */
+  z-index: 1000;
+}
+
+.sugerencia-item {
+  padding: 5px;
+  cursor: pointer;
+}
+
+.sugerencia-item:hover {
+  background-color: #ce2929;
 }

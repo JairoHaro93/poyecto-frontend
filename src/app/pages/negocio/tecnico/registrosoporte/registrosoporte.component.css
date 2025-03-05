@@ -1,0 +1,152 @@
+/* Aplica el fondo rojo y texto blanco a todas las celdas de la fila seleccionada */
+.selected-row td {
+  background-color: #ce2929 !important;
+  color: white !important;
+}
+.custom-header th {
+  white-space: nowrap;
+}
+html,
+body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+.main {
+  display: flex;
+  flex-direction: column;
+  height: 100vh; /* Ocupa el 100% de la altura de la ventana */
+  overflow-y: auto; /* Permite desplazamiento vertical si el contenido es largo */
+}
+
+.table {
+  width: 100%;
+  /* Permite que se apliquen bordes redondeados */
+  border-collapse: separate;
+  border-spacing: 0;
+  /* Borde de la tabla */
+  border: 1px solid black;
+  border-radius: 7px;
+  /* Asegura que el contenido no se desborde del borde redondeado */
+  overflow: hidden;
+}
+
+.table th,
+.table td {
+  padding: 8px;
+  text-align: left;
+  /* Si deseas bordes internos en cada celda, puedes mantenerlos */
+  border: 1px gray;
+}
+
+/* Opcional: fondo para los encabezados */
+.table th {
+  background-color: #f8f8f8;
+}
+
+.custom-header th {
+  background-color: #000 !important;
+  color: #fff !important;
+  padding: 1rem;
+}
+
+.flex {
+  display: flex;
+  flex-direction: column;
+}
+
+aside {
+  width: 300px;
+}
+
+.datos_generales {
+  width: 95%;
+  border-radius: 10px;
+}
+/*
+.tabla_pendientes {
+  width: 98%;
+  border-radius: 10px;
+  font-size: 12px;
+ 
+}
+*/
+
+.tabla_pendientes {
+  width: 95%;
+  border-radius: 10px;
+  font-size: 12px;
+  border-collapse: collapse;
+}
+
+.tabla_pendientes thead {
+  position: sticky;
+  top: 0;
+  background-color: #ffffff; /* Mantiene el fondo fijo */
+  z-index: 10;
+}
+
+.tabla_pendientes tbody {
+  display: block;
+  max-height: 250px; /* Altura máxima antes de activar el scroll */
+  overflow-y: auto; /* Scroll solo en el body */
+  width: 100%;
+}
+
+.tabla_pendientes tr {
+  display: table;
+  width: 100%;
+  table-layout: fixed; /* Mantiene el ancho de las columnas */
+}
+
+.tabla_pendientes th,
+.tabla_pendientes td {
+  padding: 8px;
+  text-align: left;
+  border: 1px solid #ddd;
+}
+
+/* Ajusta la columna "Orden" */
+.tabla_pendientes th:nth-child(1),
+.tabla_pendientes td:nth-child(1) {
+  width: 80px; /* Ajusta el ancho según lo necesario */
+  min-width: 80px;
+  max-width: 80px;
+  text-align: center;
+}
+
+@media (min-width: 800px) {
+  .flex {
+    flex-direction: row;
+  }
+}
+
+.sugerencias {
+  border: 1px solid #ccc;
+  max-width: 500px;
+  background-color: #fff;
+  position: absolute; /* Posiciona la lista debajo del input */
+  z-index: 1000;
+}
+
+.sugerencia-item {
+  padding: 5px;
+  cursor: pointer;
+}
+
+.sugerencia-item:hover {
+  background-color: #ce2929;
+}
+
+.Observaciones {
+  background-color: #d5d7c9;
+  border-collapse: separate;
+  border-spacing: 0;
+  border: 1px solid black;
+  border-radius: 7px;
+  overflow: hidden;
+  padding: 8px;
+  text-align: left;
+  margin: 16px;
+}

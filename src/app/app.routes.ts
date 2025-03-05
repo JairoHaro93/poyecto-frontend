@@ -38,6 +38,8 @@ import { mapaMorososGuard } from './guards/recuperacion/mapa-morosos.guard';
 import { gestionMorososGuard } from './guards/recuperacion/gestion-morosos.guard';
 import { miAgendaGuard } from './guards/tecnico/mi-agenda.guard';
 import { registroSoporteGuard } from './guards/tecnico/registro-soporte.guard';
+import { InfoSopComponent } from './pages/negocio/noc/info-sop/info-sop.component';
+import { AsignarTrabajosComponent } from './pages/negocio/noc/asignar-trabajos/asignar-trabajos.component';
 
 export const routes: Routes = [
   { path: '', pathMatch: 'full', redirectTo: 'login' },
@@ -140,8 +142,19 @@ export const routes: Routes = [
         canActivate: [mapeoCajasGuard],
       },
       {
+        path: 'asignar-trabajos',
+        component: AsignarTrabajosComponent,
+        canActivate: [mapeoCajasGuard],
+      },
+
+      {
         path: 'soporte-tecnico',
         component: SoporteTecnicoComponent,
+        canActivate: [soporteTecnicoGuard],
+      },
+      {
+        path: 'info-sop/:ord_ins',
+        component: InfoSopComponent,
         canActivate: [soporteTecnicoGuard],
       },
     ],

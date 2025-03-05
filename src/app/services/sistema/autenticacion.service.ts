@@ -10,6 +10,7 @@ interface CustomPayload extends JwtPayload {
   usuario_id: number;
   usuario_usuario: string;
   usuario_rol: [];
+  usuario_nombre: string;
 }
 @Injectable({
   providedIn: 'root',
