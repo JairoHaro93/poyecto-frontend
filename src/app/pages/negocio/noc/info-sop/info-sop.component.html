@@ -174,7 +174,7 @@
               type="radio"
               name="reg_sop_opc"
               id="opcion1"
-              value="EN REVISIÓN"
+              value="REVISION"
               (change)="asignarSolucion($event)"
               checked
             />
@@ -279,11 +279,7 @@
         </div>
 
         <div class="d-flex flex-column flex-wrap justify-content-center">
-          <button
-            (click)="guardarSolucion()"
-            class="btn btn-danger"
-            [routerLink]="['/home', 'noc', 'soporte-tecnico']"
-          >
+          <button (click)="guardarSolucion()" class="btn btn-danger">
             Guardar
           </button>
         </div>

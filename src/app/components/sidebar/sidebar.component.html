@@ -142,7 +142,27 @@
       data-bs-target="#noc-collapse"
       aria-expanded="false"
     >
-      <i class="fa-solid fa-circle-nodes"></i> Noc
+      <div class="d-flex justify-content-around">
+        <span class="badge-circle">
+          @if(soportesPendientesCount>0){
+          {{ soportesPendientesCount }}
+
+          }
+        </span>
+
+        <div>
+          <i class="fa-solid fa-circle-nodes"></i>
+
+          Noc
+        </div>
+
+        <span class="badge-circle">
+          @if(soportesPendientesCount>0){
+          {{ soportesPendientesCount }}
+
+          }
+        </span>
+      </div>
     </button>
     }
     <!-- OPCIONES BOTONES NOC -->

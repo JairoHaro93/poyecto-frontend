@@ -113,3 +113,17 @@ ul {
   background-color: #ce2929;
   border-radius: 10px;
 }
+
+.badge-circle {
+  display: inline-block;
+  background-color: lightgreen;
+  color: black;
+  font-size: 12px;
+  font-weight: bold;
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  line-height: 20px;
+  text-align: center;
+  margin-left: 8px;
+}

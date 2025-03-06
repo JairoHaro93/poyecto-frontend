@@ -3,7 +3,6 @@ import {
   FormControl,
   FormGroup,
   FormsModule,
-  NgForm,
   ReactiveFormsModule,
   Validators,
 } from '@angular/forms';
@@ -11,11 +10,12 @@ import { CommonModule } from '@angular/common';
 import { ClientesService } from '../../../../services/negocio_atuntaqui/clientes.service';
 import { Iclientes } from '../../../../interfaces/negocio/clientes/iclientes.interface';
 import { Isoportes } from '../../../../interfaces/negocio/soportes/isoportes.interface';
-import { JwtPayload } from 'jwt-decode';
 import { AutenticacionService } from '../../../../services/sistema/autenticacion.service';
 import { SoportesService } from '../../../../services/negocio_latacunga/soportes.service';
 import Swal from 'sweetalert2';
 import { Router } from '@angular/router';
+import { io } from 'socket.io-client';
+import { environment } from '../../../../../environments/environment';
 
 @Component({
   selector: 'app-registrosoporte',
@@ -28,27 +28,22 @@ export class RegistrosoporteComponent {
   clienteService = inject(ClientesService);
   authService = inject(AutenticacionService);
   soporteService = inject(SoportesService);
+  private router = inject(Router);
 
   clientelista: Iclientes[] = [];
   soportesPendientes: Isoportes[] = [];
-
   SoporteForm2: FormGroup;
-
-  private router = inject(Router);
-
   datosUsuario: any;
 
-  // Búsqueda por nombre
+  // Conexión con Socket.IO
+  //private socket = io('http://localhost:3000'); // Servidor WebSocket
+  private socket = io(`${environment.API_WEBSOKETS_IO}`); // Conexión con WebSocket
+
+  // Búsquedas
   busqueda: string = '';
   nombresFiltrados: string[] = [];
-
-  // Búsqueda por cédula
   busquedaCedula: string = '';
-
-  // Cliente seleccionado (se utiliza para actualizar ambos campos y obtener servicios)
   clienteSeleccionado: Iclientes | null = null;
-
-  // Servicio seleccionado a través del radio button
   servicioSeleccionado: any = null;
 
   @Output() nuevoSoporte: EventEmitter<Isoportes> = new EventEmitter();
@@ -59,9 +54,9 @@ export class RegistrosoporteComponent {
       reg_sop_observaciones: new FormControl('', []),
       cli_tel: new FormControl('', [
         Validators.required,
-        Validators.pattern('^[0-9]{10,}$'), // Solo números, mínimo 7 dígitos
+        Validators.pattern('^[0-9]{10,}$'),
       ]),
-      reg_sop_opc: new FormControl(null, [Validators.required]), // Valor por defecto
+      reg_sop_opc: new FormControl(null, [Validators.required]),
       reg_sop_registrado_por_id: new FormControl('', []),
       reg_sop_nombre: new FormControl('', []),
     });
@@ -71,10 +66,47 @@ export class RegistrosoporteComponent {
     this.clientelista = await this.clienteService.getInfoClientes();
     this.datosUsuario = this.authService.datosLogged();
     await this.cargarSoportesPendientes();
+
+    // Escuchar el evento para actualizar la lista cuando otro usuario registre un soporte
+    this.socket.on('actualizarSoportes', async () => {
+      console.log(
+        '🔄 Recibiendo actualización de soportes en RegistrosoporteComponent'
+      );
+      await this.cargarSoportesPendientes();
+    });
   }
 
   async cargarSoportesPendientes() {
     this.soportesPendientes = await this.soporteService.getAllPendientes();
+  }
+
+  async getDataForm2() {
+    if (this.SoporteForm2.valid) {
+      this.SoporteForm2.patchValue({
+        reg_sop_nombre: this.clienteSeleccionado?.nombre_completo,
+        ord_ins: this.servicioSeleccionado?.orden_instalacion || null,
+        reg_sop_registrado_por_id: this.datosUsuario.usuario_id,
+      });
+
+      console.log('Formulario válido:', this.SoporteForm2.value);
+
+      const SoporteData = this.SoporteForm2.value;
+      try {
+        const response = await this.soporteService.insert(SoporteData);
+        Swal.fire('Realizado', 'Orden de Soporte Creado', 'success');
+
+        // Emitir evento de actualización de soportes a través de WebSocket
+        this.socket.emit('soporteCreado');
+
+        await this.cargarSoportesPendientes();
+        this.resetDatosGenerales();
+      } catch ({ error }: any) {
+        Swal.fire('Error guardando soporte', error.message, 'error');
+      }
+    } else {
+      console.log('Formulario inválido, revise los campos.');
+      this.SoporteForm2.markAllAsTouched();
+    }
   }
 
   resetDatosGenerales() {
@@ -86,7 +118,7 @@ export class RegistrosoporteComponent {
     this.SoporteForm2.reset();
   }
 
-  // Actualiza las sugerencias para búsqueda por nombre
+  // Métodos de búsqueda y selección de clientes
   actualizarSugerencias() {
     const texto = this.busqueda.trim().toLowerCase();
     if (texto.length > 0) {
@@ -98,16 +130,11 @@ export class RegistrosoporteComponent {
     }
   }
 
-  // Busca cliente por nombre y actualiza ambos campos
   buscarClienteSeleccionado() {
     this.clienteSeleccionado =
       this.clientelista.find((c) => c.nombre_completo === this.busqueda) ||
       null;
-    if (
-      this.clienteSeleccionado &&
-      this.clienteSeleccionado.servicios?.length
-    ) {
-      // Se asigna el primer servicio por defecto.
+    if (this.clienteSeleccionado?.servicios?.length) {
       this.servicioSeleccionado = this.clienteSeleccionado.servicios[0];
     }
 
@@ -119,18 +146,13 @@ export class RegistrosoporteComponent {
     }
   }
 
-  // Busca cliente por cédula y actualiza ambos campos
   buscarClientePorCedula() {
     this.clienteSeleccionado =
       this.clientelista.find(
         (c) =>
           c.cedula.toLowerCase() === this.busquedaCedula.trim().toLowerCase()
       ) || null;
-    if (
-      this.clienteSeleccionado &&
-      this.clienteSeleccionado.servicios?.length
-    ) {
-      // Se asigna el primer servicio por defecto.
+    if (this.clienteSeleccionado?.servicios?.length) {
       this.servicioSeleccionado = this.clienteSeleccionado.servicios[0];
     }
 
@@ -142,7 +164,6 @@ export class RegistrosoporteComponent {
     }
   }
 
-  // Método para seleccionar el nombre de la lista personalizada
   seleccionarNombre(nombre: string): void {
     this.busqueda = nombre;
     this.buscarClienteSeleccionado();
@@ -158,30 +179,5 @@ export class RegistrosoporteComponent {
       .catch((err) => {
         console.error('Error al copiar IP: ', err);
       });
-  }
-
-  async getDataForm2() {
-    if (this.SoporteForm2.valid) {
-      this.SoporteForm2.patchValue({
-        reg_sop_nombre: this.clienteSeleccionado?.nombre_completo,
-        ord_ins: this.servicioSeleccionado.orden_instalacion,
-        reg_sop_registrado_por_id: this.datosUsuario.usuario_id,
-      });
-
-      console.log('Formulario válido:', this.SoporteForm2.value);
-
-      const SoporteData = this.SoporteForm2.value;
-      try {
-        const response = await this.soporteService.insert(SoporteData);
-        Swal.fire('Realizado', 'Orden de Soporte Creado', 'success');
-        await this.cargarSoportesPendientes();
-        this.resetDatosGenerales();
-      } catch ({ error }: any) {
-        Swal.fire('Error guardando soporte', error.message, 'error');
-      }
-    } else {
-      console.log('Formulario inválido, revise los campos.');
-      this.SoporteForm2.markAllAsTouched();
-    }
   }
 }

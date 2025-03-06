@@ -12,4 +12,5 @@ export interface Isoportes {
   reg_sop_estado: string;
   reg_sop_tec_asignado: number;
   nombre_tecnico: string;
+  reg_sop_noc_id_acepta: number;
 }

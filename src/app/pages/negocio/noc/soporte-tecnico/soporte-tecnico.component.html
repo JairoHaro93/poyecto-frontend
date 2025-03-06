@@ -13,21 +13,16 @@
         </tr>
       </thead>
       <tbody>
-        @for (item of soportesPendientes; track $index) {
+        @for (soporte of soportesPendientes; track $index) {
         <tr>
-          <td>{{ item.ord_ins }}</td>
-          <td>{{ item.reg_sop_nombre }}</td>
+          <td>{{ soporte.ord_ins }}</td>
+          <td>{{ soporte.reg_sop_nombre }}</td>
           <td>
-            {{ item.reg_sop_fecha | date : "EEEE dd MMMM YYYY hh:mm:ss" }}
+            {{ soporte.reg_sop_fecha | date : "EEEE dd MMMM YYYY hh:mm:ss" }}
           </td>
-          <td>{{ item.reg_sop_registrado_por_nombre }}</td>
+          <td>{{ soporte.reg_sop_registrado_por_nombre }}</td>
           <td>
-            <a
-              class="btn btn-warning custom-btn"
-              [routerLink]="['/home', 'noc', 'info-sop', item.ord_ins]"
-            >
-              Revisar
-            </a>
+            <button (click)="aceptarSoporte(soporte.ord_ins)">Revisar</button>
           </td>
         </tr>
         }
@@ -71,14 +66,12 @@
           <td>{{ item.reg_sop_registrado_por_nombre }}</td>
           <td>{{ item.reg_sop_estado }}</td>
           <td>
-            @if (item.reg_sop_estado!=="RESUELTO") {
             <a
               class="btn btn-warning custom-btn"
               [routerLink]="['/home', 'noc', 'info-sop', item.ord_ins]"
             >
               Revisar
             </a>
-            }
           </td>
         </tr>
         }

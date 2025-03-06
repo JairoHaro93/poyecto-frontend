@@ -37,7 +37,7 @@ export class SoportesService {
     );
   }
 
-  getbyNocId(noc_id: number) {
+  getbyNocId(noc_id: string) {
     return firstValueFrom(
       this.httpClient.get<Isoportes[]>(`${this.baseUrl}/mis-soportes/${noc_id}`)
     );

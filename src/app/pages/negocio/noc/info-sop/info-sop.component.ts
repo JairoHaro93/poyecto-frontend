@@ -1,17 +1,18 @@
 import { Component, inject } from '@angular/core';
 import { Isoportes } from '../../../../interfaces/negocio/soportes/isoportes.interface';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { SoportesService } from '../../../../services/negocio_latacunga/soportes.service';
 import { AutenticacionService } from '../../../../services/sistema/autenticacion.service';
 import { ClientesService } from '../../../../services/negocio_atuntaqui/clientes.service';
 import { Iclientes } from '../../../../interfaces/negocio/clientes/iclientes.interface';
 import { DatePipe } from '@angular/common';
 import { FormsModule, NgModel } from '@angular/forms';
+import Swal from 'sweetalert2';
 
 @Component({
   selector: 'app-info-sop',
   standalone: true,
-  imports: [RouterLink, DatePipe],
+  imports: [DatePipe],
   templateUrl: './info-sop.component.html',
   styleUrl: './info-sop.component.css',
 })
@@ -20,14 +21,14 @@ export class InfoSopComponent {
   activatedRoute = inject(ActivatedRoute);
   authService = inject(AutenticacionService);
   soporteService = inject(SoportesService);
-
+  private router = inject(Router);
   datosUsuario: any;
   datosNoc: any;
   clienteService = inject(ClientesService);
   clientelista: Iclientes[] = [];
   clienteSeleccionado: Iclientes | null = null;
   servicioSeleccionado: any = null;
-  solucionSeleccionada: any;
+  solucionSeleccionada: string = 'REVISION';
 
   async ngOnInit() {
     this.activatedRoute.params.subscribe((params: any) => {
@@ -85,11 +86,52 @@ export class InfoSopComponent {
   }
 
   async guardarSolucion() {
-    const body = { reg_sop_estado: this.solucionSeleccionada };
+    if (this.solucionSeleccionada === 'RESUELTO') {
+      Swal.fire({
+        title: '¿Estás seguro?',
+        text: 'El Soporte se ha resuelto satisfactoriamente?.',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#3085d6',
+        cancelButtonColor: '#d33',
+        confirmButtonText: 'Sí, He resuelto el soporte',
+      }).then(async (result) => {
+        if (result.isConfirmed) {
+          try {
+            const body = { reg_sop_estado: this.solucionSeleccionada };
+            await this.soporteService.actualizarSopEstado(
+              this.servicioSeleccionado.orden_instalacion,
+              body
+            );
 
-    await this.soporteService.actualizarSopEstado(
-      this.servicioSeleccionado.orden_instalacion,
-      body
-    );
+            this.router.navigateByUrl('/home/noc/soporte-tecnico');
+          } catch (error) {
+            console.error(error);
+            Swal.fire({
+              title: 'Error!',
+              text: 'Ocurrió un error al cerrar el soporte.',
+              icon: 'error',
+            });
+          }
+        } else {
+        }
+      });
+    } else {
+      try {
+        const body = { reg_sop_estado: this.solucionSeleccionada };
+        await this.soporteService.actualizarSopEstado(
+          this.servicioSeleccionado.orden_instalacion,
+          body
+        );
+        this.router.navigateByUrl('/home/noc/soporte-tecnico');
+      } catch (error) {
+        console.error(error);
+        Swal.fire({
+          title: 'Error!',
+          text: 'Ocurrió un error al cerrar el soporte.',
+          icon: 'error',
+        });
+      }
+    }
   }
 }
