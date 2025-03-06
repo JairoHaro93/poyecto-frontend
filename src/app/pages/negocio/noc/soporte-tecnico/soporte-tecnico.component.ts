@@ -18,7 +18,7 @@ import { environment } from '../../../../../environments/environment';
   styleUrl: './soporte-tecnico.component.css',
 })
 export class SoporteTecnicoComponent implements OnDestroy {
-  //private socket = io('http://localhost:3000'); // Servidor WebSocket
+  //private socket = io('http://localhost:3000'); // Conexión con WebSocket
   private socket = io(`${environment.API_WEBSOKETS_IO}`); // Conexión con WebSocket
   clienteService = inject(ClientesService);
   authService = inject(AutenticacionService);
@@ -34,6 +34,7 @@ export class SoporteTecnicoComponent implements OnDestroy {
   constructor(private dataSharingService: DataSharingService) {}
 
   async ngOnInit() {
+    //this.reproducirSonido(); // Ve
     this.datosUsuario = this.authService.datosLogged();
     let noc_id = this.datosUsuario.usuario_id;
 
@@ -50,9 +51,9 @@ export class SoporteTecnicoComponent implements OnDestroy {
       await this.cargarDatos(noc_id); // Cargar nuevos datos
 
       // Comparar listas y reproducir sonido si hay cambios
-      if (this.hayNuevosSoportes(soportesPrevios, this.soportesPendientes)) {
-        this.reproducirSonido();
-      }
+      // if (this.hayNuevosSoportes(soportesPrevios, this.soportesPendientes)) {
+      //   this.reproducirSonido();
+      // }
     });
 
     // 📢 Escuchar cuando se crea un nuevo soporte y reproducir sonido
@@ -64,9 +65,9 @@ export class SoporteTecnicoComponent implements OnDestroy {
       await this.cargarDatos(noc_id); // Cargar nuevos datos
 
       // Comparar listas y reproducir sonido si hay cambios
-      if (this.hayNuevosSoportes(soportesPrevios, this.soportesPendientes)) {
-        this.reproducirSonido();
-      }
+      // if (this.hayNuevosSoportes(soportesPrevios, this.soportesPendientes)) {
+      //   this.reproducirSonido();
+      // }
     });
   }
 
@@ -134,28 +135,41 @@ export class SoporteTecnicoComponent implements OnDestroy {
     }
   }
 
+  // hayNuevosSoportes(previos: Isoportes[], actuales: Isoportes[]): boolean {
+  //   const sonDiferentes = JSON.stringify(previos) !== JSON.stringify(actuales);
+  //   console.log('Comparando soportes:', { previos, actuales, sonDiferentes });
+  //   return sonDiferentes;
+  // }
+
   // Método para verificar si hay nuevos soportes
-  hayNuevosSoportes(previos: Isoportes[], actuales: Isoportes[]): boolean {
-    return JSON.stringify(previos) !== JSON.stringify(actuales);
-  }
+  // hayNuevosSoportes(previos: Isoportes[], actuales: Isoportes[]): boolean {
+  //   return JSON.stringify(previos) !== JSON.stringify(actuales);
+  // }
 
   // // Método para reproducir el sonido
   // reproducirSonido() {
+  //   const audio = new Audio('/assets/sonidos/notificacion.mp3'); // Ruta del archivo de sonido
+  //   audio.play().catch(error => console.error('❌ Error al reproducir sonido:', error));
+  // }
+
+  // reproducirSonido() {
+  //   console.log('VALIDACION DE REPRODUCCION DE SONIDO');
   //   const audio = new Audio(
   //     'https://www.myinstants.com/media/sounds/tuturu.mp3'
   //   );
+  //   console.log('el AUDIO va a sonar');
   //   audio
   //     .play()
   //     .catch((error) => console.error('❌ Error al reproducir sonido:', error));
   // }
 
   // Método para reproducir el sonido
-  reproducirSonido() {
-    const audio = new Audio('./sounds/ding_sop.mp3'); // Ruta del archivo de sonido
-    audio
-      .play()
-      .catch((error) => console.error('❌ Error al reproducir sonido:', error));
-  }
+  // reproducirSonido() {
+  //   const audio = new Audio('./sounds/ding_sop.mp3'); // Ruta del archivo de sonido
+  //   audio
+  //     .play()
+  //     .catch((error) => console.error('❌ Error al reproducir sonido:', error));
+  // }
 
   ngOnDestroy() {
     this.socket.disconnect();

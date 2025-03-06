@@ -23,7 +23,7 @@ interface CustomPayload extends JwtPayload {
 })
 export class SidebarComponent implements OnDestroy {
   isMenu = false;
-  //private socket = io('http://localhost:3000'); // Servidor WebSocket
+  // private socket = io('http://localhost:3000'); // Servidor WebSocket
   private socket = io(`${environment.API_WEBSOKETS_IO}`); // Conexión con WebSocket
 
   // Inyección de servicios
@@ -81,16 +81,34 @@ export class SidebarComponent implements OnDestroy {
       );
     }
 
-    // Cargar número inicial de soportes pendientes
-    await this.obtenerSoportesPendientes();
+    if (this.arrNoc.length > 0) {
+      // Cargar número inicial de soportes pendientes
 
-    // Escuchar evento de actualización desde el servidor
-    this.socket.on('actualizarSoportes', async () => {
-      console.log(
-        '🔄 Recibiendo actualización de soportes en SidebarComponent'
-      );
+      console.log(' WEBSOCKET NOC ');
       await this.obtenerSoportesPendientes();
-    });
+
+      // Escuchar evento de actualización desde el servidor
+      this.socket.on('actualizarSoportes', async () => {
+        console.log(
+          '🔄 Recibiendo actualización de soportes en SidebarComponent'
+        );
+        const soportesPrevios = this.soportesPendientesCount;
+        await this.obtenerSoportesPendientes();
+        if (this.soportesPendientesCount > soportesPrevios) {
+          this.reproducirSonido();
+        }
+      });
+
+      // Escuchar evento cuando se crea un nuevo soporte
+      this.socket.on('soporteCreado', async () => {
+        console.log('📢 Se ha creado un nuevo soporte.');
+        const soportesPrevios = this.soportesPendientesCount;
+        await this.obtenerSoportesPendientes();
+        if (this.soportesPendientesCount > soportesPrevios) {
+          this.reproducirSonido();
+        }
+      });
+    }
   }
 
   async obtenerSoportesPendientes() {
@@ -104,6 +122,13 @@ export class SidebarComponent implements OnDestroy {
     } catch (error) {
       console.error('❌ Error al obtener soportes pendientes:', error);
     }
+  }
+
+  reproducirSonido() {
+    const audio = new Audio('./sounds/ding_sop.mp3'); // Ruta del archivo de sonido
+    audio
+      .play()
+      .catch((error) => console.error('❌ Error al reproducir sonido:', error));
   }
 
   onClickLogout() {
