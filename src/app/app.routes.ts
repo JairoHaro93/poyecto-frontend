@@ -153,7 +153,7 @@ export const routes: Routes = [
         canActivate: [soporteTecnicoGuard],
       },
       {
-        path: 'info-sop/:ord_ins',
+        path: 'info-sop/:id_sop/:ord_ins',
         component: InfoSopComponent,
         canActivate: [soporteTecnicoGuard],
       },

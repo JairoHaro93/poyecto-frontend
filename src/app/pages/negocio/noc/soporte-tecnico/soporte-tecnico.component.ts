@@ -49,11 +49,6 @@ export class SoporteTecnicoComponent implements OnDestroy {
       const soportesPrevios = [...this.soportesPendientes]; // Guardar lista anterior
 
       await this.cargarDatos(noc_id); // Cargar nuevos datos
-
-      // Comparar listas y reproducir sonido si hay cambios
-      // if (this.hayNuevosSoportes(soportesPrevios, this.soportesPendientes)) {
-      //   this.reproducirSonido();
-      // }
     });
 
     // 📢 Escuchar cuando se crea un nuevo soporte y reproducir sonido
@@ -63,11 +58,6 @@ export class SoporteTecnicoComponent implements OnDestroy {
       const soportesPrevios = [...this.soportesPendientes]; // Guardar lista anterior
 
       await this.cargarDatos(noc_id); // Cargar nuevos datos
-
-      // Comparar listas y reproducir sonido si hay cambios
-      // if (this.hayNuevosSoportes(soportesPrevios, this.soportesPendientes)) {
-      //   this.reproducirSonido();
-      // }
     });
   }
 
@@ -106,7 +96,7 @@ export class SoporteTecnicoComponent implements OnDestroy {
     return `${dias} días ${horas} horas ${minutos} minutos`;
   }
 
-  async aceptarSoporte(ord_ins: number) {
+  async aceptarSoporte(id: number, ord_ins: number) {
     try {
       // Obtener datos del usuario autenticado
       this.datosUsuario = this.authService.datosLogged();
@@ -116,8 +106,8 @@ export class SoporteTecnicoComponent implements OnDestroy {
       const body = { reg_sop_noc_id_acepta: reg_sop_registrado_por_id };
 
       // Asegurar que `aceptarSoporte` se ejecute primero
-      await this.soporteService.aceptarSoporte(ord_ins, body);
-      console.log(`✅ Soporte ${ord_ins} aceptado con éxito`);
+      await this.soporteService.aceptarSoporte(id, body);
+      console.log(`✅ Soporte ${id} aceptado con éxito`);
 
       this.dataSharingService.updateData(
         this.soportesPendientes.length,
@@ -129,47 +119,11 @@ export class SoporteTecnicoComponent implements OnDestroy {
 
       console.log('📢 Soporte actualizado en tiempo real');
 
-      await this.router.navigateByUrl(`/home/noc/info-sop/${ord_ins}`);
+      await this.router.navigateByUrl(`/home/noc/info-sop/${id}/${ord_ins}`);
     } catch (error) {
       console.error('❌ Error al aceptar soporte:', error);
     }
   }
-
-  // hayNuevosSoportes(previos: Isoportes[], actuales: Isoportes[]): boolean {
-  //   const sonDiferentes = JSON.stringify(previos) !== JSON.stringify(actuales);
-  //   console.log('Comparando soportes:', { previos, actuales, sonDiferentes });
-  //   return sonDiferentes;
-  // }
-
-  // Método para verificar si hay nuevos soportes
-  // hayNuevosSoportes(previos: Isoportes[], actuales: Isoportes[]): boolean {
-  //   return JSON.stringify(previos) !== JSON.stringify(actuales);
-  // }
-
-  // // Método para reproducir el sonido
-  // reproducirSonido() {
-  //   const audio = new Audio('/assets/sonidos/notificacion.mp3'); // Ruta del archivo de sonido
-  //   audio.play().catch(error => console.error('❌ Error al reproducir sonido:', error));
-  // }
-
-  // reproducirSonido() {
-  //   console.log('VALIDACION DE REPRODUCCION DE SONIDO');
-  //   const audio = new Audio(
-  //     'https://www.myinstants.com/media/sounds/tuturu.mp3'
-  //   );
-  //   console.log('el AUDIO va a sonar');
-  //   audio
-  //     .play()
-  //     .catch((error) => console.error('❌ Error al reproducir sonido:', error));
-  // }
-
-  // Método para reproducir el sonido
-  // reproducirSonido() {
-  //   const audio = new Audio('./sounds/ding_sop.mp3'); // Ruta del archivo de sonido
-  //   audio
-  //     .play()
-  //     .catch((error) => console.error('❌ Error al reproducir sonido:', error));
-  // }
 
   ngOnDestroy() {
     this.socket.disconnect();

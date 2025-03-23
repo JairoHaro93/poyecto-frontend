@@ -54,15 +54,15 @@ export class SoportesService {
     );
   }
 
-  actualizarSopEstado(ord_ins: number, body: any): Promise<any> {
+  actualizarSopEstado(soporteId: number, body: any): Promise<any> {
     console.log(
-      `Actualizando soporte: ${this.baseUrl}/mis-soportes/solucion/${ord_ins}`,
+      `Actualizando soporte: ${this.baseUrl}/mis-soportes/solucion/${soporteId}`,
       body
     );
 
     return firstValueFrom(
       this.httpClient.put<any>(
-        `${this.baseUrl}/mis-soportes/solucion/${ord_ins}`,
+        `${this.baseUrl}/mis-soportes/solucion/${soporteId}`,
         body
       )
     );

@@ -30,41 +30,52 @@ export class InfoSopComponent {
   servicioSeleccionado: any = null;
   solucionSeleccionada: string = 'REVISION';
 
+  id_sop: any;
+
   async ngOnInit() {
     this.activatedRoute.params.subscribe((params: any) => {
-      let ord_ins = parseInt(params.ord_ins, 10); // Convertir a número
-      if (!ord_ins) {
-        console.error("Error: 'ord_ins' no válido");
+      this.id_sop = params['id_sop'];
+      const ordIns = params['ord_ins'];
+      console.log(this.id_sop, ordIns);
+
+      if (!this.id_sop) {
+        console.error("Error: 'id' no válido");
         return;
       }
-      this.cargarSoporte(ord_ins);
+
+      this.cargarSoporte(this.id_sop, ordIns);
     });
   }
 
-  async cargarSoporte(ord_ins: number) {
+  async cargarSoporte(id_sop: number, ord_ins: number): Promise<void> {
+    console.log('ID Soporte:', id_sop, 'Orden Instalación:', ord_ins);
+
     try {
       // Obtener datos del usuario autenticado
       this.datosUsuario = this.authService.datosLogged();
-      let reg_sop_registrado_por_id = this.datosUsuario.usuario_id;
+
+      const reg_sop_registrado_por_id = this.datosUsuario?.usuario_id;
+      if (!reg_sop_registrado_por_id) {
+        throw new Error('No se pudo obtener el ID del usuario autenticado.');
+      }
 
       // Crear el objeto `body` con los datos requeridos
       const body = { reg_sop_noc_id_acepta: reg_sop_registrado_por_id };
 
       // Asegurar que `aceptarSoporte` se ejecute primero
-      const response = await this.soporteService.aceptarSoporte(ord_ins, body);
-      console.log('Soporte aceptado con éxito:', response);
+      const response = await this.soporteService.aceptarSoporte(id_sop, body);
+      console.log('✅ Soporte aceptado con éxito:', response);
 
       // Después de aceptar el soporte, obtener los datos del soporte
-      this.soporte = await this.soporteService.getbyOrdnIns(ord_ins);
+      this.soporte = await this.soporteService.getbyOrdnIns(id_sop);
+      console.log('📄 Datos del soporte obtenidos:', this.soporte);
 
+      // Obtener información del servicio usando `ord_ins`
       this.servicioSeleccionado =
         await this.clienteService.getInfoServicioByOrdId(ord_ins);
-
-      console.log(this.servicioSeleccionado);
-
-      console.log('Datos del soporte obtenidos:', this.soporte);
+      console.log('📡 Servicio seleccionado:', this.servicioSeleccionado);
     } catch (error) {
-      console.error('Error al aceptar soporte:', error);
+      console.error('❌ Error al cargar soporte:', error);
     }
   }
 
@@ -99,10 +110,7 @@ export class InfoSopComponent {
         if (result.isConfirmed) {
           try {
             const body = { reg_sop_estado: this.solucionSeleccionada };
-            await this.soporteService.actualizarSopEstado(
-              this.servicioSeleccionado.orden_instalacion,
-              body
-            );
+            await this.soporteService.actualizarSopEstado(this.id_sop, body);
 
             this.router.navigateByUrl('/home/noc/soporte-tecnico');
           } catch (error) {
@@ -119,10 +127,7 @@ export class InfoSopComponent {
     } else {
       try {
         const body = { reg_sop_estado: this.solucionSeleccionada };
-        await this.soporteService.actualizarSopEstado(
-          this.servicioSeleccionado.orden_instalacion,
-          body
-        );
+        await this.soporteService.actualizarSopEstado(this.id_sop, body);
         this.router.navigateByUrl('/home/noc/soporte-tecnico');
       } catch (error) {
         console.error(error);

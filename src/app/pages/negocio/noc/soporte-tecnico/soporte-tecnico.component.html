@@ -22,7 +22,9 @@
           </td>
           <td>{{ soporte.reg_sop_registrado_por_nombre }}</td>
           <td>
-            <button (click)="aceptarSoporte(soporte.ord_ins)">Revisar</button>
+            <button (click)="aceptarSoporte(soporte.id, soporte.ord_ins)">
+              Revisarid
+            </button>
           </td>
         </tr>
         }
@@ -68,7 +70,7 @@
           <td>
             <a
               class="btn btn-warning custom-btn"
-              [routerLink]="['/home', 'noc', 'info-sop', item.ord_ins]"
+              [routerLink]="['/home', 'noc', 'info-sop', item.id, item.ord_ins]"
             >
               Revisar
             </a>
