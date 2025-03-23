@@ -143,12 +143,11 @@
       aria-expanded="false"
     >
       <div class="d-flex justify-content-around">
+        @if(soportesPendientesCount>0){
         <span class="badge-circle">
-          @if(soportesPendientesCount>0){
           {{ soportesPendientesCount }}
-
-          }
         </span>
+        }
 
         <div>
           <i class="fa-solid fa-circle-nodes"></i>
@@ -156,12 +155,11 @@
           Noc
         </div>
 
+        @if(soportesPendientesCount>0){
         <span class="badge-circle">
-          @if(soportesPendientesCount>0){
           {{ soportesPendientesCount }}
-
-          }
         </span>
+        }
       </div>
     </button>
     }
