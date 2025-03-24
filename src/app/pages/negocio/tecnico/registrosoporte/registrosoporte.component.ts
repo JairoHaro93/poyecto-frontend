@@ -36,7 +36,7 @@ export class RegistrosoporteComponent {
   datosUsuario: any;
 
   // Conexión con Socket.IO
-  //private socket = io('http://localhost:3000'); // Servidor WebSocket
+
   private socket = io(`${environment.API_WEBSOKETS_IO}`); // Conexión con WebSocket
 
   // Búsquedas
@@ -51,7 +51,7 @@ export class RegistrosoporteComponent {
   constructor() {
     this.SoporteForm2 = new FormGroup({
       ord_ins: new FormControl(null, []),
-      reg_sop_observaciones: new FormControl('', []),
+      reg_sop_observaciones: new FormControl(null, []),
       cli_tel: new FormControl('', [
         Validators.required,
         Validators.pattern('^[0-9]{10,}$'),
