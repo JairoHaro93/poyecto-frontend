@@ -31,9 +31,9 @@ export class SoportesService {
     );
   }
 
-  getbyOrdnIns(ord_ins: number): Promise<Isoportes> {
+  getbyId(id_sop: number): Promise<Isoportes> {
     return firstValueFrom(
-      this.httpClient.get<Isoportes>(`${this.baseUrl}/${ord_ins}`)
+      this.httpClient.get<Isoportes>(`${this.baseUrl}/${id_sop}`)
     );
   }
 

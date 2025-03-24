@@ -67,7 +67,7 @@ export class InfoSopComponent {
       console.log('✅ Soporte aceptado con éxito:', response);
 
       // Después de aceptar el soporte, obtener los datos del soporte
-      this.soporte = await this.soporteService.getbyOrdnIns(id_sop);
+      this.soporte = await this.soporteService.getbyId(id_sop);
       console.log('📄 Datos del soporte obtenidos:', this.soporte);
 
       // Obtener información del servicio usando `ord_ins`
