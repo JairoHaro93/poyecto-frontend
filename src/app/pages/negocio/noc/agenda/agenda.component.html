@@ -1,0 +1,199 @@
+<main>
+  <section class="container mt-3"></section>
+
+  <div class="row m-2">
+    <div class="col-lg-8">
+      <div class="d-flex align-items-center mb-3 gap-2">
+        <p class="text-muted small mb-0">
+          <strong>{{ nombreDelDia }}</strong>
+        </p>
+        <input
+          id="fechaAgenda"
+          type="date"
+          class="form-control form-control-sm w-auto"
+          [(ngModel)]="fechaSeleccionada"
+          (change)="onFechaChange()"
+        />
+      </div>
+
+      <table
+        class="table table-bordered table-sm text-center align-middle small"
+      >
+        <thead class="table-light">
+          <tr>
+            <th>Horario</th>
+            <th>F17 FURGONETA</th>
+            <th>F18 CAMIONETA</th>
+            <th>F19 CAMION</th>
+            <th>F20 MOTO ROJA</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (hora of horarios; track hora) {
+          <tr>
+            <td class="py-1">{{ hora }} - {{ getFinHora(hora) }}</td>
+            @for (vehiculo of vehiculos; track vehiculo) {
+            <td
+              class="py-1 text-truncate"
+              style="max-width: 120px"
+              [ngClass]="
+                getEstadoClass(
+                  agendaAsignada[hora][vehiculo.codigo]?.reg_sop_estado
+                )
+              "
+            >
+              <div *ngIf="agendaAsignada[hora][vehiculo.codigo]">
+                <i class="bi bi-person-fill me-1"></i>
+                {{ agendaAsignada[hora][vehiculo.codigo]?.reg_sop_nombre }}
+              </div>
+            </td>
+            }
+          </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <div class="col-lg-4">
+      <table class="table table-bordered table-striped table-sm small">
+        <thead class="table-primary text-center">
+          <tr>
+            <th colspan="4">SOPORTES</th>
+          </tr>
+          <tr>
+            <th>Nombre</th>
+            <th>Estado</th>
+            <th>Coordenadas</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (item of soportesTec; track $index) {
+          <tr>
+            <td class="py-1">{{ item.reg_sop_nombre }}</td>
+            <td class="py-1">{{ item.reg_sop_estado }}</td>
+            <td class="py-1">{{ item.reg_sop_coordenadas }}</td>
+            <td class="py-1">
+              <button class="btn btn-primary btn-sm" (click)="abrirModal(item)">
+                <i class="bi bi-pencil-square me-1"></i> Asignar
+              </button>
+            </td>
+          </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </div>
+</main>
+
+<!-- Modal de Asignación -->
+<div
+  class="modal fade"
+  id="asignarModal"
+  tabindex="-1"
+  aria-labelledby="asignarModalLabel"
+  aria-hidden="true"
+>
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="asignarModalLabel">Asignar Horario</h5>
+        <button
+          type="button"
+          class="btn-close"
+          data-bs-dismiss="modal"
+          aria-label="Cerrar"
+        ></button>
+      </div>
+      <div class="modal-body small">
+        <p>
+          <strong>Soporte:</strong> {{ soporteSeleccionado?.reg_sop_nombre }}
+        </p>
+
+        <div class="mb-3">
+          <label for="tecnico" class="form-label">Técnico encargado:</label>
+          <select
+            id="tecnico"
+            class="form-select form-select-sm"
+            [(ngModel)]="idTecnico"
+            (change)="seleccionarTecnico()"
+          >
+            <option value="0" disabled selected>Seleccione un técnico</option>
+            @for (tecnico of tecnicosList; track tecnico) {
+            <option [value]="tecnico.id">
+              {{ tecnico.nombre }}
+            </option>
+            }
+          </select>
+        </div>
+
+        <div class="mb-3">
+          <label for="fechaSoporte" class="form-label"
+            >Fecha de ejecución del soporte:</label
+          >
+          <input
+            id="fechaSoporte"
+            type="date"
+            class="form-control form-control-sm"
+            [(ngModel)]="fechaSoporteSeleccionada"
+          />
+        </div>
+
+        <div class="mb-3">
+          <label for="horaInicio" class="form-label">Hora de inicio:</label>
+          <select
+            id="horaInicio"
+            class="form-select form-select-sm"
+            [(ngModel)]="horaInicio"
+          >
+            @for (hora of horarios; track hora) {
+            <option [value]="hora">{{ hora }}</option>
+            }
+          </select>
+        </div>
+
+        <div class="mb-3">
+          <label for="horaFin" class="form-label">Hora de fin:</label>
+          <select
+            id="horaFin"
+            class="form-select form-select-sm"
+            [(ngModel)]="horaFin"
+          >
+            @for (hora of horarios; track hora) {
+            <option [value]="hora">{{ hora }}</option>
+            }
+          </select>
+        </div>
+
+        <div class="mb-3">
+          <label for="vehiculo" class="form-label">Seleccione vehículo:</label>
+          <select
+            id="vehiculo"
+            class="form-select form-select-sm"
+            [(ngModel)]="vehiculoSeleccionado"
+          >
+            @for (vehiculo of vehiculos; track vehiculo.codigo) {
+            <option [value]="vehiculo.codigo">{{ vehiculo.nombre }}</option>
+            }
+          </select>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button
+          type="button"
+          class="btn btn-secondary btn-sm"
+          data-bs-dismiss="modal"
+        >
+          Cancelar
+        </button>
+        <button
+          type="button"
+          class="btn btn-success btn-sm"
+          (click)="confirmarAsignacion()"
+        >
+          Asignar
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

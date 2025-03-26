@@ -12,7 +12,7 @@ import Swal from 'sweetalert2';
 @Component({
   selector: 'app-info-sop',
   standalone: true,
-  imports: [DatePipe],
+  imports: [DatePipe, FormsModule],
   templateUrl: './info-sop.component.html',
   styleUrl: './info-sop.component.css',
 })
@@ -29,6 +29,7 @@ export class InfoSopComponent {
   clienteSeleccionado: Iclientes | null = null;
   servicioSeleccionado: any = null;
   solucionSeleccionada: string = 'REVISION';
+  detalleSolucion: string = '';
 
   id_sop: any;
 
@@ -51,26 +52,27 @@ export class InfoSopComponent {
     console.log('ID Soporte:', id_sop, 'Orden Instalación:', ord_ins);
 
     try {
-      // Obtener datos del usuario autenticado
       this.datosUsuario = this.authService.datosLogged();
-
       const reg_sop_registrado_por_id = this.datosUsuario?.usuario_id;
+
       if (!reg_sop_registrado_por_id) {
         throw new Error('No se pudo obtener el ID del usuario autenticado.');
       }
 
-      // Crear el objeto `body` con los datos requeridos
       const body = { reg_sop_noc_id_acepta: reg_sop_registrado_por_id };
 
-      // Asegurar que `aceptarSoporte` se ejecute primero
       const response = await this.soporteService.aceptarSoporte(id_sop, body);
       console.log('✅ Soporte aceptado con éxito:', response);
 
-      // Después de aceptar el soporte, obtener los datos del soporte
       this.soporte = await this.soporteService.getbyId(id_sop);
       console.log('📄 Datos del soporte obtenidos:', this.soporte);
 
-      // Obtener información del servicio usando `ord_ins`
+      // Asignar estado y detalle guardados
+      this.solucionSeleccionada = this.soporte?.reg_sop_estado || 'REVISION';
+
+      console.log('estado', this.solucionSeleccionada);
+      this.detalleSolucion = this.soporte?.reg_sop_sol_det || '';
+
       this.servicioSeleccionado =
         await this.clienteService.getInfoServicioByOrdId(ord_ins);
       console.log('📡 Servicio seleccionado:', this.servicioSeleccionado);
@@ -97,21 +99,42 @@ export class InfoSopComponent {
   }
 
   async guardarSolucion() {
+    if (!this.solucionSeleccionada) {
+      Swal.fire({
+        title: 'Advertencia',
+        text: 'Debes seleccionar un estado de solución.',
+        icon: 'warning',
+      });
+      return;
+    }
+
+    if (!this.detalleSolucion || !this.detalleSolucion.trim()) {
+      Swal.fire({
+        title: 'Advertencia',
+        text: 'La descripción de la solución no puede estar vacía.',
+        icon: 'warning',
+      });
+      return;
+    }
+
+    const body = {
+      reg_sop_estado: this.solucionSeleccionada,
+      reg_sop_sol_det: this.detalleSolucion.trim(),
+    };
+
     if (this.solucionSeleccionada === 'RESUELTO') {
       Swal.fire({
         title: '¿Estás seguro?',
-        text: 'El Soporte se ha resuelto satisfactoriamente?.',
+        text: '¿El soporte se ha resuelto satisfactoriamente?',
         icon: 'warning',
         showCancelButton: true,
         confirmButtonColor: '#3085d6',
         cancelButtonColor: '#d33',
-        confirmButtonText: 'Sí, He resuelto el soporte',
+        confirmButtonText: 'Sí, he resuelto el soporte',
       }).then(async (result) => {
         if (result.isConfirmed) {
           try {
-            const body = { reg_sop_estado: this.solucionSeleccionada };
             await this.soporteService.actualizarSopEstado(this.id_sop, body);
-
             this.router.navigateByUrl('/home/noc/soporte-tecnico');
           } catch (error) {
             console.error(error);
@@ -121,12 +144,10 @@ export class InfoSopComponent {
               icon: 'error',
             });
           }
-        } else {
         }
       });
     } else {
       try {
-        const body = { reg_sop_estado: this.solucionSeleccionada };
         await this.soporteService.actualizarSopEstado(this.id_sop, body);
         this.router.navigateByUrl('/home/noc/soporte-tecnico');
       } catch (error) {

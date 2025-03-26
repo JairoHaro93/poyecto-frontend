@@ -13,4 +13,6 @@ export interface Isoportes {
   reg_sop_tec_asignado: number;
   nombre_tecnico: string;
   reg_sop_noc_id_acepta: number;
+  reg_sop_sol_det: string;
+  reg_sop_coordenadas: string;
 }

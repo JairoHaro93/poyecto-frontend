@@ -167,10 +167,23 @@
 
     <div class="collapse" id="noc-collapse">
       <ul class="btn-toggle-nav list-unstyled fw-normal pb-1 small">
-        @if (arrNoc.includes("NInforme Diario")) {
+        @if (arrNoc.includes("NAgenda")) {
+        <li (click)="onClickMenu()" [routerLink]="['/home/noc/agenda']">
+          Agenda
+        </li>
+
+        } @if (arrNoc.includes("NSoporte Tecnico")) {
+        <li
+          (click)="onClickMenu()"
+          [routerLink]="['/home/noc/soporte-tecnico']"
+        >
+          Soporte Tecnico
+        </li>
+        } @if (arrNoc.includes("NInforme Diario")) {
         <li (click)="onClickMenu()" [routerLink]="['/home/noc/informediario']">
           Informe diario
         </li>
+
         } @if (arrNoc.includes("NMapeo Cajas")) {
         <li (click)="onClickMenu()" [routerLink]="['/home/noc/mapeo-cajas']">
           Mapeo cajas
@@ -181,13 +194,6 @@
           [routerLink]="['/home/noc/asignar-trabajos']"
         >
           Asignar Trabajos
-        </li>
-        } @if (arrNoc.includes("NSoporte Tecnico")) {
-        <li
-          (click)="onClickMenu()"
-          [routerLink]="['/home/noc/soporte-tecnico']"
-        >
-          Soporte Tecnico
         </li>
         }
       </ul>
