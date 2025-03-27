@@ -1,5 +1,5 @@
 import { inject, Injectable } from '@angular/core';
-import { lastValueFrom } from 'rxjs';
+import { firstValueFrom, lastValueFrom } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { HttpClient } from '@angular/common/http';
 import { Iagenda } from '../../interfaces/negocio/agenda/iagenda.interface';
@@ -17,10 +17,15 @@ export class AgendaService {
     private httpClient = inject(HttpClient);
 
 
-    //metodos
+    //METODO OBTENER LA AGENDA POR FECHA
     getAgendaByDate(fecha_age:string) {
-    this.httpClient.get<Iagenda[]>(`${this.baseUrl}/mis-soportes/${fecha_age}`)
+   return firstValueFrom( this.httpClient.get<Iagenda[]>(`${this.baseUrl}/${fecha_age}`))
     }
 
+
+    //METODO CREAR TRABAJO EN AGENDA
+    insertTrabajoEnAgenda(body: Iagenda): Promise<Iagenda> {
+    return firstValueFrom(this.httpClient.post<Iagenda>(`${this.baseUrl}/crear`,body));
+  }
 
 }

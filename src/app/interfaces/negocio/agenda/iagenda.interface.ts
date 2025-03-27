@@ -4,7 +4,7 @@ export interface Iagenda {
   age_coordenadas:string
   age_hora_inicio:string
   age_hora_fin:string
-  age_fecha:Date
+  age_fecha:string
   age_vehiculo:string
   age_tecnico:string
 }

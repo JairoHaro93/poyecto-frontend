@@ -1,3 +1,4 @@
+/* === Tabla === */
 table {
   border-collapse: collapse;
   width: 100%;
@@ -14,14 +15,10 @@ thead th {
   background-color: #f5f5f5;
 }
 
+/* === Botones === */
 td button {
   font-size: 0.75rem;
   padding: 2px 6px;
-}
-
-.modal-content {
-  border-radius: 12px;
-  box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
 }
 
 .btn-success {
@@ -33,6 +30,41 @@ td button {
   background-color: #218838;
 }
 
+.boton-soportes {
+  position: relative;
+}
+
+/* === Modal === */
+.modal-content {
+  border-radius: 12px;
+  box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
+}
+
+/* === Celdas de Agenda === */
+.agenda-table {
+  table-layout: fixed;
+  width: 100%;
+}
+
+.col-horario {
+  width: 100px;
+  white-space: nowrap;
+}
+
+.celda-agenda {
+  max-width: 120px;
+  cursor: pointer;
+}
+
+.celda-soporte {
+  padding: 0.25rem 0.5rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  vertical-align: middle;
+}
+
+/* === Estados === */
 .bg-warning {
   background-color: #fff3cd !important;
 }
@@ -53,10 +85,6 @@ td button {
   background-color: #f8f9fa !important;
 }
 
-.text-muted {
-  color: #6c757d !important;
-}
-
 .bg-orange {
   background-color: orange !important;
   color: white;
@@ -66,12 +94,16 @@ td button {
   background-color: #007bff !important;
   color: white;
 }
-/* Animación suave para cambios de celda */
+
+/* === Transiciones / Iconos === */
 td {
   transition: background-color 1s ease, color 0.4s ease;
 }
 
-/* Icono dentro de celda */
 td i {
   font-size: 0.9rem;
+}
+
+.text-muted {
+  color: #6c757d !important;
 }

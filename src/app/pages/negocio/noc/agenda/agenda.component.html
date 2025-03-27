@@ -1,27 +1,39 @@
-<main>
-  <section class="container mt-3"></section>
+<main class="container mt-3">
+
+
+  <div class="d-flex justify-content-between align-items-center mb-3 px-2 flex-wrap pe-3">
+    <div class="d-flex align-items-center gap-2 mb-2 mb-lg-0">
+      <p class="text-muted small mb-0">
+        <strong>{{ nombreDelDia }}</strong>
+      </p>
+      <input
+        id="fechaAgenda"
+        type="date"
+        class="form-control form-control-sm w-auto"
+        [(ngModel)]="fechaSeleccionada"
+        (change)="onFechaChange()"
+      />
+    </div>
+
+    <button
+      class="btn btn-outline-primary btn-sm boton-soportes "
+      [disabled]="soportesTec.length === 0"
+      data-bs-toggle="modal"
+      data-bs-target="#modalSoportes"
+    >
+      Mostrar Soportes
+      <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger ">
+        {{ soportesTec.length }}
+      </span>
+    </button>
+  </div>
 
   <div class="row m-2">
-    <div class="col-lg-8">
-      <div class="d-flex align-items-center mb-3 gap-2">
-        <p class="text-muted small mb-0">
-          <strong>{{ nombreDelDia }}</strong>
-        </p>
-        <input
-          id="fechaAgenda"
-          type="date"
-          class="form-control form-control-sm w-auto"
-          [(ngModel)]="fechaSeleccionada"
-          (change)="onFechaChange()"
-        />
-      </div>
-
-      <table
-        class="table table-bordered table-sm text-center align-middle small"
-      >
+    <div class="col-lg-12">
+      <table class="table table-bordered table-sm text-center align-middle small agenda-table">
         <thead class="table-light">
           <tr>
-            <th>Horario</th>
+            <th class="col-horario">Horario</th>
             <th>F17 FURGONETA</th>
             <th>F18 CAMIONETA</th>
             <th>F19 CAMION</th>
@@ -30,61 +42,37 @@
         </thead>
         <tbody>
           @for (hora of horarios; track hora) {
-          <tr>
-            <td class="py-1">{{ hora }} - {{ getFinHora(hora) }}</td>
-            @for (vehiculo of vehiculos; track vehiculo) {
-            <td
-              class="py-1 text-truncate"
-              style="max-width: 120px"
-              [ngClass]="
-                getEstadoClass(
-                  agendaAsignada[hora][vehiculo.codigo]?.reg_sop_estado
-                )
-              "
-            >
-              <div *ngIf="agendaAsignada[hora][vehiculo.codigo]">
-                <i class="bi bi-person-fill me-1"></i>
-                {{ agendaAsignada[hora][vehiculo.codigo]?.reg_sop_nombre }}
-              </div>
-            </td>
-            }
-          </tr>
-          }
-        </tbody>
-      </table>
-    </div>
-
-    <div class="col-lg-4">
-      <table class="table table-bordered table-striped table-sm small">
-        <thead class="table-primary text-center">
-          <tr>
-            <th colspan="4">SOPORTES</th>
-          </tr>
-          <tr>
-            <th>Nombre</th>
-            <th>Estado</th>
-            <th>Coordenadas</th>
-            <th>Acciones</th>
-          </tr>
-        </thead>
-        <tbody>
-          @for (item of soportesTec; track $index) {
-          <tr>
-            <td class="py-1">{{ item.reg_sop_nombre }}</td>
-            <td class="py-1">{{ item.reg_sop_estado }}</td>
-            <td class="py-1">{{ item.reg_sop_coordenadas }}</td>
-            <td class="py-1">
-              <button class="btn btn-primary btn-sm" (click)="abrirModal(item)">
-                <i class="bi bi-pencil-square me-1"></i> Asignar
-              </button>
-            </td>
-          </tr>
+            <tr>
+              <td class="col-horario text-nowrap">
+                {{ hora }} - {{ getFinHora(hora) }}
+              </td>
+              @for (vehiculo of vehiculos; track vehiculo.codigo) {
+                @if (renderAgenda[hora][vehiculo.codigo].mostrar) {
+                  <td
+                    [attr.rowspan]="renderAgenda[hora][vehiculo.codigo].rowspan"
+                    class="celda-agenda celda-soporte text-truncate align-middle"
+                    [ngClass]="getEstadoClass(renderAgenda[hora][vehiculo.codigo].soporte?.reg_sop_estado)"
+                    (click)="abrirEdicionDesdeTabla(hora, vehiculo.codigo)"
+                  >
+                    <div *ngIf="renderAgenda[hora][vehiculo.codigo].soporte">
+                      <i class="bi bi-person-fill me-1"></i>
+                      {{ renderAgenda[hora][vehiculo.codigo].soporte?.reg_sop_nombre }}<br />
+                      <small class="bi bi-person-fill me-1">
+                        {{ renderAgenda[hora][vehiculo.codigo].soporte?.nombre_tecnico }}
+                      </small>
+                    </div>
+                  </td>
+                }
+              }
+            </tr>
           }
         </tbody>
       </table>
     </div>
   </div>
 </main>
+
+
 
 <!-- Modal de Asignación -->
 <div
@@ -128,9 +116,9 @@
         </div>
 
         <div class="mb-3">
-          <label for="fechaSoporte" class="form-label"
-            >Fecha de ejecución del soporte:</label
-          >
+          <label for="fechaSoporte" class="form-label">
+            Fecha de ejecución del soporte:
+          </label>
           <input
             id="fechaSoporte"
             type="date"
@@ -193,6 +181,64 @@
         >
           Asignar
         </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal de Soportes -->
+<div
+  class="modal fade"
+  id="modalSoportes"
+  tabindex="-1"
+  aria-labelledby="modalSoportesLabel"
+  aria-hidden="true"
+>
+  <div class="modal-dialog modal-xl">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="modalSoportesLabel">Soportes disponibles para asignar</h5>
+        <button
+          type="button"
+          class="btn-close"
+          data-bs-dismiss="modal"
+          aria-label="Cerrar"
+        ></button>
+      </div>
+      <div class="modal-body">
+        <table class="table table-bordered table-striped table-sm small">
+          <thead class="table-primary text-center">
+            <tr>
+              <th>Nombre</th>
+              <th>Estado</th>
+              <th>Coordenadas</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            @if (soportesTec.length > 0) {
+              @for (item of soportesTec; track item.id) {
+                <tr>
+                  <td class="py-1">{{ item.reg_sop_nombre }}</td>
+                  <td class="py-1">{{ item.reg_sop_estado }}</td>
+                  <td class="py-1">{{ item.reg_sop_coordenadas }}</td>
+                  <td class="py-1 text-center">
+                    <button
+                      class="btn btn-primary btn-sm"
+                      (click)="abrirModal(item); cerrarModalSoportes()"
+                    >
+                      <i class="bi bi-pencil-square me-1"></i> Asignar
+                    </button>
+                  </td>
+                </tr>
+              }
+            } @else {
+              <tr>
+                <td colspan="4" class="text-center text-muted">No hay soportes disponibles</td>
+              </tr>
+            }
+          </tbody>
+        </table>
       </div>
     </div>
   </div>
