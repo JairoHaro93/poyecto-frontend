@@ -48,20 +48,54 @@
               </td>
               @for (vehiculo of vehiculos; track vehiculo.codigo) {
                 @if (renderAgenda[hora][vehiculo.codigo].mostrar) {
+                 
+                 
+                 
                   <td
-                    [attr.rowspan]="renderAgenda[hora][vehiculo.codigo].rowspan"
-                    class="celda-agenda celda-soporte text-truncate align-middle"
-                    [ngClass]="getEstadoClass(renderAgenda[hora][vehiculo.codigo].soporte?.reg_sop_estado)"
-                    (click)="abrirEdicionDesdeTabla(hora, vehiculo.codigo)"
-                  >
-                    <div *ngIf="renderAgenda[hora][vehiculo.codigo].soporte">
-                      <i class="bi bi-person-fill me-1"></i>
-                      {{ renderAgenda[hora][vehiculo.codigo].soporte?.reg_sop_nombre }}<br />
-                      <small class="bi bi-person-fill me-1">
-                        {{ renderAgenda[hora][vehiculo.codigo].soporte?.nombre_tecnico }}
-                      </small>
-                    </div>
-                  </td>
+  [attr.rowspan]="renderAgenda[hora][vehiculo.codigo].rowspan"
+  class="celda-agenda celda-soporte text-truncate align-middle position-relative"
+  [ngClass]="getEstadoClass(renderAgenda[hora][vehiculo.codigo].soporte?.reg_sop_estado)"
+>
+  <div *ngIf="renderAgenda[hora][vehiculo.codigo].soporte" class="celda-contenido d-flex flex-column h-100 justify-content-between">
+    
+    <!-- Botones (EDITAR + VISTA) -->
+    <div class="d-flex flex-column justify-content-start h-100 position-relative">
+      <!-- Botón EDITAR (esquina superior derecha) -->
+      <button
+        class="btn btn-editar-badge position-absolute"
+        (click)="abrirEdicionDesdeTabla(hora, vehiculo.codigo)"
+      >
+        <i class="fas fa-pencil-alt fa-lg"></i>
+      </button>
+    
+      <!-- Botón VISTA (esquina superior izquierda) -->
+      <button
+        class="btn btn-vista-badge position-absolute"
+        (click)="abrirVistaDetalle(hora, vehiculo.codigo)"
+      >
+        <i class="fas fa-eye fa-lg"></i>
+      </button>
+    
+      <!-- Contenido principal (centrado con margen superior para dejar espacio a los botones) -->
+     <!-- Contenido principal -->
+<div class="contenido-celda  px-4 text-center">
+  <i class="bi bi-person-fill me-1"></i>
+  {{ renderAgenda[hora][vehiculo.codigo].soporte?.reg_sop_nombre }}<br />
+  <small class="text-muted">
+    {{ renderAgenda[hora][vehiculo.codigo].soporte?.nombre_tecnico }}
+  </small>
+</div>
+
+    </div>
+    
+
+    
+  </div>
+</td>
+
+                
+                
+
                 }
               }
             </tr>
@@ -239,6 +273,29 @@
             }
           </tbody>
         </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+
+<!-- Modal de Vista Detallada (centrado) -->
+<div class="modal fade" id="modalVistaSoporte" tabindex="-1" aria-labelledby="modalVistaSoporteLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header bg-danger text-white py-2">
+        <h6 class="modal-title" id="modalVistaSoporteLabel">Detalle del Soporte</h6>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+      </div>
+      <div class="modal-body small">
+        <p><strong>📛 Nombre:</strong><br>{{ soporteVista?.reg_sop_nombre }}</p>
+        <p><strong>👷 Técnico:</strong><br>{{ soporteVista?.nombre_tecnico }}</p>
+        <p><strong>📍 Coordenadas:</strong><br>{{ soporteVista?.reg_sop_coordenadas }}</p>
+
+
+
+        <!-- Agrega aquí más información si lo deseas -->
       </div>
     </div>
   </div>

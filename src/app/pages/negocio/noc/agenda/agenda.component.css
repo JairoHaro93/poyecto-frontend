@@ -8,7 +8,7 @@ th,
 td {
   text-align: center;
   vertical-align: middle;
-  padding: 8px;
+  padding: 1px;
 }
 
 thead th {
@@ -53,16 +53,25 @@ td button {
 
 .celda-agenda {
   max-width: 120px;
-  cursor: pointer;
+
 }
 
 .celda-soporte {
-  padding: 0.25rem 0.5rem;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
   vertical-align: middle;
+  word-break: break-word;
+  white-space: normal;
+  line-height: 1.2;
+  max-width: 120px;
 }
+
+.contenido-celda {
+  white-space: normal;
+  word-break: break-word;
+  padding: 0rem 2.5rem; /* espacio horizontal sin afectar botones */
+  text-align: center;
+}
+
+
 
 /* === Estados === */
 .bg-warning {
@@ -104,6 +113,51 @@ td i {
   font-size: 0.9rem;
 }
 
+
+
 .text-muted {
-  color: #6c757d !important;
+  color: #ffffff !important;
+}
+
+
+.btn-editar-badge {
+  top: 0;
+  right: 0;
+  font-size: 1.2rem;
+  
+  border-radius: 50%;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  z-index: 10;
+}
+
+.btn-vista-badge {
+  top: 0;
+  left: 0;
+  font-size: 1.2rem;
+  
+  border-radius: 50%;
+  background-color: #17a2b8;
+  color: white;
+  border: none;
+  z-index: 10;
+}
+
+
+
+.cuadro-detalle-idea .card {
+  border: 2px dashed red; /* DEBUG */
+}
+
+/* Pico */
+.cuadro-detalle-idea .detalle-pico {
+  position: absolute;
+  bottom: -10px;
+  left: 20px;
+  width: 0;
+  height: 0;
+  border-left: 8px solid transparent;
+  border-right: 8px solid transparent;
+  border-top: 10px solid #fffbea;
 }

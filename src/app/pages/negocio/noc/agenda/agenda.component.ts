@@ -31,6 +31,9 @@ export class AgendaComponent {
   fechaSeleccionada: string = this.obtenerFechaHoy();
   nombreDelDia: string = this.obtenerNombreDelDia(this.fechaSeleccionada);
 
+  soporteVista: Isoportes | null = null;
+
+
   soporteSeleccionado: Isoportes | null = null;
   horaInicio: string = '';
   horaFin: string = '';
@@ -304,4 +307,15 @@ export class AgendaComponent {
       }
     }
   }
+ 
+  abrirVistaDetalle(hora: string, vehiculo: string) {
+    const soporte = this.agendaAsignada[hora][vehiculo];
+    if (!soporte) return;
+  
+    this.soporteVista = soporte;
+  
+    const modal = new bootstrap.Modal(document.getElementById('modalVistaSoporte'));
+    modal.show();
+  }
+ 
 }
