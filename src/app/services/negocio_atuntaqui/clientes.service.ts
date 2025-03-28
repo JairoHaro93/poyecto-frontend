@@ -23,6 +23,17 @@ export class ClientesService {
   }
 
   getInfoServicioByOrdId(ord_ins: number) {
-    return lastValueFrom(this.httpClient.get<[]>(`${this.baseUrl}/${ord_ins}`));
+    return lastValueFrom(
+      this.httpClient.get<{
+        nombre_completo: string;
+        coordenadas: string;
+        telefonos: string;
+        direccion: string;
+        referencia: string;
+        plan_nombre: string;
+        [key: string]: any; // para permitir campos adicionales
+      }>(`${this.baseUrl}/${ord_ins}`)
+    );
   }
+  
 }

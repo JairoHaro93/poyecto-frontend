@@ -23,9 +23,16 @@ export class AgendaService {
     }
 
 
-    //METODO CREAR TRABAJO EN AGENDA
-    insertTrabajoEnAgenda(body: Iagenda): Promise<Iagenda> {
-    return firstValueFrom(this.httpClient.post<Iagenda>(`${this.baseUrl}/crear`,body));
-  }
+     //METODO OBTENER LA PREAGENDA
+     getPreAgenda() {
+      return firstValueFrom( this.httpClient.get<Iagenda[]>(`${this.baseUrl}/preagenda`))
+       }
+
+
+
+// Método para actualizar (asignar) fecha y hora de un trabajo ya creado
+actualizarHorarioTrabajo(id: number, body: Iagenda): Promise<any> {
+  return firstValueFrom(this.httpClient.put(`${this.baseUrl}/crear/${id}`, body));
+}
 
 }

@@ -146,9 +146,48 @@ export class InfoSopComponent {
           }
         }
       });
-    } else {
+    } 
+    
+    if (this.solucionSeleccionada === 'VISITA' || this.solucionSeleccionada === 'LOS' ) {
+      Swal.fire({
+        title: '¿Estás seguro?',
+        text: '¿AGREGAR EL SOPORTE A LA AGENDA?',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#3085d6',
+        cancelButtonColor: '#d33',
+        confirmButtonText: 'Sí, he resuelto el soporte',
+      }).then(async (result) => {
+        if (result.isConfirmed) {
+          try {
+
+
+            await this.soporteService.actualizarSopEstado(this.id_sop, body);
+
+            
+
+
+
+            this.router.navigateByUrl('/home/noc/soporte-tecnico');
+          } catch (error) {
+            console.error(error);
+            Swal.fire({
+              title: 'Error!',
+              text: 'Ocurrió un error al cerrar el soporte.',
+              icon: 'error',
+            });
+          }
+        }
+      });
+    } 
+    
+    
+    else {
       try {
+
         await this.soporteService.actualizarSopEstado(this.id_sop, body);
+
+
         this.router.navigateByUrl('/home/noc/soporte-tecnico');
       } catch (error) {
         console.error(error);
