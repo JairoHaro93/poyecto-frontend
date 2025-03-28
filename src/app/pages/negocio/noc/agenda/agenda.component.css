@@ -12,7 +12,8 @@ td {
 }
 
 thead th {
-  background-color: #f5f5f5;
+  background-color: #cc2929;
+  color: white;
 }
 
 /* === Botones === */
@@ -53,7 +54,6 @@ td button {
 
 .celda-agenda {
   max-width: 120px;
-
 }
 
 .celda-soporte {
@@ -70,8 +70,6 @@ td button {
   padding: 0rem 2.5rem; /* espacio horizontal sin afectar botones */
   text-align: center;
 }
-
-
 
 /* === Estados === */
 .bg-warning {
@@ -113,18 +111,15 @@ td i {
   font-size: 0.9rem;
 }
 
-
-
 .text-muted {
-  color: #ffffff !important;
+  color: #cc2929 !important;
 }
-
 
 .btn-editar-badge {
   top: 0;
   right: 0;
   font-size: 1.2rem;
-  
+
   border-radius: 50%;
   background-color: #007bff;
   color: white;
@@ -136,15 +131,13 @@ td i {
   top: 0;
   left: 0;
   font-size: 1.2rem;
-  
+
   border-radius: 50%;
-  background-color: #17a2b8;
+  background-color: #007bff;
   color: white;
   border: none;
   z-index: 10;
 }
-
-
 
 .cuadro-detalle-idea .card {
   border: 2px dashed red; /* DEBUG */
