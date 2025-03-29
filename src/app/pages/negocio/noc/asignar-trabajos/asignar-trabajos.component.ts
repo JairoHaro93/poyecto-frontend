@@ -69,21 +69,21 @@ export class AsignarTrabajosComponent {
       return;
     }
 
-    const id = this.servicioSeleccionado.id;
+    const ord_ins = this.servicioSeleccionado.ord_ins;
 
-    if (!id) {
+    if (!ord_ins) {
       console.error('❌ Invalid Installation Order.');
       return;
     }
 
     const body = { reg_sop_tec_asignado: this.idTecnico };
 
-    console.log('📌 Selected Installation Order:', id);
+    console.log('📌 Selected Installation Order:', ord_ins);
     console.log('👨‍🔧 Assigning Technician ID:', this.idTecnico);
 
     try {
       const response = await this.soporteService.actualizarTecnicoAsignado(
-        id,
+        ord_ins,
         body
       );
       console.log('✅ Technician successfully assigned!', response);

@@ -1,39 +1,48 @@
 <main class="container mt-3">
-  <div class="d-flex justify-content-between align-items-center mb-3 px-2 flex-wrap pe-3">
+  <div
+    class="d-flex justify-content-between align-items-center mb-3 px-2 flex-wrap pe-3"
+  >
+    <!--  NOMBRE Y CALENDARIO-->
     <div class="d-flex align-items-center gap-2 mb-2 mb-lg-0">
       <p class="text-muted small mb-0">
         <strong>{{ nombreDelDia }}</strong>
       </p>
       <input
-       id="fechaAgenda"
+        id="fechaAgenda"
         type="date"
         class="form-control form-control-sm w-auto"
         [(ngModel)]="fechaSeleccionada"
         (change)="alCambiarFecha()"
       />
     </div>
-
+    <!--  BOTON MOSTRAR PREAGENDA-->
     <button
-    class="btn btn-outline-primary btn-sm boton-soportes"
+      class="btn btn-outline-primary btn-sm boton-soportes"
       [disabled]="preAgendaList.length === 0"
       (click)="abrirModalPreagenda()"
     >
       Mostrar Preagenda
-      <span  class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+      <span
+        class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger"
+      >
         {{ preAgendaList.length }}
       </span>
     </button>
   </div>
-
+  <!-- TABLA HORARIO -->
   <div class="row m-2">
     <div class="col-lg-12">
-      <table class="table table-bordered table-sm text-center align-middle small agenda-table">
+      <table
+        class="table table-bordered table-sm text-center align-middle small agenda-table"
+      >
+        <!-- HEADER DE LA TABLA-->
         <thead class="table-light">
           <tr>
             <th>Horario</th>
             <th *ngFor="let veh of vehiculos">{{ veh.nombre }}</th>
           </tr>
         </thead>
+        <!--  BODY DE LA TABLA-->
         <tbody>
           <tr *ngFor="let hora of horarios">
             <td class="text-nowrap">{{ hora }} - {{ getFinHora(hora) }}</td>
@@ -41,16 +50,20 @@
               *ngFor="let vehiculo of vehiculos"
               [attr.rowspan]="renderAgenda[hora][vehiculo.codigo].rowspan"
               [hidden]="!renderAgenda[hora][vehiculo.codigo].mostrar"
-              [ngClass]="getEstadoClass(renderAgenda[hora][vehiculo.codigo].trabajo?.age_tipo)"
-
+              [ngClass]="
+                getEstadoClass(
+                  renderAgenda[hora][vehiculo.codigo].trabajo?.age_tipo
+                )
+              "
               class="celda-agenda position-relative"
             >
               <div *ngIf="renderAgenda[hora][vehiculo.codigo].trabajo">
-                <div class="celda-contenido d-flex flex-column h-100 justify-content-between">
-
+                <div
+                  class="celda-contenido d-flex flex-column h-100 justify-content-between"
+                >
                   <!-- Botón EDITAR (esquina superior derecha) -->
                   <button
-                  class="btn btn-editar-badge position-absolute"
+                    class="btn btn-editar-badge position-absolute"
                     (click)="iniciarEdicionDesdeTabla(hora, vehiculo.codigo)"
                   >
                     <i class="fas fa-pencil-alt"></i>
@@ -59,19 +72,30 @@
                   <!-- Botón VISTA (esquina superior izquierda) -->
 
                   <button
-                  class="btn btn-vista-badge position-absolute"
+                    class="btn btn-vista-badge position-absolute"
                     (click)="abrirVistaDetalle(hora, vehiculo.codigo)"
                   >
                     <i class="fas fa-eye"></i>
                   </button>
 
-                   <!-- Contenido principal -->
+                  <!-- Contenido principal -->
                 </div>
-              <div class="contenido-celda px-4 text-center">
-                  <i class="bi bi-person-fill"></i> {{ renderAgenda[hora][vehiculo.codigo].trabajo?.nombre_completo }}<br />
+                <div class="contenido-celda px-4 text-center">
+                  <i class="bi bi-person-fill"></i>
+                  {{
+                    renderAgenda[hora][vehiculo.codigo].trabajo
+                      ?.nombre_completo
+                  }}<br />
                   <small>
-                    👷 {{ renderAgenda[hora][vehiculo.codigo].trabajo?.age_tecnico }}<br />
-                  
+                    {{
+                      "👷" +
+                        getNombreTecnicoPorId(
+                          renderAgenda[hora][vehiculo.codigo].trabajo
+                            ?.reg_sop_tec_asignado
+                        )
+                    }}
+
+                    <br />
                   </small>
                 </div>
               </div>
@@ -84,12 +108,23 @@
 </main>
 
 <!-- Modal Preagenda -->
-<div class="modal fade" id="modalSoportes" tabindex="-1" aria-labelledby="modalSoportesLabel" aria-hidden="true">
+<div
+  class="modal fade"
+  id="modalSoportes"
+  tabindex="-1"
+  aria-labelledby="modalSoportesLabel"
+  aria-hidden="true"
+>
   <div class="modal-dialog modal-xl">
     <div class="modal-content">
       <div class="modal-header">
         <h5 class="modal-title">Preagenda disponible</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+        <button
+          type="button"
+          class="btn-close"
+          data-bs-dismiss="modal"
+          aria-label="Cerrar"
+        ></button>
       </div>
       <div class="modal-body">
         <table class="table table-bordered table-striped table-sm small">
@@ -109,13 +144,18 @@
               <td>{{ item.cli_tel }}</td>
               <td>{{ item.reg_sop_coordenadas }}</td>
               <td class="text-center">
-                <button class="btn btn-sm btn-primary" (click)="abrirModalAsignacion(item)">
+                <button
+                  class="btn btn-sm btn-primary"
+                  (click)="asignarDesdePreagenda(item)"
+                >
                   Asignar
                 </button>
               </td>
             </tr>
             <tr *ngIf="preAgendaList.length === 0">
-              <td colspan="5" class="text-center text-muted">No hay trabajos pendientes</td>
+              <td colspan="5" class="text-center text-muted">
+                No hay trabajos pendientes
+              </td>
             </tr>
           </tbody>
         </table>
@@ -125,72 +165,142 @@
 </div>
 
 <!-- Modal Asignación -->
-<div class="modal fade" id="asignarModal" tabindex="-1" aria-labelledby="asignarModalLabel" aria-hidden="true">
+<div
+  class="modal fade"
+  id="asignarModal"
+  tabindex="-1"
+  aria-labelledby="asignarModalLabel"
+  aria-hidden="true"
+>
   <div class="modal-dialog">
     <div class="modal-content">
       <div class="modal-header">
         <h5 class="modal-title">Asignar Trabajo</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+        <button
+          type="button"
+          class="btn-close"
+          data-bs-dismiss="modal"
+          aria-label="Cerrar"
+        ></button>
       </div>
       <div class="modal-body small">
         <p><strong>Tipo:</strong> {{ trabajoSeleccionado?.age_tipo }}</p>
 
         <div class="mb-3">
           <label for="tecnico">Técnico</label>
-          <select id="tecnico" class="form-select form-select-sm" [(ngModel)]="idTecnico" (change)="asignarTecnicoASoporte()">
+          <select
+            id="tecnico"
+            class="form-select form-select-sm"
+            [(ngModel)]="idTecnico"
+            (change)="asignarTecnicoASoporte()"
+          >
             <option [value]="0" disabled>Seleccione técnico</option>
-            <option *ngFor="let tecnico of tecnicosList" [value]="tecnico.id">{{ tecnico.nombre }}</option>
+            <option *ngFor="let tecnico of tecnicosList" [value]="tecnico.id">
+              {{ tecnico.nombre }}
+            </option>
           </select>
         </div>
 
         <div class="mb-3">
           <label for="fecha">Fecha</label>
-          <input id="fecha" type="date" class="form-control form-control-sm" [(ngModel)]="fechaSoporteSeleccionada" />
+          <input
+            id="fecha"
+            type="date"
+            class="form-control form-control-sm"
+            [(ngModel)]="fechaSoporteSeleccionada"
+          />
         </div>
 
         <div class="mb-3">
           <label for="horaInicio">Hora inicio</label>
-          <select id="horaInicio" class="form-select form-select-sm" [(ngModel)]="horaInicio">
-            <option *ngFor="let hora of horarios" [value]="hora">{{ hora }}</option>
+          <select
+            id="horaInicio"
+            class="form-select form-select-sm"
+            [(ngModel)]="horaInicio"
+          >
+            <option *ngFor="let hora of horarios" [value]="hora">
+              {{ hora }}
+            </option>
           </select>
         </div>
 
         <div class="mb-3">
           <label for="horaFin">Hora fin</label>
-          <select id="horaFin" class="form-select form-select-sm" [(ngModel)]="horaFin">
-            <option *ngFor="let hora of horarios" [value]="hora">{{ hora }}</option>
+          <select
+            id="horaFin"
+            class="form-select form-select-sm"
+            [(ngModel)]="horaFin"
+          >
+            <option *ngFor="let hora of horarios" [value]="hora">
+              {{ hora }}
+            </option>
           </select>
         </div>
 
         <div class="mb-3">
           <label for="vehiculo">Vehículo</label>
-          <select id="vehiculo" class="form-select form-select-sm" [(ngModel)]="vehiculoSeleccionado">
-            <option *ngFor="let vehiculo of vehiculos" [value]="vehiculo.codigo">{{ vehiculo.nombre }}</option>
+          <select
+            id="vehiculo"
+            class="form-select form-select-sm"
+            [(ngModel)]="vehiculoSeleccionado"
+          >
+            <option
+              *ngFor="let vehiculo of vehiculos"
+              [value]="vehiculo.codigo"
+            >
+              {{ vehiculo.nombre }}
+            </option>
           </select>
         </div>
       </div>
       <div class="modal-footer">
-        <button class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancelar</button>
-        <button class="btn btn-success btn-sm" (click)="guardarAsignacionTrabajo()">Guardar</button>
+        <button class="btn btn-secondary btn-sm" data-bs-dismiss="modal">
+          Cancelar
+        </button>
+        <button
+          class="btn btn-success btn-sm"
+          (click)="guardarAsignacionTrabajo()"
+        >
+          Guardar
+        </button>
       </div>
     </div>
   </div>
 </div>
 
 <!-- Modal Detalle Soporte -->
-<div class="modal fade" id="modalVistaSoporte" tabindex="-1" aria-labelledby="modalVistaSoporteLabel" aria-hidden="true">
+<div
+  class="modal fade"
+  id="modalVistaSoporte"
+  tabindex="-1"
+  aria-labelledby="modalVistaSoporteLabel"
+  aria-hidden="true"
+>
   <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content">
       <div class="modal-header bg-danger text-white py-2">
         <h6 class="modal-title">Detalle del Trabajo</h6>
-        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+        <button
+          type="button"
+          class="btn-close btn-close-white"
+          data-bs-dismiss="modal"
+          aria-label="Cerrar"
+        ></button>
       </div>
       <div class="modal-body small">
-        <p><strong>📛 Nombre:</strong><br />{{ soporteVista?.nombre_completo }}</p>
-        <p><strong>👷 Técnico:</strong><br />{{ soporteVista?.age_tecnico }}</p>
-        <p><strong>📍 Coordenadas:</strong><br />{{ soporteVista?.reg_sop_coordenadas }}</p>
-        <p><strong>📞 Teléfono:</strong><br />{{ soporteVista?.cli_tel }}</p>
-        
+        <p>
+          <strong>📛 Nombre:</strong><br />{{ trabajoVista?.nombre_completo }}
+        </p>
+        <p>
+          <strong>👷 Técnico: </strong><br />
+          {{ getNombreTecnicoPorId(trabajoVista?.reg_sop_tec_asignado) }}
+        </p>
+        <p>
+          <strong>📍 Coordenadas:</strong><br />{{
+            trabajoVista?.reg_sop_coordenadas
+          }}
+        </p>
+        <p><strong>📞 Teléfono:</strong><br />{{ trabajoVista?.cli_tel }}</p>
       </div>
     </div>
   </div>

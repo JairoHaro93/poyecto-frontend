@@ -96,7 +96,7 @@ export class SoporteTecnicoComponent implements OnDestroy {
     return `${dias} días ${horas} horas ${minutos} minutos`;
   }
 
-  async aceptarSoporte(id: number, ord_ins: number) {
+  async aceptarSoporte(id: number, ord_ins: string) {
     try {
       // Obtener datos del usuario autenticado
       this.datosUsuario = this.authService.datosLogged();

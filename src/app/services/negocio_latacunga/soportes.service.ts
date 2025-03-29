@@ -56,7 +56,7 @@ export class SoportesService {
 
   actualizarSopEstado(soporteId: number, body: any): Promise<any> {
     console.log(
-      `Actualizando soporte: ${this.baseUrl}/mis-soportes/solucion/${soporteId}`,
+      `Actualizando Estado en soporte: ${this.baseUrl}/mis-soportes/solucion/${soporteId}`,
       body
     );
 
@@ -68,15 +68,15 @@ export class SoportesService {
     );
   }
 
-  actualizarTecnicoAsignado(ord_ins: number, body: any): Promise<any> {
+  actualizarTecnicoAsignado(id: string, body: any): Promise<any> {
     console.log(
-      `Actualizando soporte: ${this.baseUrl}/asignar-tecnico/${ord_ins}`,
+      `Actualizando Tecnico en soporte: ${this.baseUrl}/asignar-tecnico/${id}`,
       body
     );
 
     return firstValueFrom(
       this.httpClient.put<any>(
-        `${this.baseUrl}/asignar-tecnico/${ord_ins}`, // ✅ Fixed endpoint typo
+        `${this.baseUrl}/asignar-tecnico/${id}`, // ✅ Fixed endpoint typo
         body
       )
     );

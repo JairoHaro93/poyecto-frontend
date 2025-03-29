@@ -12,5 +12,6 @@ export interface Iagenda {
   age_tecnico: string;
   cli_tel: string;
   reg_sop_coordenadas: string;
-  nombre_completo?: string; // <-- agregado
+  nombre_completo?: string;
+  reg_sop_tec_asignado: number;
 }
