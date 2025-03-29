@@ -92,8 +92,8 @@ td button {
   background-color: #f8f9fa !important;
 }
 
-.bg-orange {
-  background-color: orange !important;
+.bg-yellow {
+  background-color: rgb(255, 233, 0) !important;
   color: white;
 }
 

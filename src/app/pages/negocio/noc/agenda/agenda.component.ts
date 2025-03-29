@@ -38,7 +38,7 @@ export class AgendaComponent {
   fechaSeleccionada = this.obtenerFechaHoy();
   nombreDelDia = this.obtenerNombreDelDia(this.fechaSeleccionada);
 
-  soporteVista: Isoportes | null = null;
+  soporteVista: Iagenda | null = null;
   trabajoSeleccionado: Iagenda | null = null;
 
   horaInicio = '';
@@ -54,11 +54,12 @@ export class AgendaComponent {
     { codigo: 'F20', nombre: 'F20 MOTO ROJA' },
   ];
 
-  agendaAsignada: { [hora: string]: { [vehiculo: string]: Isoportes | null } } = {};
+  agendaAsignada: { [hora: string]: { [vehiculo: string]: Iagenda | null } } = {};
+  
 
   async ngOnInit() {
     this.generarHorarios();
-    await this.cargarAgenda();
+    await this.cargarAgendaPorFecha();
     await this.cargarPreAgenda();
     this.tecnicosList = await this.usuariosService.getAllAgendaTecnicos();
   }
@@ -134,8 +135,9 @@ export class AgendaComponent {
 
       for (let i = inicioIndex; i < finIndex; i++) {
         const hora = this.horarios[i];
-        this.agendaAsignada[hora][item.age_vehiculo] = soporte;
+        this.agendaAsignada[hora][item.age_vehiculo] = item; // item ya es de tipo Iagenda
       }
+      
     }
   }
 
@@ -157,40 +159,30 @@ export class AgendaComponent {
   }
 
   abrirVistaDetalle(hora: string, vehiculo: string) {
-    const soporte = this.agendaAsignada[hora][vehiculo];
-    if (!soporte) return;
-    this.soporteVista = soporte;
-    bootstrap.Modal.getOrCreateInstance(document.getElementById('modalVistaSoporte')).show();
+    const trabajo = this.agendaAsignada[hora][vehiculo];
+    if (!trabajo) return;
+  
+    this.soporteVista = trabajo;
+    const modal = bootstrap.Modal.getOrCreateInstance(document.getElementById('modalVistaSoporte'));
+    modal.show();
   }
+  
 
   iniciarEdicionDesdeTabla(hora: string, vehiculo: string) {
-    const soporte = this.agendaAsignada[hora][vehiculo];
-    if (!soporte) return;
-
-    this.trabajoSeleccionado = {
-      id: soporte.id,
-      age_tipo: soporte.reg_sop_nombre,
-      age_ord_tra: '',
-      age_ord_ins: '',
-      age_id_sop: '',
-      age_coordenadas: soporte.reg_sop_coordenadas,
-      age_fecha: this.fechaSeleccionada,
-      age_hora_inicio: hora,
-      age_hora_fin: this.getFinHora(hora),
-      age_vehiculo: vehiculo,
-      age_tecnico: soporte.nombre_tecnico,
-      cli_tel: soporte.cli_tel,
-      reg_sop_coordenadas: soporte.reg_sop_coordenadas,
-    };
-
-    this.fechaSoporteSeleccionada = this.fechaSeleccionada;
-    this.horaInicio = hora;
-    this.horaFin = this.getFinHora(hora);
-    this.vehiculoSeleccionado = vehiculo;
-    this.idTecnico = this.tecnicosList.find(t => t.nombre === soporte.nombre_tecnico)?.id || 0;
-
+    const trabajo = this.agendaAsignada[hora][vehiculo];
+    if (!trabajo) return;
+  
+    this.trabajoSeleccionado = trabajo;
+  
+    this.fechaSoporteSeleccionada = trabajo.age_fecha;
+    this.horaInicio = trabajo.age_hora_inicio;
+    this.horaFin = trabajo.age_hora_fin;
+    this.vehiculoSeleccionado = trabajo.age_vehiculo;
+    this.idTecnico = this.tecnicosList.find(t => t.nombre === trabajo.age_tecnico)?.id || 0;
+  
     bootstrap.Modal.getOrCreateInstance(document.getElementById('asignarModal')).show();
   }
+  
 
   generarHorarios() {
     const inicio = 8 * 60;
@@ -206,44 +198,47 @@ export class AgendaComponent {
       this.vehiculos.forEach(v => this.agendaAsignada[hora][v.codigo] = null);
     }
   }
-
   generarRenderAgenda() {
     this.renderAgenda = {};
-
+  
     for (const hora of this.horarios) {
       this.renderAgenda[hora] = {};
       for (const vehiculo of this.vehiculos) {
         this.renderAgenda[hora][vehiculo.codigo] = {
-          soporte: this.agendaAsignada[hora][vehiculo.codigo],
+          trabajo: this.agendaAsignada[hora][vehiculo.codigo],
           rowspan: 1,
           mostrar: true,
         };
       }
     }
-
+  
     for (const vehiculo of this.vehiculos) {
-      let prev: Isoportes | null = null;
+      let trabajoPrevio: Iagenda | null = null;
       let bloqueInicio: string | null = null;
-
+  
       for (let i = 0; i < this.horarios.length; i++) {
         const hora = this.horarios[i];
-        const actual = this.renderAgenda[hora][vehiculo.codigo].soporte;
-
-        if (prev && actual && actual.id === prev.id) {
+        const actual = this.renderAgenda[hora][vehiculo.codigo].trabajo;
+  
+        if (trabajoPrevio && actual && actual.id === trabajoPrevio.id) {
           this.renderAgenda[hora][vehiculo.codigo].mostrar = false;
-          if (bloqueInicio) this.renderAgenda[bloqueInicio][vehiculo.codigo].rowspan++;
+          if (bloqueInicio) {
+            this.renderAgenda[bloqueInicio][vehiculo.codigo].rowspan++;
+          }
         } else {
           bloqueInicio = hora;
         }
-        prev = actual;
+  
+        trabajoPrevio = actual;
       }
     }
   }
+  
 
-  getEstadoClass(estado: string | undefined): string {
-    switch (estado) {
-      case 'LOS': return 'bg-orange text-white';
-      case 'VISITA': return 'bg-blue text-white';
+  getEstadoClass(tipo: string | undefined): string {
+    switch (tipo) {
+      case 'S': return 'bg-yellow  text-black';
+      case 'I': return 'bg-blue text-white';
       case 'Pendiente': return 'bg-warning text-dark';
       case 'Asignado': return 'bg-primary text-white';
       case 'Completado': return 'bg-success text-white';
@@ -271,12 +266,13 @@ export class AgendaComponent {
   renderAgenda: {
     [hora: string]: {
       [vehiculo: string]: {
-        soporte: Isoportes | null;
+        trabajo: Iagenda | null;
         rowspan: number;
         mostrar: boolean;
       };
     };
   } = {};
+  
 
   alCambiarFecha() {
     this.nombreDelDia = this.obtenerNombreDelDia(this.fechaSeleccionada);
@@ -308,18 +304,35 @@ export class AgendaComponent {
 
   async cargarAgendaPorFecha() {
     try {
-      // Obtener la agenda desde el servicio según la fecha seleccionada
+      // 1. Obtener trabajos agendados por la fecha seleccionada
       this.agendaList = await this.agendaService.getAgendaByDate(this.fechaSeleccionada);
   
-      // Mapear los trabajos agendados a la tabla visual
+      // 2. Enriquecer con nombre del cliente usando age_ord_ins
+      for (const item of this.agendaList) {
+        try {
+          if (item.age_ord_ins) {
+            const servicio = await this.clienteService.getInfoServicioByOrdId(Number(item.age_ord_ins));
+            item.nombre_completo = servicio?.nombre_completo || '---';
+          } else {
+            item.nombre_completo = '---';
+          }
+        } catch (error) {
+          console.warn(`❌ Error obteniendo info cliente para orden ${item.age_ord_ins}:`, error);
+          item.nombre_completo = '---';
+        }
+      }
+  
+      // 3. Mapear trabajos agendados a la tabla visual
       this.mapearAgendaDesdeBD();
   
-      // Generar la tabla con celdas combinadas
+      // 4. Generar render con rowspan y visualización de celdas
       this.generarRenderAgenda();
     } catch (error) {
       console.error('❌ Error al cargar la agenda por fecha:', error);
     }
   }
+  
+  
 
   abrirModalPreagenda() {
     const element = document.getElementById('modalSoportes');
