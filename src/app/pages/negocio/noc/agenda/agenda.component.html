@@ -46,21 +46,28 @@
               class="celda-agenda position-relative"
             >
               <div *ngIf="renderAgenda[hora][vehiculo.codigo].trabajo">
-                <div class="position-relative">
+                <div class="celda-contenido d-flex flex-column h-100 justify-content-between">
+
+                  <!-- Botón EDITAR (esquina superior derecha) -->
                   <button
-                    class="btn btn-sm btn-light position-absolute top-0 end-0"
+                  class="btn btn-editar-badge position-absolute"
                     (click)="iniciarEdicionDesdeTabla(hora, vehiculo.codigo)"
                   >
                     <i class="fas fa-pencil-alt"></i>
                   </button>
+
+                  <!-- Botón VISTA (esquina superior izquierda) -->
+
                   <button
-                    class="btn btn-sm btn-light position-absolute top-0 start-0"
+                  class="btn btn-vista-badge position-absolute"
                     (click)="abrirVistaDetalle(hora, vehiculo.codigo)"
                   >
                     <i class="fas fa-eye"></i>
                   </button>
+
+                   <!-- Contenido principal -->
                 </div>
-                <div class="text-center ">
+              <div class="contenido-celda px-4 text-center">
                   <i class="bi bi-person-fill"></i> {{ renderAgenda[hora][vehiculo.codigo].trabajo?.nombre_completo }}<br />
                   <small>
                     👷 {{ renderAgenda[hora][vehiculo.codigo].trabajo?.age_tecnico }}<br />
