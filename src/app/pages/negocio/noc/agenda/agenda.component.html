@@ -199,6 +199,22 @@
               {{ tecnico.nombre }}
             </option>
           </select>
+
+          <div class="mb-3">
+            <label for="vehiculo">Vehículo</label>
+            <select
+              id="vehiculo"
+              class="form-select form-select-sm"
+              [(ngModel)]="vehiculoSeleccionado"
+            >
+              <option
+                *ngFor="let vehiculo of vehiculos"
+                [value]="vehiculo.codigo"
+              >
+                {{ vehiculo.nombre }}
+              </option>
+            </select>
+          </div>
         </div>
 
         <div class="mb-3">
@@ -207,7 +223,7 @@
             id="fecha"
             type="date"
             class="form-control form-control-sm"
-            [(ngModel)]="fechaSoporteSeleccionada"
+            [(ngModel)]="fechaTrabajoSeleccionada"
           />
         </div>
 
@@ -233,22 +249,6 @@
           >
             <option *ngFor="let hora of horarios" [value]="hora">
               {{ hora }}
-            </option>
-          </select>
-        </div>
-
-        <div class="mb-3">
-          <label for="vehiculo">Vehículo</label>
-          <select
-            id="vehiculo"
-            class="form-select form-select-sm"
-            [(ngModel)]="vehiculoSeleccionado"
-          >
-            <option
-              *ngFor="let vehiculo of vehiculos"
-              [value]="vehiculo.codigo"
-            >
-              {{ vehiculo.nombre }}
             </option>
           </select>
         </div>

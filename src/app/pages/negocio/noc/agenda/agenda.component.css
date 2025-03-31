@@ -103,13 +103,13 @@ td button {
 }
 
 /* === Transiciones / Iconos === */
-td {
+/* td {
   transition: background-color 1s ease, color 0.4s ease;
-}
+} */
 
-td i {
+/* td i {
   font-size: 0.9rem;
-}
+} */
 
 .text-muted {
   color: #cc2929 !important;
