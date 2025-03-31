@@ -32,78 +32,69 @@
   <!-- TABLA HORARIO -->
   <div class="row m-2">
     <div class="col-lg-12">
-      <table
-        class="table table-bordered table-sm text-center align-middle small agenda-table"
-      >
-        <!-- HEADER DE LA TABLA-->
-        <thead class="table-light">
-          <tr>
-            <th>Horario</th>
-            <th *ngFor="let veh of vehiculos">{{ veh.nombre }}</th>
-          </tr>
-        </thead>
-        <!--  BODY DE LA TABLA-->
-        <tbody>
-          <tr *ngFor="let hora of horarios">
-            <td class="text-nowrap">{{ hora }} - {{ getFinHora(hora) }}</td>
-            <td
-              *ngFor="let vehiculo of vehiculos"
-              [attr.rowspan]="renderAgenda[hora][vehiculo.codigo].rowspan"
-              [hidden]="!renderAgenda[hora][vehiculo.codigo].mostrar"
-              [ngClass]="
-                getEstadoClass(
-                  renderAgenda[hora][vehiculo.codigo].trabajo?.age_tipo
-                )
-              "
-              class="celda-agenda position-relative"
-            >
-              <div *ngIf="renderAgenda[hora][vehiculo.codigo].trabajo">
-                <div
-                  class="celda-contenido d-flex flex-column h-100 justify-content-between"
-                >
-                  <!-- Botón EDITAR (esquina superior derecha) -->
-                  <button
-  *ngIf="!esFechaPasada(renderAgenda[hora][vehiculo.codigo].trabajo?.age_fecha)"
-  class="btn btn-editar-badge position-absolute"
-  (click)="iniciarEdicionDesdeTabla(hora, vehiculo.codigo)"
->
-  <i class="fas fa-pencil-alt"></i>
-</button>
 
-                  <!-- Botón VISTA (esquina superior izquierda) -->
-
-                  <button
-                    class="btn btn-vista-badge position-absolute"
-                    (click)="abrirVistaDetalle(hora, vehiculo.codigo)"
+      <div *ngIf="renderAgenda && horarios.length">
+        <table class="table table-bordered table-sm text-center align-middle small agenda-table">
+          <!-- HEADER DE LA TABLA-->
+          <thead class="table-light">
+            <tr>
+              <th>Horario</th>
+              <th *ngFor="let veh of vehiculos">{{ veh.nombre }}</th>
+            </tr>
+          </thead>
+      
+          <!-- BODY DE LA TABLA -->
+          <tbody>
+            <tr *ngFor="let hora of horarios">
+              <td class="text-nowrap">{{ hora }} - {{ getFinHora(hora) }}</td>
+      
+              <ng-container *ngFor="let vehiculo of vehiculos">
+                <ng-container *ngIf="renderAgenda[hora] && renderAgenda[hora][vehiculo.codigo] as celda">
+                  <td
+                    [attr.rowspan]="celda.rowspan"
+                    [hidden]="!celda.mostrar"
+                    [ngClass]="getEstadoClass(celda.trabajo?.age_tipo)"
+                    class="celda-agenda position-relative"
                   >
-                    <i class="fas fa-eye"></i>
-                  </button>
+                    <div *ngIf="celda.trabajo">
+                      <div class="celda-contenido d-flex flex-column h-100 justify-content-between">
+                        <!-- Botón EDITAR -->
+                        <button
+                          *ngIf="!esFechaPasada(celda.trabajo.age_fecha)"
+                          class="btn btn-editar-badge position-absolute"
+                          (click)="iniciarEdicionDesdeTabla(hora, vehiculo.codigo)"
+                        >
+                          <i class="fas fa-pencil-alt"></i>
+                        </button>
+      
+                        <!-- Botón VISTA -->
+                        <button
+                          class="btn btn-vista-badge position-absolute"
+                          (click)="abrirVistaDetalle(hora, vehiculo.codigo)"
+                        >
+                          <i class="fas fa-eye"></i>
+                        </button>
+                      </div>
+      
+                      <!-- Contenido Principal -->
+                      <div class="contenido-celda px-4 text-center">
+                        <i class="bi bi-person-fill"></i>
+                        {{ celda.trabajo.nombre_completo }}<br />
+                        <small>
+                          👷 {{ getNombreTecnicoPorId(celda.trabajo.reg_sop_tec_asignado) }}
+                        </small>
+                      </div>
+                    </div>
+                  </td>
+                </ng-container>
+              </ng-container>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      
 
-                  <!-- Contenido principal -->
-                </div>
-                <div class="contenido-celda px-4 text-center">
-                  <i class="bi bi-person-fill"></i>
-                  {{
-                    renderAgenda[hora][vehiculo.codigo].trabajo
-                      ?.nombre_completo
-                  }}<br />
-                  <small>
-                    {{
-                      "👷" +
-                        getNombreTecnicoPorId(
-                          renderAgenda[hora][vehiculo.codigo].trabajo
-                            ?.reg_sop_tec_asignado
-                        )
-                    }}
 
-                    <br />
-                  </small>
-                </div>
-              </div>
-            </td>
-          </tr>
-        </tbody>
-      </table>
     </div>
   </div>
 </main>
