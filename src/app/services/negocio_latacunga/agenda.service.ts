@@ -29,10 +29,17 @@ export class AgendaService {
        }
 
 
+      //METODO PARA AGREGAR UN SOPORTE A LA AGENDA
+
+      postSopAgenda(body: any) {
+        return firstValueFrom( this.httpClient.post<Iagenda[]>(`${this.baseUrl}/agenda-sop`,body))
+         }
+  
+
 
 // Método para actualizar (asignar) fecha y hora de un trabajo ya creado
 actualizarHorarioTrabajo(id: number, body: Iagenda): Promise<any> {
-  return firstValueFrom(this.httpClient.put(`${this.baseUrl}/crear/${id}`, body));
+  return firstValueFrom(this.httpClient.put(`${this.baseUrl}/edita/${id}`, body));
 }
 
 }

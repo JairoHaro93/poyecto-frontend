@@ -46,6 +46,8 @@ export class AgendaComponent {
   horaFin = '';
   vehiculoSeleccionado = '';
   modoEdicion = false;
+  edicionHabilitada = true;
+
 
   horarios: string[] = [];
 
@@ -105,6 +107,8 @@ export class AgendaComponent {
 
     const nombreTecnico =
       this.tecnicosList.find((t) => t.id === this.idTecnico)?.nombre || '';
+
+
     const body: Iagenda = {
       ...this.trabajoSeleccionado!,
       age_fecha: this.fechaTrabajoSeleccionada,
@@ -114,8 +118,25 @@ export class AgendaComponent {
       age_tecnico: nombreTecnico,
     };
 
+    const body_tec = {
+      reg_sop_tec_asignado: this.idTecnico
+
+    }
+    console.log(body)
+
+    await this.soporteService.actualizarTecnicoAsignado(this.trabajoSeleccionado!.age_id_sop, body_tec);
+
     await this.agendaService.actualizarHorarioTrabajo(body.id, body);
+
+    // 🔄 Refresca completamente el componente
+await this.ngOnInit();
+
+
     await this.cargarAgendaPorFecha();
+
+
+
+
     bootstrap.Modal.getInstance(
       document.getElementById('asignarModal')
     )?.hide();
@@ -283,17 +304,25 @@ export class AgendaComponent {
     }
   }
 
+  esFechaPasada(fecha: string | null | undefined): boolean {
+    if (!fecha) return false;
+    const hoy = new Date().setHours(0, 0, 0, 0);
+    const fechaTrabajo = new Date(fecha).setHours(0, 0, 0, 0);
+    return fechaTrabajo < hoy;
+  }
+  
+
   // FUNCIONES DE TECNICOS
 
   async asignarTecnicoASoporte() {
-    if (!this.trabajoSeleccionado) return;
-    const ord_ins = this.trabajoSeleccionado.age_id_sop;
-    const body = { reg_sop_tec_asignado: this.idTecnico };
-    try {
-      await this.soporteService.actualizarTecnicoAsignado(ord_ins, body);
-    } catch (error) {
-      console.error('Error actualizando técnico:', error);
-    }
+    // if (!this.trabajoSeleccionado) return;
+    // const ord_ins = this.trabajoSeleccionado.age_id_sop;
+    // const body = { reg_sop_tec_asignado: this.idTecnico };
+    // try {
+    //   await this.soporteService.actualizarTecnicoAsignado(sop_id, body);
+    // } catch (error) {
+    //   console.error('Error actualizando técnico:', error);
+    // }
   }
 
   getNombreTecnicoPorId(id: number | null | undefined): string {
@@ -318,17 +347,31 @@ export class AgendaComponent {
   iniciarEdicionDesdeTabla(hora: string, vehiculo: string) {
     const trabajo = this.agendaAsignada[hora][vehiculo];
     if (!trabajo) return;
+  
     this.trabajoSeleccionado = trabajo;
-    this.fechaTrabajoSeleccionada = trabajo.age_fecha;
+    this.fechaTrabajoSeleccionada = this.formatearFecha(trabajo.age_fecha);
+
     this.horaInicio = trabajo.age_hora_inicio;
     this.horaFin = trabajo.age_hora_fin;
     this.vehiculoSeleccionado = trabajo.age_vehiculo;
-    this.idTecnico =
-      this.tecnicosList.find((t) => t.nombre === trabajo.age_tecnico)?.id || 0;
+    this.idTecnico = trabajo.reg_sop_tec_asignado || 0;
+
+    this.edicionHabilitada = !this.esFechaPasada(trabajo.age_fecha); // ❗️ aquí se evalúa
+  
     bootstrap.Modal.getOrCreateInstance(
       document.getElementById('asignarModal')
     ).show();
   }
+  
+  formatearFecha(fecha: string | Date | null | undefined): string {
+    if (!fecha) return this.obtenerFechaHoy(); // fallback por si es null
+    const f = new Date(fecha);
+    const y = f.getFullYear();
+    const m = (f.getMonth() + 1).toString().padStart(2, '0');
+    const d = f.getDate().toString().padStart(2, '0');
+    return `${y}-${m}-${d}`;
+  }
+  
 
   abrirVistaDetalle(hora: string, vehiculo: string) {
     const trabajo = this.agendaAsignada[hora][vehiculo];

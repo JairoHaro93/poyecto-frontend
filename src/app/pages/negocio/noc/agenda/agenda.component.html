@@ -63,11 +63,12 @@
                 >
                   <!-- Botón EDITAR (esquina superior derecha) -->
                   <button
-                    class="btn btn-editar-badge position-absolute"
-                    (click)="iniciarEdicionDesdeTabla(hora, vehiculo.codigo)"
-                  >
-                    <i class="fas fa-pencil-alt"></i>
-                  </button>
+  *ngIf="!esFechaPasada(renderAgenda[hora][vehiculo.codigo].trabajo?.age_fecha)"
+  class="btn btn-editar-badge position-absolute"
+  (click)="iniciarEdicionDesdeTabla(hora, vehiculo.codigo)"
+>
+  <i class="fas fa-pencil-alt"></i>
+</button>
 
                   <!-- Botón VISTA (esquina superior izquierda) -->
 
@@ -189,11 +190,12 @@
         <div class="mb-3">
           <label for="tecnico">Técnico</label>
           <select
-            id="tecnico"
-            class="form-select form-select-sm"
-            [(ngModel)]="idTecnico"
-            (change)="asignarTecnicoASoporte()"
-          >
+          id="tecnico"
+          class="form-select form-select-sm"
+          [(ngModel)]="idTecnico"
+          [disabled]="!edicionHabilitada"
+        >
+        
             <option [value]="0" disabled>Seleccione técnico</option>
             <option *ngFor="let tecnico of tecnicosList" [value]="tecnico.id">
               {{ tecnico.nombre }}
@@ -203,10 +205,12 @@
           <div class="mb-3">
             <label for="vehiculo">Vehículo</label>
             <select
-              id="vehiculo"
-              class="form-select form-select-sm"
-              [(ngModel)]="vehiculoSeleccionado"
-            >
+            id="vehiculo"
+            class="form-select form-select-sm"
+            [(ngModel)]="vehiculoSeleccionado"
+            [disabled]="!edicionHabilitada"
+          >
+          
               <option
                 *ngFor="let vehiculo of vehiculos"
                 [value]="vehiculo.codigo"
@@ -220,20 +224,24 @@
         <div class="mb-3">
           <label for="fecha">Fecha</label>
           <input
-            id="fecha"
-            type="date"
-            class="form-control form-control-sm"
-            [(ngModel)]="fechaTrabajoSeleccionada"
-          />
+          id="fecha"
+          type="date"
+          class="form-control form-control-sm"
+          [(ngModel)]="fechaTrabajoSeleccionada"
+          [disabled]="!edicionHabilitada"
+        />
+        
         </div>
 
         <div class="mb-3">
           <label for="horaInicio">Hora inicio</label>
           <select
-            id="horaInicio"
-            class="form-select form-select-sm"
-            [(ngModel)]="horaInicio"
-          >
+          id="horaInicio"
+          class="form-select form-select-sm"
+          [(ngModel)]="horaInicio"
+          [disabled]="!edicionHabilitada"
+        >
+        
             <option *ngFor="let hora of horarios" [value]="hora">
               {{ hora }}
             </option>
@@ -243,10 +251,12 @@
         <div class="mb-3">
           <label for="horaFin">Hora fin</label>
           <select
-            id="horaFin"
-            class="form-select form-select-sm"
-            [(ngModel)]="horaFin"
-          >
+          id="horaFin"
+          class="form-select form-select-sm"
+          [(ngModel)]="horaFin"
+          [disabled]="!edicionHabilitada"
+        >
+        
             <option *ngFor="let hora of horarios" [value]="hora">
               {{ hora }}
             </option>

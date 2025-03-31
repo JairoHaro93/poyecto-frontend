@@ -8,6 +8,7 @@ import { Iclientes } from '../../../../interfaces/negocio/clientes/iclientes.int
 import { DatePipe } from '@angular/common';
 import { FormsModule, NgModel } from '@angular/forms';
 import Swal from 'sweetalert2';
+import { AgendaService } from '../../../../services/negocio_latacunga/agenda.service';
 
 @Component({
   selector: 'app-info-sop',
@@ -21,6 +22,7 @@ export class InfoSopComponent {
   activatedRoute = inject(ActivatedRoute);
   authService = inject(AutenticacionService);
   soporteService = inject(SoportesService);
+  agendaService = inject(AgendaService)
   private router = inject(Router);
   datosUsuario: any;
   datosNoc: any;
@@ -32,19 +34,20 @@ export class InfoSopComponent {
   detalleSolucion: string = '';
 
   id_sop: any;
+  ord_Ins : any
 
   async ngOnInit() {
     this.activatedRoute.params.subscribe((params: any) => {
       this.id_sop = params['id_sop'];
-      const ordIns = params['ord_ins'];
-      console.log(this.id_sop, ordIns);
+      this.ord_Ins = params['ord_ins'];
+      console.log(this.id_sop, this.ord_Ins);
 
       if (!this.id_sop) {
         console.error("Error: 'id' no válido");
         return;
       }
 
-      this.cargarSoporte(this.id_sop, ordIns);
+      this.cargarSoporte(this.id_sop, this.ord_Ins);
     });
   }
 
@@ -122,6 +125,13 @@ export class InfoSopComponent {
       reg_sop_sol_det: this.detalleSolucion.trim(),
     };
 
+    const bodysop={
+
+       age_ord_ins : this.ord_Ins,
+       age_id_sop : this.id_sop,
+       age_tipo : "SOPORTE"
+    }
+
     if (this.solucionSeleccionada === 'RESUELTO') {
       Swal.fire({
         title: '¿Estás seguro?',
@@ -156,15 +166,22 @@ export class InfoSopComponent {
         showCancelButton: true,
         confirmButtonColor: '#3085d6',
         cancelButtonColor: '#d33',
-        confirmButtonText: 'Sí, he resuelto el soporte',
+        confirmButtonText: 'Sí, debe agregarse a la agenda',
       }).then(async (result) => {
         if (result.isConfirmed) {
           try {
 
+            
 
             await this.soporteService.actualizarSopEstado(this.id_sop, body);
 
-            
+              //AGREGAR EL SOPORTE A LA AGENDA
+
+
+
+          await this.agendaService.postSopAgenda(bodysop)
+
+          console.log(bodysop)
 
 
 
