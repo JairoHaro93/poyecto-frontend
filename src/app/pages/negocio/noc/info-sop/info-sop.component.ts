@@ -22,7 +22,7 @@ export class InfoSopComponent {
   activatedRoute = inject(ActivatedRoute);
   authService = inject(AutenticacionService);
   soporteService = inject(SoportesService);
-  agendaService = inject(AgendaService)
+  agendaService = inject(AgendaService);
   private router = inject(Router);
   datosUsuario: any;
   datosNoc: any;
@@ -34,7 +34,7 @@ export class InfoSopComponent {
   detalleSolucion: string = '';
 
   id_sop: any;
-  ord_Ins : any
+  ord_Ins: any;
 
   async ngOnInit() {
     this.activatedRoute.params.subscribe((params: any) => {
@@ -51,7 +51,7 @@ export class InfoSopComponent {
     });
   }
 
-  async cargarSoporte(id_sop: number, ord_ins: number): Promise<void> {
+  async cargarSoporte(id_sop: string, ord_ins: number): Promise<void> {
     console.log('ID Soporte:', id_sop, 'Orden Instalación:', ord_ins);
 
     try {
@@ -67,7 +67,7 @@ export class InfoSopComponent {
       const response = await this.soporteService.aceptarSoporte(id_sop, body);
       console.log('✅ Soporte aceptado con éxito:', response);
 
-      this.soporte = await this.soporteService.getbyId(id_sop);
+      this.soporte = await this.soporteService.getSopById(id_sop);
       console.log('📄 Datos del soporte obtenidos:', this.soporte);
 
       // Asignar estado y detalle guardados
@@ -125,12 +125,11 @@ export class InfoSopComponent {
       reg_sop_sol_det: this.detalleSolucion.trim(),
     };
 
-    const bodysop={
-
-       age_ord_ins : this.ord_Ins,
-       age_id_sop : this.id_sop,
-       age_tipo : "SOPORTE"
-    }
+    const bodysop = {
+      age_ord_ins: this.ord_Ins,
+      age_id_sop: this.id_sop,
+      age_tipo: 'SOPORTE',
+    };
 
     if (this.solucionSeleccionada === 'RESUELTO') {
       Swal.fire({
@@ -144,7 +143,7 @@ export class InfoSopComponent {
       }).then(async (result) => {
         if (result.isConfirmed) {
           try {
-            await this.soporteService.actualizarSopEstado(this.id_sop, body);
+            await this.soporteService.actualizarEstadoSop(this.id_sop, body);
             this.router.navigateByUrl('/home/noc/soporte-tecnico');
           } catch (error) {
             console.error(error);
@@ -156,9 +155,12 @@ export class InfoSopComponent {
           }
         }
       });
-    } 
-    
-    if (this.solucionSeleccionada === 'VISITA' || this.solucionSeleccionada === 'LOS' ) {
+    }
+
+    if (
+      this.solucionSeleccionada === 'VISITA' ||
+      this.solucionSeleccionada === 'LOS'
+    ) {
       Swal.fire({
         title: '¿Estás seguro?',
         text: '¿AGREGAR EL SOPORTE A LA AGENDA?',
@@ -170,20 +172,13 @@ export class InfoSopComponent {
       }).then(async (result) => {
         if (result.isConfirmed) {
           try {
+            await this.soporteService.actualizarEstadoSop(this.id_sop, body);
 
-            
+            //AGREGAR EL SOPORTE A LA AGENDA
 
-            await this.soporteService.actualizarSopEstado(this.id_sop, body);
+            await this.agendaService.postSopAgenda(bodysop);
 
-              //AGREGAR EL SOPORTE A LA AGENDA
-
-
-
-          await this.agendaService.postSopAgenda(bodysop)
-
-          console.log(bodysop)
-
-
+            console.log(bodysop);
 
             this.router.navigateByUrl('/home/noc/soporte-tecnico');
           } catch (error) {
@@ -196,14 +191,9 @@ export class InfoSopComponent {
           }
         }
       });
-    } 
-    
-    
-    else {
+    } else {
       try {
-
-        await this.soporteService.actualizarSopEstado(this.id_sop, body);
-
+        await this.soporteService.actualizarEstadoSop(this.id_sop, body);
 
         this.router.navigateByUrl('/home/noc/soporte-tecnico');
       } catch (error) {

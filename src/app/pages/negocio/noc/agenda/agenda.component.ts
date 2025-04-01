@@ -48,7 +48,6 @@ export class AgendaComponent {
   modoEdicion = false;
   edicionHabilitada = true;
 
-
   horarios: string[] = [];
 
   agendaAsignada: { [hora: string]: { [vehiculo: string]: Iagenda | null } } =
@@ -108,7 +107,6 @@ export class AgendaComponent {
     const nombreTecnico =
       this.tecnicosList.find((t) => t.id === this.idTecnico)?.nombre || '';
 
-
     const body: Iagenda = {
       ...this.trabajoSeleccionado!,
       age_fecha: this.fechaTrabajoSeleccionada,
@@ -119,23 +117,21 @@ export class AgendaComponent {
     };
 
     const body_tec = {
-      reg_sop_tec_asignado: this.idTecnico
+      reg_sop_tec_asignado: this.idTecnico,
+    };
+    console.log(body);
 
-    }
-    console.log(body)
-
-    await this.soporteService.actualizarTecnicoAsignado(this.trabajoSeleccionado!.age_id_sop, body_tec);
+    await this.soporteService.actualizarTecnicoSop(
+      this.trabajoSeleccionado!.age_id_sop,
+      body_tec
+    );
 
     await this.agendaService.actualizarHorarioTrabajo(body.id, body);
 
     // 🔄 Refresca completamente el componente
-await this.ngOnInit();
-
+    await this.ngOnInit();
 
     await this.cargarAgendaPorFecha();
-
-
-
 
     bootstrap.Modal.getInstance(
       document.getElementById('asignarModal')
@@ -310,7 +306,6 @@ await this.ngOnInit();
     const fechaTrabajo = new Date(fecha).setHours(0, 0, 0, 0);
     return fechaTrabajo < hoy;
   }
-  
 
   // FUNCIONES DE TECNICOS
 
@@ -347,7 +342,7 @@ await this.ngOnInit();
   iniciarEdicionDesdeTabla(hora: string, vehiculo: string) {
     const trabajo = this.agendaAsignada[hora][vehiculo];
     if (!trabajo) return;
-  
+
     this.trabajoSeleccionado = trabajo;
     this.fechaTrabajoSeleccionada = this.formatearFecha(trabajo.age_fecha);
 
@@ -357,12 +352,12 @@ await this.ngOnInit();
     this.idTecnico = trabajo.reg_sop_tec_asignado || 0;
 
     this.edicionHabilitada = !this.esFechaPasada(trabajo.age_fecha); // ❗️ aquí se evalúa
-  
+
     bootstrap.Modal.getOrCreateInstance(
       document.getElementById('asignarModal')
     ).show();
   }
-  
+
   formatearFecha(fecha: string | Date | null | undefined): string {
     if (!fecha) return this.obtenerFechaHoy(); // fallback por si es null
     const f = new Date(fecha);
@@ -371,7 +366,6 @@ await this.ngOnInit();
     const d = f.getDate().toString().padStart(2, '0');
     return `${y}-${m}-${d}`;
   }
-  
 
   abrirVistaDetalle(hora: string, vehiculo: string) {
     const trabajo = this.agendaAsignada[hora][vehiculo];

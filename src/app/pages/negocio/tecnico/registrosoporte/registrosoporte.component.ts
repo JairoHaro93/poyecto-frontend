@@ -94,7 +94,7 @@ export class RegistrosoporteComponent {
 
       const SoporteData = this.SoporteForm2.value;
       try {
-        const response = await this.soporteService.insert(SoporteData);
+        const response = await this.soporteService.createSop(SoporteData);
         Swal.fire('Realizado', 'Orden de Soporte Creado', 'success');
 
         // Emitir evento de actualización de soportes a través de WebSocket
