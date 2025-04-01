@@ -295,26 +295,20 @@
         <p>
           <strong>👷 Técnico: </strong><br />
           {{ getNombreTecnicoPorId(trabajoVista?.reg_sop_tec_asignado) }}
-        </p>
-
-       
-
-
+        </p> 
+        <p><strong>📞 Teléfono:</strong><br />{{ trabajoVista?.cli_tel }}</p>
         <p>
           <strong>📍 Coordenadas:</strong><br />
-          
           <a
           [href]="
             'https://www.google.com/maps/search/' +
-            trabajoVista?.reg_sop_coordenadas
-          "
+            trabajoVista?.reg_sop_coordenadas "
           class="text-danger"
           target="_blank"
         >
           {{ trabajoVista?.reg_sop_coordenadas }}
         </a>
         </p>
-        <p><strong>📞 Teléfono:</strong><br />{{ trabajoVista?.cli_tel }}</p>
       </div>
     </div>
   </div>

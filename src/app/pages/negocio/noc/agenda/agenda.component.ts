@@ -309,16 +309,6 @@ export class AgendaComponent {
 
   // FUNCIONES DE TECNICOS
 
-  async asignarTecnicoASoporte() {
-    // if (!this.trabajoSeleccionado) return;
-    // const ord_ins = this.trabajoSeleccionado.age_id_sop;
-    // const body = { reg_sop_tec_asignado: this.idTecnico };
-    // try {
-    //   await this.soporteService.actualizarTecnicoAsignado(sop_id, body);
-    // } catch (error) {
-    //   console.error('Error actualizando técnico:', error);
-    // }
-  }
 
   getNombreTecnicoPorId(id: number | null | undefined): string {
     if (!id) return 'No asignado';
