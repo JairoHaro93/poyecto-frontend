@@ -96,7 +96,7 @@ export class SoporteTecnicoComponent implements OnDestroy {
     return `${dias} días ${horas} horas ${minutos} minutos`;
   }
 
-  async aceptarSoporte(id_sop: string, ord_ins: string) {
+  async aceptarSoporte(id: number, ord_ins: string) {
     try {
       // Obtener datos del usuario autenticado
       this.datosUsuario = this.authService.datosLogged();
@@ -106,8 +106,8 @@ export class SoporteTecnicoComponent implements OnDestroy {
       const body = { reg_sop_noc_id_acepta: reg_sop_registrado_por_id };
 
       // Asegurar que `aceptarSoporte` se ejecute primero
-      await this.soporteService.aceptarSoporte(id_sop, body);
-      console.log(`✅ Soporte ${id_sop} aceptado con éxito`);
+      await this.soporteService.aceptarSoporte(id, body);
+      console.log(`✅ Soporte ${id} aceptado con éxito`);
 
       this.dataSharingService.updateData(
         this.soportesPendientes.length,
@@ -119,9 +119,7 @@ export class SoporteTecnicoComponent implements OnDestroy {
 
       console.log('📢 Soporte actualizado en tiempo real');
 
-      await this.router.navigateByUrl(
-        `/home/noc/info-sop/${id_sop}/${ord_ins}`
-      );
+      await this.router.navigateByUrl(`/home/noc/info-sop/${id}/${ord_ins}`);
     } catch (error) {
       console.error('❌ Error al aceptar soporte:', error);
     }

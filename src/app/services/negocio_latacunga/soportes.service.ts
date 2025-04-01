@@ -38,8 +38,8 @@ export class SoportesService {
     }
   }
 
-  //OBTIENE UN SOPORTE POR ORDEN DE INSTALACION
-  getSopById(id_sop: string): Promise<Isoportes> {
+  //OBTIENE UN SOPORTE POR ID DE SOPORTE
+  getSopById(id_sop: number): Promise<Isoportes> {
     try {
       return firstValueFrom(
         this.httpClient.get<Isoportes>(`${this.baseUrl}/${id_sop}`)
@@ -77,7 +77,7 @@ export class SoportesService {
   }
 
   //NOC ACEPTA Y ACTUALIZA LA TABLA CON SU USUARIO Y HORA DE ACEPTACION
-  aceptarSoporte(id_sop: string, body: any): Promise<any> {
+  aceptarSoporte(id_sop: number, body: any): Promise<any> {
     try {
       console.log(`Aceptando soporte: ${this.baseUrl}/${id_sop}`, body);
       return firstValueFrom(

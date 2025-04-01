@@ -51,8 +51,8 @@ export class InfoSopComponent {
     });
   }
 
-  async cargarSoporte(id_sop: string, ord_ins: number): Promise<void> {
-    console.log('ID Soporte:', id_sop, 'Orden Instalación:', ord_ins);
+  async cargarSoporte(id: number, ord_ins: number): Promise<void> {
+    console.log('ID Soporte:', id, 'Orden Instalación:', ord_ins);
 
     try {
       this.datosUsuario = this.authService.datosLogged();
@@ -64,10 +64,10 @@ export class InfoSopComponent {
 
       const body = { reg_sop_noc_id_acepta: reg_sop_registrado_por_id };
 
-      const response = await this.soporteService.aceptarSoporte(id_sop, body);
+      const response = await this.soporteService.aceptarSoporte(id, body);
       console.log('✅ Soporte aceptado con éxito:', response);
 
-      this.soporte = await this.soporteService.getSopById(id_sop);
+      this.soporte = await this.soporteService.getSopById(id);
       console.log('📄 Datos del soporte obtenidos:', this.soporte);
 
       // Asignar estado y detalle guardados
