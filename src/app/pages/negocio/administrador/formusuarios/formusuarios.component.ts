@@ -237,6 +237,7 @@ export class FormusuariosComponent {
         // console.log(usuarioData);
         // Actualizar
         const response = await this.usuarioServices.update(usuarioData);
+        console.log(usuarioData);
         Swal.fire('Realizado', 'Usuario Actualizado', 'success');
       } else {
         // Insertar

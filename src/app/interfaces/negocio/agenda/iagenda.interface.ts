@@ -9,7 +9,7 @@ export interface Iagenda {
   age_hora_fin: string;
   age_fecha: string;
   age_vehiculo: string;
-  age_tecnico: string;
+  age_tecnico: number;
   cli_tel: string;
   reg_sop_coordenadas: string;
   nombre_completo?: string;

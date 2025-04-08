@@ -113,7 +113,8 @@ export class AgendaComponent {
       age_hora_inicio: this.horaInicio,
       age_hora_fin: this.horaFin,
       age_vehiculo: this.vehiculoSeleccionado,
-      age_tecnico: nombreTecnico,
+      //age_tecnico: nombreTecnico,
+      age_tecnico: this.idTecnico,
     };
 
     const body_tec = {
@@ -308,7 +309,6 @@ export class AgendaComponent {
   }
 
   // FUNCIONES DE TECNICOS
-
 
   getNombreTecnicoPorId(id: number | null | undefined): string {
     if (!id) return 'No asignado';
