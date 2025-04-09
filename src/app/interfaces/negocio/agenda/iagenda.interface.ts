@@ -1,6 +1,7 @@
 export interface Iagenda {
   id: number;
   age_tipo: string;
+  age_subtipo: string;
   age_ord_tra: string;
   age_ord_ins: string;
   age_id_sop: string;
@@ -14,4 +15,5 @@ export interface Iagenda {
   reg_sop_coordenadas: string;
   nombre_completo?: string;
   reg_sop_tec_asignado: number;
+  age_observaciones: string;
 }

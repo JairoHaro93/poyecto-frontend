@@ -123,18 +123,28 @@
           <thead class="table-primary text-center">
             <tr>
               <th>Tipo</th>
+              <th>ESTADO</th>
               <th>Cliente</th>
-              <th>Teléfono</th>
-              <th>Coordenadas</th>
+              <th>Observaciones</th>
+              <th class="col-horario">Coordenadas</th>
               <th>Acción</th>
             </tr>
           </thead>
           <tbody>
             <tr *ngFor="let item of preAgendaList">
               <td>{{ item.age_tipo }}</td>
+              <td>{{ item.age_subtipo }}</td>
               <td>{{ item.nombre_completo }}</td>
-              <td>{{ item.cli_tel }}</td>
-              <td>{{ item.reg_sop_coordenadas }}</td>
+              <td>{{ item.age_observaciones }}</td>
+              <td class="col-horario" >  <a
+                [href]="
+                  'https://www.google.com/maps/search/' +
+                  item.age_coordenadas "
+                class="text-danger"
+                target="_blank"
+              >
+                {{ item.age_coordenadas }}
+              </a></td>
               <td class="text-center">
                 <button
                   class="btn btn-sm btn-primary"
