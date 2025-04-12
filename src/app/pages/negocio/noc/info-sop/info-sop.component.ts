@@ -125,10 +125,14 @@ export class InfoSopComponent {
       reg_sop_sol_det: this.detalleSolucion.trim(),
     };
 
-    const bodysop = {
+    const bodyAge = {
       age_ord_ins: this.ord_Ins,
       age_id_sop: this.id_sop,
       age_tipo: 'SOPORTE',
+      age_subtipo: this.solucionSeleccionada,
+      age_observaciones: this.detalleSolucion,
+      age_coordenadas: this.servicioSeleccionado.coordenadas,
+      age_telefono: this.soporte?.cli_tel,
     };
 
     if (this.solucionSeleccionada === 'RESUELTO') {
@@ -176,9 +180,9 @@ export class InfoSopComponent {
 
             //AGREGAR EL SOPORTE A LA AGENDA
 
-            await this.agendaService.postSopAgenda(bodysop);
+            await this.agendaService.postSopAgenda(bodyAge);
 
-            console.log(bodysop);
+            console.log(bodyAge);
 
             this.router.navigateByUrl('/home/noc/soporte-tecnico');
           } catch (error) {

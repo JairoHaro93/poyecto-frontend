@@ -73,7 +73,7 @@ td button {
 
 /* === Estados === */
 .bg-warning {
-  background-color: #fff3cd !important;
+  background-color: #d86cb2 !important;
 }
 
 .bg-primary {
@@ -155,3 +155,18 @@ td button {
   border-top: 10px solid #fffbea;
 }
 
+.modal-right {
+  position: fixed;
+  left: 0;
+  margin: 0;
+  top: 0;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  z-index: 1055;
+}
+
+.modal-dialog.modal-sm {
+  max-width: 350px;
+  margin-right: auto;
+}

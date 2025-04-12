@@ -88,6 +88,7 @@ export class AgendaComponent {
       }
       this.mapearAgendaDesdeBD();
       this.generarRenderAgenda();
+      console.log(this.agendaList);
     } catch (error) {
       console.error('❌ Error al cargar la agenda por fecha:', error);
     }
@@ -122,10 +123,10 @@ export class AgendaComponent {
     };
     console.log(body);
 
-    await this.soporteService.actualizarTecnicoSop(
-      this.trabajoSeleccionado!.age_id_sop,
-      body_tec
-    );
+    // await this.soporteService.actualizarTecnicoSop(
+    //   this.trabajoSeleccionado!.age_id_sop,
+    //   body_tec
+    //);
 
     await this.agendaService.actualizarHorarioTrabajo(body.id, body);
 
@@ -198,13 +199,13 @@ export class AgendaComponent {
     }
   }
 
-  getEstadoClass(tipo: string | undefined): string {
-    switch (tipo) {
-      case 'SOPORTE':
+  getEstadoClass(sub_tipo: string | undefined): string {
+    switch (sub_tipo) {
+      case 'LOS':
         return 'bg-yellow  text-black';
-      case 'I':
+      case 'VISITA':
         return 'bg-blue text-white';
-      case 'Pendiente':
+      case 'TRABAJO':
         return 'bg-warning text-dark';
       case 'Asignado':
         return 'bg-primary text-white';
@@ -310,9 +311,12 @@ export class AgendaComponent {
 
   // FUNCIONES DE TECNICOS
 
-  getNombreTecnicoPorId(id: number | null | undefined): string {
-    if (!id) return 'No asignado';
-    return this.tecnicosList.find((t) => t.id === id)?.nombre || 'No asignado';
+  getNombreTecnicoPorId(id: any): string {
+    const idNum = Number(id);
+    if (!id || isNaN(idNum)) return 'No asignado';
+    return (
+      this.tecnicosList.find((t) => t.id === idNum)?.nombre || 'No asignado'
+    );
   }
 
   //MODALES
