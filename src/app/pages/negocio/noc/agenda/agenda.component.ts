@@ -207,10 +207,10 @@ export class AgendaComponent {
         return 'bg-blue text-white';
       case 'TRABAJO':
         return 'bg-warning text-dark';
-      case 'Asignado':
-        return 'bg-primary text-white';
-      case 'Completado':
+      case 'INSTALACION':
         return 'bg-success text-white';
+      case 'ALMUERZO':
+        return 'bg-primary text-white';
       case 'Cancelado':
         return 'bg-danger text-white';
       default:
@@ -343,7 +343,7 @@ export class AgendaComponent {
     this.horaInicio = trabajo.age_hora_inicio;
     this.horaFin = trabajo.age_hora_fin;
     this.vehiculoSeleccionado = trabajo.age_vehiculo;
-    this.idTecnico = trabajo.reg_sop_tec_asignado || 0;
+    this.idTecnico = trabajo.age_tecnico || 0;
 
     this.edicionHabilitada = !this.esFechaPasada(trabajo.age_fecha); // ❗️ aquí se evalúa
 
