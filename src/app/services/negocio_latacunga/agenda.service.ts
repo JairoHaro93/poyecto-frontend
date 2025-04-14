@@ -28,6 +28,16 @@ export class AgendaService {
     );
   }
 
+  //METODO OBTENER LOS DATOS AGENDADOS A UN TECNICO
+  getAgendaTec(id_tec: number) {
+    console.log(`${this.baseUrl}/mis-trabajos-tec/${id_tec}`);
+    return firstValueFrom(
+      this.httpClient.get<Iagenda[]>(
+        `${this.baseUrl}/mis-trabajos-tec/${id_tec}`
+      )
+    );
+  }
+
   //METODO PARA AGREGAR UN SOPORTE A LA AGENDA
 
   postSopAgenda(body: any) {
