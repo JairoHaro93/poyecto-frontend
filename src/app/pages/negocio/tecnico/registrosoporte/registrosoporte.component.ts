@@ -86,7 +86,7 @@ export class RegistrosoporteComponent {
       this.SoporteForm2.patchValue({
         reg_sop_nombre: this.clienteSeleccionado?.nombre_completo,
         ord_ins: this.servicioSeleccionado?.orden_instalacion || null,
-        reg_sop_coordenadas: this.servicioSeleccionado?.coordenadas || null,
+
         reg_sop_registrado_por_id: this.datosUsuario.usuario_id,
       });
 
