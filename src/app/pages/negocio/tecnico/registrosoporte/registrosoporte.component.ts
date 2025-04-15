@@ -53,7 +53,7 @@ export class RegistrosoporteComponent {
       reg_sop_coordenadas: new FormControl(null, []),
       ord_ins: new FormControl(null, []),
       reg_sop_observaciones: new FormControl(null, []),
-      cli_tel: new FormControl('', [
+      reg_sop_tel: new FormControl('', [
         Validators.required,
         Validators.pattern('^[0-9]{10,}$'),
       ]),

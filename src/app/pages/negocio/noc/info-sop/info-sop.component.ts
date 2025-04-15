@@ -132,7 +132,7 @@ export class InfoSopComponent {
       age_subtipo: this.solucionSeleccionada,
       age_observaciones: this.detalleSolucion,
       age_coordenadas: this.servicioSeleccionado.coordenadas,
-      age_telefono: this.soporte?.cli_tel,
+      age_telefono: this.soporte?.reg_sop_tel,
     };
 
     if (this.solucionSeleccionada === 'RESUELTO') {
