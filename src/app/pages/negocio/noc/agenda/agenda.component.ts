@@ -118,15 +118,7 @@ export class AgendaComponent {
       age_tecnico: this.idTecnico,
     };
 
-    const body_tec = {
-      reg_sop_tec_asignado: this.idTecnico,
-    };
     console.log(body);
-
-    // await this.soporteService.actualizarTecnicoSop(
-    //   this.trabajoSeleccionado!.age_id_sop,
-    //   body_tec
-    //);
 
     await this.agendaService.actualizarHorarioTrabajo(body.id, body);
 

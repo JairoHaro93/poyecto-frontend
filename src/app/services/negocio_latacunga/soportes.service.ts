@@ -107,26 +107,4 @@ export class SoportesService {
       throw error;
     }
   }
-
-  //NOC ASIGNA UN TECNICO PARA SOPORTE
-  actualizarTecnicoSop(id_sop: string, body: any): Promise<any> {
-    try {
-      console.log(
-        `Actualizando Técnico en soporte: ${this.baseUrl}/asignar-tecnico/${id_sop}`,
-        body
-      );
-      return firstValueFrom(
-        this.httpClient.put<any>(
-          `${this.baseUrl}/asignar-tecnico/${id_sop}`,
-          body
-        )
-      );
-    } catch (error) {
-      console.error(
-        `Error al actualizar técnico asignado para ID ${id_sop}:`,
-        error
-      );
-      throw error;
-    }
-  }
 }
