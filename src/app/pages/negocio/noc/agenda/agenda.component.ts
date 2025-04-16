@@ -105,6 +105,11 @@ export class AgendaComponent {
       return;
     }
 
+    if (this.hayConflictoDeHorario()) {
+      alert('⛔ El vehículo ya tiene un trabajo asignado en ese horario.');
+      return;
+    }
+
     const nombreTecnico =
       this.tecnicosList.find((t) => t.id === this.idTecnico)?.nombre || '';
 
@@ -114,19 +119,11 @@ export class AgendaComponent {
       age_hora_inicio: this.horaInicio,
       age_hora_fin: this.horaFin,
       age_vehiculo: this.vehiculoSeleccionado,
-      //age_tecnico: nombreTecnico,
       age_tecnico: this.idTecnico,
     };
 
-    console.log(body);
-
     await this.agendaService.actualizarHorarioTrabajo(body.id, body);
-
-    // 🔄 Refresca completamente el componente
     await this.ngOnInit();
-
-    await this.cargarAgendaPorFecha();
-
     bootstrap.Modal.getInstance(
       document.getElementById('asignarModal')
     )?.hide();
@@ -150,12 +147,15 @@ export class AgendaComponent {
 
   mapearAgendaDesdeBD() {
     for (const item of this.agendaList) {
-      const inicioIndex = this.horarios.indexOf(item.age_hora_inicio);
-      const finIndex = this.horarios.indexOf(item.age_hora_fin);
-      if (inicioIndex === -1 || finIndex === -1) continue;
-      for (let i = inicioIndex; i < finIndex; i++) {
-        const hora = this.horarios[i];
-        this.agendaAsignada[hora][item.age_vehiculo] = item;
+      const inicio = item.age_hora_inicio;
+      const fin = item.age_hora_fin;
+
+      let agregar = false;
+      for (const hora of this.horarios) {
+        const [hInicio, hFin] = hora.split(' - ');
+        if (hInicio === inicio) agregar = true;
+        if (agregar) this.agendaAsignada[hora][item.age_vehiculo] = item;
+        if (hFin === fin) break;
       }
     }
   }
@@ -225,18 +225,28 @@ export class AgendaComponent {
   generarHorarios() {
     const inicio = 8 * 60;
     const fin = 18 * 60;
-    const paso = 30;
+    const paso = 15; // PASO EN MINUTOS
     this.horarios = [];
     this.agendaAsignada = {};
+
     for (let min = inicio; min < fin; min += paso) {
-      const hora = `${Math.floor(min / 60)
+      const hInicio = Math.floor(min / 60);
+      const mInicio = min % 60;
+      const hFin = Math.floor((min + paso) / 60);
+      const mFin = (min + paso) % 60;
+
+      const horaFormateada = `${hInicio.toString().padStart(2, '0')}:${mInicio
         .toString()
-        .padStart(2, '0')}:${(min % 60).toString().padStart(2, '0')}`;
-      this.horarios.push(hora);
-      this.agendaAsignada[hora] = {};
-      this.vehiculos.forEach(
-        (v) => (this.agendaAsignada[hora][v.codigo] = null)
-      );
+        .padStart(2, '0')} - ${hFin.toString().padStart(2, '0')}:${mFin
+        .toString()
+        .padStart(2, '0')}`;
+
+      this.horarios.push(horaFormateada);
+      this.agendaAsignada[horaFormateada] = {};
+
+      this.vehiculos.forEach((vehiculo) => {
+        this.agendaAsignada[horaFormateada][vehiculo.codigo] = null;
+      });
     }
   }
 
@@ -250,7 +260,7 @@ export class AgendaComponent {
 
   alCambiarFecha() {
     this.nombreDelDia = this.obtenerNombreDelDia(this.fechaSeleccionada);
-    this.generarRangoHorarios();
+
     this.cargarAgendaPorFecha();
   }
 
@@ -272,26 +282,6 @@ export class AgendaComponent {
       'Viernes',
       'Sábado',
     ][new Date(a, m - 1, d).getDay()];
-  }
-
-  generarRangoHorarios() {
-    const inicio = 8 * 60;
-    const fin = 18 * 60;
-    const paso = 30;
-    this.horarios = [];
-    this.agendaAsignada = {};
-    for (let min = inicio; min < fin; min += paso) {
-      const horas = Math.floor(min / 60)
-        .toString()
-        .padStart(2, '0');
-      const minutos = (min % 60).toString().padStart(2, '0');
-      const hora = `${horas}:${minutos}`;
-      this.horarios.push(hora);
-      this.agendaAsignada[hora] = {};
-      for (const veh of this.vehiculos) {
-        this.agendaAsignada[hora][veh.codigo] = null;
-      }
-    }
   }
 
   esFechaPasada(fecha: string | null | undefined): boolean {
@@ -334,10 +324,12 @@ export class AgendaComponent {
 
     this.horaInicio = trabajo.age_hora_inicio;
     this.horaFin = trabajo.age_hora_fin;
+
+    this.actualizarHorasFinDisponibles(); // ✅ llamada correcta aquí
+
     this.vehiculoSeleccionado = trabajo.age_vehiculo;
     this.idTecnico = trabajo.age_tecnico || 0;
-
-    this.edicionHabilitada = !this.esFechaPasada(trabajo.age_fecha); // ❗️ aquí se evalúa
+    this.edicionHabilitada = !this.esFechaPasada(trabajo.age_fecha);
 
     bootstrap.Modal.getOrCreateInstance(
       document.getElementById('asignarModal')
@@ -398,5 +390,53 @@ export class AgendaComponent {
     bootstrap.Modal.getInstance(
       document.getElementById('modalSoportes')
     )?.hide();
+  }
+  horaSeleccionada: string = '';
+
+  actualizarHorasDesdeRango() {
+    const [inicio, fin] = this.horaSeleccionada.split(' - ');
+    this.horaInicio = inicio;
+    this.horaFin = fin;
+  }
+
+  horariosDisponiblesFin: string[] = [];
+
+  actualizarHorasFinDisponibles() {
+    const indexInicio = this.horarios.findIndex(
+      (h) => h.split(' - ')[0] === this.horaInicio
+    );
+    this.horariosDisponiblesFin = [];
+
+    if (indexInicio !== -1) {
+      for (let i = indexInicio + 1; i < this.horarios.length; i++) {
+        const horaFin = this.horarios[i].split(' - ')[1];
+        this.horariosDisponiblesFin.push(horaFin);
+      }
+    }
+  }
+  hayConflictoDeHorario(): boolean {
+    if (!this.horaInicio || !this.horaFin || !this.vehiculoSeleccionado)
+      return false;
+
+    const inicioSeleccionado = this.horaInicio;
+    const finSeleccionado = this.horaFin;
+    const vehiculo = this.vehiculoSeleccionado;
+
+    for (const hora of this.horarios) {
+      const [hInicio, hFin] = hora.split(' - ');
+
+      const estaDentroDelRango =
+        hInicio >= inicioSeleccionado && hInicio < finSeleccionado;
+
+      const trabajoEnCelda = this.agendaAsignada[hora][vehiculo];
+      const esTrabajoActual =
+        trabajoEnCelda?.id === this.trabajoSeleccionado?.id;
+
+      if (estaDentroDelRango && trabajoEnCelda && !esTrabajoActual) {
+        return true; // conflicto solo si ya hay otro trabajo en este vehículo y horario
+      }
+    }
+
+    return false;
   }
 }

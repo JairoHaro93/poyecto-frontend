@@ -1,10 +1,32 @@
-/* === Tabla === */
-table {
-  border-collapse: collapse;
+/* === Contenedor Scroll === */
+.agenda-scroll-wrapper {
+  max-height: calc(100vh); /* altura dinámica */
+  overflow-y: auto;
+  overflow-x: auto;
   width: 100%;
+  position: relative;
 }
 
-th,
+/* === Tabla === */
+.agenda-table {
+  table-layout: fixed;
+  min-width: 600px;
+  width: 100%;
+  border-collapse: collapse;
+}
+
+/* === Cabecera Fija === */
+.agenda-table thead th {
+  position: sticky;
+  top: 0;
+  background-color: #cc2929;
+  color: white;
+  z-index: 5;
+  text-align: center;
+  vertical-align: middle;
+  padding: 4px;
+}
+
 td {
   text-align: center;
   vertical-align: middle;
@@ -54,6 +76,7 @@ td button {
 
 .celda-agenda {
   max-width: 120px;
+  position: relative; /* ✅ Esto encierra bien a los botones */
 }
 
 .celda-soporte {
@@ -102,48 +125,26 @@ td button {
   color: white;
 }
 
-/* === Transiciones / Iconos === */
-/* td {
-  transition: background-color 1s ease, color 0.4s ease;
-} */
-
-/* td i {
-  font-size: 0.9rem;
-} */
-
 .text-muted {
   color: #cc2929 !important;
 }
 
-.btn-editar-badge {
-  top: 0;
-  right: 0;
-  font-size: 1.2rem;
-
-  border-radius: 50%;
-  background-color: #007bff;
-  color: white;
-  border: none;
-  z-index: 10;
-}
-
+.btn-editar-badge,
 .btn-vista-badge {
+  position: absolute;
   top: 0;
-  left: 0;
   font-size: 1.2rem;
-
   border-radius: 50%;
-  background-color: #007bff;
+  background-color: #ff0000;
   color: white;
   border: none;
-  z-index: 10;
+  z-index: 1;
 }
 
 .cuadro-detalle-idea .card {
-  border: 2px dashed red; /* DEBUG */
+  border: 2px dashed red;
 }
 
-/* Pico */
 .cuadro-detalle-idea .detalle-pico {
   position: absolute;
   bottom: -10px;
@@ -169,4 +170,12 @@ td button {
 .modal-dialog.modal-sm {
   max-width: 350px;
   margin-right: auto;
+}
+
+.btn-editar-badge {
+  right: 2px;
+}
+
+.btn-vista-badge {
+  left: 2px;
 }

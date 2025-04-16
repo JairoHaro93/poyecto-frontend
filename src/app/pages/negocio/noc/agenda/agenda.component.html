@@ -30,9 +30,13 @@
     </button>
   </div>
   <!-- TABLA HORARIO -->
+  <!-- TABLA HORARIO -->
   <div class="row m-2">
     <div class="col-lg-12">
-      <div *ngIf="renderAgenda && horarios.length">
+      <div
+        *ngIf="renderAgenda && horarios.length"
+        class="agenda-scroll-wrapper"
+      >
         <table
           class="table table-bordered table-sm text-center align-middle small agenda-table"
         >
@@ -47,7 +51,7 @@
           <!-- BODY DE LA TABLA -->
           <tbody>
             <tr *ngFor="let hora of horarios">
-              <td class="text-nowrap">{{ hora }} - {{ getFinHora(hora) }}</td>
+              <td class="text-nowrap col-horario">{{ hora }}</td>
 
               <ng-container *ngFor="let vehiculo of vehiculos">
                 <ng-container
@@ -187,7 +191,7 @@
   <div class="modal-dialog modal-dialog-centered modal-sm modal-right">
     <div class="modal-content">
       <div class="modal-header">
-        <h5 class="modal-title">Asignar Trabajo</h5>
+        <h5 class="modal-title">Editar Trabajo</h5>
         <button
           type="button"
           class="btn-close"
@@ -195,9 +199,11 @@
           aria-label="Cerrar"
         ></button>
       </div>
+
       <div class="modal-body small">
         <p><strong>Tipo:</strong> {{ trabajoSeleccionado?.age_tipo }}</p>
 
+        <!-- Técnico -->
         <div class="mb-3">
           <label for="tecnico">Técnico</label>
           <select
@@ -213,6 +219,7 @@
           </select>
         </div>
 
+        <!-- Vehículo -->
         <div class="mb-3">
           <label for="vehiculo">Vehículo</label>
           <select
@@ -230,6 +237,7 @@
           </select>
         </div>
 
+        <!-- Fecha -->
         <div class="mb-3">
           <label for="fecha">Fecha</label>
           <input
@@ -241,30 +249,41 @@
           />
         </div>
 
+        <!-- Hora inicio -->
         <div class="mb-3">
           <label for="horaInicio">Hora inicio</label>
           <select
             id="horaInicio"
             class="form-select form-select-sm"
             [(ngModel)]="horaInicio"
+            (change)="actualizarHorasFinDisponibles()"
             [disabled]="!edicionHabilitada"
           >
-            <option *ngFor="let hora of horarios" [value]="hora">
-              {{ hora }}
+            <option [value]="''" disabled selected>
+              Seleccione hora inicio
+            </option>
+            <option
+              *ngFor="let hora of horarios"
+              [value]="hora.split(' - ')[0]"
+            >
+              {{ hora.split(" - ")[0] }}
             </option>
           </select>
         </div>
 
+        <!-- Hora fin -->
         <div class="mb-3">
           <label for="horaFin">Hora fin</label>
           <select
             id="horaFin"
             class="form-select form-select-sm"
             [(ngModel)]="horaFin"
-            [disabled]="!edicionHabilitada"
+            [disabled]="!edicionHabilitada || !horaInicio"
           >
-            <option *ngFor="let hora of horarios" [value]="hora">
-              {{ hora }}
+            <option [value]="''" disabled>Seleccione hora inicio</option>
+
+            <option *ngFor="let fin of horariosDisponiblesFin" [value]="fin">
+              {{ fin }}
             </option>
           </select>
         </div>
