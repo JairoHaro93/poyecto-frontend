@@ -21,7 +21,7 @@
 
 .table th,
 .table td {
-  padding: 8px;
+  font-size: 12px;
   text-align: left;
   /* Si deseas bordes internos en cada celda, puedes mantenerlos */
   border: 1px gray;
@@ -35,7 +35,6 @@
 .custom-header th {
   background-color: #000 !important;
   color: #fff !important;
-  padding: 1rem;
 }
 
 .flex {

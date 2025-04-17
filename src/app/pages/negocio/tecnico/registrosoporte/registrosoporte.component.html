@@ -49,11 +49,12 @@
   </section>
 
   <!-- Mostrar la información de los servicios del cliente seleccionado -->
+  <!-- Mostrar la información de los servicios del cliente seleccionado -->
   <section
-    class="container mt-3"
+    class="container"
     *ngIf="clienteSeleccionado && clienteSeleccionado.servicios?.length"
   >
-    <table border="2" class="table">
+    <table border="2" class="table tabla-servicios">
       <thead>
         <tr class="custom-header">
           <th></th>
@@ -63,6 +64,8 @@
           <th>Plan Contratado</th>
           <th>Precio</th>
           <th>Pago</th>
+          <th>Cortado</th>
+          <th>Servicio</th>
         </tr>
       </thead>
       <tbody>
@@ -78,12 +81,14 @@
               [(ngModel)]="servicioSeleccionado"
             />
           </td>
-          <td>{{ servicio.orden_instalacion }}</td>
-          <td>{{ servicio.direccion }}</td>
-          <td>{{ servicio.referencia }}</td>
-          <td>{{ servicio.plan_nombre }}</td>
-          <td>{{ servicio.precio }}</td>
-          <td>{{ servicio.estado }}</td>
+          <td class="text-nowrap">{{ servicio.orden_instalacion }}</td>
+          <td>{{ servicio.direccion | uppercase }}</td>
+          <td>{{ servicio.referencia | uppercase }}</td>
+          <td class="text-nowrap">{{ servicio.plan_nombre }}</td>
+          <td class="text-nowrap">{{ servicio.precio }}</td>
+          <td class="text-nowrap">{{ servicio.estado }}</td>
+          <td class="text-nowrap">{{ servicio.cortado }}</td>
+          <td class="text-nowrap">{{ servicio.servicio }}</td>
         </tr>
       </tbody>
     </table>

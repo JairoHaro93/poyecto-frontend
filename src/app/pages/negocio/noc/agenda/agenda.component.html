@@ -280,7 +280,7 @@
             [(ngModel)]="horaFin"
             [disabled]="!edicionHabilitada || !horaInicio"
           >
-            <option [value]="''" disabled>Seleccione hora inicio</option>
+            <option [value]="''" disabled>Seleccione hora Fin</option>
 
             <option *ngFor="let fin of horariosDisponiblesFin" [value]="fin">
               {{ fin }}

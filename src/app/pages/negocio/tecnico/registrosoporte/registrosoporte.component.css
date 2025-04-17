@@ -34,6 +34,7 @@ body {
 
 .table th,
 .table td {
+  font-size: 12px;
   padding: 8px;
   text-align: left;
   /* Si deseas bordes internos en cada celda, puedes mantenerlos */

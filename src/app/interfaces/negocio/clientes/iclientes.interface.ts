@@ -17,6 +17,11 @@ export interface Iclientes {
       plan_nombre: string;
       telefonos: string;
       precio: number;
+      cortado: string;
+      tipo: string;
+      tipo_instalacion: string;
+      estado_instalacion: string;
+      servicio: string;
     }
   ];
 }

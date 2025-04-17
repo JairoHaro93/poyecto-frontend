@@ -64,7 +64,7 @@ export class RegistrosoporteComponent {
   }
 
   async ngOnInit() {
-    this.clientelista = await this.clienteService.getInfoClientes();
+    this.clientelista = await this.clienteService.getInfoClientesActivos();
     this.datosUsuario = this.authService.datosLogged();
     await this.cargarSoportesPendientes();
 
@@ -123,53 +123,87 @@ export class RegistrosoporteComponent {
   // Métodos de búsqueda y selección de clientes
   actualizarSugerencias() {
     const texto = this.busqueda.trim().toLowerCase();
-    if (texto.length > 0) {
-      this.nombresFiltrados = this.clientelista
-        .map((c) => c.nombre_completo)
-        .filter((nombre) => nombre.toLowerCase().includes(texto));
-    } else {
+    this.nombresFiltrados = texto
+      ? this.clientelista
+          .map((c) => c.nombre_completo)
+          .filter((nombre) => nombre.toLowerCase().includes(texto))
+      : [];
+  }
+
+  // Cuando selecciona un nombre
+  async buscarClienteSeleccionado() {
+    const cliente = this.clientelista.find(
+      (c) =>
+        c.nombre_completo.trim().toLowerCase() ===
+        this.busqueda.trim().toLowerCase()
+    );
+
+    if (cliente) {
+      this.busquedaCedula = cliente.cedula;
       this.nombresFiltrados = [];
-    }
-  }
 
-  buscarClienteSeleccionado() {
-    this.clienteSeleccionado =
-      this.clientelista.find((c) => c.nombre_completo === this.busqueda) ||
-      null;
-    if (this.clienteSeleccionado?.servicios?.length) {
-      this.servicioSeleccionado = this.clienteSeleccionado.servicios[0];
-    }
-
-    if (this.clienteSeleccionado) {
-      this.busqueda = this.clienteSeleccionado.nombre_completo;
-      this.busquedaCedula = this.clienteSeleccionado.cedula;
+      // 🔁 Carga los detalles como en búsqueda por cédula
+      await this.cargarDetalleClientePorCedula();
     } else {
-      console.log('Cliente no encontrado');
+      this.busquedaCedula = '';
+      this.clienteSeleccionado = null;
+      this.servicioSeleccionado = null;
     }
   }
 
-  buscarClientePorCedula() {
-    this.clienteSeleccionado =
-      this.clientelista.find(
-        (c) =>
-          c.cedula.toLowerCase() === this.busquedaCedula.trim().toLowerCase()
-      ) || null;
-    if (this.clienteSeleccionado?.servicios?.length) {
-      this.servicioSeleccionado = this.clienteSeleccionado.servicios[0];
-    }
+  // Cuando ingresa una cédula
+  async buscarClientePorCedula() {
+    const cedulaBuscada = this.busquedaCedula.trim();
+    const cliente = this.clientelista.find((c) => c.cedula === cedulaBuscada);
 
-    if (this.clienteSeleccionado) {
-      this.busqueda = this.clienteSeleccionado.nombre_completo;
-      this.busquedaCedula = this.clienteSeleccionado.cedula;
+    if (cliente) {
+      this.busqueda = cliente.nombre_completo;
+      this.nombresFiltrados = [];
+
+      // 🔁 Llama al servicio para cargar detalles del cliente
+      await this.cargarDetalleClientePorCedula();
     } else {
-      console.log('Cliente no encontrado');
+      this.busqueda = '';
+      this.clienteSeleccionado = null;
+      this.servicioSeleccionado = null;
     }
   }
 
-  seleccionarNombre(nombre: string): void {
+  async seleccionarNombre(nombre: string) {
     this.busqueda = nombre;
     this.buscarClienteSeleccionado();
-    this.nombresFiltrados = []; // Oculta la lista de sugerencias
+    this.nombresFiltrados = [];
+  }
+
+  // Carga el detalle completo del cliente por su cédula
+  async cargarDetalleClientePorCedula() {
+    const cedula = this.busquedaCedula.trim();
+    if (!cedula) return;
+
+    try {
+      const detalle = await this.clienteService.getInfoClientesArrayActivos(
+        cedula
+      );
+      console.log('Detalle recibido:', detalle);
+
+      if (detalle.servicios.length > 0) {
+        this.clienteSeleccionado = detalle;
+        this.servicioSeleccionado = detalle.servicios[0];
+
+        console.log('Servicios cargados:', this.clienteSeleccionado.servicios);
+        console.log(
+          'Servicio seleccionado:',
+          this.servicioSeleccionado?.orden_instalacion
+        );
+
+        this.busqueda = this.clienteSeleccionado.nombre_completo;
+      } else {
+        this.clienteSeleccionado = null;
+        this.servicioSeleccionado = null;
+      }
+    } catch (error) {
+      console.error('❌ Error al cargar detalle del cliente:', error);
+    }
   }
 
   copyIp(ip: string): void {
