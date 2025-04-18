@@ -14,22 +14,24 @@ export class ClientesService {
   //injectables
   private httpClient = inject(HttpClient);
 
-  //metodos
-
+  //GET PARA INFORMACION NOMBRE COMPLETO Y CEDULA TODOS LOS CLIENTES DE LATACUNGA
   getInfoClientes() {
     return lastValueFrom(this.httpClient.get<[]>(`${this.baseUrl}`));
   }
 
+  //GET PARA INFORMACION NOMBRE COMPLETO Y CEDULA TODOS LOS CLIENTES DE LATACUNGA CON SERVICIO ACTIVO
   getInfoClientesActivos() {
     return lastValueFrom(this.httpClient.get<[]>(`${this.baseUrl}/activos`));
   }
 
+  //GET PARA INFORMACION TODOS LOS CLIENTES DE LATACUNGA CON SERVICIOS EN ARRAY
   getInfoClientesArray(cedula: string): Promise<Iclientes> {
     return lastValueFrom(
       this.httpClient.get<Iclientes>(`${this.baseUrl}/data/${cedula}`)
     );
   }
 
+  //GET PARA INFORMACION TODOS LOS CLIENTES DE LATACUNGA CON SERVICIOS EN ARRAY CON SERVICIOS ACTIVOS
   getInfoClientesArrayActivos(cedula: string): Promise<Iclientes> {
     return lastValueFrom(
       this.httpClient.get<Iclientes>(`${this.baseUrl}/data-act/${cedula}`)

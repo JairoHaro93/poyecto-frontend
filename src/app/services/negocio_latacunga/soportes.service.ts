@@ -41,6 +41,7 @@ export class SoportesService {
   //OBTIENE UN SOPORTE POR ID DE SOPORTE
   getSopById(id_sop: number): Promise<Isoportes> {
     try {
+      console.log(`${this.baseUrl}/${id_sop}`);
       return firstValueFrom(
         this.httpClient.get<Isoportes>(`${this.baseUrl}/${id_sop}`)
       );

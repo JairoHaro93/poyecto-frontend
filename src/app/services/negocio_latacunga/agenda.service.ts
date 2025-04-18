@@ -47,7 +47,7 @@ export class AgendaService {
   }
 
   // METODO PARA ACTUALIZAR FECHA Y HORA DE UN TRABAJO
-  actualizarHorarioTrabajo(id: number, body: Iagenda): Promise<any> {
+  actualizarAgenda(id: number, body: Iagenda): Promise<any> {
     return firstValueFrom(
       this.httpClient.put(`${this.baseUrl}/edita/${id}`, body)
     );

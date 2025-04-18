@@ -122,7 +122,7 @@ export class AgendaComponent {
       age_tecnico: this.idTecnico,
     };
 
-    await this.agendaService.actualizarHorarioTrabajo(body.id, body);
+    await this.agendaService.actualizarAgenda(body.id, body);
     await this.ngOnInit();
     bootstrap.Modal.getInstance(
       document.getElementById('asignarModal')
