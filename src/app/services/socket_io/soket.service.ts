@@ -6,7 +6,6 @@ import { environment } from '../../../environments/environment';
   providedIn: 'root',
 })
 export class SoketService {
-  // private socket = io('http://localhost:3000'); // Servidor WebSocket
   private socket = io(`${environment.API_WEBSOKETS_IO}`); // Conexión con WebSocket
   constructor() {}
 

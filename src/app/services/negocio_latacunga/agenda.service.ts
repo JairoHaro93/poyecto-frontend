@@ -39,17 +39,25 @@ export class AgendaService {
   }
 
   //METODO PARA AGREGAR UN SOPORTE A LA AGENDA
-
   postSopAgenda(body: any) {
     return firstValueFrom(
       this.httpClient.post<Iagenda[]>(`${this.baseUrl}/agenda-sop`, body)
     );
   }
 
-  // METODO PARA ACTUALIZAR FECHA Y HORA DE UN TRABAJO
-  actualizarAgenda(id: number, body: Iagenda): Promise<any> {
+  // METODO PARA ACTUALIZAR EL HORARIO DE UN TRABAJO
+  actualizarAgendaHorario(id: number, body: Iagenda): Promise<any> {
+    console.log(`${this.baseUrl}/edita-hora/${id}`, body);
     return firstValueFrom(
-      this.httpClient.put(`${this.baseUrl}/edita/${id}`, body)
+      this.httpClient.put(`${this.baseUrl}/edita-hora/${id}`, body)
+    );
+  }
+
+  // METODO PARA ACTUALIZAR LA SOLUCIONES DE UN TRABAJO
+  actualizarAgendaSolucuion(id: number, body: Iagenda): Promise<any> {
+    console.log(`${this.baseUrl}/edita-sol/${id}`, body);
+    return firstValueFrom(
+      this.httpClient.put(`${this.baseUrl}/edita-sol/${id}`, body)
     );
   }
 }

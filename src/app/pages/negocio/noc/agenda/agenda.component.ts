@@ -11,6 +11,8 @@ import { Iusuarios } from '../../../../interfaces/sistema/iusuarios.interface';
 import { AgendaService } from '../../../../services/negocio_latacunga/agenda.service';
 import { Iagenda } from '../../../../interfaces/negocio/agenda/iagenda.interface';
 import { ClientesService } from '../../../../services/negocio_atuntaqui/clientes.service';
+import { environment } from '../../../../../environments/environment';
+import { io } from 'socket.io-client';
 
 declare var bootstrap: any;
 
@@ -59,6 +61,8 @@ export class AgendaComponent {
     { codigo: 'F19', nombre: 'F19 CAMION' },
     { codigo: 'F20', nombre: 'F20 MOTO ROJA' },
   ];
+
+  private socket = io(`${environment.API_WEBSOKETS_IO}`); // Conexión con WebSocket
 
   async ngOnInit() {
     this.generarHorarios();
@@ -122,7 +126,9 @@ export class AgendaComponent {
       age_tecnico: this.idTecnico,
     };
 
-    await this.agendaService.actualizarAgenda(body.id, body);
+    await this.agendaService.actualizarAgendaHorario(body.id, body);
+    // Emitir evento de actualización de soportes a través de WebSocket
+    this.socket.emit('trabajoAgendado');
     await this.ngOnInit();
     bootstrap.Modal.getInstance(
       document.getElementById('asignarModal')

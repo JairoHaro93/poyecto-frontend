@@ -17,4 +17,6 @@ export interface Iagenda {
   reg_sop_tec_asignado: number;
   age_observaciones: string;
   age_telefono: string;
+  age_solucion: string;
+  age_estado: string;
 }

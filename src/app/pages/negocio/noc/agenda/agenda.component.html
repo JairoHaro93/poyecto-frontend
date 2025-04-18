@@ -71,8 +71,9 @@
                         class="celda-contenido d-flex flex-column h-100 justify-content-between"
                       >
                         <!-- Botón EDITAR -->
+                        @if (!esFechaPasada(celda.trabajo.age_fecha) &&
+                        celda.trabajo.age_estado !== 'CONCLUIDO') {
                         <button
-                          *ngIf="!esFechaPasada(celda.trabajo.age_fecha)"
                           class="btn btn-editar-badge position-absolute"
                           (click)="
                             iniciarEdicionDesdeTabla(hora, vehiculo.codigo)
@@ -80,6 +81,7 @@
                         >
                           <i class="fas fa-pencil-alt"></i>
                         </button>
+                        }
 
                         <!-- Botón VISTA -->
                         <button

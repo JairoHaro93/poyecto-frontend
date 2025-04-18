@@ -33,7 +33,7 @@
             </button>
             <button
               class="btn btn-sm btn-secondary"
-              (click)="editarTrabajo(trabajo)"
+              (click)="abrirModalEditar(trabajo)"
             >
               Editar
             </button>
@@ -132,6 +132,88 @@
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
           Cerrar
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Editar -->
+<div
+  class="modal fade"
+  id="editarModal"
+  tabindex="-1"
+  aria-labelledby="editarModalLabel"
+  aria-hidden="true"
+>
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Editar Trabajo / Soporte</h5>
+        <button
+          type="button"
+          class="btn-close"
+          data-bs-dismiss="modal"
+          aria-label="Cerrar"
+        ></button>
+      </div>
+      <div class="modal-body small">
+        <form *ngIf="trabajoSeleccionado" #formSolucion="ngForm">
+          <!-- Observaciones del problema -->
+          <div class="mb-3">
+            <label class="form-label">Descripción del problema</label>
+            <textarea
+              class="form-control"
+              rows="3"
+              [value]="trabajoSeleccionado.age_observaciones"
+              disabled
+            ></textarea>
+          </div>
+
+          <!-- Solución aplicada -->
+          <div class="mb-3">
+            <label class="form-label">Solución aplicada</label>
+            <textarea
+              class="form-control"
+              [(ngModel)]="trabajoSeleccionado.age_solucion"
+              name="descripcion"
+              required
+              rows="3"
+              placeholder="Describe la solución técnica aplicada"
+            ></textarea>
+          </div>
+
+          <!-- Estado del trabajo -->
+          <div class="mb-3">
+            <label class="form-label">Estado</label>
+            <select
+              class="form-select"
+              [(ngModel)]="trabajoSeleccionado.age_estado"
+              name="estado"
+            >
+              <option value="Trabajo">Trabajo</option>
+              <option value="CONCLUIDO">CONCLUIDO</option>
+            </select>
+          </div>
+        </form>
+
+        <!-- Estado sin datos -->
+        <ng-container *ngIf="!trabajoSeleccionado">
+          <p class="text-muted">No hay información cargada.</p>
+        </ng-container>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+          Cancelar
+        </button>
+        <button
+          type="button"
+          class="btn btn-success"
+          (click)="guardarSolucion()"
+          [disabled]="!trabajoSeleccionado?.age_solucion"
+        >
+          Guardar
         </button>
       </div>
     </div>
