@@ -25,20 +25,13 @@
       <!-- BOTON ADMINISTRADOR -->
       @if (arrAdmin.length>0) {
       <button
-        class="button-primary btn-toggle rounded collapsed my-2"
-        data-bs-toggle="collapse"
-        data-bs-target="#home-collapse"
-        aria-expanded="false"
-        aria-controls="home-collapse"
+        class="button-primary btn-toggle rounded my-2"
+        (click)="toggleCollapse('home-collapse')"
       >
         <i class="fa-solid fa-gear"></i> Administrador
       </button>
       }
-      <div
-        class="accordion-collapse collapse"
-        id="home-collapse"
-        data-bs-parent="#accordionSidebar"
-      >
+      <div class="accordion-collapse collapse" id="home-collapse">
         <ul class="btn-toggle-nav list-unstyled fw-normal pb-1 small gap-5">
           @if (arrAdmin.includes("AUsuarios")) {
           <li
@@ -61,20 +54,13 @@
       <!-- BOTON BODEGA -->
       @if (arrBodega.length>0) {
       <button
-        class="button-primary btn-toggle rounded collapsed my-2"
-        data-bs-toggle="collapse"
-        data-bs-target="#bodega-collapse"
-        aria-expanded="false"
-        aria-controls="bodega-collapse"
+        class="button-primary btn-toggle rounded my-2"
+        (click)="toggleCollapse('bodega-collapse')"
       >
         <i class="fa-solid fa-box-open"></i> Bodega
       </button>
       }
-      <div
-        class="accordion-collapse collapse"
-        id="bodega-collapse"
-        data-bs-parent="#accordionSidebar"
-      >
+      <div class="accordion-collapse collapse" id="bodega-collapse">
         <ul class="btn-toggle-nav list-unstyled fw-normal pb-1 small">
           @if (arrBodega.includes("BInventario")) {
           <li
@@ -115,20 +101,13 @@
       <!-- BOTON CLIENTES -->
       @if (arrClientes.length>0) {
       <button
-        class="button-primary btn-toggle rounded collapsed my-2"
-        data-bs-toggle="collapse"
-        data-bs-target="#clientes-collapse"
-        aria-expanded="false"
-        aria-controls="clientes-collapse"
+        class="button-primary btn-toggle rounded my-2"
+        (click)="toggleCollapse('clientes-collapse')"
       >
         <i class="fa-solid fa-users"></i> Clientes
       </button>
       }
-      <div
-        class="accordion-collapse collapse"
-        id="clientes-collapse"
-        data-bs-parent="#accordionSidebar"
-      >
+      <div class="accordion-collapse collapse" id="clientes-collapse">
         <ul class="btn-toggle-nav list-unstyled fw-normal pb-1 small">
           @if (arrClientes.includes("CDatos de Clientes")) {
           <li (click)="onClickMenu()" [routerLink]="['/home/clientes/datos']">
@@ -141,11 +120,8 @@
       <!-- BOTON NOC -->
       @if (arrNoc.length>0) {
       <button
-        class="button-primary btn-toggle rounded collapsed my-2"
-        data-bs-toggle="collapse"
-        data-bs-target="#noc-collapse"
-        aria-expanded="false"
-        aria-controls="noc-collapse"
+        class="button-primary btn-toggle rounded my-2"
+        (click)="toggleCollapse('noc-collapse')"
       >
         <div class="d-flex justify-content-around">
           @if(soportesPendientesCount>0){
@@ -165,11 +141,7 @@
         </div>
       </button>
       }
-      <div
-        class="accordion-collapse collapse"
-        id="noc-collapse"
-        data-bs-parent="#accordionSidebar"
-      >
+      <div class="accordion-collapse collapse" id="noc-collapse">
         <ul class="btn-toggle-nav list-unstyled fw-normal pb-1 small">
           @if (arrNoc.includes("NAgenda")) {
           <li (click)="onClickMenu()" [routerLink]="['/home/noc/agenda']">
@@ -207,20 +179,13 @@
       <!-- BOTON RECUPERACION -->
       @if (arrRecuperacion.length>0) {
       <button
-        class="button-primary btn-toggle rounded collapsed my-2"
-        data-bs-toggle="collapse"
-        data-bs-target="#recuperacion-collapse"
-        aria-expanded="false"
-        aria-controls="recuperacion-collapse"
+        class="button-primary btn-toggle rounded my-2"
+        (click)="toggleCollapse('recuperacion-collapse')"
       >
         <i class="fa-solid fa-rotate-left"></i> Recuperacion
       </button>
       }
-      <div
-        class="accordion-collapse collapse"
-        id="recuperacion-collapse"
-        data-bs-parent="#accordionSidebar"
-      >
+      <div class="accordion-collapse collapse" id="recuperacion-collapse">
         <ul class="btn-toggle-nav list-unstyled fw-normal pb-1 small">
           @if (arrRecuperacion.includes("RMorosos")) {
           <li
@@ -250,20 +215,13 @@
       <!-- BOTON TECNICO -->
       @if (arrTecnico.length>0) {
       <button
-        class="button-primary btn-toggle rounded collapsed my-2"
-        data-bs-toggle="collapse"
-        data-bs-target="#tecnico-collapse"
-        aria-expanded="false"
-        aria-controls="tecnico-collapse"
+        class="button-primary btn-toggle rounded my-2"
+        (click)="toggleCollapse('tecnico-collapse')"
       >
         <i class="fa-solid fa-screwdriver-wrench"></i> Tecnico
       </button>
       }
-      <div
-        class="accordion-collapse collapse"
-        id="tecnico-collapse"
-        data-bs-parent="#accordionSidebar"
-      >
+      <div class="accordion-collapse collapse" id="tecnico-collapse">
         <ul class="btn-toggle-nav list-unstyled fw-normal pb-1 small">
           @if (arrTecnico.includes("TMi Agenda")) {
           <li

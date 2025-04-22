@@ -13,6 +13,7 @@ interface CustomPayload extends JwtPayload {
   usuario_rol: [];
   usuario_nombre: string;
 }
+declare var bootstrap: any;
 
 @Component({
   selector: 'app-sidebar',
@@ -142,5 +143,25 @@ export class SidebarComponent implements OnDestroy {
 
   ngOnDestroy() {
     this.socket.disconnect();
+  }
+
+  toggleCollapse(targetId: string) {
+    const allPanels = document.querySelectorAll('.accordion-collapse');
+    allPanels.forEach((panel: any) => {
+      if (panel.id !== targetId && panel.classList.contains('show')) {
+        const instance =
+          bootstrap.Collapse.getInstance(panel) ||
+          new bootstrap.Collapse(panel, { toggle: false });
+        instance.hide();
+      }
+    });
+
+    const target = document.getElementById(targetId);
+    if (target) {
+      const instance =
+        bootstrap.Collapse.getInstance(target) ||
+        new bootstrap.Collapse(target, { toggle: false });
+      target.classList.contains('show') ? instance.hide() : instance.show();
+    }
   }
 }
