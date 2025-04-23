@@ -132,8 +132,9 @@ export class SidebarComponent implements OnDestroy {
       .catch((error) => console.error('❌ Error al reproducir sonido:', error));
   }
 
-  onClickLogout() {
+  async onClickLogout() {
     localStorage.removeItem('token_proyecto');
+    await this.authService.logout(this.data.usuario_id);
     this.router.navigateByUrl('/login');
   }
 

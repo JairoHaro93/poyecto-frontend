@@ -28,6 +28,13 @@ export class AutenticacionService {
     );
   }
 
+  async logout(usuario_id: number) {
+    console.log(`${this.baseUrl}/login/not`, { usuario_id });
+    return lastValueFrom(
+      this.httpClient.post(`${this.baseUrl}/login/not`, { usuario_id })
+    );
+  }
+
   datosLogged() {
     const token = localStorage.getItem('token_proyecto');
 
