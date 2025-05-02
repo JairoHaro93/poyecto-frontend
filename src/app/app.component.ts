@@ -1,5 +1,7 @@
-import { Component } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
+import { SoketService } from './services/socket_io/soket.service';
+import { AutenticacionService } from './services/sistema/autenticacion.service';
 
 @Component({
   selector: 'app-root',

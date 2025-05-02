@@ -4,7 +4,7 @@ import { lastValueFrom } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { jwtDecode, JwtPayload } from 'jwt-decode';
 //tipados
-type LoginBody = { usuario: string; passwprd: string };
+type LoginBody = { usuario: string; password: string };
 type ResponseLogin = { message: string; token: string };
 interface CustomPayload extends JwtPayload {
   usuario_id: number;
@@ -35,13 +35,14 @@ export class AutenticacionService {
     );
   }
 
-  datosLogged() {
+  datosLogged(): any {
     const token = localStorage.getItem('token_proyecto');
+    if (!token) return null;
 
-    const data = jwtDecode<CustomPayload>(token!);
-
-    // Asegurarse de que usuario_rol sea un array de strings
-
-    return data;
+    try {
+      return jwtDecode(token); // contiene usuario_id, usuario_rol, etc.
+    } catch (err) {
+      return null;
+    }
   }
 }

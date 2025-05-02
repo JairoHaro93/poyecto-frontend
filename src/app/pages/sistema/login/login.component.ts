@@ -2,6 +2,7 @@ import { Component, inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { AutenticacionService } from '../../../services/sistema/autenticacion.service';
+import { SoketService } from '../../../services/socket_io/soket.service'; // 👈 asegúrate del path
 import Swal from 'sweetalert2';
 
 @Component({
@@ -12,21 +13,26 @@ import Swal from 'sweetalert2';
   styleUrl: './login.component.css',
 })
 export class LoginComponent {
-  //variables
   formLogin: FormGroup = new FormGroup({
     usuario: new FormControl(),
     password: new FormControl(),
   });
-  //injectables
+
   autenservice = inject(AutenticacionService);
+  soketService = inject(SoketService); // 👈 inyectar el servicio de sockets
   router = inject(Router);
 
   async onSubmit() {
     try {
       const response = await this.autenservice.login(this.formLogin.value);
-      //  console.log(response);
+
+      // Guardar token en localStorage
       localStorage.setItem('token_proyecto', response.token);
-      //  console.log('bienvenido');
+
+      // 🔌 Conectar WebSocket después del login
+      this.soketService.connectSocket();
+
+      // Redirigir
       this.router.navigateByUrl('/home');
     } catch ({ error }: any) {
       Swal.fire('Error', error.message, 'error');

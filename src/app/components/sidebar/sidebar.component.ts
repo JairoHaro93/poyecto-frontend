@@ -1,11 +1,10 @@
-import { Component, inject, OnDestroy } from '@angular/core';
+import { Component, inject, OnDestroy, OnInit } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { AutenticacionService } from '../../services/sistema/autenticacion.service';
 import { JwtPayload } from 'jwt-decode';
 import { DataSharingService } from '../../services/data-sharing.service';
 import { SoportesService } from '../../services/negocio_latacunga/soportes.service';
-import { io } from 'socket.io-client';
-import { environment } from '../../../environments/environment';
+import { SoketService } from '../../services/socket_io/soket.service'; // ✅ Usa tu servicio
 
 interface CustomPayload extends JwtPayload {
   usuario_id: number;
@@ -13,6 +12,7 @@ interface CustomPayload extends JwtPayload {
   usuario_rol: [];
   usuario_nombre: string;
 }
+
 declare var bootstrap: any;
 
 @Component({
@@ -22,18 +22,15 @@ declare var bootstrap: any;
   templateUrl: './sidebar.component.html',
   styleUrls: ['./sidebar.component.css'],
 })
-export class SidebarComponent implements OnDestroy {
+export class SidebarComponent implements OnInit, OnDestroy {
   isMenu = false;
-  // private socket = io('http://localhost:3000'); // Servidor WebSocket
-  private socket = io(`${environment.API_WEBSOKETS_IO}`); // Conexión con WebSocket
 
-  // Inyección de servicios
   router = inject(Router);
   authService = inject(AutenticacionService);
   soporteService = inject(SoportesService);
-  constructor(private dataSharingService: DataSharingService) {}
+  soketService = inject(SoketService); // ✅ Inyección correcta del servicio
+  dataSharingService = inject(DataSharingService);
 
-  // Datos del usuario
   data: CustomPayload = {
     usuario_id: 0,
     usuario_usuario: '',
@@ -41,8 +38,9 @@ export class SidebarComponent implements OnDestroy {
     usuario_nombre: '',
   };
 
-  soportesPendientesCount: number = 0;
-  soportesNocCount: number = 0;
+  soportesPendientesCount = 0;
+  soportesNocCount = 0;
+
   arrAdmin: string[] = [];
   arrBodega: string[] = [];
   arrNoc: string[] = [];
@@ -54,12 +52,9 @@ export class SidebarComponent implements OnDestroy {
     this.dataSharingService.currentData.subscribe((data) => {
       this.soportesPendientesCount = data.pendientes;
       this.soportesNocCount = data.noc;
-      console.log('Datos recibidos en Sidebar:', data);
     });
 
-    // Obtener datos del usuario
     const datosUsuario = this.authService.datosLogged();
-
     if (datosUsuario) {
       this.data = datosUsuario;
       this.arrAdmin = this.data.usuario_rol.filter((rol: string) =>
@@ -82,17 +77,13 @@ export class SidebarComponent implements OnDestroy {
       );
     }
 
+    // Solo conectar y escuchar si es NOC
     if (this.arrNoc.length > 0) {
-      // Cargar número inicial de soportes pendientes
-
-      console.log(' WEBSOCKET NOC ');
+      this.soketService.connectSocket(); // ✅ conectar desde el servicio
       await this.obtenerSoportesPendientes();
 
-      // Escuchar evento de actualización desde el servidor
-      this.socket.on('actualizarSoportes', async () => {
-        console.log(
-          '🔄 Recibiendo actualización de soportes en SidebarComponent'
-        );
+      this.soketService.on('actualizarSoportes', async () => {
+        console.log('🔄 Recibiendo actualización de soportes');
         const soportesPrevios = this.soportesPendientesCount;
         await this.obtenerSoportesPendientes();
         if (this.soportesPendientesCount > soportesPrevios) {
@@ -100,9 +91,8 @@ export class SidebarComponent implements OnDestroy {
         }
       });
 
-      // Escuchar evento cuando se crea un nuevo soporte
-      this.socket.on('soporteCreado', async () => {
-        console.log('📢 Se ha creado un nuevo soporte.');
+      this.soketService.on('soporteCreado', async () => {
+        console.log('📢 Nuevo soporte creado');
         const soportesPrevios = this.soportesPendientesCount;
         await this.obtenerSoportesPendientes();
         if (this.soportesPendientesCount > soportesPrevios) {
@@ -116,23 +106,20 @@ export class SidebarComponent implements OnDestroy {
     try {
       const soportesPendientes = await this.soporteService.getAllPendientes();
       this.soportesPendientesCount = soportesPendientes.length;
-      console.log(
-        '📢 Soportes pendientes actualizados:',
-        this.soportesPendientesCount
-      );
     } catch (error) {
       console.error('❌ Error al obtener soportes pendientes:', error);
     }
   }
 
   reproducirSonido() {
-    const audio = new Audio('./sounds/ding_sop.mp3'); // Ruta del archivo de sonido
+    const audio = new Audio('./sounds/ding_sop.mp3');
     audio
       .play()
-      .catch((error) => console.error('❌ Error al reproducir sonido:', error));
+      .catch((err) => console.error('🎵 Error al reproducir sonido:', err));
   }
 
   async onClickLogout() {
+    this.soketService.disconnectSocket(); // ✅ desconectar socket correctamente
     localStorage.removeItem('token_proyecto');
     await this.authService.logout(this.data.usuario_id);
     this.router.navigateByUrl('/login');
@@ -143,7 +130,7 @@ export class SidebarComponent implements OnDestroy {
   }
 
   ngOnDestroy() {
-    this.socket.disconnect();
+    this.soketService.disconnectSocket(); // ✅ desconectar también al destruir
   }
 
   toggleCollapse(targetId: string) {
