@@ -12,4 +12,10 @@ import { AutenticacionService } from './services/sistema/autenticacion.service';
 })
 export class AppComponent {
   title = 'Frontend';
+
+  private soketService = inject(SoketService);
+
+  ngOnInit(): void {
+    this.soketService.connectSocket();
+  }
 }

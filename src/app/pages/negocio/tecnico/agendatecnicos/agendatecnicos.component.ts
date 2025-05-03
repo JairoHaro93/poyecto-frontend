@@ -49,7 +49,7 @@ export class AgendatecnicosComponent {
       this.agendaTecnicosList = await this.agendaService.getAgendaTec(idtec);
       console.log(this.agendaTecnicosList);
 
-      // Escuchar el evento para actualizar la lista cuando otro usuario registre un soporte
+      // ESCUCHAR EL EVENTO PARA ACTUALIZAR LA LISTA CUANDO OTRO USUARIO REGISTRE UN TRABAJO
       this.socket.on('trabajoAgendado', async () => {
         console.log(
           '🔄 Recibiendo actualización de trabajos en agendaTecnicosComponent'
@@ -106,24 +106,21 @@ export class AgendatecnicosComponent {
         ...this.trabajoSeleccionado,
         age_estado: this.trabajoSeleccionado.age_estado,
         age_solucion: this.trabajoSeleccionado.age_solucion,
-        // puedes incluir más campos aquí si estás editando también fecha/hora:
-        // age_fecha: this.fechaTrabajoSeleccionada,
-        // age_hora_inicio: this.horaInicio,
-        // age_hora_fin: this.horaFin,
-        // age_vehiculo: this.vehiculoSeleccionado,
-        // age_tecnico: this.idTecnico,
       };
 
       console.log('el body' + body.id, body);
 
       await this.agendaService.actualizarAgendaSolucuion(body.id, body);
 
-      // 🔄 Recargar toda la agenda actualizada desde el backend
+      // 🔄 Emitir evento de trabajo resuelto
+      this.socket.emit('trabajoCulminado');
+
+      // 🔄 Recargar la agenda
       const idtec = this.datosUsuario?.usuario_id;
       if (idtec) {
         this.agendaTecnicosList = await this.agendaService.getAgendaTec(idtec);
       }
-      // Confirmación visual
+
       Swal.fire({
         icon: 'success',
         title: 'Trabajo actualizado',
@@ -132,15 +129,14 @@ export class AgendatecnicosComponent {
         showConfirmButton: false,
       });
 
-      // Cerrar modal
       const modal = Modal.getInstance(document.getElementById('editarModal')!);
       modal?.hide();
     } catch (error) {
       console.error('❌ Error al actualizar trabajo:', error);
 
       Swal.fire({
-        icon: 'success',
-        title: 'Trabajo actualizado',
+        icon: 'error',
+        title: 'Error',
         text: '❌ Error al guardar los cambios.',
         timer: 2000,
         showConfirmButton: false,

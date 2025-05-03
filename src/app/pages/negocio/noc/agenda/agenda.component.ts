@@ -78,8 +78,8 @@ export class AgendaComponent {
     });
 
     // 🔄 Escuchar evento de culminación de trabajos
-    this.socket.on('trabajoCulminado', async ({ id }) => {
-      console.log(`📥 trabajoCulminado recibido para el trabajo ${id}`);
+    this.socket.on('trabajoCulminado', async () => {
+      console.log(`📥 trabajoCulminado recibido para el trabajo`);
       await this.cargarAgendaPorFecha(); // o actualizar solo ese trabajo si lo deseas
     });
   }

@@ -30,7 +30,6 @@ export class LoginComponent {
       localStorage.setItem('token_proyecto', response.token);
 
       // 🔌 Conectar WebSocket después del login
-      this.soketService.connectSocket();
 
       // Redirigir
       // this.router.navigateByUrl('/home');
@@ -38,7 +37,7 @@ export class LoginComponent {
       // Redirigir con window.open en la misma pestaña
       const features =
         'resizable=yes,scrollbars=yes,menubar=no,toolbar=no,location=no,status=no,noopener=true,toolbar=yes';
-      window.open('/home', '_blank', features);
+      window.open('/es/home', '_blank', features);
     } catch ({ error }: any) {
       Swal.fire('Error', error.message, 'error');
     }

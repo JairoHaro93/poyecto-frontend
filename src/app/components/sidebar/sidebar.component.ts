@@ -79,7 +79,7 @@ export class SidebarComponent implements OnInit, OnDestroy {
 
     // Solo conectar y escuchar si es NOC
     if (this.arrNoc.length > 0) {
-      this.soketService.connectSocket(); // ✅ conectar desde el servicio
+      //this.soketService.connectSocket(); // ✅ conectar desde el servicio
       await this.obtenerSoportesPendientes();
 
       this.soketService.on('actualizarSoportes', async () => {
@@ -119,9 +119,9 @@ export class SidebarComponent implements OnInit, OnDestroy {
   }
 
   async onClickLogout() {
-    this.soketService.disconnectSocket(); // ✅ desconectar socket correctamente
     localStorage.removeItem('token_proyecto');
     await this.authService.logout(this.data.usuario_id);
+    this.soketService.disconnectSocket(); // ✅ desconectar socket correctamente
     this.router.navigateByUrl('/login');
   }
 
@@ -130,7 +130,7 @@ export class SidebarComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy() {
-    this.soketService.disconnectSocket(); // ✅ desconectar también al destruir
+    // this.soketService.disconnectSocket(); // ✅ desconectar también al destruir
   }
 
   toggleCollapse(targetId: string) {

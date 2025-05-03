@@ -11,7 +11,6 @@ export class SoketService {
   private socket: Socket | null = null;
 
   constructor(private authService: AutenticacionService) {}
-
   connectSocket(): void {
     const usuario = this.authService.datosLogged();
 
@@ -20,9 +19,16 @@ export class SoketService {
       return;
     }
 
-    if (this.socket) {
-      console.warn('⚠️ Ya hay un socket creado, evita duplicados');
+    // Evitar duplicados si ya hay socket y está conectado
+    if (this.socket && this.socket.connected) {
+      console.warn('⚠️ Ya hay un socket activo, evita duplicados');
       return;
+    }
+
+    // Si el socket existe pero está desconectado, reemplázalo
+    if (this.socket && !this.socket.connected) {
+      this.socket.disconnect();
+      this.socket = null;
     }
 
     this.socket = io(environment.API_WEBSOKETS_IO, {
