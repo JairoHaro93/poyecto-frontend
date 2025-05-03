@@ -33,7 +33,12 @@ export class LoginComponent {
       this.soketService.connectSocket();
 
       // Redirigir
-      this.router.navigateByUrl('/home');
+      // this.router.navigateByUrl('/home');
+
+      // Redirigir con window.open en la misma pestaña
+      const features =
+        'resizable=yes,scrollbars=yes,menubar=no,toolbar=no,location=no,status=no,noopener=true,toolbar=yes';
+      window.open('/home', '_blank', features);
     } catch ({ error }: any) {
       Swal.fire('Error', error.message, 'error');
     }
