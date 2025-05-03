@@ -13,6 +13,7 @@ import { Iagenda } from '../../../../interfaces/negocio/agenda/iagenda.interface
 import { ClientesService } from '../../../../services/negocio_atuntaqui/clientes.service';
 import { environment } from '../../../../../environments/environment';
 import { io } from 'socket.io-client';
+import Swal from 'sweetalert2';
 
 declare var bootstrap: any;
 
@@ -69,6 +70,18 @@ export class AgendaComponent {
     await this.cargarAgendaPorFecha();
     await this.cargarPreAgenda();
     this.tecnicosList = await this.usuariosService.getAllAgendaTecnicos();
+
+    // 🔄 Escuchar evento de actualización de trabajos
+    this.socket.on('trabajoAgendado', async () => {
+      console.log('📥 trabajoAgendado recibido');
+      await this.cargarAgendaPorFecha();
+    });
+
+    // 🔄 Escuchar evento de culminación de trabajos
+    this.socket.on('trabajoCulminado', async ({ id }) => {
+      console.log(`📥 trabajoCulminado recibido para el trabajo ${id}`);
+      await this.cargarAgendaPorFecha(); // o actualizar solo ese trabajo si lo deseas
+    });
   }
 
   async cargarAgendaPorFecha() {
@@ -76,6 +89,7 @@ export class AgendaComponent {
       this.agendaList = await this.agendaService.getAgendaByDate(
         this.fechaSeleccionada
       );
+
       for (const item of this.agendaList) {
         try {
           if (item.age_ord_ins) {
@@ -90,6 +104,16 @@ export class AgendaComponent {
           item.nombre_completo = '---';
         }
       }
+
+      // 👇 Limpiar antes de renderizar
+      this.agendaAsignada = {};
+      this.horarios.forEach((hora) => {
+        this.agendaAsignada[hora] = {};
+        this.vehiculos.forEach((vehiculo) => {
+          this.agendaAsignada[hora][vehiculo.codigo] = null;
+        });
+      });
+
       this.mapearAgendaDesdeBD();
       this.generarRenderAgenda();
       console.log(this.agendaList);
@@ -105,12 +129,22 @@ export class AgendaComponent {
       this.horaInicio >= this.horaFin ||
       !this.vehiculoSeleccionado
     ) {
-      alert('Complete correctamente el horario y vehículo.');
+      Swal.fire({
+        icon: 'info',
+        title: 'Formulario incompleto',
+        text: 'Complete correctamente el horario y vehículo.',
+        confirmButtonText: 'Entendido',
+      });
       return;
     }
 
     if (this.hayConflictoDeHorario()) {
-      alert('⛔ El vehículo ya tiene un trabajo asignado en ese horario.');
+      Swal.fire({
+        icon: 'warning',
+        title: 'Conflicto de Horario',
+        text: '⛔ El vehículo ya tiene un trabajo asignado en ese horario.',
+        confirmButtonText: 'Aceptar',
+      });
       return;
     }
 
@@ -420,6 +454,7 @@ export class AgendaComponent {
       }
     }
   }
+
   hayConflictoDeHorario(): boolean {
     if (!this.horaInicio || !this.horaFin || !this.vehiculoSeleccionado)
       return false;

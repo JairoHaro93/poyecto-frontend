@@ -12,6 +12,7 @@ import { Isoportes } from '../../../../interfaces/negocio/soportes/isoportes.int
 import { FormsModule } from '@angular/forms';
 import { environment } from '../../../../../environments/environment';
 import { io } from 'socket.io-client';
+import Swal from 'sweetalert2';
 
 interface CustomPayload extends JwtPayload {
   usuario_id: number;
@@ -123,14 +124,27 @@ export class AgendatecnicosComponent {
         this.agendaTecnicosList = await this.agendaService.getAgendaTec(idtec);
       }
       // Confirmación visual
-      window.alert('✅ Trabajo actualizado correctamente.');
+      Swal.fire({
+        icon: 'success',
+        title: 'Trabajo actualizado',
+        text: '✅ Trabajo actualizado correctamente.',
+        timer: 1000,
+        showConfirmButton: false,
+      });
 
       // Cerrar modal
       const modal = Modal.getInstance(document.getElementById('editarModal')!);
       modal?.hide();
     } catch (error) {
       console.error('❌ Error al actualizar trabajo:', error);
-      window.alert('Error al guardar los cambios.');
+
+      Swal.fire({
+        icon: 'success',
+        title: 'Trabajo actualizado',
+        text: '❌ Error al guardar los cambios.',
+        timer: 2000,
+        showConfirmButton: false,
+      });
     }
   }
 
