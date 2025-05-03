@@ -49,6 +49,7 @@ export class SidebarComponent implements OnInit, OnDestroy {
   arrRecuperacion: string[] = [];
 
   async ngOnInit() {
+    this.soketService.connectSocket();
     this.dataSharingService.currentData.subscribe((data) => {
       this.soportesPendientesCount = data.pendientes;
       this.soportesNocCount = data.noc;
@@ -119,18 +120,25 @@ export class SidebarComponent implements OnInit, OnDestroy {
   }
 
   async onClickLogout() {
-    localStorage.removeItem('token_proyecto');
-    await this.authService.logout(this.data.usuario_id);
-    this.soketService.disconnectSocket(); // ✅ desconectar socket correctamente
-    this.router.navigateByUrl('/login');
+    this.soketService.disconnectSocket(); // 🔴 primero desconectamos socket
+
+    localStorage.removeItem('token_proyecto'); // 🧹 limpiar token
+    await this.authService.logout(this.data.usuario_id); // API logout
+
+    //this.router.navigateByUrl('/login');
+    window.close(); // si fue abierto con window.open
   }
 
   onClickMenu() {
     this.isMenu = !this.isMenu;
   }
 
-  ngOnDestroy() {
-    // this.soketService.disconnectSocket(); // ✅ desconectar también al destruir
+  async ngOnDestroy() {
+    //this.soketService.disconnectSocket(); // ✅ desconectar también al destruir
+    //  localStorage.removeItem('token_proyecto');
+    await this.authService.logout(this.data.usuario_id);
+
+    //this.router.navigateByUrl('/login');
   }
 
   toggleCollapse(targetId: string) {

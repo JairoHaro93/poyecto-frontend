@@ -16,6 +16,6 @@ export class AppComponent {
   private soketService = inject(SoketService);
 
   ngOnInit(): void {
-    this.soketService.connectSocket();
+    // this.soketService.connectSocket();
   }
 }

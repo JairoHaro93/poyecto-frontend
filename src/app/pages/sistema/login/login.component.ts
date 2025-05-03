@@ -38,6 +38,7 @@ export class LoginComponent {
       const features =
         'resizable=yes,scrollbars=yes,menubar=no,toolbar=no,location=no,status=no,noopener=true,toolbar=yes';
       window.open('/es/home', '_blank', features);
+      //this.soketService.connectSocket();
     } catch ({ error }: any) {
       Swal.fire('Error', error.message, 'error');
     }

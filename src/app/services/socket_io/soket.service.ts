@@ -10,7 +10,10 @@ import { AutenticacionService } from '../sistema/autenticacion.service';
 export class SoketService {
   private socket: Socket | null = null;
 
+  private isSocketConnected = false;
+
   constructor(private authService: AutenticacionService) {}
+
   connectSocket(): void {
     const usuario = this.authService.datosLogged();
 
@@ -19,31 +22,25 @@ export class SoketService {
       return;
     }
 
-    // Evitar duplicados si ya hay socket y está conectado
-    if (this.socket && this.socket.connected) {
-      console.warn('⚠️ Ya hay un socket activo, evita duplicados');
+    // ✅ Nueva verificación explícita
+    if (this.isSocketConnected) {
+      console.warn('⚠️ Ya hay un socket conectado (bandera isSocketConnected)');
       return;
     }
 
-    // Si el socket existe pero está desconectado, reemplázalo
-    if (this.socket && !this.socket.connected) {
-      this.socket.disconnect();
-      this.socket = null;
-    }
-
     this.socket = io(environment.API_WEBSOKETS_IO, {
-      query: {
-        usuario_id: usuario.usuario_id,
-      },
+      query: { usuario_id: usuario.usuario_id },
       transports: ['websocket'],
       reconnection: true,
     });
 
     this.socket.on('connect', () => {
+      this.isSocketConnected = true;
       console.log('✅ WebSocket conectado:', this.socket?.id);
     });
 
     this.socket.on('disconnect', () => {
+      this.isSocketConnected = false;
       console.log('❌ WebSocket desconectado:', this.socket?.id);
     });
   }
@@ -51,8 +48,9 @@ export class SoketService {
   disconnectSocket(): void {
     if (this.socket) {
       this.socket.disconnect();
-      console.log('🧹 WebSocket desconectado manualmente');
+      this.isSocketConnected = false;
       this.socket = null;
+      console.log('🧹 WebSocket desconectado manualmente');
     }
   }
 
