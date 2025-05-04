@@ -41,170 +41,167 @@ import { registroSoporteGuard } from './guards/tecnico/registro-soporte.guard';
 import { InfoSopComponent } from './pages/negocio/noc/info-sop/info-sop.component';
 import { AsignarTrabajosComponent } from './pages/negocio/noc/asignar-trabajos/asignar-trabajos.component';
 import { AgendaComponent } from './pages/negocio/noc/agenda/agenda.component';
+import { LayoutComponent } from './pages/sistema/layout/layout.component';
 
 export const routes: Routes = [
   { path: '', pathMatch: 'full', redirectTo: 'login' },
   { path: 'login', component: LoginComponent },
+
   {
     path: 'home',
-    component: HomeComponent,
+    component: LayoutComponent,
     canActivate: [tokenGuard],
-  },
-
-  //ADMINISTRADOR
-  {
-    path: 'home/administrador',
-    component: AdministradorComponent,
-
     children: [
+      // ADMINISTRADOR
       {
-        path: 'usuarios',
-        component: UsuariosComponent,
-        canActivate: [usuariosGuard],
+        path: 'administrador',
+        component: AdministradorComponent,
+        children: [
+          {
+            path: 'usuarios',
+            component: UsuariosComponent,
+            canActivate: [usuariosGuard],
+          },
+          {
+            path: 'data-clientes',
+            component: DataclientesComponent,
+            canActivate: [informacionClientesGuard],
+          },
+          {
+            path: 'usuario/:id',
+            component: VistausuariosComponent,
+            canActivate: [usuariosGuard],
+          },
+          {
+            path: 'crearusuario',
+            component: FormusuariosComponent,
+            canActivate: [usuariosGuard],
+          },
+          {
+            path: 'actualizarusuario/:id',
+            component: FormusuariosComponent,
+            canActivate: [usuariosGuard],
+          },
+        ],
       },
+
+      // BODEGA
       {
-        path: 'data-clientes',
-        component: DataclientesComponent,
-        canActivate: [informacionClientesGuard],
+        path: 'bodega',
+        component: BodegaComponent,
+        children: [
+          {
+            path: 'inventario',
+            component: InventarioComponent,
+            canActivate: [inventarioGuard],
+          },
+          {
+            path: 'ingresar-equipos',
+            component: IngresarEquiposComponent,
+            canActivate: [ingresarEquiposGuard],
+          },
+          {
+            path: 'despachar-equipos',
+            component: DespacharEquiposComponent,
+            canActivate: [despacharEquiposGuard],
+          },
+          {
+            path: 'asignar-equipos',
+            component: AsignarEquiposComponent,
+            canActivate: [asignarEquiposGuard],
+          },
+        ],
       },
+
+      // CLIENTES
       {
-        path: 'usuario/:id',
-        component: VistausuariosComponent,
-        canActivate: [usuariosGuard],
+        path: 'clientes',
+        component: NocComponent,
+        children: [
+          {
+            path: 'datos',
+            component: DatosclientesComponent,
+            canActivate: [datosClientesGuard],
+          },
+        ],
       },
+
+      // NOC
       {
-        path: 'crearusuario',
-        component: FormusuariosComponent,
-        canActivate: [usuariosGuard],
+        path: 'noc',
+        component: NocComponent,
+        children: [
+          {
+            path: 'informediario',
+            component: InformediarioComponent,
+            canActivate: [informeDiarioGuard],
+          },
+          {
+            path: 'mapeo-cajas',
+            component: MapeoCajasComponent,
+            canActivate: [mapeoCajasGuard],
+          },
+          {
+            path: 'asignar-trabajos',
+            component: AsignarTrabajosComponent,
+            canActivate: [mapeoCajasGuard],
+          },
+          {
+            path: 'soporte-tecnico',
+            component: SoporteTecnicoComponent,
+            canActivate: [soporteTecnicoGuard],
+          },
+          {
+            path: 'info-sop/:id_sop/:ord_ins',
+            component: InfoSopComponent,
+            canActivate: [soporteTecnicoGuard],
+          },
+          { path: 'agenda', component: AgendaComponent },
+        ],
       },
+
+      // RECUPERACIÓN
       {
-        path: 'actualizarusuario/:id',
-        component: FormusuariosComponent,
-        canActivate: [usuariosGuard],
+        path: 'recuperacion',
+        component: RecuperacionComponent,
+        children: [
+          {
+            path: 'morosos',
+            component: MorososComponent,
+            canActivate: [morososGuard],
+          },
+          {
+            path: 'mapa-morosos',
+            component: MapaMorososComponent,
+            canActivate: [mapaMorososGuard],
+          },
+          {
+            path: 'gestion-morosos',
+            component: GestionMorososComponent,
+            canActivate: [gestionMorososGuard],
+          },
+        ],
+      },
+
+      // TÉCNICO
+      {
+        path: 'tecnico',
+        component: NocComponent,
+        children: [
+          {
+            path: 'mi-agenda-tec',
+            component: AgendatecnicosComponent,
+            canActivate: [miAgendaGuard],
+          },
+          {
+            path: 'registrosop',
+            component: RegistrosoporteComponent,
+            canActivate: [registroSoporteGuard],
+          },
+        ],
       },
     ],
   },
 
-  //BODEGA
-  {
-    path: 'home/bodega',
-    component: BodegaComponent,
-    children: [
-      {
-        path: 'inventario',
-        component: InventarioComponent,
-        canActivate: [inventarioGuard],
-      },
-
-      {
-        path: 'ingresar-equipos',
-        component: IngresarEquiposComponent,
-        canActivate: [ingresarEquiposGuard],
-      },
-      {
-        path: 'despachar-equipos',
-        component: DespacharEquiposComponent,
-        canActivate: [despacharEquiposGuard],
-      },
-      {
-        path: 'asignar-equipos',
-        component: AsignarEquiposComponent,
-        canActivate: [asignarEquiposGuard],
-      },
-    ],
-  },
-
-  //CLIENTES
-  {
-    path: 'home/clientes',
-    component: NocComponent,
-    children: [
-      {
-        path: 'datos',
-        component: DatosclientesComponent,
-        canActivate: [datosClientesGuard],
-      },
-    ],
-  },
-
-  //NOC
-  {
-    path: 'home/noc',
-    component: NocComponent,
-    children: [
-      {
-        path: 'informediario',
-        component: InformediarioComponent,
-        canActivate: [informeDiarioGuard],
-      },
-      {
-        path: 'mapeo-cajas',
-        component: MapeoCajasComponent,
-        canActivate: [mapeoCajasGuard],
-      },
-      {
-        path: 'asignar-trabajos',
-        component: AsignarTrabajosComponent,
-        canActivate: [mapeoCajasGuard],
-      },
-
-      {
-        path: 'soporte-tecnico',
-        component: SoporteTecnicoComponent,
-        canActivate: [soporteTecnicoGuard],
-      },
-      {
-        path: 'info-sop/:id_sop/:ord_ins',
-        component: InfoSopComponent,
-        canActivate: [soporteTecnicoGuard],
-      },
-      {
-        path: 'agenda',
-        component: AgendaComponent,
-      },
-    ],
-  },
-
-  //RECUPERACION
-  {
-    path: 'home/recuperacion',
-    component: RecuperacionComponent,
-    children: [
-      {
-        path: 'morosos',
-        component: MorososComponent,
-        canActivate: [morososGuard],
-      },
-      {
-        path: 'mapa-morosos',
-        component: MapaMorososComponent,
-        canActivate: [mapaMorososGuard],
-      },
-      {
-        path: 'gestion-morosos',
-        component: GestionMorososComponent,
-        canActivate: [gestionMorososGuard],
-      },
-    ],
-  },
-
-  //TECNICO
-  {
-    path: 'home/tecnico',
-    component: NocComponent,
-    children: [
-      {
-        path: 'mi-agenda-tec',
-        component: AgendatecnicosComponent,
-        canActivate: [miAgendaGuard],
-      },
-      {
-        path: 'registrosop',
-        component: RegistrosoporteComponent,
-        canActivate: [registroSoporteGuard],
-      },
-    ],
-  },
-
-  { path: '**', redirectTo: 'home' }, //ruta 404
+  { path: '**', redirectTo: 'home' },
 ];
