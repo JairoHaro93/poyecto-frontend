@@ -42,17 +42,9 @@ export class ClientesService {
     return lastValueFrom(this.httpClient.get<[]>(`${this.baseUrl}/mapas`));
   }
 
-  getInfoServicioByOrdId(ord_ins: number) {
+  getInfoServicioByOrdId(ord_ins: number): Promise<Iclientes> {
     return lastValueFrom(
-      this.httpClient.get<{
-        nombre_completo: string;
-        coordenadas: string;
-        telefonos: string;
-        direccion: string;
-        referencia: string;
-        plan_nombre: string;
-        [key: string]: any; // para permitir campos adicionales
-      }>(`${this.baseUrl}/${ord_ins}`)
+      this.httpClient.get<Iclientes>(`${this.baseUrl}/${ord_ins}`)
     );
   }
 }
