@@ -129,7 +129,7 @@ export class SidebarComponent implements OnInit, OnDestroy {
     await this.authService.logout(this.data.id!);
     window.close(); // o this.router.navigateByUrl('/login')
 
-    //this.router.navigateByUrl('/login');
+    this.router.navigateByUrl('/login');
   }
 
   onClickMenu() {
