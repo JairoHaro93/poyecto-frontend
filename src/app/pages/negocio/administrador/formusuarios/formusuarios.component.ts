@@ -28,7 +28,7 @@ export class FormusuariosComponent {
   funcionesForm!: FormGroup;
 
   arrfunciones: any[] = [];
-  selectedIds: number[] = [];
+  selectedIds: string[] = [];
 
   authService = inject(AutenticacionService);
 
@@ -214,7 +214,7 @@ export class FormusuariosComponent {
     }
   }
 
-  addStatus(item: { funcion: number }, event: Event): void {
+  addStatus(item: { funcion: string }, event: Event): void {
     const input = event.target as HTMLInputElement;
     if (input.checked) {
       if (!this.selectedIds.includes(item.funcion)) {

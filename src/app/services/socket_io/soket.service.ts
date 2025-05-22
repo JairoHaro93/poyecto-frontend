@@ -1,4 +1,3 @@
-// soket.service.ts
 import { Injectable } from '@angular/core';
 import { io, Socket } from 'socket.io-client';
 import { environment } from '../../../environments/environment';
@@ -9,40 +8,45 @@ import { AutenticacionService } from '../sistema/autenticacion.service';
 })
 export class SoketService {
   private socket: Socket | null = null;
-
   private isSocketConnected = false;
 
   constructor(private authService: AutenticacionService) {}
 
-  connectSocket(): void {
-    const usuario = this.authService.datosLogged();
+  async connectSocket(): Promise<void> {
+    try {
+      const usuario = await this.authService.getUsuarioAutenticado(); // ✅ llamado real al backend
 
-    if (!usuario?.usuario_id) {
-      console.warn('⚠️ No se conecta el socket: usuario_id undefined');
-      return;
+      if (!usuario?.id) {
+        console.warn('⚠️ No se conecta el socket: usuario.id indefinido');
+        return;
+      }
+
+      if (this.isSocketConnected) {
+        console.warn('⚠️ Ya hay un socket conectado (isSocketConnected)');
+        return;
+      }
+
+      this.socket = io(environment.API_WEBSOKETS_IO, {
+        query: { usuario_id: usuario.id.toString() },
+        transports: ['websocket'],
+        reconnection: true,
+      });
+
+      this.socket.on('connect', () => {
+        this.isSocketConnected = true;
+        console.log('✅ WebSocket conectado:', this.socket?.id);
+      });
+
+      this.socket.on('disconnect', () => {
+        this.isSocketConnected = false;
+        console.log('❌ WebSocket desconectado:', this.socket?.id);
+      });
+    } catch (error) {
+      console.error(
+        '❌ No se pudo obtener el usuario para conectar socket:',
+        error
+      );
     }
-
-    // ✅ Nueva verificación explícita
-    if (this.isSocketConnected) {
-      console.warn('⚠️ Ya hay un socket conectado (bandera isSocketConnected)');
-      return;
-    }
-
-    this.socket = io(environment.API_WEBSOKETS_IO, {
-      query: { usuario_id: usuario.usuario_id },
-      transports: ['websocket'],
-      reconnection: true,
-    });
-
-    this.socket.on('connect', () => {
-      this.isSocketConnected = true;
-      console.log('✅ WebSocket conectado:', this.socket?.id);
-    });
-
-    this.socket.on('disconnect', () => {
-      this.isSocketConnected = false;
-      console.log('❌ WebSocket desconectado:', this.socket?.id);
-    });
   }
 
   disconnectSocket(): void {

@@ -1,4 +1,4 @@
-import { HttpClient } from '@angular/common/http';
+/*import { HttpClient } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { lastValueFrom } from 'rxjs';
 import { environment } from '../../../environments/environment';
@@ -44,5 +44,63 @@ export class AutenticacionService {
     } catch (err) {
       return null;
     }
+  }
+}
+
+*/
+import { HttpClient } from '@angular/common/http';
+import { inject, Injectable } from '@angular/core';
+import { firstValueFrom } from 'rxjs';
+import { environment } from '../../../environments/environment';
+import { Iusuarios } from '../../interfaces/sistema/iusuarios.interface';
+
+type LoginBody = { usuario: string; password: string };
+
+@Injectable({
+  providedIn: 'root',
+})
+export class AutenticacionService {
+  private httpClient = inject(HttpClient);
+  private baseUrl: string = `${environment.API_URL}/login`;
+  private usuario: Iusuarios | null = null;
+
+  // LOGIN
+  async login(body: LoginBody): Promise<void> {
+    await firstValueFrom(
+      this.httpClient.post(`${this.baseUrl}`, body, {
+        withCredentials: true,
+      })
+    );
+
+    // después del login, obtener el usuario autenticado
+    this.usuario = await this.getUsuarioAutenticado();
+  }
+
+  // LOGOUT
+  async logout(usuario_id: number): Promise<void> {
+    await firstValueFrom(
+      this.httpClient.post(
+        `${this.baseUrl}/not`,
+        { usuario_id },
+        { withCredentials: true }
+      )
+    );
+    this.usuario = null;
+  }
+
+  // OBTENER USUARIO AUTENTICADO
+  async getUsuarioAutenticado(): Promise<Iusuarios> {
+    const user = await firstValueFrom(
+      this.httpClient.get<Iusuarios>(`${this.baseUrl}/me`, {
+        withCredentials: true,
+      })
+    );
+    this.usuario = user;
+    return user;
+  }
+
+  // ACCEDER A DATOS EN MEMORIA
+  datosLogged(): Iusuarios | null {
+    return this.usuario;
   }
 }

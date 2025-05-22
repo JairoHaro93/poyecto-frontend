@@ -7,22 +7,24 @@ import { firstValueFrom, lastValueFrom } from 'rxjs';
   providedIn: 'root',
 })
 export class FuncionesService {
-  //variables
   private baseUrl: string = `${environment.API_URL}/funciones`;
-
-  //injectables
   private httpClient = inject(HttpClient);
 
-  //metodos
+  // Obtener todas las funciones
   getAll() {
-    return lastValueFrom(this.httpClient.get<[]>(this.baseUrl));
+    return lastValueFrom(
+      this.httpClient.get<[]>(this.baseUrl, {
+        withCredentials: true, // ✅ importante para enviar cookie
+      })
+    );
   }
 
-  /**
-   * GETBYID()
-   * return
-   */
+  // Obtener funciones por ID de usuario
   getbyId(id: string) {
-    return firstValueFrom(this.httpClient.get<[]>(`${this.baseUrl}/${id}`));
+    return firstValueFrom(
+      this.httpClient.get<[]>(`${this.baseUrl}/${id}`, {
+        withCredentials: true, // ✅ importante para enviar cookie
+      })
+    );
   }
 }

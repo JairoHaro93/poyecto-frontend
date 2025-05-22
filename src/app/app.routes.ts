@@ -13,8 +13,7 @@ import { InformediarioComponent } from './pages/negocio/noc/informediario/inform
 import { DatosclientesComponent } from './pages/negocio/clientes/datosclientes/datosclientes.component';
 import { AgendatecnicosComponent } from './pages/negocio/tecnico/agendatecnicos/agendatecnicos.component';
 import { MorososComponent } from './pages/negocio/recuperacion/morosos/morosos.component';
-import { usuariosGuard } from './guards/administrador/usuarios.guard';
-import { inventarioGuard } from './guards/bodega/inventario.guard';
+
 import { DataclientesComponent } from './pages/negocio/administrador/dataclientes/dataclientes.component';
 import { RegistrosoporteComponent } from './pages/negocio/tecnico/registrosoporte/registrosoporte.component';
 import { RecuperacionComponent } from './pages/negocio/recuperacion/recuperacion.component';
@@ -25,23 +24,12 @@ import { MapeoCajasComponent } from './pages/negocio/noc/mapeo-cajas/mapeo-cajas
 import { SoporteTecnicoComponent } from './pages/negocio/noc/soporte-tecnico/soporte-tecnico.component';
 import { MapaMorososComponent } from './pages/negocio/recuperacion/mapa-morosos/mapa-morosos.component';
 import { GestionMorososComponent } from './pages/negocio/recuperacion/gestion-morosos/gestion-morosos.component';
-import { ingresarEquiposGuard } from './guards/bodega/ingresar-equipos.guard';
-import { informacionClientesGuard } from './guards/administrador/informacion-clientes.guard';
-import { despacharEquiposGuard } from './guards/bodega/despachar-equipos.guard';
-import { asignarEquiposGuard } from './guards/bodega/asignar-equipos.guard';
-import { datosClientesGuard } from './guards/clientes/datos-clientes.guard';
-import { informeDiarioGuard } from './guards/noc/informe-diario.guard';
-import { mapeoCajasGuard } from './guards/noc/mapeo-cajas.guard';
-import { soporteTecnicoGuard } from './guards/noc/soporte-tecnico.guard';
-import { morososGuard } from './guards/recuperacion/morosos.guard';
-import { mapaMorososGuard } from './guards/recuperacion/mapa-morosos.guard';
-import { gestionMorososGuard } from './guards/recuperacion/gestion-morosos.guard';
-import { miAgendaGuard } from './guards/tecnico/mi-agenda.guard';
-import { registroSoporteGuard } from './guards/tecnico/registro-soporte.guard';
+
 import { InfoSopComponent } from './pages/negocio/noc/info-sop/info-sop.component';
 import { AsignarTrabajosComponent } from './pages/negocio/noc/asignar-trabajos/asignar-trabajos.component';
 import { AgendaComponent } from './pages/negocio/noc/agenda/agenda.component';
 import { LayoutComponent } from './pages/sistema/layout/layout.component';
+import { permisosGuard } from './guards/permisos.guard';
 
 export const routes: Routes = [
   { path: '', pathMatch: 'full', redirectTo: 'login' },
@@ -60,27 +48,27 @@ export const routes: Routes = [
           {
             path: 'usuarios',
             component: UsuariosComponent,
-            canActivate: [usuariosGuard],
+            canActivate: [permisosGuard('AUsuarios')],
           },
           {
             path: 'data-clientes',
             component: DataclientesComponent,
-            canActivate: [informacionClientesGuard],
+            canActivate: [permisosGuard('AInformación Clientes')],
           },
           {
             path: 'usuario/:id',
             component: VistausuariosComponent,
-            canActivate: [usuariosGuard],
+            canActivate: [permisosGuard('AUsuarios')],
           },
           {
             path: 'crearusuario',
             component: FormusuariosComponent,
-            canActivate: [usuariosGuard],
+            canActivate: [permisosGuard('AUsuarios')],
           },
           {
             path: 'actualizarusuario/:id',
             component: FormusuariosComponent,
-            canActivate: [usuariosGuard],
+            canActivate: [permisosGuard('AUsuarios')],
           },
         ],
       },
@@ -93,22 +81,22 @@ export const routes: Routes = [
           {
             path: 'inventario',
             component: InventarioComponent,
-            canActivate: [inventarioGuard],
+            canActivate: [permisosGuard('BInventario')],
           },
           {
             path: 'ingresar-equipos',
             component: IngresarEquiposComponent,
-            canActivate: [ingresarEquiposGuard],
+            canActivate: [permisosGuard('BIngresar Equipos')],
           },
           {
             path: 'despachar-equipos',
             component: DespacharEquiposComponent,
-            canActivate: [despacharEquiposGuard],
+            canActivate: [permisosGuard('BDespachar Equipos')],
           },
           {
             path: 'asignar-equipos',
             component: AsignarEquiposComponent,
-            canActivate: [asignarEquiposGuard],
+            canActivate: [permisosGuard('BAsignar Equipos')],
           },
         ],
       },
@@ -121,7 +109,7 @@ export const routes: Routes = [
           {
             path: 'datos',
             component: DatosclientesComponent,
-            canActivate: [datosClientesGuard],
+            canActivate: [permisosGuard('CDatos de Clientes')],
           },
         ],
       },
@@ -134,27 +122,27 @@ export const routes: Routes = [
           {
             path: 'informediario',
             component: InformediarioComponent,
-            canActivate: [informeDiarioGuard],
+            canActivate: [permisosGuard('NInforme Diario')],
           },
           {
             path: 'mapeo-cajas',
             component: MapeoCajasComponent,
-            canActivate: [mapeoCajasGuard],
+            canActivate: [permisosGuard('NMapeo Cajas')],
           },
           {
             path: 'asignar-trabajos',
             component: AsignarTrabajosComponent,
-            canActivate: [mapeoCajasGuard],
+            canActivate: [permisosGuard('NSoporte Tecnico')],
           },
           {
             path: 'soporte-tecnico',
             component: SoporteTecnicoComponent,
-            canActivate: [soporteTecnicoGuard],
+            canActivate: [permisosGuard('NSoporte Tecnico')],
           },
           {
             path: 'info-sop/:id_sop/:ord_ins',
             component: InfoSopComponent,
-            canActivate: [soporteTecnicoGuard],
+            canActivate: [permisosGuard('NSoporte Tecnico')],
           },
           { path: 'agenda', component: AgendaComponent },
         ],
@@ -168,17 +156,17 @@ export const routes: Routes = [
           {
             path: 'morosos',
             component: MorososComponent,
-            canActivate: [morososGuard],
+            canActivate: [permisosGuard('RMorosos')],
           },
           {
             path: 'mapa-morosos',
             component: MapaMorososComponent,
-            canActivate: [mapaMorososGuard],
+            canActivate: [permisosGuard('RMapa Morosos')],
           },
           {
             path: 'gestion-morosos',
             component: GestionMorososComponent,
-            canActivate: [gestionMorososGuard],
+            canActivate: [permisosGuard('RGestion')],
           },
         ],
       },
@@ -191,12 +179,12 @@ export const routes: Routes = [
           {
             path: 'mi-agenda-tec',
             component: AgendatecnicosComponent,
-            canActivate: [miAgendaGuard],
+            canActivate: [permisosGuard('TMi Agenda')],
           },
           {
             path: 'registrosop',
             component: RegistrosoporteComponent,
-            canActivate: [registroSoporteGuard],
+            canActivate: [permisosGuard('TRegistro Soporte')],
           },
         ],
       },
