@@ -33,12 +33,12 @@ export class LoginComponent {
       // Redirigir (elige una de las dos opciones)
 
       // Opción 1: redirigir en la misma pestaña
-      this.router.navigateByUrl('/home');
+      // this.router.navigateByUrl('/home');
 
       // Opción 2: abrir en nueva pestaña
-      // const features =
-      //   'resizable=yes,scrollbars=yes,menubar=no,toolbar=no,location=no,status=no,noopener=true,toolbar=yes';
-      // window.open('/es/home', '_blank', features);
+      const features =
+        'resizable=yes,scrollbars=yes,menubar=no,toolbar=no,location=no,status=no,noopener=true,toolbar=yes';
+      window.open('/es/home', '_blank', features);
     } catch ({ error }: any) {
       Swal.fire('Error', error.message, 'error');
     }

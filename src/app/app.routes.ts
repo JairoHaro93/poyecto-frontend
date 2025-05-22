@@ -1,7 +1,7 @@
 import { Routes } from '@angular/router';
 import { LoginComponent } from './pages/sistema/login/login.component';
 import { HomeComponent } from './pages/sistema/home/home.component';
-import { tokenGuard } from './guards/token.guard';
+import { isAuthenticatedGuard } from './guards/token.guard';
 import { AdministradorComponent } from './pages/negocio/administrador/administrador.component';
 import { UsuariosComponent } from './pages/negocio/administrador/usuarios/usuarios.component';
 import { FormusuariosComponent } from './pages/negocio/administrador/formusuarios/formusuarios.component';
@@ -38,7 +38,7 @@ export const routes: Routes = [
   {
     path: 'home',
     component: LayoutComponent,
-    canActivate: [tokenGuard],
+    canActivate: [isAuthenticatedGuard],
     children: [
       // ADMINISTRADOR
       {

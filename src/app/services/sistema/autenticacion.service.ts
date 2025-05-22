@@ -100,7 +100,7 @@ export class AutenticacionService {
   }
 
   // ACCEDER A DATOS EN MEMORIA
-  datosLogged(): Iusuarios | null {
-    return this.usuario;
-  }
+  // datosLogged(): Iusuarios | null {
+  //  return this.usuario;
+  // }
 }

@@ -37,48 +37,33 @@ export class InfoSopComponent {
   ord_Ins: any;
 
   async ngOnInit() {
-    this.activatedRoute.params.subscribe((params: any) => {
+    this.activatedRoute.params.subscribe(async (params: any) => {
       this.id_sop = params['id_sop'];
       this.ord_Ins = params['ord_ins'];
-      console.log(this.id_sop, this.ord_Ins);
 
       if (!this.id_sop) {
-        console.error("Error: 'id' no válido");
+        console.error("Error: 'id_sop' no válido");
         return;
       }
 
-      this.cargarSoporte(this.id_sop, this.ord_Ins);
+      await this.cargarSoporte(this.id_sop, this.ord_Ins);
     });
   }
 
   async cargarSoporte(id: number, ord_ins: number): Promise<void> {
-    console.log('ID Soporte:', id, 'Orden Instalación:', ord_ins);
-
     try {
-      this.datosUsuario = this.authService.datosLogged();
-      const reg_sop_registrado_por_id = this.datosUsuario?.usuario_id;
-
-      if (!reg_sop_registrado_por_id) {
-        throw new Error('No se pudo obtener el ID del usuario autenticado.');
-      }
+      this.datosUsuario = await this.authService.getUsuarioAutenticado();
+      const reg_sop_registrado_por_id = this.datosUsuario.id;
 
       const body = { reg_sop_noc_id_acepta: reg_sop_registrado_por_id };
-
-      const response = await this.soporteService.aceptarSoporte(id, body);
-      console.log('✅ Soporte aceptado con éxito:', response);
+      await this.soporteService.aceptarSoporte(id, body);
 
       this.soporte = await this.soporteService.getSopById(id);
-      console.log('📄 Datos del soporte obtenidos:', this.soporte);
-
-      // Asignar estado y detalle guardados
       this.solucionSeleccionada = this.soporte?.reg_sop_estado || 'REVISION';
-
-      console.log('estado', this.solucionSeleccionada);
       this.detalleSolucion = this.soporte?.reg_sop_sol_det || '';
 
       this.servicioSeleccionado =
         await this.clienteService.getInfoServicioByOrdId(ord_ins);
-      console.log('📡 Servicio seleccionado:', this.servicioSeleccionado);
     } catch (error) {
       console.error('❌ Error al cargar soporte:', error);
     }

@@ -6,6 +6,7 @@ import { DataSharingService } from '../../services/data-sharing.service';
 import { SoportesService } from '../../services/negocio_latacunga/soportes.service';
 import { SoketService } from '../../services/socket_io/soket.service'; // ✅ Usa tu servicio
 import { Iusuarios } from '../../interfaces/sistema/iusuarios.interface';
+import { toDate } from 'date-fns';
 
 declare var bootstrap: any;
 
@@ -24,8 +25,18 @@ export class SidebarComponent implements OnInit, OnDestroy {
   soporteService = inject(SoportesService);
   soketService = inject(SoketService); // ✅ Inyección correcta del servicio
   dataSharingService = inject(DataSharingService);
-
-  data!: Iusuarios;
+  data: Iusuarios = {
+    id: 0,
+    usuario: '',
+    nombre: '',
+    apellido: '',
+    ci: '',
+    password: '',
+    fecha_cont: new Date(), // ✅ valor de tipo Date válido
+    fecha_nac: new Date(), // ✅ valor de tipo Date válido
+    genero: '',
+    rol: [],
+  };
 
   soportesPendientesCount = 0;
   soportesNocCount = 0;
@@ -48,7 +59,6 @@ export class SidebarComponent implements OnInit, OnDestroy {
     try {
       const datosUsuario = await this.authService.getUsuarioAutenticado();
 
-      console.log(datosUsuario);
       this.data = datosUsuario;
 
       this.arrAdmin = this.data.rol.filter((rol: string) =>

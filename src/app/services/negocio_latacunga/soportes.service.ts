@@ -35,7 +35,7 @@ export class SoportesService {
     );
   }
 
-  getSopByNocId(id_noc: string): Promise<Isoportes[]> {
+  getSopByNocId(id_noc: number): Promise<Isoportes[]> {
     return firstValueFrom(
       this.httpClient.get<Isoportes[]>(
         `${this.baseUrl}/mis-soportes/${id_noc}`,
