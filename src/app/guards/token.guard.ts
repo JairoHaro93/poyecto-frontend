@@ -1,18 +1,18 @@
 import { inject } from '@angular/core';
 import { CanActivateFn, Router } from '@angular/router';
 import Swal from 'sweetalert2';
+import { AutenticacionService } from '../services/sistema/autenticacion.service';
 
-export const tokenGuard: CanActivateFn = (route, state) => {
+export const isAuthenticatedGuard: CanActivateFn = async (route, state) => {
+  const router = inject(Router);
+  const authService = inject(AutenticacionService);
 
-  const router = inject(Router)
-
-  const token = localStorage.getItem('token_proyecto')
-
-  if(token){
-  return true;
-}
-Swal.fire('Error','Debes estar autenticado',"warning")
-router.navigateByUrl('/login')
-
-return false
+  try {
+    await authService.getUsuarioAutenticado(); // ✅ Si falla, lanza error
+    return true;
+  } catch (error) {
+    Swal.fire('Acceso denegado', 'Debes iniciar sesión', 'warning');
+    router.navigateByUrl('/login');
+    return false;
+  }
 };

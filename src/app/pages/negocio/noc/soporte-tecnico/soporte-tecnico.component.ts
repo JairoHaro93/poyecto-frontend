@@ -9,6 +9,7 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { io } from 'socket.io-client';
 import { DataSharingService } from '../../../../services/data-sharing.service';
 import { environment } from '../../../../../environments/environment';
+import { Iusuarios } from '../../../../interfaces/sistema/iusuarios.interface';
 
 @Component({
   selector: 'app-soporte-tecnico',
@@ -28,40 +29,39 @@ export class SoporteTecnicoComponent implements OnDestroy {
 
   soportesPendientes: Isoportes[] = [];
   soportesNoc: Isoportes[] = [];
-  datosUsuario: any;
+
+  datosUsuario!: Iusuarios;
+
   isLoading = true;
 
   constructor(private dataSharingService: DataSharingService) {}
 
   async ngOnInit() {
-    //this.reproducirSonido(); // Ve
-    this.datosUsuario = this.authService.datosLogged();
-    let noc_id = this.datosUsuario.usuario_id;
+    try {
+      // Obtener datos del usuario autenticado desde cookie JWT
+      this.datosUsuario = await this.authService.getUsuarioAutenticado();
+      const noc_id = this.datosUsuario.id!;
 
-    await this.cargarDatos(noc_id);
+      await this.cargarDatos(noc_id);
 
-    // Escuchar evento de actualización desde el servidor
-    this.socket.on('actualizarSoportes', async () => {
-      console.log(
-        '🔄 Recibiendo actualización de soportes en SoporteTecnicoComponent'
-      );
+      this.socket.on('actualizarSoportes', async () => {
+        console.log(
+          '🔄 Recibiendo actualización de soportes en SoporteTecnicoComponent'
+        );
+        await this.cargarDatos(noc_id);
+      });
 
-      const soportesPrevios = [...this.soportesPendientes]; // Guardar lista anterior
-
-      await this.cargarDatos(noc_id); // Cargar nuevos datos
-    });
-
-    // 📢 Escuchar cuando se crea un nuevo soporte y reproducir sonido
-    this.socket.on('soporteCreado', async () => {
-      console.log('📢 Se ha creado un nuevo soporte.');
-
-      const soportesPrevios = [...this.soportesPendientes]; // Guardar lista anterior
-
-      await this.cargarDatos(noc_id); // Cargar nuevos datos
-    });
+      this.socket.on('soporteCreado', async () => {
+        console.log('📢 Se ha creado un nuevo soporte.');
+        await this.cargarDatos(noc_id);
+      });
+    } catch (error) {
+      console.error('❌ Error al iniciar soporte técnico:', error);
+      this.router.navigateByUrl('/login');
+    }
   }
 
-  async cargarDatos(noc_id: string) {
+  async cargarDatos(noc_id: number) {
     try {
       this.isLoading = true;
       let [soportesPend, soportesNoc] = await Promise.all([
@@ -95,17 +95,11 @@ export class SoporteTecnicoComponent implements OnDestroy {
 
     return `${dias} días ${horas} horas ${minutos} minutos`;
   }
-
   async aceptarSoporte(id: number, ord_ins: string) {
     try {
-      // Obtener datos del usuario autenticado
-      this.datosUsuario = this.authService.datosLogged();
-      let reg_sop_registrado_por_id = this.datosUsuario.usuario_id;
+      const usuario = await this.authService.getUsuarioAutenticado();
+      const body = { reg_sop_noc_id_acepta: usuario.id };
 
-      // Crear el objeto `body` con los datos requeridos
-      const body = { reg_sop_noc_id_acepta: reg_sop_registrado_por_id };
-
-      // Asegurar que `aceptarSoporte` se ejecute primero
       await this.soporteService.aceptarSoporte(id, body);
       console.log(`✅ Soporte ${id} aceptado con éxito`);
 
@@ -114,9 +108,7 @@ export class SoporteTecnicoComponent implements OnDestroy {
         this.soportesNoc.length
       );
 
-      // Emitir evento de actualización para otros clientes
       this.socket.emit('soporteActualizado');
-
       console.log('📢 Soporte actualizado en tiempo real');
 
       await this.router.navigateByUrl(`/home/noc/info-sop/${id}/${ord_ins}`);

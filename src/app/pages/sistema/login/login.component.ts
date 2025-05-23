@@ -2,7 +2,7 @@ import { Component, inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { AutenticacionService } from '../../../services/sistema/autenticacion.service';
-import { SoketService } from '../../../services/socket_io/soket.service'; // 👈 asegúrate del path
+import { SoketService } from '../../../services/socket_io/soket.service';
 import Swal from 'sweetalert2';
 
 @Component({
@@ -19,26 +19,26 @@ export class LoginComponent {
   });
 
   autenservice = inject(AutenticacionService);
-  soketService = inject(SoketService); // 👈 inyectar el servicio de sockets
+  soketService = inject(SoketService);
   router = inject(Router);
 
   async onSubmit() {
     try {
-      const response = await this.autenservice.login(this.formLogin.value);
+      // Login (el token será almacenado en cookie automáticamente)
+      await this.autenservice.login(this.formLogin.value);
 
-      // Guardar token en localStorage
-      localStorage.setItem('token_proyecto', response.token);
+      // WebSocket puede conectarse aquí si es necesario
+      // this.soketService.connectSocket();
 
-      // 🔌 Conectar WebSocket después del login
+      // Redirigir (elige una de las dos opciones)
 
-      // Redirigir
-      // this.router.navigateByUrl('/home');
+      // Opción 1: redirigir en la misma pestaña
+      this.router.navigateByUrl('/home');
 
-      // Redirigir con window.open en la misma pestaña
-      const features =
-        'resizable=yes,scrollbars=yes,menubar=no,toolbar=no,location=no,status=no,noopener=true,toolbar=yes';
-      window.open('/es/home', '_blank', features);
-      //this.soketService.connectSocket();
+      // Opción 2: abrir en nueva pestaña
+      //  const features =
+      //    'resizable=yes,scrollbars=yes,menubar=no,toolbar=no,location=no,status=no,noopener=true,toolbar=yes';
+      //   window.open('/es/home', '_blank', features);
     } catch ({ error }: any) {
       Swal.fire('Error', error.message, 'error');
     }

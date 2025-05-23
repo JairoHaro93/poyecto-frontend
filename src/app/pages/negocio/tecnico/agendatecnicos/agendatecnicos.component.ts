@@ -1,7 +1,6 @@
 import { Component, inject } from '@angular/core';
 import { Iagenda } from '../../../../interfaces/negocio/agenda/iagenda.interface';
 import { AgendaService } from '../../../../services/negocio_latacunga/agenda.service';
-import { jwtDecode, JwtPayload } from 'jwt-decode';
 import { AutenticacionService } from '../../../../services/sistema/autenticacion.service';
 import { DatePipe } from '@angular/common';
 import { SoportesService } from '../../../../services/negocio_latacunga/soportes.service';
@@ -13,13 +12,7 @@ import { FormsModule } from '@angular/forms';
 import { environment } from '../../../../../environments/environment';
 import { io } from 'socket.io-client';
 import Swal from 'sweetalert2';
-
-interface CustomPayload extends JwtPayload {
-  usuario_id: number;
-  usuario_usuario: string;
-  usuario_rol: [];
-  usuario_nombre: string;
-}
+import { Iusuarios } from '../../../../interfaces/sistema/iusuarios.interface';
 
 @Component({
   selector: 'app-agendatecnicos',
@@ -30,7 +23,7 @@ interface CustomPayload extends JwtPayload {
 })
 export class AgendatecnicosComponent {
   agendaTecnicosList: Iagenda[] = [];
-  datosUsuario: any;
+  datosUsuario!: Iusuarios;
   agendaService = inject(AgendaService);
   authService = inject(AutenticacionService);
   soporteService = inject(SoportesService);
@@ -42,22 +35,19 @@ export class AgendatecnicosComponent {
 
   async ngOnInit() {
     try {
-      this.datosUsuario = this.authService.datosLogged();
-      const idtec = this.datosUsuario.usuario_id;
-      console.log(idtec);
+      this.datosUsuario = await this.authService.getUsuarioAutenticado();
+      const idtec = this.datosUsuario.id;
 
-      this.agendaTecnicosList = await this.agendaService.getAgendaTec(idtec);
-      console.log(this.agendaTecnicosList);
+      this.agendaTecnicosList = await this.agendaService.getAgendaTec(idtec!);
 
-      // ESCUCHAR EL EVENTO PARA ACTUALIZAR LA LISTA CUANDO OTRO USUARIO REGISTRE UN TRABAJO
       this.socket.on('trabajoAgendado', async () => {
         console.log(
           '🔄 Recibiendo actualización de trabajos en agendaTecnicosComponent'
         );
-        this.agendaTecnicosList = await this.agendaService.getAgendaTec(idtec);
+        this.agendaTecnicosList = await this.agendaService.getAgendaTec(idtec!);
       });
     } catch (error) {
-      console.error('Error al obtener la agenda del técnico', error);
+      console.error('❌ Error al obtener la agenda del técnico', error);
     }
   }
 
@@ -116,7 +106,7 @@ export class AgendatecnicosComponent {
       this.socket.emit('trabajoCulminado');
 
       // 🔄 Recargar la agenda
-      const idtec = this.datosUsuario?.usuario_id;
+      const idtec = this.datosUsuario?.id;
       if (idtec) {
         this.agendaTecnicosList = await this.agendaService.getAgendaTec(idtec);
       }

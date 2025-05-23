@@ -16,6 +16,7 @@ import Swal from 'sweetalert2';
 import { Router } from '@angular/router';
 import { io } from 'socket.io-client';
 import { environment } from '../../../../../environments/environment';
+import { Iusuarios } from '../../../../interfaces/sistema/iusuarios.interface';
 
 @Component({
   selector: 'app-registrosoporte',
@@ -33,7 +34,7 @@ export class RegistrosoporteComponent {
   clientelista: Iclientes[] = [];
   soportesPendientes: Isoportes[] = [];
   SoporteForm2: FormGroup;
-  datosUsuario: any;
+  datosUsuario!: Iusuarios;
 
   // Conexión con Socket.IO
 
@@ -64,17 +65,21 @@ export class RegistrosoporteComponent {
   }
 
   async ngOnInit() {
-    this.clientelista = await this.clienteService.getInfoClientesActivos();
-    this.datosUsuario = this.authService.datosLogged();
-    await this.cargarSoportesPendientes();
-
-    // Escuchar el evento para actualizar la lista cuando otro usuario registre un soporte
-    this.socket.on('actualizarSoportes', async () => {
-      console.log(
-        '🔄 Recibiendo actualización de soportes en RegistrosoporteComponent'
-      );
+    try {
+      this.clientelista = await this.clienteService.getInfoClientesActivos();
+      this.datosUsuario = await this.authService.getUsuarioAutenticado();
       await this.cargarSoportesPendientes();
-    });
+
+      this.socket.on('actualizarSoportes', async () => {
+        console.log(
+          '🔄 Recibiendo actualización de soportes en RegistrosoporteComponent'
+        );
+        await this.cargarSoportesPendientes();
+      });
+    } catch (error) {
+      console.error('❌ Error al iniciar RegistroSoporteComponent:', error);
+      this.router.navigateByUrl('/login');
+    }
   }
 
   async cargarSoportesPendientes() {
@@ -87,7 +92,7 @@ export class RegistrosoporteComponent {
         reg_sop_nombre: this.clienteSeleccionado?.nombre_completo,
         ord_ins: this.servicioSeleccionado?.orden_instalacion || null,
 
-        reg_sop_registrado_por_id: this.datosUsuario.usuario_id,
+        reg_sop_registrado_por_id: this.datosUsuario.id,
       });
 
       console.log('Formulario válido:', this.SoporteForm2.value);

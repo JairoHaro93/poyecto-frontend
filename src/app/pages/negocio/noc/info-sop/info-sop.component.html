@@ -1,5 +1,6 @@
 <section class="container mt-1">
   <div class="d-flex justify-content-between border-5 m-2">
+    <!-- TABLA DATOS DEL USUARIO -->
     <table class="table table-bordered table-striped w-50 me-3">
       <thead class="custom-header">
         <tr>
@@ -17,24 +18,23 @@
         </tr>
         <tr>
           <th scope="row">Precio</th>
-          <td>${{ servicioSeleccionado?.precio }}</td>
+          <td>${{ servicioSeleccionado?.servicios[0]?.precio }}</td>
         </tr>
         <tr>
           <th scope="row">Estado de Pago</th>
-          <td>{{ servicioSeleccionado?.estado }}</td>
+          <td>{{ servicioSeleccionado?.servicios[0]?.estado }}</td>
         </tr>
         <tr>
           <th scope="row">Plan</th>
-          <td>{{ servicioSeleccionado?.plan_nombre }}</td>
+          <td>{{ servicioSeleccionado?.servicios[0]?.plan_nombre }}</td>
         </tr>
         <tr>
           <th scope="row">Cortado</th>
-          <td></td>
-          <!-- Espacio vacío si no hay información -->
+          <td>{{ servicioSeleccionado?.servicios[0]?.cortado }}</td>
         </tr>
       </tbody>
     </table>
-
+    <!-- TABLA DATOS DEL SOPORTE -->
     <table class="table table-bordered table-striped w-50">
       <thead class="custom-header">
         <tr>
@@ -90,17 +90,17 @@
       </tbody>
     </table>
   </div>
-
+  <!-- TABLA DATOS DEL SERVICIO -->
   <div class="d-flex justify-content-between align-items-stretch">
     <table class="Datos-servicio table table-bordered table-striped mb-0">
       <tbody>
         <tr>
           <th scope="row">Dirección</th>
-          <td>{{ servicioSeleccionado?.direccion }}</td>
+          <td>{{ servicioSeleccionado?.servicios[0]?.direccion }}</td>
         </tr>
         <tr>
           <th scope="row">Referencia</th>
-          <td>{{ servicioSeleccionado?.referencia }}</td>
+          <td>{{ servicioSeleccionado?.servicios[0]?.referencia }}</td>
         </tr>
         <tr>
           <th scope="row">Coordenadas</th>
@@ -108,12 +108,12 @@
             <a
               [href]="
                 'https://www.google.com/maps/search/' +
-                servicioSeleccionado?.coordenadas
+                servicioSeleccionado?.servicios[0]?.coordenadas
               "
               class="text-danger"
               target="_blank"
             >
-              {{ servicioSeleccionado?.coordenadas }}
+              {{ servicioSeleccionado?.servicios[0]?.coordenadas }}
             </a>
           </td>
         </tr>
@@ -121,7 +121,7 @@
           <th scope="row">Fecha Instalación</th>
           <td>
             {{
-              servicioSeleccionado?.fecha_instalacion
+              servicioSeleccionado?.servicios[0]?.fecha_instalacion
                 | date : "EEEE dd MMMM YYYY"
             }}
           </td>
@@ -129,9 +129,9 @@
         <tr>
           <th scope="row">IP Equipo</th>
           <td>
-            {{ servicioSeleccionado?.ip }}
+            {{ servicioSeleccionado?.servicios[0]?.ip }}
             <button
-              (click)="copyIp(servicioSeleccionado?.ip)"
+              (click)="copyIp(servicioSeleccionado?.servicios[0]?.ip)"
               class="btn btn-sm btn-danger ms-2"
             >
               Copiar
@@ -140,11 +140,11 @@
         </tr>
         <tr>
           <th scope="row">Teléfonos Instalación</th>
-          <td>{{ servicioSeleccionado?.telefonos }}</td>
+          <td>{{ servicioSeleccionado?.servicios[0]?.telefonos }}</td>
         </tr>
         <tr>
           <th scope="row">Técnico Instalador</th>
-          <td>{{ servicioSeleccionado?.instalado_por }}</td>
+          <td>{{ servicioSeleccionado?.servicios[0]?.instalado_por }}</td>
         </tr>
       </tbody>
     </table>

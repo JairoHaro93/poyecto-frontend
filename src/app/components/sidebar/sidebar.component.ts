@@ -1,17 +1,12 @@
 import { Component, inject, OnDestroy, OnInit } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { AutenticacionService } from '../../services/sistema/autenticacion.service';
-import { JwtPayload } from 'jwt-decode';
+
 import { DataSharingService } from '../../services/data-sharing.service';
 import { SoportesService } from '../../services/negocio_latacunga/soportes.service';
 import { SoketService } from '../../services/socket_io/soket.service'; // ✅ Usa tu servicio
-
-interface CustomPayload extends JwtPayload {
-  usuario_id: number;
-  usuario_usuario: string;
-  usuario_rol: [];
-  usuario_nombre: string;
-}
+import { Iusuarios } from '../../interfaces/sistema/iusuarios.interface';
+import { toDate } from 'date-fns';
 
 declare var bootstrap: any;
 
@@ -30,12 +25,17 @@ export class SidebarComponent implements OnInit, OnDestroy {
   soporteService = inject(SoportesService);
   soketService = inject(SoketService); // ✅ Inyección correcta del servicio
   dataSharingService = inject(DataSharingService);
-
-  data: CustomPayload = {
-    usuario_id: 0,
-    usuario_usuario: '',
-    usuario_rol: [],
-    usuario_nombre: '',
+  data: Iusuarios = {
+    id: 0,
+    usuario: '',
+    nombre: '',
+    apellido: '',
+    ci: '',
+    password: '',
+    fecha_cont: new Date(), // ✅ valor de tipo Date válido
+    fecha_nac: new Date(), // ✅ valor de tipo Date válido
+    genero: '',
+    rol: [],
   };
 
   soportesPendientesCount = 0;
@@ -50,56 +50,60 @@ export class SidebarComponent implements OnInit, OnDestroy {
 
   async ngOnInit() {
     this.soketService.connectSocket();
+
     this.dataSharingService.currentData.subscribe((data) => {
       this.soportesPendientesCount = data.pendientes;
       this.soportesNocCount = data.noc;
     });
 
-    const datosUsuario = this.authService.datosLogged();
-    if (datosUsuario) {
+    try {
+      const datosUsuario = await this.authService.getUsuarioAutenticado();
+
       this.data = datosUsuario;
-      this.arrAdmin = this.data.usuario_rol.filter((rol: string) =>
+
+      this.arrAdmin = this.data.rol.filter((rol: string) =>
         rol.startsWith('A')
       );
-      this.arrBodega = this.data.usuario_rol.filter((rol: string) =>
+      this.arrBodega = this.data.rol.filter((rol: string) =>
         rol.startsWith('B')
       );
-      this.arrNoc = this.data.usuario_rol.filter((rol: string) =>
-        rol.startsWith('N')
-      );
-      this.arrTecnico = this.data.usuario_rol.filter((rol: string) =>
+      this.arrNoc = this.data.rol.filter((rol: string) => rol.startsWith('N'));
+
+      this.arrTecnico = this.data.rol.filter((rol: string) =>
         rol.startsWith('T')
       );
-      this.arrClientes = this.data.usuario_rol.filter((rol: string) =>
+      this.arrClientes = this.data.rol.filter((rol: string) =>
         rol.startsWith('C')
       );
-      this.arrRecuperacion = this.data.usuario_rol.filter((rol: string) =>
+      this.arrRecuperacion = this.data.rol.filter((rol: string) =>
         rol.startsWith('R')
       );
-    }
 
-    // Solo conectar y escuchar si es NOC
-    if (this.arrNoc.length > 0) {
-      //this.soketService.connectSocket(); // ✅ conectar desde el servicio
-      await this.obtenerSoportesPendientes();
-
-      this.soketService.on('actualizarSoportes', async () => {
-        console.log('🔄 Recibiendo actualización de soportes');
-        const soportesPrevios = this.soportesPendientesCount;
+      // Solo si es NOC conectamos eventos del socket
+      if (this.arrNoc.length > 0) {
         await this.obtenerSoportesPendientes();
-        if (this.soportesPendientesCount > soportesPrevios) {
-          this.reproducirSonido();
-        }
-      });
 
-      this.soketService.on('soporteCreado', async () => {
-        console.log('📢 Nuevo soporte creado');
-        const soportesPrevios = this.soportesPendientesCount;
-        await this.obtenerSoportesPendientes();
-        if (this.soportesPendientesCount > soportesPrevios) {
-          this.reproducirSonido();
-        }
-      });
+        this.soketService.on('actualizarSoportes', async () => {
+          console.log('🔄 Recibiendo actualización de soportes');
+          const soportesPrevios = this.soportesPendientesCount;
+          await this.obtenerSoportesPendientes();
+          if (this.soportesPendientesCount > soportesPrevios) {
+            this.reproducirSonido();
+          }
+        });
+
+        this.soketService.on('soporteCreado', async () => {
+          console.log('📢 Nuevo soporte creado');
+          const soportesPrevios = this.soportesPendientesCount;
+          await this.obtenerSoportesPendientes();
+          if (this.soportesPendientesCount > soportesPrevios) {
+            this.reproducirSonido();
+          }
+        });
+      }
+    } catch (error) {
+      console.error('❌ No se pudo obtener datos del usuario', error);
+      // Redirigir o manejar error de sesión
     }
   }
 
@@ -122,11 +126,10 @@ export class SidebarComponent implements OnInit, OnDestroy {
   async onClickLogout() {
     this.soketService.disconnectSocket(); // 🔴 primero desconectamos socket
 
-    localStorage.removeItem('token_proyecto'); // 🧹 limpiar token
-    await this.authService.logout(this.data.usuario_id); // API logout
+    await this.authService.logout(this.data.id!);
+    window.close(); // o this.router.navigateByUrl('/login')
 
-    //this.router.navigateByUrl('/login');
-    window.close(); // si fue abierto con window.open
+    this.router.navigateByUrl('/login');
   }
 
   onClickMenu() {
@@ -136,7 +139,7 @@ export class SidebarComponent implements OnInit, OnDestroy {
   async ngOnDestroy() {
     //this.soketService.disconnectSocket(); // ✅ desconectar también al destruir
     //  localStorage.removeItem('token_proyecto');
-    await this.authService.logout(this.data.usuario_id);
+    await this.authService.logout(this.data.id!);
 
     //this.router.navigateByUrl('/login');
   }
