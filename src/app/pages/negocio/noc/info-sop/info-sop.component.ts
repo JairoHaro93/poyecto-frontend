@@ -116,10 +116,10 @@ export class InfoSopComponent {
       age_tipo: 'SOPORTE',
       age_subtipo: this.solucionSeleccionada,
       age_observaciones: this.detalleSolucion,
-      age_coordenadas: this.servicioSeleccionado.coordenadas,
+      age_coordenadas: this.servicioSeleccionado.servicios[0].coordenadas,
       age_telefono: this.soporte?.reg_sop_tel,
     };
-
+    console.log(bodyAge);
     if (this.solucionSeleccionada === 'RESUELTO') {
       Swal.fire({
         title: '¿Estás seguro?',
