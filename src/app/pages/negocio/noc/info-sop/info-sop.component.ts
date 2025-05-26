@@ -70,14 +70,21 @@ export class InfoSopComponent {
   }
 
   copyIp(ip: string): void {
-    navigator.clipboard
-      .writeText(ip)
-      .then(() => {
-        console.log('IP copiada al portapapeles');
-      })
-      .catch((err) => {
-        console.error('Error al copiar IP: ', err);
-      });
+    const textarea = document.createElement('textarea');
+    textarea.value = ip;
+    textarea.style.position = 'fixed'; // Evita scroll
+    document.body.appendChild(textarea);
+    textarea.focus();
+    textarea.select();
+
+    try {
+      const successful = document.execCommand('copy');
+      console.log(successful ? 'IP copiada' : 'No se pudo copiar');
+    } catch (err) {
+      console.error('Error al copiar IP: ', err);
+    }
+
+    document.body.removeChild(textarea);
   }
 
   asignarSolucion(event: Event) {
