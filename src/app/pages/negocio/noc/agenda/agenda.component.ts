@@ -91,6 +91,12 @@ export class AgendaComponent {
       console.log('📥 trabajoCulminadoNOC recibido');
       await this.cargarAgendaPorFecha();
     });
+
+    this.socket.on('trabajoPreagendadoNOC', async () => {
+      console.log('📥 trabajoPreagendadoNOC recibido');
+      await this.cargarPreAgenda();
+      this.reproducirSonido();
+    });
   }
 
   async cargarAgendaPorFecha() {
@@ -241,6 +247,13 @@ export class AgendaComponent {
         trabajoPrevio = actual;
       }
     }
+  }
+
+  reproducirSonido() {
+    const audio = new Audio('./sounds/ding_sop.mp3');
+    audio
+      .play()
+      .catch((err) => console.error('🎵 Error al reproducir sonido:', err));
   }
 
   getEstadoClass(sub_tipo: string | undefined): string {
