@@ -14,6 +14,7 @@ import { ClientesService } from '../../../../services/negocio_atuntaqui/clientes
 import { environment } from '../../../../../environments/environment';
 import { io } from 'socket.io-client';
 import Swal from 'sweetalert2';
+import { AutenticacionService } from '../../../../services/sistema/autenticacion.service';
 
 declare var bootstrap: any;
 
@@ -30,6 +31,7 @@ export class AgendaComponent {
   clienteService = inject(ClientesService);
   usuariosService = inject(UsuariosService);
   agendaService = inject(AgendaService);
+  authService = inject(AutenticacionService);
 
   //arrays
   tecnicosList: Iusuarios[] = [];
@@ -50,6 +52,7 @@ export class AgendaComponent {
   vehiculoSeleccionado = '';
   modoEdicion = false;
   edicionHabilitada = true;
+  datosUsuario!: Iusuarios;
 
   horarios: string[] = [];
 
@@ -63,13 +66,20 @@ export class AgendaComponent {
     { codigo: 'F20', nombre: 'F20 MOTO ROJA' },
   ];
 
-  private socket = io(`${environment.API_WEBSOKETS_IO}`); // Conexión con WebSocket
-
+  //private socket = io(`${environment.API_WEBSOKETS_IO}`); // Conexión con WebSocket
+  private socket: any = null;
   async ngOnInit() {
+    this.datosUsuario = await this.authService.getUsuarioAutenticado();
     this.generarHorarios();
     await this.cargarAgendaPorFecha();
     await this.cargarPreAgenda();
     this.tecnicosList = await this.usuariosService.getAllAgendaTecnicos();
+
+    this.socket = io(`${environment.API_WEBSOKETS_IO}`, {
+      query: {
+        usuario_id: this.datosUsuario.id!.toString(),
+      },
+    });
 
     // ✅ Escuchar solo eventos dirigidos
     this.socket.on('trabajoAgendadoNOC', async () => {
