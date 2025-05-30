@@ -20,7 +20,9 @@ import { Iusuarios } from '../../../../interfaces/sistema/iusuarios.interface';
 })
 export class SoporteTecnicoComponent implements OnDestroy {
   //private socket = io('http://localhost:3000'); // Conexión con WebSocket
-  private socket = io(`${environment.API_WEBSOKETS_IO}`); // Conexión con WebSocket
+  // private socket = io(`${environment.API_WEBSOKETS_IO}`); // Conexión con WebSocket
+
+  private socket: any = null;
   clienteService = inject(ClientesService);
   authService = inject(AutenticacionService);
   soporteService = inject(SoportesService);
@@ -44,17 +46,23 @@ export class SoporteTecnicoComponent implements OnDestroy {
 
       await this.cargarDatos(noc_id);
 
-      this.socket.on('actualizarSoportes', async () => {
-        console.log(
-          '🔄 Recibiendo actualización de soportes en SoporteTecnicoComponent'
-        );
-        await this.cargarDatos(noc_id);
+      this.socket = io(`${environment.API_WEBSOKETS_IO}`, {
+        query: {
+          usuario_id: this.datosUsuario.id!.toString(),
+        },
       });
 
-      this.socket.on('soporteCreado', async () => {
-        console.log('📢 Se ha creado un nuevo soporte.');
-        await this.cargarDatos(noc_id);
-      });
+      if (this.datosUsuario.rol.length > 0) {
+        this.socket.on('soporteCreadoNOC', async () => {
+          console.log('📢 Evento NOC: soporteCreadoNOC');
+          await this.cargarDatos(noc_id);
+        });
+
+        this.socket.on('soporteActualizadoNOC', async () => {
+          console.log('🔄 Evento NOC: soporteActualizadoNOC');
+          await this.cargarDatos(noc_id);
+        });
+      }
     } catch (error) {
       console.error('❌ Error al iniciar soporte técnico:', error);
       this.router.navigateByUrl('/login');

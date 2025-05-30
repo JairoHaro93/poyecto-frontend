@@ -31,21 +31,24 @@ export class AgendatecnicosComponent {
   trabajoSeleccionado: Iagenda | null = null;
 
   // Conexión con Socket.IO
-  private socket = io(`${environment.API_WEBSOKETS_IO}`); // Conexión con WebSocket
+  //private socket = io(`${environment.API_WEBSOKETS_IO}`); // Conexión con WebSocket
+  private socket: any = null;
 
   async ngOnInit() {
     try {
       this.datosUsuario = await this.authService.getUsuarioAutenticado();
       const idtec = this.datosUsuario.id;
 
-      this.agendaTecnicosList = await this.agendaService.getAgendaTec(idtec!);
+      this.socket = io(`${environment.API_WEBSOKETS_IO}`, {
+        query: { usuario_id: idtec!.toString() },
+      });
 
-      this.socket.on('trabajoAgendado', async () => {
-        console.log(
-          '🔄 Recibiendo actualización de trabajos en agendaTecnicosComponent'
-        );
+      this.socket.on('trabajoAgendadoTecnico', async () => {
+        console.log('📥 Trabajo agendado para este técnico');
         this.agendaTecnicosList = await this.agendaService.getAgendaTec(idtec!);
       });
+
+      this.agendaTecnicosList = await this.agendaService.getAgendaTec(idtec!);
     } catch (error) {
       console.error('❌ Error al obtener la agenda del técnico', error);
     }
@@ -103,7 +106,7 @@ export class AgendatecnicosComponent {
       await this.agendaService.actualizarAgendaSolucuion(body.id, body);
 
       // 🔄 Emitir evento de trabajo resuelto
-      this.socket.emit('trabajoCulminado');
+      this.socket.emit('trabajoCulminado', { tecnicoId: this.datosUsuario.id });
 
       // 🔄 Recargar la agenda
       const idtec = this.datosUsuario?.id;
@@ -138,5 +141,10 @@ export class AgendatecnicosComponent {
     this.trabajoSeleccionado = { ...trabajo }; // copia para evitar cambios directos si no se guarda
     const modal = new Modal(document.getElementById('editarModal')!);
     modal.show();
+  }
+
+  ngOnDestroy(): void {
+    this.socket?.disconnect();
+    console.log('🔌 Socket desconectado en AgendatecnicosComponent');
   }
 }

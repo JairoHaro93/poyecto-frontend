@@ -71,16 +71,15 @@ export class AgendaComponent {
     await this.cargarPreAgenda();
     this.tecnicosList = await this.usuariosService.getAllAgendaTecnicos();
 
-    // 🔄 Escuchar evento de actualización de trabajos
-    this.socket.on('trabajoAgendado', async () => {
-      console.log('📥 trabajoAgendado recibido');
+    // ✅ Escuchar solo eventos dirigidos
+    this.socket.on('trabajoAgendadoNOC', async () => {
+      console.log('📥 trabajoAgendadoNOC recibido');
       await this.cargarAgendaPorFecha();
     });
 
-    // 🔄 Escuchar evento de culminación de trabajos
-    this.socket.on('trabajoCulminado', async () => {
-      console.log(`📥 trabajoCulminado recibido para el trabajo`);
-      await this.cargarAgendaPorFecha(); // o actualizar solo ese trabajo si lo deseas
+    this.socket.on('trabajoCulminadoNOC', async () => {
+      console.log('📥 trabajoCulminadoNOC recibido');
+      await this.cargarAgendaPorFecha();
     });
   }
 
@@ -162,7 +161,10 @@ export class AgendaComponent {
 
     await this.agendaService.actualizarAgendaHorario(body.id, body);
     // Emitir evento de actualización de soportes a través de WebSocket
-    this.socket.emit('trabajoAgendado');
+    this.socket.emit('trabajoAgendado', {
+      tecnicoId: this.idTecnico,
+    });
+
     await this.ngOnInit();
     bootstrap.Modal.getInstance(
       document.getElementById('asignarModal')

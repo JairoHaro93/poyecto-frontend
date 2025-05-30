@@ -49,6 +49,7 @@ export class SidebarComponent implements OnInit, OnDestroy {
   arrRecuperacion: string[] = [];
 
   async ngOnInit() {
+    await this.obtenerSoportesPendientes();
     this.soketService.connectSocket();
 
     this.dataSharingService.currentData.subscribe((data) => {
@@ -81,10 +82,8 @@ export class SidebarComponent implements OnInit, OnDestroy {
 
       // Solo si es NOC conectamos eventos del socket
       if (this.arrNoc.length > 0) {
-        await this.obtenerSoportesPendientes();
-
-        this.soketService.on('actualizarSoportes', async () => {
-          console.log('🔄 Recibiendo actualización de soportes');
+        this.soketService.on('soporteCreadoNOC', async () => {
+          console.log('📢 Evento recibido solo por NOC: soporteCreadoNOC');
           const soportesPrevios = this.soportesPendientesCount;
           await this.obtenerSoportesPendientes();
           if (this.soportesPendientesCount > soportesPrevios) {
@@ -92,8 +91,8 @@ export class SidebarComponent implements OnInit, OnDestroy {
           }
         });
 
-        this.soketService.on('soporteCreado', async () => {
-          console.log('📢 Nuevo soporte creado');
+        this.soketService.on('soporteActualizadoNOC', async () => {
+          console.log('📢 Evento recibido solo por NOC: soporteActualizadoNOC');
           const soportesPrevios = this.soportesPendientesCount;
           await this.obtenerSoportesPendientes();
           if (this.soportesPendientesCount > soportesPrevios) {

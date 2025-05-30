@@ -38,7 +38,7 @@ export class RegistrosoporteComponent {
 
   // Conexión con Socket.IO
 
-  private socket = io(`${environment.API_WEBSOKETS_IO}`); // Conexión con WebSocket
+  private socket: any = null; // se conecta luego
 
   // Búsquedas
   busqueda: string = '';
@@ -69,6 +69,17 @@ export class RegistrosoporteComponent {
       this.clientelista = await this.clienteService.getInfoClientesActivos();
       this.datosUsuario = await this.authService.getUsuarioAutenticado();
       await this.cargarSoportesPendientes();
+
+      // 🔗 Conexión WebSocket con usuario_id
+      this.socket = io(`${environment.API_WEBSOKETS_IO}`, {
+        query: {
+          usuario_id: this.datosUsuario.id!.toString(),
+        },
+      });
+
+      this.socket.on('connect', () => {
+        console.log('✅ WebSocket conectado:', this.socket.id);
+      });
 
       this.socket.on('actualizarSoportes', async () => {
         console.log(
