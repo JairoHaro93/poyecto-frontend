@@ -13,6 +13,7 @@ import { environment } from '../../../../../environments/environment';
 import { io } from 'socket.io-client';
 import Swal from 'sweetalert2';
 import { Iusuarios } from '../../../../interfaces/sistema/iusuarios.interface';
+import { SoketService } from '../../../../services/socket_io/soket.service';
 
 @Component({
   selector: 'app-agendatecnicos',
@@ -31,19 +32,14 @@ export class AgendatecnicosComponent {
   trabajoSeleccionado: Iagenda | null = null;
 
   // Conexión con Socket.IO
-  //private socket = io(`${environment.API_WEBSOKETS_IO}`); // Conexión con WebSocket
-  private socket: any = null;
+  private socketService = inject(SoketService);
 
   async ngOnInit() {
     try {
       this.datosUsuario = await this.authService.getUsuarioAutenticado();
       const idtec = this.datosUsuario.id;
 
-      this.socket = io(`${environment.API_WEBSOKETS_IO}`, {
-        query: { usuario_id: idtec!.toString() },
-      });
-
-      this.socket.on('trabajoAgendadoTecnico', async () => {
+      this.socketService.on('trabajoAgendadoTecnico', async () => {
         console.log('📥 Trabajo agendado para este técnico');
         this.agendaTecnicosList = await this.agendaService.getAgendaTec(idtec!);
       });
@@ -106,7 +102,9 @@ export class AgendatecnicosComponent {
       await this.agendaService.actualizarAgendaSolucuion(body.id, body);
 
       // 🔄 Emitir evento de trabajo resuelto
-      this.socket.emit('trabajoCulminado', { tecnicoId: this.datosUsuario.id });
+      this.socketService.emit('trabajoCulminado', {
+        tecnicoId: this.datosUsuario.id,
+      });
 
       // 🔄 Recargar la agenda
       const idtec = this.datosUsuario?.id;
@@ -141,10 +139,5 @@ export class AgendatecnicosComponent {
     this.trabajoSeleccionado = { ...trabajo }; // copia para evitar cambios directos si no se guarda
     const modal = new Modal(document.getElementById('editarModal')!);
     modal.show();
-  }
-
-  ngOnDestroy(): void {
-    this.socket?.disconnect();
-    console.log('🔌 Socket desconectado en AgendatecnicosComponent');
   }
 }

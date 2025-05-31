@@ -11,6 +11,7 @@ import Swal from 'sweetalert2';
 import { AgendaService } from '../../../../services/negocio_latacunga/agenda.service';
 import { environment } from '../../../../../environments/environment';
 import { io } from 'socket.io-client';
+import { SoketService } from '../../../../services/socket_io/soket.service';
 
 @Component({
   selector: 'app-info-sop',
@@ -38,19 +39,13 @@ export class InfoSopComponent {
   id_sop: any;
   ord_Ins: any;
 
-  private socket: any = null;
+  private socketService = inject(SoketService);
 
   async ngOnInit() {
     this.datosUsuario = await this.authService.getUsuarioAutenticado();
     this.activatedRoute.params.subscribe(async (params: any) => {
       this.id_sop = params['id_sop'];
       this.ord_Ins = params['ord_ins'];
-
-      this.socket = io(`${environment.API_WEBSOKETS_IO}`, {
-        query: {
-          usuario_id: this.datosUsuario.id!.toString(),
-        },
-      });
 
       if (!this.id_sop) {
         console.error("Error: 'id_sop' no válido");
@@ -186,7 +181,7 @@ export class InfoSopComponent {
             await this.agendaService.postSopAgenda(bodyAge);
 
             // ✅ Emitir evento de preagenda para que NOC reciba notificación
-            this.socket.emit('trabajoPreagendado');
+            this.socketService.emit('trabajoPreagendado');
 
             console.log(bodyAge);
 

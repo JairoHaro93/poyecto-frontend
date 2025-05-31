@@ -11,10 +11,10 @@ import { Iusuarios } from '../../../../interfaces/sistema/iusuarios.interface';
 import { AgendaService } from '../../../../services/negocio_latacunga/agenda.service';
 import { Iagenda } from '../../../../interfaces/negocio/agenda/iagenda.interface';
 import { ClientesService } from '../../../../services/negocio_atuntaqui/clientes.service';
-import { environment } from '../../../../../environments/environment';
-import { io } from 'socket.io-client';
+
 import Swal from 'sweetalert2';
 import { AutenticacionService } from '../../../../services/sistema/autenticacion.service';
+import { SoketService } from '../../../../services/socket_io/soket.service';
 
 declare var bootstrap: any;
 
@@ -32,6 +32,7 @@ export class AgendaComponent {
   usuariosService = inject(UsuariosService);
   agendaService = inject(AgendaService);
   authService = inject(AutenticacionService);
+  private socketService = inject(SoketService);
 
   //arrays
   tecnicosList: Iusuarios[] = [];
@@ -39,6 +40,7 @@ export class AgendaComponent {
   preAgendaList: Iagenda[] = [];
 
   //variables estrategicas
+  preAgendaPendientesCount = 0;
   idTecnico = 0;
   fechaTrabajoSeleccionada = '';
   fechaSeleccionada = this.obtenerFechaHoy();
@@ -67,7 +69,7 @@ export class AgendaComponent {
   ];
 
   //private socket = io(`${environment.API_WEBSOKETS_IO}`); // Conexión con WebSocket
-  private socket: any = null;
+
   async ngOnInit() {
     this.datosUsuario = await this.authService.getUsuarioAutenticado();
     this.generarHorarios();
@@ -75,27 +77,26 @@ export class AgendaComponent {
     await this.cargarPreAgenda();
     this.tecnicosList = await this.usuariosService.getAllAgendaTecnicos();
 
-    this.socket = io(`${environment.API_WEBSOKETS_IO}`, {
-      query: {
-        usuario_id: this.datosUsuario.id!.toString(),
-      },
-    });
-
     // ✅ Escuchar solo eventos dirigidos
-    this.socket.on('trabajoAgendadoNOC', async () => {
+    this.socketService.on('trabajoAgendadoNOC', async () => {
       console.log('📥 trabajoAgendadoNOC recibido');
       await this.cargarAgendaPorFecha();
     });
 
-    this.socket.on('trabajoCulminadoNOC', async () => {
+    this.socketService.on('trabajoCulminadoNOC', async () => {
       console.log('📥 trabajoCulminadoNOC recibido');
       await this.cargarAgendaPorFecha();
     });
 
-    this.socket.on('trabajoPreagendadoNOC', async () => {
+    this.socketService.on('trabajoPreagendadoNOC', async () => {
       console.log('📥 trabajoPreagendadoNOC recibido');
+      const preAgendaPrevio = this.preAgendaPendientesCount;
+      console.log('LA PREAGENDA ANTES DEL IF ES' + preAgendaPrevio);
       await this.cargarPreAgenda();
-      this.reproducirSonido();
+      console.log('LA PREAGENDA despues DEL IF ES' + preAgendaPrevio);
+      if (this.preAgendaPendientesCount > preAgendaPrevio) {
+        this.reproducirSonido();
+      }
     });
   }
 
@@ -177,9 +178,12 @@ export class AgendaComponent {
 
     await this.agendaService.actualizarAgendaHorario(body.id, body);
     // Emitir evento de actualización de soportes a través de WebSocket
-    this.socket.emit('trabajoAgendado', {
+    this.socketService.emit('trabajoAgendado', {
       tecnicoId: this.idTecnico,
     });
+
+    // ✅ Emitir evento de preagenda para que NOC reciba notificación
+    this.socketService.emit('trabajoPreagendado');
 
     await this.ngOnInit();
     bootstrap.Modal.getInstance(
@@ -189,6 +193,8 @@ export class AgendaComponent {
 
   async cargarPreAgenda() {
     this.preAgendaList = await this.agendaService.getPreAgenda();
+    this.preAgendaPendientesCount = this.preAgendaList.length;
+    console.log('la preagenda es' + this.preAgendaPendientesCount);
     for (const item of this.preAgendaList) {
       try {
         const info = await this.clienteService.getInfoServicioByOrdId(

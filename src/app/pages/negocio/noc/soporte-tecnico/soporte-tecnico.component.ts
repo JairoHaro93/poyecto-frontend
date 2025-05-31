@@ -10,6 +10,7 @@ import { io } from 'socket.io-client';
 import { DataSharingService } from '../../../../services/data-sharing.service';
 import { environment } from '../../../../../environments/environment';
 import { Iusuarios } from '../../../../interfaces/sistema/iusuarios.interface';
+import { SoketService } from '../../../../services/socket_io/soket.service';
 
 @Component({
   selector: 'app-soporte-tecnico',
@@ -18,11 +19,10 @@ import { Iusuarios } from '../../../../interfaces/sistema/iusuarios.interface';
   templateUrl: './soporte-tecnico.component.html',
   styleUrl: './soporte-tecnico.component.css',
 })
-export class SoporteTecnicoComponent implements OnDestroy {
+export class SoporteTecnicoComponent {
   //private socket = io('http://localhost:3000'); // Conexión con WebSocket
   // private socket = io(`${environment.API_WEBSOKETS_IO}`); // Conexión con WebSocket
 
-  private socket: any = null;
   clienteService = inject(ClientesService);
   authService = inject(AutenticacionService);
   soporteService = inject(SoportesService);
@@ -33,6 +33,8 @@ export class SoporteTecnicoComponent implements OnDestroy {
   soportesNoc: Isoportes[] = [];
 
   datosUsuario!: Iusuarios;
+
+  private socketService = inject(SoketService);
 
   isLoading = true;
 
@@ -46,19 +48,13 @@ export class SoporteTecnicoComponent implements OnDestroy {
 
       await this.cargarDatos(noc_id);
 
-      this.socket = io(`${environment.API_WEBSOKETS_IO}`, {
-        query: {
-          usuario_id: this.datosUsuario.id!.toString(),
-        },
-      });
-
       if (this.datosUsuario.rol.length > 0) {
-        this.socket.on('soporteCreadoNOC', async () => {
+        this.socketService.on('soporteCreadoNOC', async () => {
           console.log('📢 Evento NOC: soporteCreadoNOC');
           await this.cargarDatos(noc_id);
         });
 
-        this.socket.on('soporteActualizadoNOC', async () => {
+        this.socketService.on('soporteActualizadoNOC', async () => {
           console.log('🔄 Evento NOC: soporteActualizadoNOC');
           await this.cargarDatos(noc_id);
         });
@@ -116,16 +112,12 @@ export class SoporteTecnicoComponent implements OnDestroy {
         this.soportesNoc.length
       );
 
-      this.socket.emit('soporteActualizado');
+      this.socketService.emit('soporteActualizado');
       console.log('📢 Soporte actualizado en tiempo real');
 
       await this.router.navigateByUrl(`/home/noc/info-sop/${id}/${ord_ins}`);
     } catch (error) {
       console.error('❌ Error al aceptar soporte:', error);
     }
-  }
-
-  ngOnDestroy() {
-    this.socket.disconnect();
   }
 }

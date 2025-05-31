@@ -10,11 +10,14 @@ export class SoketService {
   private socket: Socket | null = null;
   private isSocketConnected = false;
 
+  // 👉 Map para evitar múltiples callbacks por evento
+  private listeners: Map<string, (...args: any[]) => void> = new Map();
+
   constructor(private authService: AutenticacionService) {}
 
   async connectSocket(): Promise<void> {
     try {
-      const usuario = await this.authService.getUsuarioAutenticado(); // ✅ llamado real al backend
+      const usuario = await this.authService.getUsuarioAutenticado();
 
       if (!usuario?.id) {
         console.warn('⚠️ No se conecta el socket: usuario.id indefinido');
@@ -22,7 +25,7 @@ export class SoketService {
       }
 
       if (this.isSocketConnected) {
-        console.warn('⚠️ Ya hay un socket conectado (isSocketConnected)');
+        console.warn('⚠️ Ya hay un socket conectado');
         return;
       }
 
@@ -49,11 +52,12 @@ export class SoketService {
     }
   }
 
-  disconnectSocket(): void {
+  disconnect(): void {
     if (this.socket) {
       this.socket.disconnect();
-      this.isSocketConnected = false;
       this.socket = null;
+      this.isSocketConnected = false;
+      this.listeners.clear();
       console.log('🧹 WebSocket desconectado manualmente');
     }
   }
@@ -64,8 +68,22 @@ export class SoketService {
     }
   }
 
-  on(event: string, callback: (data?: any) => void): void {
-    this.socket?.off(event); // limpiar anteriores
-    this.socket?.on(event, callback);
+  on(event: string, callback: (...args: any[]) => void): void {
+    if (!this.socket) return;
+
+    // 🛡️ Remueve anterior si existe
+    if (this.listeners.has(event)) {
+      this.socket.off(event, this.listeners.get(event)!);
+    }
+
+    this.listeners.set(event, callback);
+    this.socket.on(event, callback);
+  }
+
+  off(event: string): void {
+    if (this.socket && this.listeners.has(event)) {
+      this.socket.off(event, this.listeners.get(event)!);
+      this.listeners.delete(event);
+    }
   }
 }

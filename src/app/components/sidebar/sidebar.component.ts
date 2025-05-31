@@ -49,7 +49,7 @@ export class SidebarComponent implements OnInit, OnDestroy {
   arrRecuperacion: string[] = [];
 
   async ngOnInit() {
-    await this.obtenerSoportesPendientes();
+    this.obtenerSoportesPendientes();
     this.soketService.connectSocket();
 
     this.dataSharingService.currentData.subscribe((data) => {
@@ -81,25 +81,24 @@ export class SidebarComponent implements OnInit, OnDestroy {
       );
 
       // Solo si es NOC conectamos eventos del socket
-      if (this.arrNoc.length > 0) {
-        this.soketService.on('soporteCreadoNOC', async () => {
-          console.log('📢 Evento recibido solo por NOC: soporteCreadoNOC');
-          const soportesPrevios = this.soportesPendientesCount;
-          await this.obtenerSoportesPendientes();
-          if (this.soportesPendientesCount > soportesPrevios) {
-            this.reproducirSonido();
-          }
-        });
 
-        this.soketService.on('soporteActualizadoNOC', async () => {
-          console.log('📢 Evento recibido solo por NOC: soporteActualizadoNOC');
-          const soportesPrevios = this.soportesPendientesCount;
-          await this.obtenerSoportesPendientes();
-          if (this.soportesPendientesCount > soportesPrevios) {
-            this.reproducirSonido();
-          }
-        });
-      }
+      this.soketService.on('soporteCreadoNOC', async () => {
+        console.log('📢 Evento recibido solo por NOC: soporteCreadoNOC');
+        const soportesPrevios = this.soportesPendientesCount;
+        await this.obtenerSoportesPendientes();
+        if (this.soportesPendientesCount > soportesPrevios) {
+          this.reproducirSonido();
+        }
+      });
+
+      this.soketService.on('soporteActualizadoNOC', async () => {
+        console.log('📢 Evento recibido solo por NOC: soporteActualizadoNOC');
+        const soportesPrevios = this.soportesPendientesCount;
+        await this.obtenerSoportesPendientes();
+        if (this.soportesPendientesCount > soportesPrevios) {
+          this.reproducirSonido();
+        }
+      });
     } catch (error) {
       console.error('❌ No se pudo obtener datos del usuario', error);
       // Redirigir o manejar error de sesión
@@ -109,7 +108,9 @@ export class SidebarComponent implements OnInit, OnDestroy {
   async obtenerSoportesPendientes() {
     try {
       const soportesPendientes = await this.soporteService.getAllPendientes();
+      console.log(soportesPendientes);
       this.soportesPendientesCount = soportesPendientes.length;
+      console.log(this.soportesPendientesCount);
     } catch (error) {
       console.error('❌ Error al obtener soportes pendientes:', error);
     }
@@ -123,7 +124,7 @@ export class SidebarComponent implements OnInit, OnDestroy {
   }
 
   async onClickLogout() {
-    this.soketService.disconnectSocket(); // 🔴 primero desconectamos socket
+    this.soketService.disconnect(); // 🔴 primero desconectamos socket
 
     await this.authService.logout(this.data.id!);
     window.close(); // o this.router.navigateByUrl('/login')
@@ -136,7 +137,7 @@ export class SidebarComponent implements OnInit, OnDestroy {
   }
 
   async ngOnDestroy() {
-    //this.soketService.disconnectSocket(); // ✅ desconectar también al destruir
+    //this.soketService.disconnect(); // ✅ desconectar también al destruir
     //  localStorage.removeItem('token_proyecto');
     await this.authService.logout(this.data.id!);
 

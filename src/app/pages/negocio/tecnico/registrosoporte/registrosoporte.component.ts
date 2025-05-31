@@ -17,6 +17,7 @@ import { Router } from '@angular/router';
 import { io } from 'socket.io-client';
 import { environment } from '../../../../../environments/environment';
 import { Iusuarios } from '../../../../interfaces/sistema/iusuarios.interface';
+import { SoketService } from '../../../../services/socket_io/soket.service';
 
 @Component({
   selector: 'app-registrosoporte',
@@ -38,7 +39,7 @@ export class RegistrosoporteComponent {
 
   // Conexión con Socket.IO
 
-  private socket: any = null; // se conecta luego
+  private socketService = inject(SoketService);
 
   // Búsquedas
   busqueda: string = '';
@@ -70,18 +71,8 @@ export class RegistrosoporteComponent {
       this.datosUsuario = await this.authService.getUsuarioAutenticado();
       await this.cargarSoportesPendientes();
 
-      // 🔗 Conexión WebSocket con usuario_id
-      this.socket = io(`${environment.API_WEBSOKETS_IO}`, {
-        query: {
-          usuario_id: this.datosUsuario.id!.toString(),
-        },
-      });
-
-      this.socket.on('connect', () => {
-        console.log('✅ WebSocket conectado:', this.socket.id);
-      });
-
-      this.socket.on('actualizarSoportes', async () => {
+      // 🔗 Ya no se crea un socket aquí, solo usamos el existente
+      this.socketService.on('actualizarSoportes', async () => {
         console.log(
           '🔄 Recibiendo actualización de soportes en RegistrosoporteComponent'
         );
@@ -113,8 +104,8 @@ export class RegistrosoporteComponent {
         const response = await this.soporteService.createSop(SoporteData);
         Swal.fire('Realizado', 'Orden de Soporte Creado', 'success');
 
-        // Emitir evento de actualización de soportes a través de WebSocket
-        this.socket.emit('soporteCreado');
+        // ✅ Emitir evento de soporte creado a través del SoketService
+        this.socketService.emit('soporteCreado');
 
         await this.cargarSoportesPendientes();
         this.resetDatosGenerales();
