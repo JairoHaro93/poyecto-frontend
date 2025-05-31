@@ -99,6 +99,8 @@
                         <small>
                           👷
                           {{ getNombreTecnicoPorId(celda.trabajo.age_tecnico) }}
+
+                          @if (celda.trabajo.age_estado === 'CONCLUIDO') { ✅ }
                         </small>
                       </div>
                     </div>
