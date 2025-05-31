@@ -7,6 +7,8 @@ import { SoportesService } from '../../services/negocio_latacunga/soportes.servi
 import { SoketService } from '../../services/socket_io/soket.service'; // ✅ Usa tu servicio
 import { Iusuarios } from '../../interfaces/sistema/iusuarios.interface';
 import { toDate } from 'date-fns';
+import { AgendaService } from '../../services/negocio_latacunga/agenda.service';
+import { Iagenda } from '../../interfaces/negocio/agenda/iagenda.interface';
 
 declare var bootstrap: any;
 
@@ -23,6 +25,7 @@ export class SidebarComponent implements OnInit, OnDestroy {
   router = inject(Router);
   authService = inject(AutenticacionService);
   soporteService = inject(SoportesService);
+  agendaService = inject(AgendaService);
   soketService = inject(SoketService); // ✅ Inyección correcta del servicio
   dataSharingService = inject(DataSharingService);
   data: Iusuarios = {
@@ -40,7 +43,9 @@ export class SidebarComponent implements OnInit, OnDestroy {
 
   soportesPendientesCount = 0;
   soportesNocCount = 0;
+  preAgendaPendientesCount = 0;
 
+  preAgendaList: Iagenda[] = [];
   arrAdmin: string[] = [];
   arrBodega: string[] = [];
   arrNoc: string[] = [];
@@ -50,6 +55,7 @@ export class SidebarComponent implements OnInit, OnDestroy {
 
   async ngOnInit() {
     this.obtenerSoportesPendientes();
+    this.cargarPreAgenda();
     this.soketService.connectSocket();
 
     this.dataSharingService.currentData.subscribe((data) => {
@@ -83,19 +89,40 @@ export class SidebarComponent implements OnInit, OnDestroy {
       // Solo si es NOC conectamos eventos del socket
 
       this.soketService.on('soporteCreadoNOC', async () => {
-        console.log('📢 Evento recibido solo por NOC: soporteCreadoNOC');
+        console.log(
+          '📢 Evento recibido EN SIDEBAR solo por NOC: soporteCreadoNOC'
+        );
         const soportesPrevios = this.soportesPendientesCount;
         await this.obtenerSoportesPendientes();
+        // await this.cargarPreAgenda();
         if (this.soportesPendientesCount > soportesPrevios) {
           this.reproducirSonido();
         }
       });
 
       this.soketService.on('soporteActualizadoNOC', async () => {
-        console.log('📢 Evento recibido solo por NOC: soporteActualizadoNOC');
+        console.log(
+          '📢 Evento recibido EN SIDEBAR solo por NOC: soporteActualizadoNOC'
+        );
         const soportesPrevios = this.soportesPendientesCount;
         await this.obtenerSoportesPendientes();
+        //   await this.cargarPreAgenda();
         if (this.soportesPendientesCount > soportesPrevios) {
+          this.reproducirSonido();
+        }
+      });
+
+      this.soketService.on('trabajoPreagendadoNOC', async () => {
+        console.log('📥 trabajoPreagendadoNOC recibido EN SIDEBAR');
+        const preAgendaPrevio = this.preAgendaPendientesCount;
+        console.log(
+          'LA PREAGENDA ANTES DEL IF EN SIDEBAR ES' + preAgendaPrevio
+        );
+        await this.cargarPreAgenda();
+        console.log(
+          'LA PREAGENDA despues DEL IF EN SIDEBAR ES' + preAgendaPrevio
+        );
+        if (this.preAgendaPendientesCount > preAgendaPrevio) {
           this.reproducirSonido();
         }
       });
@@ -105,12 +132,21 @@ export class SidebarComponent implements OnInit, OnDestroy {
     }
   }
 
+  async cargarPreAgenda() {
+    this.preAgendaList = await this.agendaService.getPreAgenda();
+    this.preAgendaPendientesCount = this.preAgendaList.length;
+    console.log(
+      'la preagenda es en SIDEBAR es ' + this.preAgendaPendientesCount
+    );
+  }
+
   async obtenerSoportesPendientes() {
     try {
       const soportesPendientes = await this.soporteService.getAllPendientes();
-      console.log(soportesPendientes);
       this.soportesPendientesCount = soportesPendientes.length;
-      console.log(this.soportesPendientesCount);
+      console.log(
+        'El numero de soporte en SIDEBAR es ' + this.soportesPendientesCount
+      );
     } catch (error) {
       console.error('❌ Error al obtener soportes pendientes:', error);
     }

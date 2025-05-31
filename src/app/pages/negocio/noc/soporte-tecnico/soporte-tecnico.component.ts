@@ -46,19 +46,21 @@ export class SoporteTecnicoComponent {
       this.datosUsuario = await this.authService.getUsuarioAutenticado();
       const noc_id = this.datosUsuario.id!;
 
-      await this.cargarDatos(noc_id);
+      this.cargarDatos(noc_id);
 
-      if (this.datosUsuario.rol.length > 0) {
-        this.socketService.on('soporteCreadoNOC', async () => {
-          console.log('📢 Evento NOC: soporteCreadoNOC');
-          await this.cargarDatos(noc_id);
-        });
+      this.socketService.on('soporteCreadoNOC', async () => {
+        console.log(
+          '📢 Evento recibido EN SOPORTE TECNICO solo por NOC: soporteCreadoNOC'
+        );
+        await this.cargarDatos(noc_id);
+      });
 
-        this.socketService.on('soporteActualizadoNOC', async () => {
-          console.log('🔄 Evento NOC: soporteActualizadoNOC');
-          await this.cargarDatos(noc_id);
-        });
-      }
+      this.socketService.on('soporteActualizadoNOC', async () => {
+        console.log(
+          '📢 Evento recibido EN SOPORTE TECNICO solo por NOC: soporteActualizadoNOC'
+        );
+        await this.cargarDatos(noc_id);
+      });
     } catch (error) {
       console.error('❌ Error al iniciar soporte técnico:', error);
       this.router.navigateByUrl('/login');
@@ -74,6 +76,10 @@ export class SoporteTecnicoComponent {
       ]);
 
       this.soportesPendientes = soportesPend;
+      console.log(
+        'El numero de soporte en SOPORTE TECNICO es ' +
+          this.soportesPendientes.length
+      );
       this.soportesNoc = soportesNoc;
     } catch (error) {
       console.error('Error al cargar los datos:', error);

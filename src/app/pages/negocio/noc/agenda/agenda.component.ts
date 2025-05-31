@@ -91,9 +91,9 @@ export class AgendaComponent {
     this.socketService.on('trabajoPreagendadoNOC', async () => {
       console.log('📥 trabajoPreagendadoNOC recibido');
       const preAgendaPrevio = this.preAgendaPendientesCount;
-      console.log('LA PREAGENDA ANTES DEL IF ES' + preAgendaPrevio);
+
       await this.cargarPreAgenda();
-      console.log('LA PREAGENDA despues DEL IF ES' + preAgendaPrevio);
+
       if (this.preAgendaPendientesCount > preAgendaPrevio) {
         this.reproducirSonido();
       }
@@ -132,7 +132,6 @@ export class AgendaComponent {
 
       this.mapearAgendaDesdeBD();
       this.generarRenderAgenda();
-      console.log(this.agendaList);
     } catch (error) {
       console.error('❌ Error al cargar la agenda por fecha:', error);
     }
@@ -194,7 +193,6 @@ export class AgendaComponent {
   async cargarPreAgenda() {
     this.preAgendaList = await this.agendaService.getPreAgenda();
     this.preAgendaPendientesCount = this.preAgendaList.length;
-    console.log('la preagenda es' + this.preAgendaPendientesCount);
     for (const item of this.preAgendaList) {
       try {
         const info = await this.clienteService.getInfoServicioByOrdId(

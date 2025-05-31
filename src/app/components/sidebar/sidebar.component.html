@@ -124,9 +124,9 @@
         (click)="toggleCollapse('noc-collapse')"
       >
         <div class="d-flex justify-content-around">
-          @if(soportesPendientesCount>0){
+          @if(preAgendaPendientesCount>0){
           <span class="badge-circle">
-            {{ soportesPendientesCount }}
+            {{ preAgendaPendientesCount }}
           </span>
           }
           <div>
@@ -145,14 +145,22 @@
         <ul class="btn-toggle-nav list-unstyled fw-normal pb-1 small">
           @if (arrNoc.includes("NAgenda")) {
           <li (click)="onClickMenu()" [routerLink]="['/home/noc/agenda']">
-            Agenda
+            Agenda @if(preAgendaPendientesCount>0){
+            <span class="badge-circle">
+              {{ preAgendaPendientesCount }}
+            </span>
+            }
           </li>
           } @if (arrNoc.includes("NSoporte Tecnico")) {
           <li
             (click)="onClickMenu()"
             [routerLink]="['/home/noc/soporte-tecnico']"
           >
-            Soporte Tecnico
+            Soporte Tecnico @if(soportesPendientesCount>0){
+            <span class="badge-circle">
+              {{ soportesPendientesCount }}
+            </span>
+            }
           </li>
           } @if (arrNoc.includes("NInforme Diario")) {
           <li

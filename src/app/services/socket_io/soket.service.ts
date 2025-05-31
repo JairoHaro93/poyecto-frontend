@@ -11,7 +11,7 @@ export class SoketService {
   private isSocketConnected = false;
 
   // 👉 Map para evitar múltiples callbacks por evento
-  private listeners: Map<string, (...args: any[]) => void> = new Map();
+  private listeners: Map<string, ((...args: any[]) => void)[]> = new Map();
 
   constructor(private authService: AutenticacionService) {}
 
@@ -71,18 +71,39 @@ export class SoketService {
   on(event: string, callback: (...args: any[]) => void): void {
     if (!this.socket) return;
 
-    // 🛡️ Remueve anterior si existe
-    if (this.listeners.has(event)) {
-      this.socket.off(event, this.listeners.get(event)!);
+    // Si es la primera vez que se escucha este evento
+    if (!this.listeners.has(event)) {
+      this.listeners.set(event, []);
+      this.socket.on(event, (...args) => {
+        // Ejecutar todos los callbacks asociados a este evento
+        this.listeners.get(event)?.forEach((cb) => cb(...args));
+      });
     }
 
-    this.listeners.set(event, callback);
-    this.socket.on(event, callback);
+    // Añadir el nuevo callback si aún no está registrado
+    const currentListeners = this.listeners.get(event)!;
+    if (!currentListeners.includes(callback)) {
+      currentListeners.push(callback);
+    }
   }
 
-  off(event: string): void {
-    if (this.socket && this.listeners.has(event)) {
-      this.socket.off(event, this.listeners.get(event)!);
+  off(event: string, callback?: (...args: any[]) => void): void {
+    if (!this.socket || !this.listeners.has(event)) return;
+
+    if (callback) {
+      const updatedListeners = this.listeners
+        .get(event)!
+        .filter((cb) => cb !== callback);
+
+      if (updatedListeners.length === 0) {
+        this.socket.off(event);
+        this.listeners.delete(event);
+      } else {
+        this.listeners.set(event, updatedListeners);
+      }
+    } else {
+      // Si no se especifica callback, eliminamos todos
+      this.socket.off(event);
       this.listeners.delete(event);
     }
   }
