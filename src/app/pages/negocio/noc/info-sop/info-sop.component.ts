@@ -134,7 +134,7 @@ export class InfoSopComponent {
     };
     console.log(bodyAge);
     if (this.solucionSeleccionada === 'RESUELTO') {
-      Swal.fire({
+      const result = await Swal.fire({
         title: '¿Estás seguro?',
         text: '¿El soporte se ha resuelto satisfactoriamente?',
         icon: 'warning',
@@ -142,28 +142,43 @@ export class InfoSopComponent {
         confirmButtonColor: '#3085d6',
         cancelButtonColor: '#d33',
         confirmButtonText: 'Sí, he resuelto el soporte',
-      }).then(async (result) => {
-        if (result.isConfirmed) {
-          try {
-            await this.soporteService.actualizarEstadoSop(this.id_sop, body);
-            this.router.navigateByUrl('/home/noc/soporte-tecnico');
-          } catch (error) {
-            console.error(error);
-            Swal.fire({
-              title: 'Error!',
-              text: 'Ocurrió un error al cerrar el soporte.',
-              icon: 'error',
-            });
-          }
-        }
+        cancelButtonText: 'Cancelar',
       });
+
+      if (result.isConfirmed) {
+        try {
+          await this.soporteService.actualizarEstadoSop(this.id_sop, body);
+          console.log('lo ha resuelto');
+          this.router.navigateByUrl('/home/noc/soporte-tecnico');
+        } catch (error) {
+          console.error(error);
+          Swal.fire({
+            title: 'Error!',
+            text: 'Ocurrió un error al cerrar el soporte.',
+            icon: 'error',
+          });
+          return;
+        }
+        return;
+      } else {
+        console.log('⛔ El soporte no fue marcado como resuelto.');
+
+        Swal.fire({
+          title: 'Acción cancelada',
+          text: 'El soporte no ha sido marcado como resuelto.',
+          icon: 'info',
+          timer: 2000,
+          showConfirmButton: false,
+        });
+        return;
+      }
     }
 
     if (
       this.solucionSeleccionada === 'VISITA' ||
       this.solucionSeleccionada === 'LOS'
     ) {
-      Swal.fire({
+      const result = await Swal.fire({
         title: '¿Estás seguro?',
         text: '¿AGREGAR EL SOPORTE A LA AGENDA?',
         icon: 'warning',
@@ -171,20 +186,56 @@ export class InfoSopComponent {
         confirmButtonColor: '#3085d6',
         cancelButtonColor: '#d33',
         confirmButtonText: 'Sí, debe agregarse a la agenda',
-      }).then(async (result) => {
+        cancelButtonText: 'Cancelar',
+      });
+
+      if (result.isConfirmed) {
+        try {
+          await this.soporteService.actualizarEstadoSop(this.id_sop, body);
+          await this.agendaService.postSopAgenda(bodyAge);
+          this.socketService.emit('trabajoPreagendado');
+          this.router.navigateByUrl('/home/noc/soporte-tecnico');
+        } catch (error) {
+          console.error(error);
+          Swal.fire({
+            title: 'Error!',
+            text: 'Ocurrió un error al cerrar el soporte.',
+            icon: 'error',
+          });
+          return;
+        }
+        return;
+      } else {
+        Swal.fire({
+          title: 'Cancelado',
+          text: 'El soporte no fue agendado.',
+          icon: 'info',
+          timer: 2000,
+          showConfirmButton: false,
+        });
+        return;
+      }
+    } else {
+      try {
+        // await this.soporteService.actualizarEstadoSop(this.id_sop, body);
+
+        //    this.router.navigateByUrl('/home/noc/soporte-tecnico');
+
+        const result = await Swal.fire({
+          title: '¿Estás seguro?',
+          text: '¿GUARDAR LA SOLUCION?',
+          icon: 'warning',
+          showCancelButton: true,
+          confirmButtonColor: '#3085d6',
+          cancelButtonColor: '#d33',
+          confirmButtonText: 'Sí',
+          cancelButtonText: 'Cancelar',
+        });
         if (result.isConfirmed) {
           try {
             await this.soporteService.actualizarEstadoSop(this.id_sop, body);
-
-            //AGREGAR EL SOPORTE A LA AGENDA
-
-            await this.agendaService.postSopAgenda(bodyAge);
-
-            // ✅ Emitir evento de preagenda para que NOC reciba notificación
+            //  await this.agendaService.postSopAgenda(bodyAge);
             this.socketService.emit('trabajoPreagendado');
-
-            console.log(bodyAge);
-
             this.router.navigateByUrl('/home/noc/soporte-tecnico');
           } catch (error) {
             console.error(error);
@@ -194,13 +245,15 @@ export class InfoSopComponent {
               icon: 'error',
             });
           }
+        } else {
+          Swal.fire({
+            title: 'Cancelado',
+            text: 'El soporte no fue agendado.',
+            icon: 'info',
+            timer: 2000,
+            showConfirmButton: false,
+          });
         }
-      });
-    } else {
-      try {
-        await this.soporteService.actualizarEstadoSop(this.id_sop, body);
-
-        this.router.navigateByUrl('/home/noc/soporte-tecnico');
       } catch (error) {
         console.error(error);
         Swal.fire({
@@ -208,6 +261,7 @@ export class InfoSopComponent {
           text: 'Ocurrió un error al cerrar el soporte.',
           icon: 'error',
         });
+        return;
       }
     }
   }
