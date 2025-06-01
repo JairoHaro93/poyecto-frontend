@@ -102,6 +102,7 @@ export class AgendaComponent {
 
   async cargarAgendaPorFecha() {
     try {
+      console.log(this.fechaSeleccionada);
       this.agendaList = await this.agendaService.getAgendaByDate(
         this.fechaSeleccionada
       );
@@ -376,7 +377,7 @@ export class AgendaComponent {
     this.trabajoSeleccionado = trabajo;
     this.horaInicio = '';
     this.horaFin = '';
-    this.fechaTrabajoSeleccionada = this.obtenerFechaHoy();
+    this.fechaTrabajoSeleccionada = this.fechaSeleccionada;
 
     const modal = bootstrap.Modal.getOrCreateInstance(
       document.getElementById('asignarModal')
@@ -425,7 +426,7 @@ export class AgendaComponent {
 
   asignarDesdePreagenda(trabajo: Iagenda) {
     this.trabajoSeleccionado = trabajo;
-    this.fechaTrabajoSeleccionada = this.obtenerFechaHoy();
+    this.fechaTrabajoSeleccionada = this.fechaSeleccionada;
     this.horaInicio = '';
     this.horaFin = '';
     this.vehiculoSeleccionado = '';
