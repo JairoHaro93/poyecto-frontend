@@ -123,30 +123,36 @@
         class="button-primary btn-toggle rounded my-2"
         (click)="toggleCollapse('noc-collapse')"
       >
-        <div class="d-flex justify-content-around">
-          @if(preAgendaPendientesCount>0){
-          <span class="badge-circle">
-            {{ preAgendaPendientesCount }}
-          </span>
+        <div class="d-flex justify-content-around align-items-center w-100">
+          <!-- Badge izquierda -->
+          @if (preAgendaPendientesCount > 0) {
+          <span class="badge-circle-age">{{ preAgendaPendientesCount }}</span>
+          } @else {
+          <span class="badge-circle-age invisible">0</span>
           }
+
+          <!-- Icono central -->
           <div>
             <i class="fa-solid fa-circle-nodes"></i>
             Noc
           </div>
-          @if(soportesPendientesCount>0){
-          <span class="badge-circle">
-            {{ soportesPendientesCount }}
-          </span>
+
+          <!-- Badge derecha -->
+          @if (soportesPendientesCount > 0) {
+          <span class="badge-circle-sop">{{ soportesPendientesCount }}</span>
+          } @else {
+          <span class="badge-circle-sop invisible">0</span>
           }
         </div>
       </button>
+
       }
       <div class="accordion-collapse collapse" id="noc-collapse">
         <ul class="btn-toggle-nav list-unstyled fw-normal pb-1 small">
           @if (arrNoc.includes("NAgenda")) {
           <li (click)="onClickMenu()" [routerLink]="['/home/noc/agenda']">
             Agenda @if(preAgendaPendientesCount>0){
-            <span class="badge-circle">
+            <span class="badge-circle-age">
               {{ preAgendaPendientesCount }}
             </span>
             }
@@ -157,7 +163,7 @@
             [routerLink]="['/home/noc/soporte-tecnico']"
           >
             Soporte Tecnico @if(soportesPendientesCount>0){
-            <span class="badge-circle">
+            <span class="badge-circle-sop">
               {{ soportesPendientesCount }}
             </span>
             }

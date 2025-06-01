@@ -132,9 +132,23 @@ ul {
   border-radius: 10px;
 }
 
-.badge-circle {
+.badge-circle-sop {
   display: inline-block;
-  background-color: lightgreen;
+  background-color: rgb(255, 233, 0);
+  color: black;
+  font-size: 12px;
+  font-weight: bold;
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  line-height: 20px;
+  text-align: center;
+  margin-left: 8px;
+}
+
+.badge-circle-age {
+  display: inline-block;
+  background-color: #007bff;
   color: black;
   font-size: 12px;
   font-weight: bold;
