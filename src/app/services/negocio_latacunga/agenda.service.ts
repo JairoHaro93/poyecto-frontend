@@ -19,6 +19,17 @@ export class AgendaService {
     );
   }
 
+  getAgendaPendienteByFecha(fecha_age: string) {
+    return firstValueFrom(
+      this.httpClient.get<{ soportes_pendientes: number }>(
+        `${this.baseUrl}/pendientes/${fecha_age}`,
+        {
+          withCredentials: true,
+        }
+      )
+    );
+  }
+
   getPreAgenda() {
     return firstValueFrom(
       this.httpClient.get<Iagenda[]>(`${this.baseUrl}/preagenda`, {
@@ -35,6 +46,14 @@ export class AgendaService {
           withCredentials: true,
         }
       )
+    );
+  }
+
+  getInfoSolByAgeId(age_id: number) {
+    return firstValueFrom(
+      this.httpClient.get<Iagenda[]>(`${this.baseUrl}/sol/${age_id}`, {
+        withCredentials: true,
+      })
     );
   }
 

@@ -45,8 +45,10 @@ export class AgendaComponent {
   fechaTrabajoSeleccionada = '';
   fechaSeleccionada = this.obtenerFechaHoy();
   nombreDelDia = this.obtenerNombreDelDia(this.fechaSeleccionada);
+  pendientes: any;
 
   trabajoVista: Iagenda | null = null;
+  solucionVista: any;
   trabajoSeleccionado: Iagenda | null = null;
 
   horaInicio = '';
@@ -71,7 +73,10 @@ export class AgendaComponent {
   //private socket = io(`${environment.API_WEBSOKETS_IO}`); // Conexión con WebSocket
 
   async ngOnInit() {
+    await this.contarpendientes();
+
     this.datosUsuario = await this.authService.getUsuarioAutenticado();
+
     this.generarHorarios();
     await this.cargarAgendaPorFecha();
     await this.cargarPreAgenda();
@@ -81,15 +86,18 @@ export class AgendaComponent {
     this.socketService.on('trabajoAgendadoNOC', async () => {
       console.log('📥 trabajoAgendadoNOC recibido');
       await this.cargarAgendaPorFecha();
+      await this.contarpendientes();
     });
 
     this.socketService.on('trabajoCulminadoNOC', async () => {
       console.log('📥 trabajoCulminadoNOC recibido');
       await this.cargarAgendaPorFecha();
+      await this.contarpendientes();
     });
 
     this.socketService.on('trabajoPreagendadoNOC', async () => {
       console.log('📥 trabajoPreagendadoNOC recibido');
+      await this.contarpendientes();
       const preAgendaPrevio = this.preAgendaPendientesCount;
 
       await this.cargarPreAgenda();
@@ -100,7 +108,22 @@ export class AgendaComponent {
     });
   }
 
+  async contarpendientes() {
+    try {
+      const response = await this.agendaService.getAgendaPendienteByFecha(
+        this.fechaSeleccionada
+      );
+      this.pendientes = response.soportes_pendientes;
+
+      console.log('LOS SOPORTES PENDIENTES SON ' + this.pendientes);
+    } catch (error) {
+      console.error('Error al contar pendientes:', error);
+    }
+  }
+
   async cargarAgendaPorFecha() {
+    this.contarpendientes();
+
     try {
       console.log(this.fechaSeleccionada);
       this.agendaList = await this.agendaService.getAgendaByDate(
@@ -415,10 +438,14 @@ export class AgendaComponent {
     return `${y}-${m}-${d}`;
   }
 
-  abrirVistaDetalle(hora: string, vehiculo: string) {
+  async abrirVistaDetalle(hora: string, vehiculo: string) {
     const trabajo = this.agendaAsignada[hora][vehiculo];
+    console.log(trabajo?.id);
+    const sol = await this.agendaService.getInfoSolByAgeId(trabajo!.id);
+    console.log(sol);
     if (!trabajo) return;
     this.trabajoVista = trabajo;
+    this.solucionVista = sol;
     bootstrap.Modal.getOrCreateInstance(
       document.getElementById('modalVistaSoporte')
     ).show();
@@ -444,16 +471,6 @@ export class AgendaComponent {
       );
       modalAsignar.show();
     });
-  }
-
-  abrirModalPreagenda() {
-    const element = document.getElementById('modalSoportes');
-    if (element) {
-      const modal = bootstrap.Modal.getOrCreateInstance(element);
-      modal.show();
-    } else {
-      console.warn('❌ Modal #modalSoportes no encontrado en el DOM');
-    }
   }
 
   cerrarModalPreagenda() {

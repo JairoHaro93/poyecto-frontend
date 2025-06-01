@@ -69,11 +69,13 @@ td button {
 .col-horario {
   width: 100px;
   white-space: nowrap;
+  padding: 0px;
 }
 
 .celda-agenda {
   max-width: 120px;
   position: relative; /* ✅ Esto encierra bien a los botones */
+  padding: 0px;
 }
 
 .celda-soporte {
@@ -89,6 +91,8 @@ td button {
   word-break: break-word;
   padding: 0rem 2.5rem; /* espacio horizontal sin afectar botones */
   text-align: center;
+  padding: 0px;
+  border: 0px;
 }
 
 /* === Estados === */
@@ -183,4 +187,15 @@ td button {
     100vh
   ); /* ajusta según la altura de tu encabezado/flotantes */
   overflow-y: auto;
+}
+
+.badge-circle {
+  display: inline-block;
+  width: 30px;
+  height: 30px;
+  line-height: 30px;
+  border-radius: 50%;
+  text-align: center;
+  font-weight: bold;
+  font-size: 14px;
 }
