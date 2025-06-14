@@ -80,4 +80,9 @@ export class AgendaService {
       })
     );
   }
+
+  getImagenesPorTrabajo(tabla: string, trabajo_id: number | string) {
+    const url = `${this.baseUrl}/images/${tabla}/${trabajo_id}`;
+    return this.httpClient.get<any>(url);
+  }
 }

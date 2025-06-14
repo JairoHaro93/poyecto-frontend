@@ -56,20 +56,14 @@
   aria-labelledby="detalleModalLabel"
   aria-hidden="true"
 >
-  <div class="modal-dialog modal-dialog-scrollable">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg">
     <div class="modal-content">
       <div class="modal-header">
         <h5 class="modal-title">
-          Detalle de @switch (trabajoSeleccionado?.age_tipo) { @case ("SOPORTE")
-          {
-          <span>Soporte</span>
-          } @case ("TRABAJO") {
-          <span> Trabajo</span>
-          } @case ("INSTALACION") {
-          <span> Instalacion</span>
-          } }
+          Detalle de @switch (trabajoSeleccionado?.age_tipo) { @case ('SOPORTE')
+          { <span>Soporte</span> } @case ('TRABAJO') { <span>Trabajo</span> }
+          @case ('INSTALACION') { <span>Instalación</span> } }
         </h5>
-
         <button
           type="button"
           class="btn-close"
@@ -77,26 +71,19 @@
           aria-label="Cerrar"
         ></button>
       </div>
+
       <div class="modal-body small">
-        <ng-container *ngIf="trabajoDetalle">
+        <ng-container *ngIf="trabajoDetalle; else cargandoDetalle">
           <p><strong>Cliente:</strong> {{ trabajoDetalle.reg_sop_nombre }}</p>
           <p>
             <strong>Reporte: </strong>
-            <span>
-              @switch (trabajoDetalle.reg_sop_opc) { @case (1) {
-              <span>Sin servicio de Internet</span>
-              } @case (2) {
-              <span> Internet Intermitente</span>
-              } @case (3) {
-              <span> Cambio de contraseña</span>
-              } @case (4) {
-              <span> Manipulacion de equipos</span>
-              } @case (5) {
-              <span> Sin Definir</span>
-              } }
-            </span>
+            @switch (trabajoDetalle.reg_sop_opc) { @case (1) {
+            <span>Sin servicio de Internet</span> } @case (2) {
+            <span>Internet Intermitente</span> } @case (3) {
+            <span>Cambio de contraseña</span> } @case (4) {
+            <span>Manipulación de equipos</span> } @case (5) {
+            <span>Sin Definir</span> } }
           </p>
-
           <p>
             <strong>Coordenadas:</strong>
             <a
@@ -110,25 +97,49 @@
               {{ trabajoSeleccionado?.age_coordenadas }}
             </a>
           </p>
-
           <p>
             <strong>Fecha de registro:</strong>
             {{ trabajoDetalle.reg_sop_fecha | date }}
           </p>
           <p>
-            <strong>Diagnóstico NOC: </strong>
+            <strong>Diagnóstico NOC:</strong>
             {{ trabajoSeleccionado?.age_observaciones }}
           </p>
           <p>
-            <strong>Descripcion del cliente: </strong>
+            <strong>Descripción del cliente:</strong>
             {{ trabajoDetalle.reg_sop_observaciones }}
           </p>
         </ng-container>
 
-        <ng-container *ngIf="!trabajoDetalle">
+        <ng-template #cargandoDetalle>
           <p class="text-muted">Cargando detalles...</p>
-        </ng-container>
+        </ng-template>
+
+        <hr />
+        <h6 class="mt-3 mb-2">Imágenes de instalación</h6>
+        <!-- Grid de imágenes -->
+        <div class="imagenes-grid row g-3">
+          @for (campo of ['fachada', 'router', 'potencia', 'ont', 'speedtest',
+          'cable_1', 'cable_2', 'equipo_1', 'equipo_2', 'equipo_3']; track
+          campo) { @if (imagenesInstalacion[campo]) {
+          <div class="col-6 col-md-3 col-lg-2">
+            <div class="card shadow-sm border rounded">
+              <div class="card-body p-2 text-center">
+                <div class="fw-bold text-capitalize mb-1">{{ campo }}</div>
+                <img
+                  [src]="imagenesInstalacion[campo].url"
+                  alt="{{ campo }}"
+                  class="img-thumbnail"
+                  style="cursor: pointer; max-height: 150px"
+                  (click)="abrirImagenModal(imagenesInstalacion[campo].url)"
+                />
+              </div>
+            </div>
+          </div>
+          } }
+        </div>
       </div>
+
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
           Cerrar
@@ -138,6 +149,34 @@
   </div>
 </div>
 
+<!-- Modal Imagen Ampliada -->
+<div
+  class="modal fade"
+  id="modalImagenAmpliada"
+  tabindex="-1"
+  aria-hidden="true"
+>
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-content bg-dark text-white text-center">
+      <div class="modal-body p-0">
+        <img
+          [src]="imagenSeleccionada"
+          class="img-fluid w-100 rounded"
+          alt="Imagen ampliada"
+        />
+      </div>
+      <div class="modal-footer justify-content-center border-0">
+        <button
+          type="button"
+          class="btn btn-outline-light"
+          data-bs-dismiss="modal"
+        >
+          Cerrar
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
 <!-- Modal Editar -->
 <div
   class="modal fade"
@@ -157,20 +196,48 @@
           aria-label="Cerrar"
         ></button>
       </div>
+
       <div class="modal-body small">
+        <h6 class="mb-3">Imágenes de instalación</h6>
+
+        <div class="row g-3 mb-4">
+          @for (campo of camposImagen; track campo) {
+          <div class="col-6 col-md-4 col-lg-3">
+            <div class="card border p-2 text-center">
+              <div class="fw-bold text-capitalize mb-2">{{ campo }}</div>
+
+              @if (imagenesInstalacion[campo]) {
+              <img
+                [src]="imagenesInstalacion[campo].url"
+                alt="{{ campo }}"
+                class="img-thumbnail mb-2"
+                style="max-height: 150px; object-fit: cover"
+              />
+              }
+              <div class="input-imagen-wrapper">
+                <label class="btn btn-sm btn-outline-primary w-100">
+                  Seleccionar imagen
+                  <input
+                    type="file"
+                    accept="image/*"
+                    (change)="onImagenSeleccionada($event, campo)"
+                    class="d-none"
+                  />
+                </label>
+              </div>
+            </div>
+          </div>
+          }
+        </div>
+
         <form *ngIf="trabajoSeleccionado" #formSolucion="ngForm">
-          <!-- Observaciones del problema -->
           <div class="mb-3">
             <label class="form-label">Descripción del problema</label>
-            <textarea
-              class="form-control"
-              rows="3"
-              [value]="trabajoSeleccionado.age_observaciones"
-              disabled
-            ></textarea>
+            <div class="form-control bg-light" style="min-height: 60px">
+              {{ trabajoSeleccionado.age_observaciones }}
+            </div>
           </div>
 
-          <!-- Solución aplicada -->
           <div class="mb-3">
             <label class="form-label">Solución aplicada</label>
             <textarea
@@ -182,22 +249,8 @@
               placeholder="Describe la solución técnica aplicada"
             ></textarea>
           </div>
-
-          <!-- Estado del trabajo -->
-          <div class="mb-3">
-            <label class="form-label">Estado</label>
-            <select
-              class="form-select"
-              [(ngModel)]="trabajoSeleccionado.age_estado"
-              name="estado"
-            >
-              <option value="Trabajo">Trabajo</option>
-              <option value="CONCLUIDO">CONCLUIDO</option>
-            </select>
-          </div>
         </form>
 
-        <!-- Estado sin datos -->
         <ng-container *ngIf="!trabajoSeleccionado">
           <p class="text-muted">No hay información cargada.</p>
         </ng-container>
@@ -213,7 +266,7 @@
           (click)="guardarSolucion()"
           [disabled]="!trabajoSeleccionado?.age_solucion"
         >
-          Guardar
+          CONCLUIR
         </button>
       </div>
     </div>

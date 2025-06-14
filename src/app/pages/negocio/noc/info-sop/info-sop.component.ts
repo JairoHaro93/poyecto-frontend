@@ -12,6 +12,8 @@ import { AgendaService } from '../../../../services/negocio_latacunga/agenda.ser
 import { environment } from '../../../../../environments/environment';
 import { io } from 'socket.io-client';
 import { SoketService } from '../../../../services/socket_io/soket.service';
+import { ImagenesService } from '../../../../services/negocio_latacunga/imagenes.service';
+import { Modal } from 'bootstrap';
 
 @Component({
   selector: 'app-info-sop',
@@ -26,7 +28,9 @@ export class InfoSopComponent {
   authService = inject(AutenticacionService);
   soporteService = inject(SoportesService);
   agendaService = inject(AgendaService);
+  imagenesService = inject(ImagenesService);
   private router = inject(Router);
+
   datosUsuario: any;
   datosNoc: any;
   clienteService = inject(ClientesService);
@@ -36,8 +40,12 @@ export class InfoSopComponent {
   solucionSeleccionada: string = 'REVISION';
   detalleSolucion: string = '';
 
+  imagenSeleccionada: string | null = null;
+
   id_sop: any;
   ord_Ins: any;
+
+  imagenesInstalacion: { [key: string]: { ruta: string; url: string } } = {};
 
   private socketService = inject(SoketService);
 
@@ -53,6 +61,23 @@ export class InfoSopComponent {
       }
 
       await this.cargarSoporte(this.id_sop, this.ord_Ins);
+      this.cargarImagenesInstalacion('neg_t_img_inst', this.ord_Ins);
+    });
+  }
+
+  private cargarImagenesInstalacion(tabla: string, ord_Ins: string): void {
+    this.imagenesService.getImagenesPorTrabajo(tabla, ord_Ins).subscribe({
+      next: (res: any) => {
+        if (res?.imagenes) {
+          this.imagenesInstalacion = res.imagenes;
+        } else {
+          this.imagenesInstalacion = {};
+        }
+      },
+      error: (err) => {
+        console.error('❌ Error cargando imágenes:', err);
+        this.imagenesInstalacion = {};
+      },
     });
   }
 
@@ -91,6 +116,12 @@ export class InfoSopComponent {
     }
 
     document.body.removeChild(textarea);
+  }
+
+  abrirImagenModal(url: string) {
+    this.imagenSeleccionada = url;
+    const modal = new Modal(document.getElementById('modalImagenAmpliada')!);
+    modal.show();
   }
 
   asignarSolucion(event: Event) {
