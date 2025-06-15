@@ -3,7 +3,7 @@ export interface Iagenda {
   age_tipo: string;
   age_subtipo: string;
   age_ord_tra: string;
-  age_ord_ins: string;
+  ord_ins: string;
   age_id_sop: string;
   age_coordenadas: string;
   age_hora_inicio: string;

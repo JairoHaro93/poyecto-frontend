@@ -58,20 +58,19 @@
 >
   <div class="modal-dialog modal-dialog-scrollable modal-lg">
     <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title">
+      <div class="modal-header bg-danger py-2">
+        <h5 class="modal-title text-white">
           Detalle de @switch (trabajoSeleccionado?.age_tipo) { @case ('SOPORTE')
           { <span>Soporte</span> } @case ('TRABAJO') { <span>Trabajo</span> }
           @case ('INSTALACION') { <span>Instalación</span> } }
         </h5>
         <button
           type="button"
-          class="btn-close"
+          class="btn-close btn-close-white"
           data-bs-dismiss="modal"
           aria-label="Cerrar"
         ></button>
       </div>
-
       <div class="modal-body small">
         <ng-container *ngIf="trabajoDetalle; else cargandoDetalle">
           <p><strong>Cliente:</strong> {{ trabajoDetalle.reg_sop_nombre }}</p>
@@ -177,6 +176,7 @@
     </div>
   </div>
 </div>
+
 <!-- Modal Editar -->
 <div
   class="modal fade"
@@ -250,6 +250,39 @@
             ></textarea>
           </div>
         </form>
+
+        <!-- Imágenes de solución -->
+        <hr />
+        <h6 class="mt-3">Imágenes de solución</h6>
+        <div class="row g-3">
+          @for (campo of ['img_1', 'img_2', 'img_3', 'img_4']; track campo) {
+          <div class="col-6 col-md-4 col-lg-3">
+            <div class="card border p-2 text-center">
+              <div class="fw-bold text-capitalize mb-2">{{ campo }}</div>
+              @if (imagenesVisita[campo]) {
+              <img
+                [src]="imagenesVisita[campo].url"
+                alt="{{ campo }}"
+                class="img-thumbnail mb-2"
+                style="max-height: 150px; object-fit: cover"
+              />
+              }
+
+              <div class="input-imagen-wrapper">
+                <label class="btn btn-sm btn-outline-primary w-100">
+                  Seleccionar imagen
+                  <input
+                    type="file"
+                    accept="image/*"
+                    (change)="onImagenSolucionSeleccionada($event, campo)"
+                    class="d-none"
+                  />
+                </label>
+              </div>
+            </div>
+          </div>
+          }
+        </div>
 
         <ng-container *ngIf="!trabajoSeleccionado">
           <p class="text-muted">No hay información cargada.</p>

@@ -54,6 +54,8 @@ export class AgendatecnicosComponent {
   // Objeto para almacenar las imágenes actuales
   imagenesInstalacion: Record<string, { url: string; ruta: string }> = {};
 
+  imagenesVisita: Record<string, { url: string; ruta: string }> = {};
+
   // Objeto temporal para archivos seleccionados por campo
   imagenesSeleccionadas: Record<string, File> = {};
 
@@ -86,7 +88,8 @@ export class AgendatecnicosComponent {
           Number(trabajo.age_id_sop)
         );
       }
-      this.cargarImagenesInstalacion('neg_t_img_inst', trabajo.age_ord_ins);
+      this.cargarImagenesInstalacion('neg_t_img_inst', trabajo.ord_ins);
+
       if (this.trabajoSeleccionado.age_tipo === 'TRABAJO') {
         this.trabajoDetalle = {
           reg_sop_nombre: 'REDECOM',
@@ -177,13 +180,31 @@ export class AgendatecnicosComponent {
     });
   }
 
+  private cargarImagenesVisita(tabla: string, ord_ins: string): void {
+    this.imagenesService.getImagenesPorTrabajo(tabla, ord_ins).subscribe({
+      next: (res: any) => {
+        if (res?.imagenes) {
+          this.imagenesVisita = res.imagenes;
+        } else {
+          this.imagenesVisita = {};
+        }
+      },
+      error: (err) => {
+        console.error('❌ Error cargando imágenes:', err);
+        this.imagenesVisita = {};
+      },
+    });
+  }
+
   abrirImagenModal(url: string) {
     this.imagenSeleccionada = url;
     const modal = new Modal(document.getElementById('modalImagenAmpliada')!);
     modal.show();
   }
+
   abrirModalEditar(trabajo: Iagenda) {
-    this.cargarImagenesInstalacion('neg_t_img_inst', trabajo.age_ord_ins);
+    this.cargarImagenesInstalacion('neg_t_img_inst', trabajo.ord_ins);
+    this.cargarImagenesVisita('neg_t_agenda', trabajo.ord_ins);
     this.trabajoSeleccionado = { ...trabajo }; // copia para evitar cambios directos si no se guarda
     const modal = new Modal(document.getElementById('editarModal')!);
     modal.show();
@@ -195,7 +216,7 @@ export class AgendatecnicosComponent {
 
     const archivo = input.files[0];
     const tabla = 'neg_t_img_inst';
-    const ord_ins = this.trabajoSeleccionado?.age_ord_ins;
+    const ord_ins = this.trabajoSeleccionado?.ord_ins;
 
     if (!ord_ins) {
       console.error('❌ ID de orden no definido.');
@@ -208,11 +229,41 @@ export class AgendatecnicosComponent {
         next: (res) => {
           console.log('✅ Imagen subida:', res);
           this.cargarImagenesInstalacion(tabla, ord_ins); // recarga imágenes
+          this.cargarImagenesVisita(tabla, ord_ins);
         },
         error: (err) => {
           console.error('❌ Error al subir imagen:', err);
         },
       });
+  }
+
+  onImagenSolucionSeleccionada(event: Event, indice: string) {
+    const input = event.target as HTMLInputElement;
+    if (input.files && input.files.length > 0) {
+      const imagen = input.files[0];
+      const campo = `${indice}`;
+
+      if (this.trabajoSeleccionado?.ord_ins) {
+        this.imagenesService
+          .postImagenesPorTrabajo(
+            'neg_t_agenda',
+            this.trabajoSeleccionado.ord_ins,
+            campo,
+            imagen
+          )
+          .subscribe({
+            next: () => {
+              console.log(`✅ Imagen ${campo} subida con éxito`);
+              this.cargarImagenesVisita(
+                'neg_t_agenda',
+                this.trabajoSeleccionado!.ord_ins
+              ); // recarga
+            },
+            error: (err) =>
+              console.error(`❌ Error subiendo imagen ${campo}:`, err),
+          });
+      }
+    }
   }
 
   onImagenSeleccionada(event: Event, campo: string) {
@@ -221,7 +272,7 @@ export class AgendatecnicosComponent {
 
     const archivo = input.files[0];
     const tabla = 'neg_t_img_inst';
-    const ord_ins = this.trabajoSeleccionado?.age_ord_ins;
+    const ord_ins = this.trabajoSeleccionado?.ord_ins;
 
     if (!ord_ins) return;
 

@@ -299,13 +299,11 @@
   </div>
 
   <!-- DIV INSTALACION-->
-  <div
-    class="instalacion-header d-flex justify-content-between align-items-center mb-3"
-  >
+  <div>
     <h1 class="titulo-seccion">Instalación</h1>
   </div>
 
-  <div class="imagenes-grid row g-3">
+  <div class="imagenes-grid row">
     @for (campo of ['fachada', 'router', 'potencia', 'ont', 'speedtest',
     'cable_1', 'cable_2', 'equipo_1', 'equipo_2', 'equipo_3']; track campo) {
     @if (imagenesInstalacion[campo]) {

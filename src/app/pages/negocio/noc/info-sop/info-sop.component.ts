@@ -155,7 +155,7 @@ export class InfoSopComponent {
     };
 
     const bodyAge = {
-      age_ord_ins: this.ord_Ins,
+      ord_ins: this.ord_Ins,
       age_id_sop: this.id_sop,
       age_tipo: 'SOPORTE',
       age_subtipo: this.solucionSeleccionada,

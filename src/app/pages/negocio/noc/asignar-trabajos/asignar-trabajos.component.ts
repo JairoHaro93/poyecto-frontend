@@ -34,7 +34,7 @@ export class AsignarTrabajosComponent {
       this.formData.age_tipo === 'Trabajo' ||
       this.formData.age_tipo === 'Gestion'
     ) {
-      bodyAge.age_ord_ins = 81177;
+      bodyAge.ord_ins = 81177;
     }
 
     Swal.fire({

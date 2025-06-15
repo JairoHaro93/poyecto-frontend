@@ -15,6 +15,8 @@ import { ClientesService } from '../../../../services/negocio_atuntaqui/clientes
 import Swal from 'sweetalert2';
 import { AutenticacionService } from '../../../../services/sistema/autenticacion.service';
 import { SoketService } from '../../../../services/socket_io/soket.service';
+import { ImagenesService } from '../../../../services/negocio_latacunga/imagenes.service';
+import { Modal } from 'bootstrap';
 
 declare var bootstrap: any;
 
@@ -33,6 +35,7 @@ export class AgendaComponent {
   agendaService = inject(AgendaService);
   authService = inject(AutenticacionService);
   private socketService = inject(SoketService);
+  imagenesService = inject(ImagenesService);
 
   //arrays
   tecnicosList: Iusuarios[] = [];
@@ -50,6 +53,7 @@ export class AgendaComponent {
   trabajoVista: Iagenda | null = null;
   solucionVista: any;
   trabajoSeleccionado: Iagenda | null = null;
+  imagenSeleccionada: string | null = null;
 
   horaInicio = '';
   horaFin = '';
@@ -62,6 +66,9 @@ export class AgendaComponent {
 
   agendaAsignada: { [hora: string]: { [vehiculo: string]: Iagenda | null } } =
     {};
+
+  imagenesInstalacion: { [key: string]: { ruta: string; url: string } } = {};
+  imagenesVisita: Record<string, { url: string; ruta: string }> = {};
 
   vehiculos = [
     { codigo: 'F17', nombre: 'F17 FURGONETA' },
@@ -132,9 +139,9 @@ export class AgendaComponent {
 
       for (const item of this.agendaList) {
         try {
-          if (item.age_ord_ins) {
+          if (item.ord_ins) {
             const servicio = await this.clienteService.getInfoServicioByOrdId(
-              Number(item.age_ord_ins)
+              Number(item.ord_ins)
             );
             item.nombre_completo = servicio?.nombre_completo || '---';
           } else {
@@ -220,7 +227,7 @@ export class AgendaComponent {
     for (const item of this.preAgendaList) {
       try {
         const info = await this.clienteService.getInfoServicioByOrdId(
-          Number(item.age_ord_ins)
+          Number(item.ord_ins)
         );
         item.nombre_completo = info?.nombre_completo || '---';
       } catch {
@@ -405,6 +412,7 @@ export class AgendaComponent {
     const modal = bootstrap.Modal.getOrCreateInstance(
       document.getElementById('asignarModal')
     );
+
     modal.show();
   }
 
@@ -446,9 +454,54 @@ export class AgendaComponent {
     if (!trabajo) return;
     this.trabajoVista = trabajo;
     this.solucionVista = sol;
+
+    this.cargarImagenesInstalacion('neg_t_img_inst', trabajo.ord_ins);
+    this.cargarImagenesVisita('neg_t_agenda', trabajo.ord_ins);
     bootstrap.Modal.getOrCreateInstance(
       document.getElementById('modalVistaSoporte')
     ).show();
+  }
+
+  private cargarImagenesInstalacion(tabla: string, ord_Ins: string): void {
+    this.imagenesService.getImagenesPorTrabajo(tabla, ord_Ins).subscribe({
+      next: (res: any) => {
+        if (res?.imagenes) {
+          this.imagenesInstalacion = res.imagenes;
+        } else {
+          this.imagenesInstalacion = {};
+        }
+      },
+      error: (err) => {
+        console.error('❌ Error cargando imágenes:', err);
+        this.imagenesInstalacion = {};
+      },
+    });
+  }
+
+  private cargarImagenesVisita(tabla: string, ord_ins: string): void {
+    this.imagenesService.getImagenesPorTrabajo(tabla, ord_ins).subscribe({
+      next: (res: any) => {
+        if (res?.imagenes) {
+          this.imagenesVisita = res.imagenes;
+        } else {
+          this.imagenesVisita = {};
+        }
+        console.log(this.imagenesVisita);
+      },
+      error: (err) => {
+        console.error('❌ Error cargando imágenes:', err);
+        this.imagenesVisita = {};
+      },
+    });
+  }
+
+  abrirImagenModal(url: string) {
+    this.imagenSeleccionada = url;
+    const modal = bootstrap.Modal.getOrCreateInstance(
+      document.getElementById('modalImagenAmpliada')!
+    );
+
+    modal.show();
   }
 
   asignarDesdePreagenda(trabajo: Iagenda) {
@@ -469,6 +522,7 @@ export class AgendaComponent {
       const modalAsignar = bootstrap.Modal.getOrCreateInstance(
         document.getElementById('asignarModal')
       );
+
       modalAsignar.show();
     });
   }

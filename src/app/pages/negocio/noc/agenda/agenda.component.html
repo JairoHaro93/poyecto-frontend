@@ -290,10 +290,14 @@
   aria-labelledby="modalVistaSoporteLabel"
   aria-hidden="true"
 >
-  <div class="modal-dialog modal-dialog-centered">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg">
     <div class="modal-content">
-      <div class="modal-header bg-danger text-white py-2">
-        <h6 class="modal-title">Detalle del Trabajo</h6>
+      <div class="modal-header bg-danger py-2">
+        <h5 class="modal-title text-white">
+          Detalle de @switch (trabajoVista?.age_tipo) { @case ('SOPORTE') {
+          <span>Soporte</span> } @case ('TRABAJO') { <span>Trabajo</span> }
+          @case ('INSTALACION') { <span>Instalación</span> } }
+        </h5>
         <button
           type="button"
           class="btn-close btn-close-white"
@@ -301,52 +305,122 @@
           aria-label="Cerrar"
         ></button>
       </div>
+      <div class="modal-body small">
+        <div class="d-flex">
+          <div class="row">
+            <!-- INFORMACION -->
+            <div class="col-12 col-md-4 Informacion">
+              <p>
+                <strong>📛 Cliente :</strong> <br />
+                {{ trabajoVista?.nombre_completo }}
+              </p>
+              <p>
+                <strong>👷 Técnico: </strong> <br />
+                {{ getNombreTecnicoPorId(trabajoVista?.age_tecnico) }}
+              </p>
+              <p>
+                <strong>📞 Teléfono:</strong> <br />
+                {{ trabajoVista?.age_telefono }}
+              </p>
+              <p>
+                <strong>👁️‍🗨️ Diagnóstico NOC:</strong> <br />
+                {{ trabajoVista?.age_observaciones }}
+              </p>
+              <p>
+                <strong>📍 Coordenadas:</strong> <br />
+                <a
+                  [href]="
+                    'https://www.google.com/maps/search/' +
+                    trabajoVista?.age_coordenadas
+                  "
+                  class="text-danger"
+                  target="_blank"
+                >
+                  {{ trabajoVista?.age_coordenadas }}
+                </a>
+              </p>
+            </div>
 
-      <div class="d-flex">
-        <div class="modal-body small">
-          <p>
-            <strong>📛 Nombre:</strong><br />{{ trabajoVista?.nombre_completo }}
-          </p>
-          <p>
-            <strong>👷 Técnico: </strong><br />
-            {{ getNombreTecnicoPorId(trabajoVista?.age_tecnico) }}
-          </p>
-          <p>
-            <strong>📞 Teléfono:</strong><br />{{ trabajoVista?.age_telefono }}
-          </p>
-          <p>
-            <strong> 👁️‍🗨️ Diagnóstico NOC:</strong><br />{{
-              trabajoVista?.age_observaciones
-            }}
-          </p>
-          <p>
-            <strong>📍 Coordenadas:</strong><br />
-            <a
-              [href]="
-                'https://www.google.com/maps/search/' +
-                trabajoVista?.age_coordenadas
-              "
-              class="text-danger"
-              target="_blank"
-            >
-              {{ trabajoVista?.age_coordenadas }}
-            </a>
-          </p>
+            <!-- SOLUCION -->
+            @if (trabajoVista?.age_estado === 'CONCLUIDO') {
+            <div class="col-12 col-md-8 Solucion">
+              <p>
+                <strong>Solución:</strong> {{ solucionVista[0].age_solucion }}
+              </p>
+              <hr />
+              <div class="row g-3">
+                @for (campo of ['img_1', 'img_2', 'img_3', 'img_4']; track
+                campo) { @if (imagenesVisita[campo] &&
+                imagenesVisita[campo].ruta !== 'null') {
+                <div class="col-6 col-md-4 col-lg-3">
+                  <div class="card border p-2 text-center">
+                    <div class="fw-bold text-capitalize mb-2">{{ campo }}</div>
+                    <img
+                      [src]="imagenesVisita[campo].url"
+                      alt="{{ campo }}"
+                      class="img-thumbnail"
+                      style="cursor: pointer; max-height: 150px"
+                      (click)="abrirImagenModal(imagenesVisita[campo].url)"
+                    />
+                  </div>
+                </div>
+                } }
+              </div>
+            </div>
+            }
+          </div>
         </div>
-        @if(trabajoVista?.age_estado==="CONCLUIDO"){
-        <div class="modal-body small">
-          <p>
-            <strong>📛 Solucion:</strong><br />{{
-              solucionVista[0].age_solucion
-            }}
-          </p>
-          <p>POSIBLE TEXTO</p>
-          <p>POSIBLE TEXTO</p>
-          <p>POSIBLE TEXTO</p>
-          <p>POSIBLE TEXTO</p>
+        <hr />
+        <h6 class="mt-3 mb-2">Imágenes de instalación</h6>
+        <!-- Grid de imágenes de instalacion -->
+        <div class="imagenes-grid">
+          @for (campo of ['fachada', 'router', 'potencia', 'ont', 'speedtest',
+          'cable_1', 'cable_2', 'equipo_1', 'equipo_2', 'equipo_3']; track
+          campo) { @if (imagenesInstalacion[campo]) {
+          <div class="col-6 col-md-3 col-lg-2">
+            <div class="card shadow-sm border rounded">
+              <div class="card-body p-2 text-center">
+                <div class="fw-bold text-capitalize mb-1">{{ campo }}</div>
+                <img
+                  [src]="imagenesInstalacion[campo].url"
+                  alt="{{ campo }}"
+                  class="img-thumbnail"
+                  style="cursor: pointer; max-height: 150px"
+                  (click)="abrirImagenModal(imagenesInstalacion[campo].url)"
+                />
+              </div>
+            </div>
+          </div>
+          } }
         </div>
-
-        }
+      </div>
+    </div>
+  </div>
+</div>
+<!-- Modal Imagen Ampliada -->
+<div
+  class="modal fade"
+  id="modalImagenAmpliada"
+  tabindex="-1"
+  aria-hidden="true"
+>
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-content bg-dark text-white text-center">
+      <div class="modal-body p-0">
+        <img
+          [src]="imagenSeleccionada"
+          class="img-fluid w-100 rounded"
+          alt="Imagen ampliada"
+        />
+      </div>
+      <div class="modal-footer justify-content-center border-0">
+        <button
+          type="button"
+          class="btn btn-outline-light"
+          data-bs-dismiss="modal"
+        >
+          Cerrar
+        </button>
       </div>
     </div>
   </div>
