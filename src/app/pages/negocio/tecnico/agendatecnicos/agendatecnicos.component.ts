@@ -126,10 +126,19 @@ export class AgendatecnicosComponent {
         age_solucion: this.trabajoSeleccionado.age_solucion,
       };
 
+      const body_sop = {
+        reg_sop_estado: 'RESUELTO',
+        reg_sop_sol_det: this.trabajoSeleccionado.age_solucion,
+      };
+
       console.log('el body' + body.id, body);
 
       await this.agendaService.actualizarAgendaSolucuion(body.id, body);
 
+      await this.soporteService.actualizarEstadoSop(
+        this.trabajoSeleccionado.age_id_sop,
+        body_sop
+      );
       // 🔄 Emitir evento de trabajo resuelto
       this.socketService.emit('trabajoCulminado', {
         tecnicoId: this.datosUsuario.id,
@@ -202,12 +211,48 @@ export class AgendatecnicosComponent {
     modal.show();
   }
 
-  abrirModalEditar(trabajo: Iagenda) {
-    this.cargarImagenesInstalacion('neg_t_img_inst', trabajo.ord_ins);
-    this.cargarImagenesVisita('neg_t_agenda', trabajo.ord_ins);
-    this.trabajoSeleccionado = { ...trabajo }; // copia para evitar cambios directos si no se guarda
-    const modal = new Modal(document.getElementById('editarModal')!);
-    modal.show();
+  async abrirModalEditar(trabajo: Iagenda) {
+    try {
+      // Asignar el trabajo seleccionado antes de usarlo
+      this.trabajoSeleccionado = { ...trabajo };
+
+      // Cargar datos adicionales si es un soporte
+      if (this.trabajoSeleccionado.age_tipo === 'SOPORTE') {
+        this.trabajoDetalle = await this.soporteService.getSopById(
+          Number(this.trabajoSeleccionado.age_id_sop)
+        );
+      }
+
+      // Si es un trabajo interno
+      if (this.trabajoSeleccionado.age_tipo === 'TRABAJO') {
+        this.trabajoDetalle = {
+          reg_sop_nombre: 'REDECOM',
+          reg_sop_opc: 0,
+          reg_sop_fecha: this.trabajoSeleccionado.age_fecha,
+          reg_sop_sol_det: 'Trabajo interno',
+          tipo_soporte: 'Trabajo',
+          reg_sop_coordenadas: '',
+          descripcion: '',
+          // agrega más campos si es necesario
+        } as unknown as Isoportes;
+      }
+
+      // Cargar imágenes
+      this.cargarImagenesInstalacion(
+        'neg_t_img_inst',
+        this.trabajoSeleccionado.ord_ins
+      );
+      this.cargarImagenesVisita(
+        'neg_t_agenda',
+        this.trabajoSeleccionado.age_id_sop
+      );
+
+      // Mostrar el modal de edición
+      const modal = new Modal(document.getElementById('editarModal')!);
+      modal.show();
+    } catch (error) {
+      console.error('❌ Error al cargar detalle del soporte:', error);
+    }
   }
 
   async subirImagen(event: Event, campo: string) {
@@ -216,20 +261,25 @@ export class AgendatecnicosComponent {
 
     const archivo = input.files[0];
     const tabla = 'neg_t_img_inst';
-    const ord_ins = this.trabajoSeleccionado?.ord_ins;
 
-    if (!ord_ins) {
-      console.error('❌ ID de orden no definido.');
+    if (!this.trabajoSeleccionado || !this.trabajoSeleccionado.ord_ins) {
+      console.error('❌ Trabajo no seleccionado o falta ID de orden.');
       return;
     }
 
+    const id = this.trabajoSeleccionado.ord_ins;
+    const directorio = this.trabajoSeleccionado.ord_ins;
+
     this.imagenesService
-      .postImagenesPorTrabajo(tabla, ord_ins, campo, archivo)
+      .postImagenesPorTrabajo(tabla, id, campo, archivo, directorio)
       .subscribe({
         next: (res) => {
           console.log('✅ Imagen subida:', res);
-          this.cargarImagenesInstalacion(tabla, ord_ins); // recarga imágenes
-          this.cargarImagenesVisita(tabla, ord_ins);
+          this.cargarImagenesInstalacion(tabla, id); // recarga imágenes
+          this.cargarImagenesVisita(
+            'neg_t_agenda',
+            this.trabajoSeleccionado!.age_id_sop
+          ); // recarga también de visitas
         },
         error: (err) => {
           console.error('❌ Error al subir imagen:', err);
@@ -237,33 +287,33 @@ export class AgendatecnicosComponent {
       });
   }
 
-  onImagenSolucionSeleccionada(event: Event, indice: string) {
+  onImagenSolucionSeleccionada(event: Event, campo: string) {
     const input = event.target as HTMLInputElement;
-    if (input.files && input.files.length > 0) {
-      const imagen = input.files[0];
-      const campo = `${indice}`;
+    if (!input.files || input.files.length === 0) return;
 
-      if (this.trabajoSeleccionado?.ord_ins) {
-        this.imagenesService
-          .postImagenesPorTrabajo(
-            'neg_t_agenda',
-            this.trabajoSeleccionado.ord_ins,
-            campo,
-            imagen
-          )
-          .subscribe({
-            next: () => {
-              console.log(`✅ Imagen ${campo} subida con éxito`);
-              this.cargarImagenesVisita(
-                'neg_t_agenda',
-                this.trabajoSeleccionado!.ord_ins
-              ); // recarga
-            },
-            error: (err) =>
-              console.error(`❌ Error subiendo imagen ${campo}:`, err),
-          });
-      }
+    const imagen = input.files[0];
+
+    // Asegurarse de que el trabajo esté seleccionado
+    if (!this.trabajoSeleccionado) {
+      console.error('❌ No hay trabajo seleccionado.');
+      return;
     }
+
+    const id = this.trabajoSeleccionado.age_id_sop;
+    const directorio = this.trabajoSeleccionado.ord_ins;
+    const tabla = 'neg_t_agenda';
+
+    this.imagenesService
+      .postImagenesPorTrabajo(tabla, id, campo, imagen, directorio)
+      .subscribe({
+        next: () => {
+          console.log(`✅ Imagen ${campo} subida con éxito`);
+          this.cargarImagenesVisita(tabla, id); // Recarga solo las de agenda
+        },
+        error: (err) => {
+          console.error(`❌ Error subiendo imagen ${campo}:`, err);
+        },
+      });
   }
 
   onImagenSeleccionada(event: Event, campo: string) {
@@ -271,20 +321,25 @@ export class AgendatecnicosComponent {
     if (!input.files || input.files.length === 0) return;
 
     const archivo = input.files[0];
-    const tabla = 'neg_t_img_inst';
-    const ord_ins = this.trabajoSeleccionado?.ord_ins;
 
-    if (!ord_ins) return;
+    if (!this.trabajoSeleccionado) {
+      console.error('❌ No hay trabajo seleccionado');
+      return;
+    }
+
+    const id = this.trabajoSeleccionado.ord_ins; // Este es el ID a comparar en neg_t_img_inst
+    const directorio = this.trabajoSeleccionado.ord_ins;
+    const tabla = 'neg_t_img_inst';
 
     this.imagenesService
-      .postImagenesPorTrabajo(tabla, ord_ins, campo, archivo)
+      .postImagenesPorTrabajo(tabla, id, campo, archivo, directorio)
       .subscribe({
         next: (res) => {
-          console.log('✅ Imagen subida:', res);
-          this.cargarImagenesInstalacion(tabla, ord_ins); // Refresca las imágenes
+          console.log(`✅ Imagen ${campo} subida con éxito`);
+          this.cargarImagenesInstalacion(tabla, id); // Refresca instalación
         },
         error: (err) => {
-          console.error('❌ Error al subir la imagen:', err);
+          console.error(`❌ Error al subir la imagen ${campo}:`, err);
         },
       });
   }

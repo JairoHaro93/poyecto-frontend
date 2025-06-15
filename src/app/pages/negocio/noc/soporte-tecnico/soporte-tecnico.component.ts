@@ -61,6 +61,11 @@ export class SoporteTecnicoComponent {
         );
         await this.cargarDatos(noc_id);
       });
+
+      this.socketService.on('trabajoCulminadoNOC', async () => {
+        console.log('📥 trabajoCulminadoNOC recibido');
+        await this.cargarDatos(noc_id);
+      });
     } catch (error) {
       console.error('❌ Error al iniciar soporte técnico:', error);
       this.router.navigateByUrl('/login');

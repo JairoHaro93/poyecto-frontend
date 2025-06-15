@@ -17,17 +17,20 @@ export class ImagenesService {
 
   postImagenesPorTrabajo(
     tabla: string,
-    ord_ins: number | string,
+    id: string | number,
     campo: string,
-    imagen: File
+    imagen: File,
+    directorio: string
   ) {
+    const url = `${this.baseUrl}/upload`;
+
     const formData = new FormData();
     formData.append('tabla', tabla);
-    formData.append('ord_ins', ord_ins.toString()); // ← Este valor es el que busca multer
+    formData.append('id', id.toString()); // id puede ser age_id_sop o ord_ins
     formData.append('campo', campo);
+    formData.append('directorio', directorio);
     formData.append('imagen', imagen);
 
-    const url = `${this.baseUrl}/upload`;
-    return this.httpClient.post<any>(url, formData);
+    return this.httpClient.post(url, formData);
   }
 }

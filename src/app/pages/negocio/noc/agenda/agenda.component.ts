@@ -456,7 +456,7 @@ export class AgendaComponent {
     this.solucionVista = sol;
 
     this.cargarImagenesInstalacion('neg_t_img_inst', trabajo.ord_ins);
-    this.cargarImagenesVisita('neg_t_agenda', trabajo.ord_ins);
+    this.cargarImagenesVisita('neg_t_agenda', trabajo.age_id_sop);
     bootstrap.Modal.getOrCreateInstance(
       document.getElementById('modalVistaSoporte')
     ).show();
@@ -478,8 +478,8 @@ export class AgendaComponent {
     });
   }
 
-  private cargarImagenesVisita(tabla: string, ord_ins: string): void {
-    this.imagenesService.getImagenesPorTrabajo(tabla, ord_ins).subscribe({
+  private cargarImagenesVisita(tabla: string, age_id_sop: string): void {
+    this.imagenesService.getImagenesPorTrabajo(tabla, age_id_sop).subscribe({
       next: (res: any) => {
         if (res?.imagenes) {
           this.imagenesVisita = res.imagenes;
