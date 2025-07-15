@@ -71,10 +71,10 @@ export class AgendaComponent {
   imagenesVisita: Record<string, { url: string; ruta: string }> = {};
 
   vehiculos = [
-    { codigo: 'F17', nombre: 'F17 FURGONETA' },
-    { codigo: 'F18', nombre: 'F18 CAMIONETA' },
-    { codigo: 'F19', nombre: 'F19 CAMION' },
-    { codigo: 'F20', nombre: 'F20 MOTO ROJA' },
+    { codigo: 'R17', nombre: 'R17 FURGONETA' },
+    { codigo: 'R18', nombre: 'R18 CAMIONETA' },
+    { codigo: 'R19', nombre: 'R19 CAMION' },
+    { codigo: 'R20', nombre: 'R20 MOTO ROJA' },
   ];
 
   //private socket = io(`${environment.API_WEBSOKETS_IO}`); // Conexión con WebSocket
