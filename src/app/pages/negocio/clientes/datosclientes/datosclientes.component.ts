@@ -2,6 +2,8 @@ import { Component, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { ClientesService } from '../../../../services/negocio_atuntaqui/clientes.service';
+import { Modal } from 'bootstrap';
+import { ImagenesService } from '../../../../services/negocio_latacunga/imagenes.service';
 
 interface ClienteBasico {
   cedula: string;
@@ -20,6 +22,8 @@ export class DatosclientesComponent {
 
   clientelista: ClienteBasico[] = [];
 
+  imagenesService = inject(ImagenesService);
+
   // Campos del formulario
   busqueda: string = ''; // nombre
   busquedaCedula: string = ''; // cédula
@@ -27,6 +31,9 @@ export class DatosclientesComponent {
   // Datos completos del cliente y sus servicios
   clienteSeleccionado: any = null;
   servicioSeleccionado: any = null;
+  imagenSeleccionada: string | null = null;
+
+  imagenesInstalacion: { [key: string]: { ruta: string; url: string } } = {};
 
   async ngOnInit() {
     try {
@@ -102,6 +109,10 @@ export class DatosclientesComponent {
       if (detalle.servicios.length > 0) {
         this.clienteSeleccionado = detalle;
         this.servicioSeleccionado = detalle.servicios[0];
+        this.cargarImagenesInstalacion(
+          'neg_t_img_inst',
+          this.servicioSeleccionado?.orden_instalacion
+        );
 
         console.log('Servicios cargados:', this.clienteSeleccionado.servicios);
         console.log(
@@ -116,6 +127,36 @@ export class DatosclientesComponent {
       }
     } catch (error) {
       console.error('❌ Error al cargar detalle del cliente:', error);
+    }
+  }
+
+  abrirImagenModal(url: string) {
+    this.imagenSeleccionada = url;
+    const modal = new Modal(document.getElementById('modalImagenAmpliada')!);
+    modal.show();
+  }
+
+  private cargarImagenesInstalacion(tabla: string, ord_Ins: string): void {
+    this.imagenesService.getImagenesPorTrabajo(tabla, ord_Ins).subscribe({
+      next: (res: any) => {
+        if (res?.imagenes) {
+          this.imagenesInstalacion = res.imagenes;
+        } else {
+          this.imagenesInstalacion = {};
+        }
+      },
+      error: (err) => {
+        console.error('❌ Error cargando imágenes:', err);
+        this.imagenesInstalacion = {};
+      },
+    });
+  }
+  onServicioSeleccionado() {
+    if (this.servicioSeleccionado?.orden_instalacion) {
+      this.cargarImagenesInstalacion(
+        'neg_t_img_inst',
+        this.servicioSeleccionado.orden_instalacion
+      );
     }
   }
 }
