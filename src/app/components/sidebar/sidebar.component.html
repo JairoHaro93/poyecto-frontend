@@ -186,6 +186,13 @@
           >
             Asignar Trabajos
           </li>
+          } @if (arrNoc.includes("NNueva Instalacion")) {
+          <li
+            (click)="onClickMenu()"
+            [routerLink]="['/home/noc/nueva-instalacion']"
+          >
+            Nueva Instalación
+          </li>
           }
         </ul>
       </div>

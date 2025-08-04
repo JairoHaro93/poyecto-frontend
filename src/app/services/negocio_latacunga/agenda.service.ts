@@ -57,6 +57,9 @@ export class AgendaService {
     );
   }
 
+  // CREA UN SOPORTE EN LA AGENDA
+  //router.post("/agenda-sop", checkToken, postAgenda);
+
   postSopAgenda(body: any) {
     return firstValueFrom(
       this.httpClient.post<Iagenda[]>(`${this.baseUrl}/agenda-sop`, body, {

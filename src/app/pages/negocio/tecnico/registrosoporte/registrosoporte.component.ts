@@ -54,14 +54,14 @@ export class RegistrosoporteComponent {
     this.SoporteForm2 = new FormGroup({
       reg_sop_coordenadas: new FormControl(null, []),
       ord_ins: new FormControl(null, []),
-      reg_sop_observaciones: new FormControl(null, []),
+      reg_sop_coment_cliente: new FormControl(null, []),
       reg_sop_tel: new FormControl('', [
         Validators.required,
         Validators.pattern('^[0-9]{10,}$'),
       ]),
       reg_sop_opc: new FormControl(null, [Validators.required]),
       reg_sop_registrado_por_id: new FormControl('', []),
-      reg_sop_nombre: new FormControl('', []),
+      // reg_sop_nombre: new FormControl('', []),
     });
   }
 
@@ -91,7 +91,7 @@ export class RegistrosoporteComponent {
   async getDataForm2() {
     if (this.SoporteForm2.valid) {
       this.SoporteForm2.patchValue({
-        reg_sop_nombre: this.clienteSeleccionado?.nombre_completo,
+        //reg_sop_nombre: this.clienteSeleccionado?.nombre_completo,
         ord_ins: this.servicioSeleccionado?.orden_instalacion || null,
 
         reg_sop_registrado_por_id: this.datosUsuario.id,

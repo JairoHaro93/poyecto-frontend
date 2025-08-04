@@ -30,6 +30,7 @@ import { AsignarTrabajosComponent } from './pages/negocio/noc/asignar-trabajos/a
 import { AgendaComponent } from './pages/negocio/noc/agenda/agenda.component';
 import { LayoutComponent } from './pages/sistema/layout/layout.component';
 import { permisosGuard } from './guards/permisos.guard';
+import { NuevaInstalacionComponent } from './pages/negocio/noc/nueva-instalacion/nueva-instalacion.component';
 
 export const routes: Routes = [
   { path: '', pathMatch: 'full', redirectTo: 'login' },
@@ -145,6 +146,11 @@ export const routes: Routes = [
             canActivate: [permisosGuard('NSoporte Tecnico')],
           },
           { path: 'agenda', component: AgendaComponent },
+          {
+            path: 'nueva-instalacion',
+            component: NuevaInstalacionComponent,
+            canActivate: [permisosGuard('NNueva Instalacion')],
+          },
         ],
       },
 

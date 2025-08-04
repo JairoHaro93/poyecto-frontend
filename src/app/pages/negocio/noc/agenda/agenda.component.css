@@ -106,6 +106,7 @@ td button {
 
 .bg-success {
   background-color: #28a745 !important;
+  color: white;
 }
 
 .bg-danger {

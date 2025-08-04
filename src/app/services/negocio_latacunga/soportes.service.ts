@@ -62,6 +62,7 @@ export class SoportesService {
     );
   }
 
+  //router.put("/mis-soportes/solucion/:id_sop", checkToken, asignarSolucion);
   actualizarEstadoSop(id_sop: string, body: any): Promise<any> {
     return firstValueFrom(
       this.httpClient.put<any>(

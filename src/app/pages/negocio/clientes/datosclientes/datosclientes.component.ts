@@ -110,7 +110,7 @@ export class DatosclientesComponent {
         this.clienteSeleccionado = detalle;
         this.servicioSeleccionado = detalle.servicios[0];
         this.cargarImagenesInstalacion(
-          'neg_t_img_inst',
+          'neg_t_instalaciones',
           this.servicioSeleccionado?.orden_instalacion
         );
 
@@ -154,7 +154,7 @@ export class DatosclientesComponent {
   onServicioSeleccionado() {
     if (this.servicioSeleccionado?.orden_instalacion) {
       this.cargarImagenesInstalacion(
-        'neg_t_img_inst',
+        'neg_t_instalaciones',
         this.servicioSeleccionado.orden_instalacion
       );
     }

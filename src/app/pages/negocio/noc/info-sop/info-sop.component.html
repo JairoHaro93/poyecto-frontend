@@ -10,7 +10,8 @@
       <tbody>
         <tr>
           <th scope="row">Cliente</th>
-          <td>{{ soporte?.reg_sop_nombre }}</td>
+
+          <td>{{ servicioSeleccionado?.nombre_completo }}</td>
         </tr>
         <tr>
           <th scope="row">Cédula</th>
@@ -85,7 +86,7 @@
         </tr>
         <tr>
           <th scope="row">Observación</th>
-          <td>{{ soporte?.reg_sop_observaciones }}</td>
+          <td>{{ soporte?.reg_sop_coment_cliente }}</td>
         </tr>
       </tbody>
     </table>
@@ -304,9 +305,10 @@
   </div>
 
   <div class="imagenes-grid row">
-    @for (campo of ['fachada', 'router', 'potencia', 'ont', 'speedtest',
+    @for (campo of ['fachada', 'router', 'ont', 'potencia', 'speedtest',
     'cable_1', 'cable_2', 'equipo_1', 'equipo_2', 'equipo_3']; track campo) {
-    @if (imagenesInstalacion[campo]) {
+    @if ( imagenesInstalacion[campo] && imagenesInstalacion[campo].ruta !==
+    'null' && imagenesInstalacion[campo].url !== 'undefined/imagenes/null' ) {
     <div class="col-6 col-md-3 col-lg-2">
       <div class="card shadow-sm border rounded">
         <div class="card-body p-2 text-center">

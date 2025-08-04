@@ -291,16 +291,16 @@ export class AgendaComponent {
       .catch((err) => console.error('🎵 Error al reproducir sonido:', err));
   }
 
-  getEstadoClass(sub_tipo: string | undefined): string {
-    switch (sub_tipo) {
+  getEstadoClass(tipo: string | undefined): string {
+    switch (tipo) {
       case 'LOS':
         return 'bg-yellow  text-black';
       case 'VISITA':
         return 'bg-blue text-white';
+      case 'INSTALACION':
+        return 'bg-success text-green';
       case 'TRABAJO':
         return 'bg-warning text-dark';
-      case 'INSTALACION':
-        return 'bg-success text-white';
       case 'ALMUERZO':
         return 'bg-primary text-white';
       case 'Cancelado':
@@ -448,15 +448,19 @@ export class AgendaComponent {
 
   async abrirVistaDetalle(hora: string, vehiculo: string) {
     const trabajo = this.agendaAsignada[hora][vehiculo];
-    console.log(trabajo?.id);
+
     const sol = await this.agendaService.getInfoSolByAgeId(trabajo!.id);
-    console.log(sol);
+
     if (!trabajo) return;
     this.trabajoVista = trabajo;
     this.solucionVista = sol;
 
-    this.cargarImagenesInstalacion('neg_t_img_inst', trabajo.ord_ins);
-    this.cargarImagenesVisita('neg_t_agenda', trabajo.age_id_sop);
+    this.cargarImagenesInstalacion('neg_t_instalaciones', trabajo.ord_ins);
+
+    if (trabajo.age_tipo === 'LOS' || trabajo.age_tipo === 'VISITA') {
+      this.cargarImagenesVisita('neg_t_vis', trabajo.age_id_tipo);
+    }
+
     bootstrap.Modal.getOrCreateInstance(
       document.getElementById('modalVistaSoporte')
     ).show();
@@ -580,5 +584,10 @@ export class AgendaComponent {
     }
 
     return false;
+  }
+
+  esImagenValida(campo: string): boolean {
+    const img = this.imagenesInstalacion[campo];
+    return img && img.ruta !== 'null' && img.url !== 'undefined/imagenes/null';
   }
 }

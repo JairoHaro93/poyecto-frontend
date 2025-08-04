@@ -1,7 +1,7 @@
 export interface Isoportes {
   id: number;
   ord_ins: string;
-  reg_sop_observaciones: string;
+  reg_sop_coment_cliente: string;
   reg_sop_tel: string;
   reg_sop_opc: number;
   reg_sop_registrado_por_id: string;

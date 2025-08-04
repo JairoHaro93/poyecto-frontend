@@ -14,6 +14,7 @@ import { io } from 'socket.io-client';
 import { SoketService } from '../../../../services/socket_io/soket.service';
 import { ImagenesService } from '../../../../services/negocio_latacunga/imagenes.service';
 import { Modal } from 'bootstrap';
+import { VisService } from '../../../../services/negocio_latacunga/vis.service';
 
 @Component({
   selector: 'app-info-sop',
@@ -29,6 +30,8 @@ export class InfoSopComponent {
   soporteService = inject(SoportesService);
   agendaService = inject(AgendaService);
   imagenesService = inject(ImagenesService);
+  visService = inject(VisService);
+
   private router = inject(Router);
 
   datosUsuario: any;
@@ -61,7 +64,7 @@ export class InfoSopComponent {
       }
 
       await this.cargarSoporte(this.id_sop, this.ord_Ins);
-      this.cargarImagenesInstalacion('neg_t_img_inst', this.ord_Ins);
+      this.cargarImagenesInstalacion('neg_t_instalaciones', this.ord_Ins);
     });
   }
 
@@ -154,16 +157,6 @@ export class InfoSopComponent {
       reg_sop_sol_det: this.detalleSolucion.trim(),
     };
 
-    const bodyAge = {
-      ord_ins: this.ord_Ins,
-      age_id_sop: this.id_sop,
-      age_tipo: 'SOPORTE',
-      age_subtipo: this.solucionSeleccionada,
-      age_observaciones: this.detalleSolucion,
-      age_coordenadas: this.servicioSeleccionado.servicios[0].coordenadas,
-      age_telefono: this.soporte?.reg_sop_tel,
-    };
-    console.log(bodyAge);
     if (this.solucionSeleccionada === 'RESUELTO') {
       const result = await Swal.fire({
         title: '¿Estás seguro?',
@@ -181,11 +174,11 @@ export class InfoSopComponent {
           await this.soporteService.actualizarEstadoSop(this.id_sop, body);
           console.log('lo ha resuelto');
           this.router.navigateByUrl('/home/noc/soporte-tecnico');
-        } catch (error) {
+        } catch ({ error }: any) {
           console.error(error);
           Swal.fire({
-            title: 'Error!',
-            text: 'Ocurrió un error al cerrar el soporte.',
+            title: 'Ocurrió un error al cerrar el soporte.',
+            text: error.message,
             icon: 'error',
           });
           return;
@@ -206,8 +199,8 @@ export class InfoSopComponent {
     }
 
     if (
-      this.solucionSeleccionada === 'VISITA' ||
-      this.solucionSeleccionada === 'LOS'
+      this.solucionSeleccionada === 'LOS' ||
+      this.solucionSeleccionada === 'VISITA'
     ) {
       const result = await Swal.fire({
         title: '¿Estás seguro?',
@@ -222,15 +215,47 @@ export class InfoSopComponent {
 
       if (result.isConfirmed) {
         try {
+          let bodyVis: any = {
+            ord_ins: this.ord_Ins,
+            vis_estado: 'PENDIENTE',
+            vis_diagnostico: this.detalleSolucion,
+            vis_coment_cliente: this.soporte!.reg_sop_coment_cliente,
+          };
+
+          if (this.solucionSeleccionada === 'VISITA') {
+            bodyVis.vis_tipo = 'VISITA';
+          } else {
+            bodyVis.vis_tipo = 'LOS';
+          }
+
+          const result = await this.visService.createVis(bodyVis);
+
           await this.soporteService.actualizarEstadoSop(this.id_sop, body);
+
+          let bodyAge: any = {
+            ord_ins: this.ord_Ins,
+            age_id_tipo: result.id,
+            age_id_sop: this.id_sop,
+            age_diagnostico: this.detalleSolucion,
+            age_coordenadas: this.servicioSeleccionado.servicios[0].coordenadas,
+            age_telefono: this.soporte?.reg_sop_tel,
+          };
+
+          if (this.solucionSeleccionada === 'VISITA') {
+            bodyAge.age_tipo = 'VISITA';
+          } else {
+            bodyAge.age_tipo = 'LOS';
+          }
+
           await this.agendaService.postSopAgenda(bodyAge);
+
           this.socketService.emit('trabajoPreagendado');
           this.router.navigateByUrl('/home/noc/soporte-tecnico');
-        } catch (error) {
+        } catch ({ error }: any) {
           console.error(error);
           Swal.fire({
             title: 'Error!',
-            text: 'Ocurrió un error al cerrar el soporte.',
+            text: error.message,
             icon: 'error',
           });
           return;

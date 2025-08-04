@@ -19,7 +19,7 @@ export class AsignarTrabajosComponent {
     age_tipo: '',
     age_subtipo: '',
     age_coordenadas: '',
-    age_observaciones: '',
+    age_diagnostico: '',
   };
 
   agendar() {
@@ -27,7 +27,7 @@ export class AsignarTrabajosComponent {
       age_tipo: this.formData.age_tipo,
       age_subtipo: this.formData.age_subtipo,
       age_coordenadas: this.formData.age_coordenadas,
-      age_observaciones: this.formData.age_observaciones,
+      age_diagnostico: this.formData.age_diagnostico,
     };
 
     if (

@@ -52,6 +52,8 @@ export class ClientesService {
     );
   }
 
+  //OBTENER INFORMACION DE SERVICIO POR ORDINS
+  //router.get("/:servicioOrdIns", checkToken, getServicioByOrdIns);
   getInfoServicioByOrdId(ord_ins: number): Promise<Iclientes> {
     return lastValueFrom(
       this.httpClient.get<Iclientes>(`${this.baseUrl}/${ord_ins}`, {

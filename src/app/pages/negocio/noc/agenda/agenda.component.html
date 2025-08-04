@@ -29,7 +29,7 @@
             <thead class="table-primary text-center">
               <tr>
                 <th>Tipo</th>
-                <th>ESTADO</th>
+
                 <th>Cliente</th>
                 <th>Observaciones</th>
                 <th class="col-horario">Coordenadas</th>
@@ -39,9 +39,9 @@
             <tbody>
               <tr *ngFor="let item of preAgendaList">
                 <td>{{ item.age_tipo }}</td>
-                <td>{{ item.age_subtipo }}</td>
+
                 <td>{{ item.nombre_completo }}</td>
-                <td>{{ item.age_observaciones }}</td>
+                <td>{{ item.age_diagnostico }}</td>
                 <td class="col-horario">
                   <a
                     [href]="
@@ -106,7 +106,7 @@
                   <td
                     [attr.rowspan]="celda.rowspan"
                     [hidden]="!celda.mostrar"
-                    [ngClass]="getEstadoClass(celda.trabajo?.age_subtipo)"
+                    [ngClass]="getEstadoClass(celda.trabajo?.age_tipo)"
                     class="celda-agenda position-relative"
                   >
                     <div *ngIf="celda.trabajo">
@@ -294,9 +294,9 @@
     <div class="modal-content">
       <div class="modal-header bg-danger py-2">
         <h5 class="modal-title text-white">
-          Detalle de @switch (trabajoVista?.age_tipo) { @case ('SOPORTE') {
-          <span>Soporte</span> } @case ('TRABAJO') { <span>Trabajo</span> }
-          @case ('INSTALACION') { <span>Instalación</span> } }
+          Detalle de @switch (trabajoVista?.age_tipo) { @case ('LOS') {
+          <span>LOS</span> } @case ('TRABAJO') { <span>Trabajo</span> } @case
+          ('INSTALACION') { <span>Instalación</span> } }
         </h5>
         <button
           type="button"
@@ -325,7 +325,7 @@
               </p>
               <p>
                 <strong>👁️‍🗨️ Diagnóstico NOC:</strong> <br />
-                {{ trabajoVista?.age_observaciones }}
+                {{ trabajoVista?.age_diagnostico }}
               </p>
               <p>
                 <strong>📍 Coordenadas:</strong> <br />
@@ -376,9 +376,11 @@
         <h6 class="">Imágenes de instalación</h6>
         <!-- Grid de imágenes de instalacion -->
         <div class="imagenes-grid">
-          @for (campo of ['fachada', 'router', 'potencia', 'ont', 'speedtest',
+          @for (campo of ['fachada', 'router', 'ont', 'potencia', 'speedtest',
           'cable_1', 'cable_2', 'equipo_1', 'equipo_2', 'equipo_3']; track
-          campo) { @if (imagenesInstalacion[campo]) {
+          campo) { @if ( imagenesInstalacion[campo] &&
+          imagenesInstalacion[campo].ruta !== 'null' &&
+          imagenesInstalacion[campo].url !== 'undefined/imagenes/null' ) {
           <div class="col-6 col-md-3 col-lg-2">
             <div class="card shadow-sm border rounded">
               <div class="card-body p-2 text-center">
@@ -399,6 +401,7 @@
     </div>
   </div>
 </div>
+
 <!-- Modal Imagen Ampliada -->
 <div
   class="modal fade"
