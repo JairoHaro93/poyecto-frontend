@@ -28,13 +28,27 @@ export class VisService {
     );
   }
 
+  //OBTIENE UNA LISTA CON TODOS LAS VISITAS DE UNA ORDINS
+  //router.get("/visitas/:ord_ins", checkToken, getAllVisByOrdIns);
+  getAllVisByOrdIns(ord_ins: number): Promise<IVis[]> {
+    return firstValueFrom(
+      this.httpClient.get<IVis[]>(`${this.baseUrl}/visitas/${ord_ins}`, {
+        withCredentials: true,
+      })
+    );
+  }
+
   //ACTUALIZA UN LOS
   //router.put("/:id_vis", checkToken, updateVisById);
-  updateVisById(id_vis: number, estado: string): Promise<IVis> {
+  updateVisById(
+    id_vis: number,
+    estado: string,
+    solucion: string
+  ): Promise<IVis> {
     return firstValueFrom(
       this.httpClient.put<IVis>(
         `${this.baseUrl}/${id_vis}`,
-        { vis_estado: estado },
+        { vis_estado: estado, vis_solucion: solucion },
         { withCredentials: true } // ✅ Esto va como tercer parámetro
       )
     );

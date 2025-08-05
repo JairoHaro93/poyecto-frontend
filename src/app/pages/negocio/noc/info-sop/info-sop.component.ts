@@ -15,6 +15,8 @@ import { SoketService } from '../../../../services/socket_io/soket.service';
 import { ImagenesService } from '../../../../services/negocio_latacunga/imagenes.service';
 import { Modal } from 'bootstrap';
 import { VisService } from '../../../../services/negocio_latacunga/vis.service';
+import { IVis } from '../../../../interfaces/negocio/vis/vis.interface';
+import { IVisConImagenes } from '../../../../interfaces/negocio/imagenes/imagenes.interface';
 
 @Component({
   selector: 'app-info-sop',
@@ -50,6 +52,10 @@ export class InfoSopComponent {
 
   imagenesInstalacion: { [key: string]: { ruta: string; url: string } } = {};
 
+  imagenesVisitas: IVisConImagenes[] = [];
+
+  //imagenesVisitas: IVis[] = [];
+
   private socketService = inject(SoketService);
 
   async ngOnInit() {
@@ -65,6 +71,7 @@ export class InfoSopComponent {
 
       await this.cargarSoporte(this.id_sop, this.ord_Ins);
       this.cargarImagenesInstalacion('neg_t_instalaciones', this.ord_Ins);
+      await this.cargarImagenesVisitas('neg_t_vis', this.ord_Ins);
     });
   }
 
@@ -82,6 +89,20 @@ export class InfoSopComponent {
         this.imagenesInstalacion = {};
       },
     });
+  }
+
+  private async cargarImagenesVisitas(
+    tabla: string,
+    ord_Ins: string
+  ): Promise<void> {
+    try {
+      this.imagenesVisitas =
+        await this.imagenesService.getImagenesVisitasByOrdIns(tabla, ord_Ins);
+      console.log(this.imagenesVisitas);
+    } catch (err) {
+      console.error('❌ Error cargando imágenes de visitas:', err);
+      this.imagenesVisitas = [];
+    }
   }
 
   async cargarSoporte(id: number, ord_ins: number): Promise<void> {

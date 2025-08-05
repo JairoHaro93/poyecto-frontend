@@ -150,7 +150,11 @@ export class AgendatecnicosComponent {
       let vis_estado = 'RESUELTO';
       await this.agendaService.actualizarAgendaSolucuion(body.id, body);
       if (this.trabajoAgenda.age_tipo !== 'INSTALACION') {
-        await this.visService.updateVisById(this.trabajoTabla.id, vis_estado);
+        await this.visService.updateVisById(
+          this.trabajoTabla.id,
+          vis_estado,
+          this.trabajoAgenda.age_solucion
+        );
 
         await this.soporteService.actualizarEstadoSop(
           this.trabajoAgenda.age_id_sop,

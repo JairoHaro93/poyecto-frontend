@@ -2,6 +2,7 @@ import { inject, Injectable } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { HttpClient } from '@angular/common/http';
+import { IVisConImagenes } from '../../interfaces/negocio/imagenes/imagenes.interface';
 
 @Injectable({
   providedIn: 'root',
@@ -13,6 +14,18 @@ export class ImagenesService {
   getImagenesPorTrabajo(tabla: string, trabajo_id: string) {
     const url = `${this.baseUrl}/download/${tabla}/${trabajo_id}`;
     return this.httpClient.get<any>(url);
+  }
+
+  getImagenesVisitasByOrdIns(
+    tabla: string,
+    ord_ins: string
+  ): Promise<IVisConImagenes[]> {
+    return firstValueFrom(
+      this.httpClient.get<IVisConImagenes[]>(
+        `${this.baseUrl}/downloadvisitas/${tabla}/${ord_ins}`,
+        { withCredentials: true }
+      )
+    );
   }
 
   postImagenesPorTrabajo(
