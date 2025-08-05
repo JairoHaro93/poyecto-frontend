@@ -199,7 +199,7 @@ export class AgendatecnicosComponent {
   }
 
   private cargarImagenesInstalacion(tabla: string, ord_ins: string): void {
-    this.imagenesService.getImagenesPorTrabajo(tabla, ord_ins).subscribe({
+    this.imagenesService.getImagenesByTableAndId(tabla, ord_ins).subscribe({
       next: (res: any) => {
         if (res?.imagenes) {
           this.imagenesInstalacion = res.imagenes;
@@ -215,7 +215,7 @@ export class AgendatecnicosComponent {
   }
 
   private cargarImagenesVisita(tabla: string, ord_ins: string): void {
-    this.imagenesService.getImagenesPorTrabajo(tabla, ord_ins).subscribe({
+    this.imagenesService.getImagenesByTableAndId(tabla, ord_ins).subscribe({
       next: (res: any) => {
         if (res?.imagenes) {
           this.imagenesVisita = res.imagenes;
@@ -314,7 +314,7 @@ export class AgendatecnicosComponent {
     const directorio = this.trabajoAgenda.ord_ins;
 
     this.imagenesService
-      .postImagenesPorTrabajo(tabla, id, campo, archivo, directorio)
+      .postImagenUnitaria(tabla, id, campo, archivo, directorio)
       .subscribe({
         next: (res) => {
           console.log('✅ Imagen subida:', res);
@@ -356,7 +356,7 @@ export class AgendatecnicosComponent {
     }
 
     this.imagenesService
-      .postImagenesPorTrabajo(tabla, id, campo, imagen, directorio)
+      .postImagenUnitaria(tabla, id, campo, imagen, directorio)
       .subscribe({
         next: () => {
           console.log(`✅ Imagen ${campo} subida con éxito`);
@@ -385,7 +385,7 @@ export class AgendatecnicosComponent {
     let tabla = 'neg_t_instalaciones';
 
     this.imagenesService
-      .postImagenesPorTrabajo(tabla, id, campo, archivo, directorio)
+      .postImagenUnitaria(tabla, id, campo, archivo, directorio)
       .subscribe({
         next: (res) => {
           console.log(`✅ Imagen ${campo} subida con éxito`);

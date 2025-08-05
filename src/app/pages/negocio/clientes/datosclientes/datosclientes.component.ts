@@ -137,7 +137,7 @@ export class DatosclientesComponent {
   }
 
   private cargarImagenesInstalacion(tabla: string, ord_Ins: string): void {
-    this.imagenesService.getImagenesPorTrabajo(tabla, ord_Ins).subscribe({
+    this.imagenesService.getImagenesByTableAndId(tabla, ord_Ins).subscribe({
       next: (res: any) => {
         if (res?.imagenes) {
           this.imagenesInstalacion = res.imagenes;

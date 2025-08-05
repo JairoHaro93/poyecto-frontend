@@ -11,12 +11,16 @@ export class ImagenesService {
   private baseUrl: string = `${environment.API_URL}/imagenes`;
   private httpClient = inject(HttpClient);
 
-  getImagenesPorTrabajo(tabla: string, trabajo_id: string) {
+  //OBTENER LAS IMAGANES DE UNA INSTALACION
+  //router.get("/download/:tabla/:id", obtenerImagenesPorTrabajo);
+  getImagenesByTableAndId(tabla: string, trabajo_id: string) {
     const url = `${this.baseUrl}/download/${tabla}/${trabajo_id}`;
     return this.httpClient.get<any>(url);
   }
 
-  getImagenesVisitasByOrdIns(
+  //OBTENER TODAS LAS VISITAS POR ORD_INS
+  //router.get("/downloadvisitas/:tabla/:ord_ins", obtenerImagenesVisitasByOrdIns);
+  getArrayAllInfoVisitasByTableAndId(
     tabla: string,
     ord_ins: string
   ): Promise<IVisConImagenes[]> {
@@ -28,7 +32,9 @@ export class ImagenesService {
     );
   }
 
-  postImagenesPorTrabajo(
+  //SUBE IMAGENES
+  //router.post("/upload", upload.single("imagen"), subirImagenUnitaria);
+  postImagenUnitaria(
     tabla: string,
     id: string | number,
     campo: string,

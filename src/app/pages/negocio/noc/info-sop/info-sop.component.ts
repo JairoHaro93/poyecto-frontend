@@ -54,8 +54,6 @@ export class InfoSopComponent {
 
   imagenesVisitas: IVisConImagenes[] = [];
 
-  //imagenesVisitas: IVis[] = [];
-
   private socketService = inject(SoketService);
 
   async ngOnInit() {
@@ -76,7 +74,7 @@ export class InfoSopComponent {
   }
 
   private cargarImagenesInstalacion(tabla: string, ord_Ins: string): void {
-    this.imagenesService.getImagenesPorTrabajo(tabla, ord_Ins).subscribe({
+    this.imagenesService.getImagenesByTableAndId(tabla, ord_Ins).subscribe({
       next: (res: any) => {
         if (res?.imagenes) {
           this.imagenesInstalacion = res.imagenes;
@@ -97,7 +95,10 @@ export class InfoSopComponent {
   ): Promise<void> {
     try {
       this.imagenesVisitas =
-        await this.imagenesService.getImagenesVisitasByOrdIns(tabla, ord_Ins);
+        await this.imagenesService.getArrayAllInfoVisitasByTableAndId(
+          tabla,
+          ord_Ins
+        );
       console.log(this.imagenesVisitas);
     } catch (err) {
       console.error('❌ Error cargando imágenes de visitas:', err);

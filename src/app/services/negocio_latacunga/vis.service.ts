@@ -11,7 +11,8 @@ export class VisService {
   private baseUrl: string = `${environment.API_URL}/vis`;
   private httpClient = inject(HttpClient);
 
-  // ✅ Método para crear un Vis (retorna una Promesa con la respuesta del backend)
+  //CREA UNA VISITA
+  //router.post("/", checkToken, createVis);
   createVis(body: IVis): Promise<IVis> {
     return firstValueFrom(
       this.httpClient.post<IVis>(this.baseUrl, body, {
@@ -20,6 +21,8 @@ export class VisService {
     );
   }
 
+  //OBTIENE UNA VISITA POR ID
+  //router.get("/:id_vis", checkToken, getVisById);
   getVisById(id_vis: number): Promise<IVis> {
     return firstValueFrom(
       this.httpClient.get<IVis>(`${this.baseUrl}/${id_vis}`, {
@@ -28,17 +31,7 @@ export class VisService {
     );
   }
 
-  //OBTIENE UNA LISTA CON TODOS LAS VISITAS DE UNA ORDINS
-  //router.get("/visitas/:ord_ins", checkToken, getAllVisByOrdIns);
-  getAllVisByOrdIns(ord_ins: number): Promise<IVis[]> {
-    return firstValueFrom(
-      this.httpClient.get<IVis[]>(`${this.baseUrl}/visitas/${ord_ins}`, {
-        withCredentials: true,
-      })
-    );
-  }
-
-  //ACTUALIZA UN LOS
+  //ACTUALIZA UNA VISITA
   //router.put("/:id_vis", checkToken, updateVisById);
   updateVisById(
     id_vis: number,
@@ -49,7 +42,7 @@ export class VisService {
       this.httpClient.put<IVis>(
         `${this.baseUrl}/${id_vis}`,
         { vis_estado: estado, vis_solucion: solucion },
-        { withCredentials: true } // ✅ Esto va como tercer parámetro
+        { withCredentials: true }
       )
     );
   }

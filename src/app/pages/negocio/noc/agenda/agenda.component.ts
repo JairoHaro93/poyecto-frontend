@@ -467,7 +467,7 @@ export class AgendaComponent {
   }
 
   private cargarImagenesInstalacion(tabla: string, ord_Ins: string): void {
-    this.imagenesService.getImagenesPorTrabajo(tabla, ord_Ins).subscribe({
+    this.imagenesService.getImagenesByTableAndId(tabla, ord_Ins).subscribe({
       next: (res: any) => {
         if (res?.imagenes) {
           this.imagenesInstalacion = res.imagenes;
@@ -483,7 +483,7 @@ export class AgendaComponent {
   }
 
   private cargarImagenesVisita(tabla: string, age_id_sop: string): void {
-    this.imagenesService.getImagenesPorTrabajo(tabla, age_id_sop).subscribe({
+    this.imagenesService.getImagenesByTableAndId(tabla, age_id_sop).subscribe({
       next: (res: any) => {
         if (res?.imagenes) {
           this.imagenesVisita = res.imagenes;
