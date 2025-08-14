@@ -4,36 +4,51 @@
     class="container m-3 border border-1 border-black p-2 datos_generales shadow"
   >
     <h3>REGISTRAR SOPORTE</h3>
-    <!-- Campo de búsqueda por nombre -->
-    <!-- Campo de búsqueda por nombre -->
+
+    <!-- Campo de búsqueda por nombre (server-side, mínimo 2 letras) -->
     <div class="mb-3 d-flex gap-2 align-items-center">
       <label for="cliente-input" style="min-width: 100px">Nombre</label>
-      <input
-        id="cliente-input"
-        type="text"
-        class="form-control"
-        [(ngModel)]="busqueda"
-        (input)="actualizarSugerencias()"
-        (change)="buscarClienteSeleccionado()"
-        placeholder="Ingrese el nombre del cliente"
-        style="width: 100%; max-width: 500px"
-      />
-    </div>
 
-    <!-- Lista personalizada de sugerencias -->
-    <!-- Lista personalizada de sugerencias -->
-    <div *ngIf="nombresFiltrados.length > 0" class="sugerencias">
-      <div
-        *ngFor="let nombre of nombresFiltrados"
-        (click)="seleccionarNombre(nombre)"
-        [ngClass]="{ selected: nombre === busqueda }"
-        class="sugerencia-item"
-      >
-        {{ nombre }}
+      <!-- Wrapper: alinea la lista justo debajo del input -->
+      <div class="sugerencias-wrap">
+        <input
+          id="cliente-input"
+          type="text"
+          class="form-control"
+          [formControl]="busquedaCtrl"
+          (keydown)="onNombreKeydown($event)"
+          (blur)="onInputBlur()"
+          (focus)="onInputFocus()"
+          placeholder="Ingrese el nombre del cliente"
+          style="width: 100%; max-width: 500px"
+          autocomplete="off"
+          [attr.aria-autocomplete]="'list'"
+          [attr.aria-expanded]="
+            showSugerencias && nombresFiltrados.length > 0 ? 'true' : 'false'
+          "
+          [attr.aria-controls]="'lista-sugerencias'"
+        />
+
+        @if (showSugerencias && nombresFiltrados.length > 0) {
+        <div id="lista-sugerencias" class="sugerencias" role="listbox">
+          @for (c of nombresFiltrados; track c.cedula; let i = $index) {
+          <div
+            role="option"
+            [attr.aria-selected]="i === highlightedIndex"
+            class="sugerencia-item"
+            [class.active]="i === highlightedIndex"
+            (mouseenter)="highlightedIndex = i"
+            (mousedown)="seleccionarNombre(c)"
+          >
+            {{ c.nombre_completo }}
+          </div>
+          }
+        </div>
+        }
       </div>
     </div>
 
-    <!-- Campo de búsqueda por cédula (sin sugerencias) -->
+    <!-- Campo de búsqueda por cédula (directo) -->
     <div class="mb-3 d-flex gap-2 align-items-center">
       <label for="cliente-cedula-input" style="min-width: 100px">Cédula</label>
       <input
@@ -42,18 +57,16 @@
         class="form-control"
         [(ngModel)]="busquedaCedula"
         (change)="buscarClientePorCedula()"
+        (keyup.enter)="buscarClientePorCedula()"
         placeholder="Ingrese la cédula del cliente"
         style="width: 100%; max-width: 500px"
       />
     </div>
   </section>
 
-  <!-- Mostrar la información de los servicios del cliente seleccionado -->
-  <!-- Mostrar la información de los servicios del cliente seleccionado -->
-  <section
-    class="container"
-    *ngIf="clienteSeleccionado && clienteSeleccionado.servicios?.length"
-  >
+  <!-- Servicios del cliente seleccionado -->
+  @if (clienteSeleccionado && clienteSeleccionado.servicios.length) {
+  <section class="container">
     <table border="2" class="table tabla-servicios">
       <thead>
         <tr class="custom-header">
@@ -69,10 +82,9 @@
         </tr>
       </thead>
       <tbody>
-        <tr
-          *ngFor="let servicio of clienteSeleccionado.servicios"
-          [ngClass]="{ 'selected-row': servicio === servicioSeleccionado }"
-        >
+        @for (servicio of clienteSeleccionado.servicios; track
+        servicio.orden_instalacion) {
+        <tr [ngClass]="{ 'selected-row': servicio === servicioSeleccionado }">
           <td class="align-items-center text-center">
             <input
               type="radio"
@@ -90,18 +102,17 @@
           <td class="text-nowrap">{{ servicio.cortado }}</td>
           <td class="text-nowrap">{{ servicio.servicio }}</td>
         </tr>
+        }
       </tbody>
     </table>
   </section>
+  }
 
-  <!-- Formulario OBSERVACIONES DEL SOPORTE-->
-
+  <!-- Formulario OBSERVACIONES DEL SOPORTE -->
   <form [formGroup]="SoporteForm2" (ngSubmit)="getDataForm2()">
-    <div
-      class="d-flex border-1 border border-black Observaciones shadow"
-      *ngIf="servicioSeleccionado"
-    >
-      <!-- Cuadro de estritura observaciones-->
+    @if (servicioSeleccionado) {
+    <div class="d-flex border-1 border border-black Observaciones shadow">
+      <!-- Observaciones -->
       <section class="container mt-3">
         <textarea
           id="observaciones"
@@ -111,7 +122,7 @@
           formControlName="reg_sop_coment_cliente"
         ></textarea>
       </section>
-      <!-- Radios y telefonos-->
+      <!-- Radios y teléfonos -->
       <section class="container d-flex justify-content-between">
         <div>
           <div class="form-check">
@@ -127,7 +138,6 @@
               >Sin servicio de Internet</label
             >
           </div>
-
           <div class="form-check">
             <input
               class="form-check-input"
@@ -141,7 +151,6 @@
               >Servicio Intermitente</label
             >
           </div>
-
           <div class="form-check">
             <input
               class="form-check-input"
@@ -155,7 +164,6 @@
               >Cambio de contraseña</label
             >
           </div>
-
           <div class="form-check">
             <input
               class="form-check-input"
@@ -169,7 +177,6 @@
               >Manipulación de equipos</label
             >
           </div>
-
           <div class="form-check">
             <input
               checked
@@ -204,6 +211,7 @@
         </div>
       </section>
     </div>
+    }
   </form>
 
   <!-- Soportes Pendientes -->

@@ -1,6 +1,6 @@
 import { inject, Injectable } from '@angular/core';
 import { environment } from '../../../environments/environment';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { lastValueFrom } from 'rxjs';
 import { Iclientes } from '../../interfaces/negocio/clientes/iclientes.interface';
 
@@ -11,20 +11,23 @@ export class ClientesService {
   private baseUrl: string = `${environment.API_URL}/clientes`;
   private httpClient = inject(HttpClient);
 
-  // NOMBRE COMPLETO Y CEDULA DE TODOS LOS CLIENTES
-  getInfoClientes() {
+  buscarClientesActivos(q: string, limit = 10) {
+    const params = new HttpParams().set('q', q).set('limit', String(limit));
     return lastValueFrom(
-      this.httpClient.get<[]>(`${this.baseUrl}`, {
-        withCredentials: true,
-      })
+      this.httpClient.get<{ cedula: string; nombre_completo: string }[]>(
+        `${this.baseUrl}/activos`,
+        { params, withCredentials: true }
+      )
     );
   }
 
-  getInfoClientesActivos() {
+  buscarClientes(q: string, limit = 10) {
+    const params = new HttpParams().set('q', q).set('limit', String(limit));
     return lastValueFrom(
-      this.httpClient.get<[]>(`${this.baseUrl}/activos`, {
-        withCredentials: true,
-      })
+      this.httpClient.get<{ cedula: string; nombre_completo: string }[]>(
+        `${this.baseUrl}`,
+        { params, withCredentials: true }
+      )
     );
   }
 

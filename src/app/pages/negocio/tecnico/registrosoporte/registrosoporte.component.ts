@@ -14,74 +14,124 @@ import { AutenticacionService } from '../../../../services/sistema/autenticacion
 import { SoportesService } from '../../../../services/negocio_latacunga/soportes.service';
 import Swal from 'sweetalert2';
 import { Router } from '@angular/router';
-import { io } from 'socket.io-client';
-import { environment } from '../../../../../environments/environment';
 import { Iusuarios } from '../../../../interfaces/sistema/iusuarios.interface';
 import { SoketService } from '../../../../services/socket_io/soket.service';
+
+// RxJS para búsqueda con debounce y server-side
+import {
+  debounceTime,
+  distinctUntilChanged,
+  filter,
+  map,
+  switchMap,
+  catchError,
+} from 'rxjs/operators';
+import { of, from } from 'rxjs';
+
+// Sugerencia: estructura mínima que devuelve /clientes/buscar
+interface ClienteSugerencia {
+  cedula: string;
+  nombre_completo: string;
+}
 
 @Component({
   selector: 'app-registrosoporte',
   standalone: true,
   imports: [FormsModule, CommonModule, ReactiveFormsModule],
   templateUrl: './registrosoporte.component.html',
-  styleUrl: './registrosoporte.component.css',
+  styleUrls: ['./registrosoporte.component.css'],
 })
 export class RegistrosoporteComponent {
-  clienteService = inject(ClientesService);
-  authService = inject(AutenticacionService);
-  soporteService = inject(SoportesService);
-  private router = inject(Router);
+  // Servicios inyectados
+  private readonly clienteService = inject(ClientesService);
+  private readonly authService = inject(AutenticacionService);
+  private readonly soporteService = inject(SoportesService);
+  private readonly router = inject(Router);
+  private readonly socketService = inject(SoketService);
 
-  clientelista: Iclientes[] = [];
+  // Estado
   soportesPendientes: Isoportes[] = [];
   SoporteForm2: FormGroup;
   datosUsuario!: Iusuarios;
 
-  // Conexión con Socket.IO
-
-  private socketService = inject(SoketService);
-
-  // Búsquedas
-  busqueda: string = '';
-  nombresFiltrados: string[] = [];
+  // Búsquedas (server-side)
+  busquedaCtrl = new FormControl<string>('', { nonNullable: true });
+  nombresFiltrados: ClienteSugerencia[] = [];
   busquedaCedula: string = '';
+  showSugerencias = false;
+  highlightedIndex = -1;
+
+  // Selección actual
   clienteSeleccionado: Iclientes | null = null;
-  servicioSeleccionado: any = null;
+  servicioSeleccionado: any = null; // TODO: tipar según interfaz de servicio
 
   @Output() nuevoSoporte: EventEmitter<Isoportes> = new EventEmitter();
 
   constructor() {
     this.SoporteForm2 = new FormGroup({
-      reg_sop_coordenadas: new FormControl(null, []),
-      ord_ins: new FormControl(null, []),
-      reg_sop_coment_cliente: new FormControl(null, []),
-      reg_sop_tel: new FormControl('', [
+      reg_sop_coordenadas: new FormControl<string | null>(null),
+      ord_ins: new FormControl<number | null>(null),
+      reg_sop_coment_cliente: new FormControl<string | null>(null),
+      reg_sop_tel: new FormControl<string>('', [
         Validators.required,
         Validators.pattern('^[0-9]{10,}$'),
       ]),
-      reg_sop_opc: new FormControl(null, [Validators.required]),
-      reg_sop_registrado_por_id: new FormControl('', []),
-      // reg_sop_nombre: new FormControl('', []),
+      reg_sop_opc: new FormControl<string | null>(null, [Validators.required]),
+      reg_sop_registrado_por_id: new FormControl<number | string>(''),
     });
   }
 
   async ngOnInit() {
     try {
-      this.clientelista = await this.clienteService.getInfoClientesActivos();
       this.datosUsuario = await this.authService.getUsuarioAutenticado();
       await this.cargarSoportesPendientes();
 
-      // 🔗 Ya no se crea un socket aquí, solo usamos el existente
+      this.busquedaCtrl.valueChanges
+        .pipe(
+          map((v) => (v ?? '').trim()),
+          debounceTime(250),
+          distinctUntilChanged(),
+          switchMap((v) => {
+            if (v.length < 2) {
+              // limpiar todo lo relacionado al cliente cuando se borra
+              this.clearClienteRelacionado();
+              this.nombresFiltrados = [];
+              this.showSugerencias = false;
+              this.highlightedIndex = -1;
+              return of([] as ClienteSugerencia[]);
+            }
+            return from(this.clienteService.buscarClientesActivos(v, 10)).pipe(
+              catchError(() => of([] as ClienteSugerencia[]))
+            );
+          })
+        )
+        .subscribe((list) => {
+          this.nombresFiltrados = list;
+          this.showSugerencias = list.length > 0;
+          this.highlightedIndex = list.length ? 0 : -1;
+        });
+
+      // Escucha de actualizaciones por Socket.IO (usando servicio compartido)
       this.socketService.on('actualizarSoportes', async () => {
-        console.log(
-          '🔄 Recibiendo actualización de soportes en RegistrosoporteComponent'
-        );
         await this.cargarSoportesPendientes();
       });
     } catch (error) {
-      console.error('❌ Error al iniciar RegistroSoporteComponent:', error);
+      console.error('❌ Error al iniciar RegistrosoporteComponent:', error);
       this.router.navigateByUrl('/login');
     }
+  }
+
+  private clearClienteRelacionado() {
+    this.busquedaCedula = '';
+    this.clienteSeleccionado = null;
+    this.servicioSeleccionado = null;
+    // limpiar campos derivados de la selección
+    this.SoporteForm2.patchValue({ ord_ins: null });
+    // Si quieres, también limpia observaciones/teléfono:
+    this.SoporteForm2.patchValue({
+      reg_sop_coment_cliente: null,
+      reg_sop_tel: '',
+    });
   }
 
   async cargarSoportesPendientes() {
@@ -91,95 +141,97 @@ export class RegistrosoporteComponent {
   async getDataForm2() {
     if (this.SoporteForm2.valid) {
       this.SoporteForm2.patchValue({
-        //reg_sop_nombre: this.clienteSeleccionado?.nombre_completo,
         ord_ins: this.servicioSeleccionado?.orden_instalacion || null,
-
         reg_sop_registrado_por_id: this.datosUsuario.id,
       });
 
-      console.log('Formulario válido:', this.SoporteForm2.value);
-
       const SoporteData = this.SoporteForm2.value;
       try {
-        const response = await this.soporteService.createSop(SoporteData);
+        await this.soporteService.createSop(SoporteData);
         Swal.fire('Realizado', 'Orden de Soporte Creado', 'success');
 
-        // ✅ Emitir evento de soporte creado a través del SoketService
+        // Emitir evento de soporte creado
         this.socketService.emit('soporteCreado');
 
         await this.cargarSoportesPendientes();
         this.resetDatosGenerales();
       } catch ({ error }: any) {
-        Swal.fire('Error guardando soporte', error.message, 'error');
+        Swal.fire(
+          'Error guardando soporte',
+          error?.message || 'Error',
+          'error'
+        );
       }
     } else {
-      console.log('Formulario inválido, revise los campos.');
       this.SoporteForm2.markAllAsTouched();
     }
   }
 
   resetDatosGenerales() {
-    this.busqueda = '';
-    this.busquedaCedula = '';
+    this.busquedaCtrl.setValue('');
     this.nombresFiltrados = [];
-    this.clienteSeleccionado = null;
-    this.servicioSeleccionado = null;
+    this.showSugerencias = false;
+    this.highlightedIndex = -1;
+    this.clearClienteRelacionado();
     this.SoporteForm2.reset();
   }
 
-  // Métodos de búsqueda y selección de clientes
-  actualizarSugerencias() {
-    const texto = this.busqueda.trim().toLowerCase();
-    this.nombresFiltrados = texto
-      ? this.clientelista
-          .map((c) => c.nombre_completo)
-          .filter((nombre) => nombre.toLowerCase().includes(texto))
-      : [];
+  // Selección desde sugerencias {cedula, nombre_completo}
+  async seleccionarNombre(c: ClienteSugerencia) {
+    this.busquedaCtrl.setValue(c.nombre_completo, { emitEvent: false });
+    this.busquedaCedula = c.cedula;
+    this.nombresFiltrados = [];
+    this.showSugerencias = false;
+    this.highlightedIndex = -1;
+    await this.cargarDetalleClientePorCedula();
   }
 
-  // Cuando selecciona un nombre
-  async buscarClienteSeleccionado() {
-    const cliente = this.clientelista.find(
-      (c) =>
-        c.nombre_completo.trim().toLowerCase() ===
-        this.busqueda.trim().toLowerCase()
-    );
+  onNombreKeydown(event: KeyboardEvent) {
+    if (!this.showSugerencias || this.nombresFiltrados.length === 0) return;
 
-    if (cliente) {
-      this.busquedaCedula = cliente.cedula;
-      this.nombresFiltrados = [];
-
-      // 🔁 Carga los detalles como en búsqueda por cédula
-      await this.cargarDetalleClientePorCedula();
-    } else {
-      this.busquedaCedula = '';
-      this.clienteSeleccionado = null;
-      this.servicioSeleccionado = null;
+    switch (event.key) {
+      case 'ArrowDown':
+        this.highlightedIndex =
+          (this.highlightedIndex + 1) % this.nombresFiltrados.length;
+        event.preventDefault();
+        break;
+      case 'ArrowUp':
+        this.highlightedIndex =
+          (this.highlightedIndex + this.nombresFiltrados.length - 1) %
+          this.nombresFiltrados.length;
+        event.preventDefault();
+        break;
+      case 'Enter':
+        if (this.highlightedIndex >= 0) {
+          this.seleccionarNombre(this.nombresFiltrados[this.highlightedIndex]);
+          event.preventDefault();
+        }
+        break;
+      case 'Escape':
+        this.showSugerencias = false;
+        this.highlightedIndex = -1;
+        event.preventDefault();
+        break;
     }
   }
 
-  // Cuando ingresa una cédula
+  onInputBlur() {
+    // Da tiempo a que haga click en una sugerencia antes de ocultar
+    setTimeout(() => (this.showSugerencias = false), 150);
+  }
+
+  onInputFocus() {
+    const v = (this.busquedaCtrl.value ?? '').trim();
+    if (v.length >= 2 && this.nombresFiltrados.length > 0) {
+      this.showSugerencias = true;
+    }
+  }
+
+  // Búsqueda directa por cédula
   async buscarClientePorCedula() {
     const cedulaBuscada = this.busquedaCedula.trim();
-    const cliente = this.clientelista.find((c) => c.cedula === cedulaBuscada);
-
-    if (cliente) {
-      this.busqueda = cliente.nombre_completo;
-      this.nombresFiltrados = [];
-
-      // 🔁 Llama al servicio para cargar detalles del cliente
-      await this.cargarDetalleClientePorCedula();
-    } else {
-      this.busqueda = '';
-      this.clienteSeleccionado = null;
-      this.servicioSeleccionado = null;
-    }
-  }
-
-  async seleccionarNombre(nombre: string) {
-    this.busqueda = nombre;
-    this.buscarClienteSeleccionado();
-    this.nombresFiltrados = [];
+    if (!cedulaBuscada) return;
+    await this.cargarDetalleClientePorCedula();
   }
 
   // Carga el detalle completo del cliente por su cédula
@@ -191,19 +243,17 @@ export class RegistrosoporteComponent {
       const detalle = await this.clienteService.getInfoClientesArrayActivos(
         cedula
       );
-      console.log('Detalle recibido:', detalle);
-
-      if (detalle.servicios.length > 0) {
+      if (detalle?.servicios?.length > 0) {
         this.clienteSeleccionado = detalle;
         this.servicioSeleccionado = detalle.servicios[0];
 
-        console.log('Servicios cargados:', this.clienteSeleccionado.servicios);
-        console.log(
-          'Servicio seleccionado:',
-          this.servicioSeleccionado?.orden_instalacion
-        );
-
-        this.busqueda = this.clienteSeleccionado.nombre_completo;
+        // ⬇️ Autollenar nombre y cerrar sugerencias
+        this.busquedaCtrl.setValue(detalle.nombre_completo, {
+          emitEvent: false,
+        });
+        this.nombresFiltrados = [];
+        this.showSugerencias = false;
+        this.highlightedIndex = -1;
       } else {
         this.clienteSeleccionado = null;
         this.servicioSeleccionado = null;
@@ -216,11 +266,6 @@ export class RegistrosoporteComponent {
   copyIp(ip: string): void {
     navigator.clipboard
       .writeText(ip)
-      .then(() => {
-        console.log('IP copiada al portapapeles');
-      })
-      .catch((err) => {
-        console.error('Error al copiar IP: ', err);
-      });
+      .catch((err) => console.error('Error al copiar IP: ', err));
   }
 }

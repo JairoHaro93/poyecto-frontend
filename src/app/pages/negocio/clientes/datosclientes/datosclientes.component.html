@@ -1,38 +1,57 @@
 <main>
   <!-- Datos generales -->
   <section
-    class="container m-3 border border-1 border-black datos_generales shadow"
+    class="container m-3 border border-1 border-black p-2 datos_generales shadow"
   >
-    <h4>Datos Generales</h4>
-    <!-- Campo de búsqueda por nombre -->
+    <h4>DATOS GENERALES</h4>
 
+    <!-- Campo de búsqueda por nombre (server-side, mínimo 2 letras) -->
     <div class="mb-3 d-flex gap-2 align-items-center">
       <label for="cliente-input" style="min-width: 100px">Nombre</label>
-      <input
-        id="cliente-input"
-        type="text"
-        class="form-control"
-        [(ngModel)]="busqueda"
-        (input)="actualizarSugerencias()"
-        (change)="buscarClienteSeleccionado()"
-        placeholder="Ingrese el nombre del cliente"
-        style="width: 100%; max-width: 500px"
-      />
-    </div>
 
-    <!-- Lista personalizada de sugerencias -->
-    <div *ngIf="nombresFiltrados.length > 0" class="sugerencias">
-      <div
-        *ngFor="let nombre of nombresFiltrados"
-        (click)="seleccionarNombre(nombre)"
-        [ngClass]="{ selected: nombre === busqueda }"
-        class="sugerencia-item"
-      >
-        {{ nombre }}
+      <!-- Wrapper: alinea la lista justo debajo del input -->
+      <div class="sugerencias-wrap">
+        <input
+          id="cliente-input"
+          type="text"
+          class="form-control"
+          [formControl]="queryCtrl"
+          (keydown)="onNombreKeydown($event)"
+          (blur)="onNombreBlur()"
+          (focus)="onNombreFocus()"
+          placeholder="Ingrese el nombre del cliente"
+          style="width: 100%; max-width: 500px"
+          autocomplete="off"
+          [attr.aria-autocomplete]="'list'"
+          [attr.aria-expanded]="
+            showSugerencias && sugerencias.length > 0 ? 'true' : 'false'
+          "
+          [attr.aria-controls]="'lista-sug-clientes'"
+        />
+
+        <!-- Lista de sugerencias -->
+        <div
+          *ngIf="showSugerencias && sugerencias.length > 0"
+          id="lista-sug-clientes"
+          class="sugerencias"
+          role="listbox"
+        >
+          <div
+            *ngFor="let c of sugerencias; let i = index"
+            role="option"
+            [attr.aria-selected]="i === highlightedIndex"
+            class="sugerencia-item"
+            [class.active]="i === highlightedIndex"
+            (mouseenter)="highlightedIndex = i"
+            (mousedown)="seleccionarSugerencia(c)"
+          >
+            {{ c.nombre_completo }}
+          </div>
+        </div>
       </div>
     </div>
 
-    <!-- Campo de búsqueda por cédula (sin sugerencias) -->
+    <!-- Campo de búsqueda por cédula (directo) -->
     <div class="mb-3 d-flex gap-2 align-items-center">
       <label for="cliente-cedula-input" style="min-width: 100px">Cédula</label>
       <input
@@ -41,6 +60,7 @@
         class="form-control"
         [(ngModel)]="busquedaCedula"
         (change)="buscarClientePorCedula()"
+        (keyup.enter)="buscarClientePorCedula()"
         placeholder="Ingrese la cédula del cliente"
         style="width: 100%; max-width: 500px"
       />

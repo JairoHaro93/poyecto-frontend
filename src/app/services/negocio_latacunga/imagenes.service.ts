@@ -11,15 +11,15 @@ export class ImagenesService {
   private baseUrl: string = `${environment.API_URL}/imagenes`;
   private httpClient = inject(HttpClient);
 
-  //OBTENER LAS IMAGANES DE UNA INSTALACION
-  //router.get("/download/:tabla/:id", obtenerImagenesPorTrabajo);
+  //OBTENER LAS IMAGENES DE LA INSTALACION O VISITA SEGUN NOMBRE TABLA Y UN ID
+  //router.get("/download/:tabla/:id", getImagenesByTableAndId);
   getImagenesByTableAndId(tabla: string, trabajo_id: string) {
     const url = `${this.baseUrl}/download/${tabla}/${trabajo_id}`;
     return this.httpClient.get<any>(url);
   }
 
-  //OBTENER TODAS LAS VISITAS POR ORD_INS
-  //router.get("/downloadvisitas/:tabla/:ord_ins", obtenerImagenesVisitasByOrdIns);
+  //OBTENER UN ARRAY CON LAS INFORMACION TODAS LAS VISITAS POR NOMBRE DE TABLA Y UNA ORD_INS
+  //router.get("/downloadvisitas/:tabla/:ord_ins",getArrayAllInfoVisitasByTableAndId);
   getArrayAllInfoVisitasByTableAndId(
     tabla: string,
     ord_ins: string

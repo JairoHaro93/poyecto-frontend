@@ -324,7 +324,7 @@ export class AgendaComponent {
 
   generarHorarios() {
     const inicio = 8 * 60;
-    const fin = 18 * 60;
+    const fin = 21 * 60;
     const paso = 15; // PASO EN MINUTOS
     this.horarios = [];
     this.agendaAsignada = {};

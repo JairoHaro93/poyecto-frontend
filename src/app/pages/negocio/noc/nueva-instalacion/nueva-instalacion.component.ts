@@ -61,7 +61,7 @@ export class NuevaInstalacionComponent {
         ord_ins: data.ord_ins,
         age_tipo: 'INSTALACION', // ✅ usa INSTALACION, no SOPORTE
         age_id_tipo: response.id,
-        age_diagnostico: 'Nueva Instalación',
+        age_diagnostico: data.observacion,
         age_coordenadas: data.coordenadas,
         age_telefono: data.telefonos,
       };
