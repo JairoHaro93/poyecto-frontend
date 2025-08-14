@@ -1,0 +1,107 @@
+<main class="container mt-4">
+  <form
+    [formGroup]="instalacionForm"
+    (ngSubmit)="submitForm()"
+    class="shadow p-4 bg-white rounded"
+  >
+    <h4 class="mb-3">Traslado Externo</h4>
+
+    <div class="mb-3">
+      <label>Orden de instalación</label>
+      <input type="text" formControlName="ord_ins" class="form-control" />
+      <p *ngIf="checkError('ord_ins', 'required')" class="text-danger">
+        Requerido
+      </p>
+    </div>
+
+    <!-- <div class="mb-3">
+      <label>Nombres</label>
+      <input
+        type="text"
+        formControlName="nombres"
+        class="form-control"
+        (input)="convertToUppercase('nombres')"
+      />
+      <p *ngIf="checkError('nombres', 'required')" class="text-danger">
+        Requerido
+      </p>
+    </div> -->
+
+    <!-- <div class="mb-3">
+      <label>Apellidos</label>
+      <input
+        type="text"
+        formControlName="apellidos"
+        class="form-control"
+        (input)="convertToUppercase('apellidos')"
+      />
+      <p *ngIf="checkError('apellidos', 'required')" class="text-danger">
+        Requerido
+      </p>
+    </div> -->
+
+    <!-- <div class="mb-3">
+      <label>Cédula</label>
+      <input type="text" formControlName="cedula" class="form-control" />
+      <p *ngIf="checkError('cedula', 'required')" class="text-danger">
+        Requerido
+      </p>
+      <p *ngIf="checkError('cedula', 'pattern')" class="text-danger">
+        Debe tener 10 dígitos
+      </p>
+    </div> -->
+    <!-- 
+    <div class="mb-3">
+      <label>Tipo</label>
+      <select class="form-select" formControlName="tipo">
+        <option value="FIBRA OPTICA">FIBRA OPTICA</option>
+        <option value="ANTENA">ANTENA</option>
+      </select>
+    </div> -->
+
+    <!-- <div class="mb-3">
+      <label>Plan</label>
+      <input type="text" formControlName="plan" class="form-control" />
+      <p *ngIf="checkError('plan', 'required')" class="text-danger">
+        Requerido
+      </p>
+    </div> -->
+
+    <div class="mb-3">
+      <label>Teléfonos</label>
+      <input type="text" formControlName="telefonos" class="form-control" />
+      <p *ngIf="checkError('telefonos', 'required')" class="text-danger">
+        Requerido
+      </p>
+    </div>
+
+    <div class="mb-3">
+      <label>Coordenadas</label>
+      <input type="text" formControlName="coordenadas" class="form-control" />
+      <p *ngIf="checkError('coordenadas', 'required')" class="text-danger">
+        Requerido
+      </p>
+    </div>
+
+    <label>Observacion</label>
+    <input
+      type="text"
+      formControlName="observacion"
+      class="form-control"
+      (input)="convertToUppercase('observacion')"
+    />
+    <p *ngIf="checkError('observacion', 'required')" class="text-danger">
+      Requerido
+    </p>
+
+    <div class="text-center">
+      <button
+        class="btn btn-primary"
+        type="submit"
+        [disabled]="!instalacionForm.valid"
+      >
+        Guardar Instalación
+      </button>
+    </div>
+  </form>
+</main>

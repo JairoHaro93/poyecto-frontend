@@ -193,6 +193,10 @@
           >
             Nueva Instalación
           </li>
+          }@if (arrNoc.includes("NTraslado Externo")) {
+          <li (click)="onClickMenu()" [routerLink]="['/home/noc/traslado-ext']">
+            Traslado Externo
+          </li>
           }
         </ul>
       </div>
