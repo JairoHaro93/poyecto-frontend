@@ -76,7 +76,7 @@ export class AgendaService {
     );
   }
 
-  actualizarAgendaSolucuion(id: number, body: Iagenda): Promise<any> {
+  actualizarAgendaSolucion(id: number, body: Iagenda): Promise<any> {
     return firstValueFrom(
       this.httpClient.put(`${this.baseUrl}/edita-sol/${id}`, body, {
         withCredentials: true,

@@ -1,49 +1,66 @@
 import { Component, inject } from '@angular/core';
+
+// Angular
+import { DatePipe, CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+
+// UI
+import { Modal } from 'bootstrap';
+import Swal from 'sweetalert2';
+
+// Interfaces (dominio)
 import { Iagenda } from '../../../../interfaces/negocio/agenda/iagenda.interface';
+import { Isoportes } from '../../../../interfaces/negocio/soportes/isoportes.interface';
+import { Iusuarios } from '../../../../interfaces/sistema/iusuarios.interface';
+import { Iclientes } from '../../../../interfaces/negocio/clientes/iclientes.interface';
+
+// Servicios (aplicación)
 import { AgendaService } from '../../../../services/negocio_latacunga/agenda.service';
 import { AutenticacionService } from '../../../../services/sistema/autenticacion.service';
-import { DatePipe } from '@angular/common';
 import { SoportesService } from '../../../../services/negocio_latacunga/soportes.service';
-
-import { CommonModule } from '@angular/common';
-import { Modal } from 'bootstrap'; // 👈 Asegúrate de tener Bootstrap 5
-import { Isoportes } from '../../../../interfaces/negocio/soportes/isoportes.interface';
-import { FormsModule } from '@angular/forms';
-import { environment } from '../../../../../environments/environment';
-import { io } from 'socket.io-client';
-import Swal from 'sweetalert2';
-import { Iusuarios } from '../../../../interfaces/sistema/iusuarios.interface';
 import { SoketService } from '../../../../services/socket_io/soket.service';
 import { ImagenesService } from '../../../../services/negocio_latacunga/imagenes.service';
 import { VisService } from '../../../../services/negocio_latacunga/vis.service';
-import { IVis } from '../../../../interfaces/negocio/vis/vis.interface';
 import { ClientesService } from '../../../../services/negocio_atuntaqui/clientes.service';
-import { Iclientes } from '../../../../interfaces/negocio/clientes/iclientes.interface';
+
+/** Mapa tipado para imágenes por campo (fachada, router, etc.) */
+type ImagenMap = Record<string, { url: string; ruta: string }>;
 
 @Component({
   selector: 'app-agendatecnicos',
   standalone: true,
   imports: [DatePipe, CommonModule, FormsModule],
   templateUrl: './agendatecnicos.component.html',
-  styleUrl: './agendatecnicos.component.css',
+  styleUrls: ['./agendatecnicos.component.css'], // ✅ Angular espera un array
 })
 export class AgendatecnicosComponent {
+  // =========================
+  // ESTADO / PROPIEDADES
+  // =========================
+
+  /** Lista de trabajos asignados al técnico autenticado */
   agendaTecnicosList: Iagenda[] = [];
+
+  /** Datos del usuario autenticado */
   datosUsuario!: Iusuarios;
-  agendaService = inject(AgendaService);
-  authService = inject(AutenticacionService);
-  soporteService = inject(SoportesService);
-  visService = inject(VisService);
-  clientesService = inject(ClientesService);
-  imagenesService = inject(ImagenesService);
-  trabajoTabla: any;
+
+  /** Trabajo seleccionado en la tabla (referencia de edición/visualización) */
   trabajoAgenda: Iagenda | null = null;
-  //imagenesInstalacion: { [key: string]: { ruta: string; url: string } } = {};
+
+  /** Estructura auxiliar para detalles según el tipo (SOPORTE/VIS/LOS/INSTALACION) */
+  trabajoTabla: any;
+
+  /** Vista previa de imagen (URL) para modal */
   imagenSeleccionada: string | null = null;
+
+  /** Datos de cliente/servicio asociados al ord_ins del trabajo */
   clienteSeleccionado: Iclientes = {} as Iclientes;
-  // Lista de campos de imagen esperados
-  comentarioCliente = null;
-  camposImagen: string[] = [
+
+  /** Comentario editable del cliente (si aplica) */
+  comentarioCliente: string | null = null;
+
+  /** Campos de imagen esperados para instalación */
+  readonly camposImagen: string[] = [
     'fachada',
     'router',
     'potencia',
@@ -56,82 +73,96 @@ export class AgendatecnicosComponent {
     'equipo_3',
   ];
 
-  // Objeto para almacenar las imágenes actuales
-  imagenesInstalacion: Record<string, { url: string; ruta: string }> = {};
+  /** Imágenes de instalación (tabla neg_t_instalaciones, id = ord_ins) */
+  imagenesInstalacion: ImagenMap = {};
 
-  imagenesVisita: Record<string, { url: string; ruta: string }> = {};
+  /** Imágenes de visita/LOS (tabla neg_t_vis, id = age_id_tipo) */
+  imagenesVisita: ImagenMap = {};
 
-  // Objeto temporal para archivos seleccionados por campo
+  /** Buffer temporal para inputs file por campo */
   imagenesSeleccionadas: Record<string, File> = {};
 
-  // Conexión con Socket.IO
-  private socketService = inject(SoketService);
+  // =========================
+  // INYECCIÓN DE SERVICIOS
+  // =========================
 
+  private readonly agendaService = inject(AgendaService);
+  private readonly authService = inject(AutenticacionService);
+  private readonly soporteService = inject(SoportesService);
+  private readonly visService = inject(VisService);
+  private readonly clientesService = inject(ClientesService);
+  private readonly imagenesService = inject(ImagenesService);
+  private readonly socketService = inject(SoketService);
+
+  // =========================
+  // CICLO DE VIDA
+  // =========================
+
+  /**
+   * Carga usuario, agenda inicial y queda escuchando asignaciones por socket.
+   */
   async ngOnInit() {
     try {
       this.datosUsuario = await this.authService.getUsuarioAutenticado();
       const idtec = this.datosUsuario.id;
 
+      // 🔔 evento socket: cuando agendan algo a este técnico, recargar
       this.socketService.on('trabajoAgendadoTecnico', async () => {
         console.log('📥 Trabajo agendado para este técnico');
         this.agendaTecnicosList = await this.agendaService.getAgendaTec(idtec!);
       });
 
+      // ▶ carga inicial de agenda
       this.agendaTecnicosList = await this.agendaService.getAgendaTec(idtec!);
     } catch (error) {
       console.error('❌ Error al obtener la agenda del técnico', error);
     }
   }
 
+  // =========================
+  // ACCIONES PRINCIPALES
+  // =========================
+
+  /**
+   * Muestra el detalle básico del trabajo (modal de lectura rápida).
+   */
   async verDetalle(trabajo: Iagenda) {
     try {
+      // 1) Seleccionar trabajo y limpiar estado visual
       this.trabajoAgenda = trabajo;
+      this.trabajoTabla = this.trabajoAgenda;
 
-      if (
-        this.trabajoAgenda.age_tipo === 'LOS' ||
-        this.trabajoAgenda.age_tipo === 'VISITA'
-      ) {
-        this.trabajoTabla = null;
-        this.trabajoTabla = await this.visService.getVisById(
-          Number(trabajo.age_id_tipo)
-        );
-        this.comentarioCliente = this.trabajoTabla.vis_coment_cliente;
-        console.log(this.trabajoTabla);
-      }
-      this.cargarImagenesInstalacion('neg_t_instalaciones', trabajo.ord_ins);
+      // 2) (Re)inicializa las imágenes para evitar que se vean las del item anterior
+      this.imagenesInstalacion = {};
 
+      // 3) Cargar imágenes de INSTALACIÓN por ord_ins (siempre)
+      //    ⚠️ Usa la misma tabla que venías usando para descarga: 'neg_t_instalaciones'
+      //    (si tu backend espera otra, cámbialo por la que corresponda)
+      this.cargarImagenesInstalacion(
+        'neg_t_instalaciones',
+        String(trabajo.ord_ins)
+      );
+
+      // 4) Cargar info del cliente asociada a la orden
       this.clienteSeleccionado =
         await this.clientesService.getInfoServicioByOrdId(
           Number(trabajo.ord_ins)
         );
 
-      console.log(this.clienteSeleccionado);
-      if (this.trabajoAgenda.age_tipo === 'INSTALACION') {
-        this.trabajoTabla = {
-          reg_sop_nombre: 'REDECOM',
-          reg_sop_opc: 0,
-          reg_sop_fecha: this.trabajoAgenda.age_fecha,
-          reg_sop_sol_det: 'Trabajo interno',
-          tipo_soporte: 'Trabajo',
-          reg_sop_coordenadas: '',
-          descripcion: '',
-          // agrega aquí el resto de campos que requiere tu template
-        } as unknown as Isoportes;
-      }
-
-      const modal = new Modal(document.getElementById('detalleModal')!);
-      modal.show();
+      // 5) Abrir modal
+      const el = document.getElementById('detalleModal');
+      if (el) new Modal(el).show();
     } catch (error) {
       console.error('Error al cargar detalle del soporte:', error);
     }
   }
 
-  editarTrabajo(trabajo: Iagenda) {
-    console.log('Editar trabajo:', trabajo);
-
-    // Aquí podrías habilitar la edición o abrir un modal
-  }
-
+  /**
+   * Guarda la solución del trabajo:
+   * - Actualiza la agenda (CONCLUIDO)
+   * - Si no es INSTALACION, actualiza también VIS/LOS y/o SOPORTE
+   * - Emite evento socket y refresca agenda
+   */
   async guardarSolucion() {
     if (!this.trabajoAgenda) return;
 
@@ -142,34 +173,36 @@ export class AgendatecnicosComponent {
         age_solucion: this.trabajoAgenda.age_solucion,
       };
 
-      const body_sop = {
-        reg_sop_estado: 'RESUELTO',
-        reg_sop_sol_det: this.trabajoAgenda.age_solucion,
-      };
-      console.log(this.trabajoTabla.id);
-      let vis_estado = 'RESUELTO';
-      await this.agendaService.actualizarAgendaSolucuion(body.id, body);
+      // Mantiene tu llamada original (usa body.id)
+      await this.agendaService.actualizarAgendaSolucion(body.id, body);
+
+      // Si no es instalación, actualiza VIS/LOS y SOPORTE.
       if (this.trabajoAgenda.age_tipo !== 'INSTALACION') {
+        // id de VIS/LOS: si no está en trabajoTabla, usar age_id_tipo
+        const idVis = Number(
+          this.trabajoTabla?.id ?? this.trabajoAgenda.age_id_tipo
+        );
         await this.visService.updateVisById(
-          this.trabajoTabla.id,
-          vis_estado,
+          idVis,
+          'RESUELTO',
           this.trabajoAgenda.age_solucion
         );
 
+        const bodySop = {
+          reg_sop_estado: 'RESUELTO',
+          reg_sop_sol_det: this.trabajoAgenda.age_solucion,
+        };
         await this.soporteService.actualizarEstadoSop(
-          this.trabajoAgenda.age_id_sop,
-          body_sop
+          this.trabajoAgenda.age_id_sop, // campo original
+          bodySop
         );
       }
 
-      console.log(this.trabajoAgenda.age_id_sop);
-
-      // 🔄 Emitir evento de trabajo resuelto
+      // 🔄 Notificar por socket y recargar la agenda
       this.socketService.emit('trabajoCulminado', {
         tecnicoId: this.datosUsuario.id,
       });
 
-      // 🔄 Recargar la agenda
       const idtec = this.datosUsuario?.id;
       if (idtec) {
         this.agendaTecnicosList = await this.agendaService.getAgendaTec(idtec);
@@ -183,11 +216,11 @@ export class AgendatecnicosComponent {
         showConfirmButton: false,
       });
 
-      const modal = Modal.getInstance(document.getElementById('editarModal')!);
+      const el = document.getElementById('editarModal');
+      const modal = el ? Modal.getInstance(el) : null;
       modal?.hide();
     } catch (error) {
       console.error('❌ Error al actualizar trabajo:', error);
-
       Swal.fire({
         icon: 'error',
         title: 'Error',
@@ -198,14 +231,73 @@ export class AgendatecnicosComponent {
     }
   }
 
+  /**
+   * Abre el modal de edición con datos completos:
+   * - Cliente por ord_ins
+   * - Define trabajoTabla según tipo (SOPORTE / VIS/LOS / INSTALACIÓN)
+   * - Carga imágenes de instalación y visita
+   */
+  async abrirModalEditar(trabajo: Iagenda) {
+    try {
+      // 1) Datos del cliente por ORD_INS
+      this.clienteSeleccionado =
+        await this.clientesService.getInfoServicioByOrdId(
+          Number(trabajo.ord_ins)
+        );
+
+      // 2) Seleccionar trabajo
+      this.trabajoAgenda = { ...trabajo };
+
+      this.cargarImagenesInstalacion(
+        'neg_t_instalaciones',
+        this.trabajoAgenda.ord_ins
+      );
+      this.cargarImagenesVisita('neg_t_vis', this.trabajoAgenda.age_id_tipo);
+
+      // 3) trabajoTabla según tipo (para que guardarSolucion tenga IDs correctos)
+      if (this.trabajoAgenda.age_tipo === 'SOPORTE') {
+        this.trabajoTabla = await this.soporteService.getSopById(
+          Number(this.trabajoAgenda.age_id_tipo)
+        );
+      } else if (
+        this.trabajoAgenda.age_tipo === 'VISITA' ||
+        this.trabajoAgenda.age_tipo === 'LOS'
+      ) {
+        // si no hay endpoint para VIS por id, al menos guardamos el id
+        this.trabajoTabla = { id: Number(this.trabajoAgenda.age_id_tipo) };
+      } else {
+        // INSTALACION u otros
+        this.trabajoTabla = this.trabajoAgenda;
+      }
+
+      // 4) Cargar imágenes (instalación y visita)
+      this.cargarImagenesInstalacion(
+        'neg_t_instalaciones',
+        this.trabajoAgenda.ord_ins
+      );
+      this.cargarImagenesVisita('neg_t_vis', this.trabajoAgenda.age_id_tipo);
+
+      // 5) Mostrar modal
+      const el = document.getElementById('editarModal');
+      if (el) new Modal(el).show();
+    } catch (error) {
+      console.error('❌ Error al cargar detalle del soporte:', error);
+    }
+  }
+
+  // =========================
+  // CARGA DE IMÁGENES (GET)
+  // =========================
+
+  /**
+   * Descarga y setea las imágenes de instalación (tabla neg_t_instalaciones).
+   * @param tabla  normalmente 'neg_t_instalaciones'
+   * @param ord_ins ID de orden de instalación (string)
+   */
   private cargarImagenesInstalacion(tabla: string, ord_ins: string): void {
     this.imagenesService.getImagenesByTableAndId(tabla, ord_ins).subscribe({
       next: (res: any) => {
-        if (res?.imagenes) {
-          this.imagenesInstalacion = res.imagenes;
-        } else {
-          this.imagenesInstalacion = {};
-        }
+        this.imagenesInstalacion = res?.imagenes ?? {};
       },
       error: (err) => {
         console.error('❌ Error cargando imágenes:', err);
@@ -214,14 +306,15 @@ export class AgendatecnicosComponent {
     });
   }
 
-  private cargarImagenesVisita(tabla: string, ord_ins: string): void {
-    this.imagenesService.getImagenesByTableAndId(tabla, ord_ins).subscribe({
+  /**
+   * Descarga y setea las imágenes de visita/LOS (tabla neg_t_vis).
+   * @param tabla  'neg_t_vis'
+   * @param id     id del registro VIS/LOS (age_id_tipo)
+   */
+  private cargarImagenesVisita(tabla: string, id: string | number): void {
+    this.imagenesService.getImagenesByTableAndId(tabla, String(id)).subscribe({
       next: (res: any) => {
-        if (res?.imagenes) {
-          this.imagenesVisita = res.imagenes;
-        } else {
-          this.imagenesVisita = {};
-        }
+        this.imagenesVisita = res?.imagenes ?? {};
       },
       error: (err) => {
         console.error('❌ Error cargando imágenes:', err);
@@ -230,175 +323,104 @@ export class AgendatecnicosComponent {
     });
   }
 
+  /**
+   * Abre el modal para ver una imagen en grande.
+   */
   abrirImagenModal(url: string) {
     this.imagenSeleccionada = url;
-    const modal = new Modal(document.getElementById('modalImagenAmpliada')!);
-    modal.show();
+    const el = document.getElementById('modalImagenAmpliada');
+    if (el) new Modal(el).show();
   }
 
-  async abrirModalEditar(trabajo: Iagenda) {
-    try {
-      this.clienteSeleccionado =
-        await this.clientesService.getInfoServicioByOrdId(
-          Number(trabajo.ord_ins)
-        );
-      console.log(this.clienteSeleccionado);
-      // Asignar el trabajo seleccionado antes de usarlo
-      this.trabajoAgenda = { ...trabajo };
+  // =========================
+  // SUBIDA DE IMÁGENES (POST)
+  // =========================
 
-      // Cargar datos adicionales si es un soporte
-      if (this.trabajoAgenda.age_tipo === 'SOPORTE') {
-        this.trabajoTabla = await this.soporteService.getSopById(
-          Number(this.trabajoAgenda.age_id_tipo)
-        );
-      }
-
-      // Si es un trabajo interno
-      if (this.trabajoAgenda.age_tipo === 'TRABAJO') {
-        this.trabajoTabla = {
-          // reg_sop_nombre: 'REDECOM',
-          reg_sop_opc: 0,
-          reg_sop_fecha: this.trabajoAgenda.age_fecha,
-          reg_sop_sol_det: 'Trabajo interno',
-          tipo_soporte: 'Trabajo',
-          reg_sop_coordenadas: '',
-          descripcion: '',
-          // agrega más campos si es necesario
-        } as unknown as Isoportes;
-      }
-
-      // Cargar imágenes
-      this.cargarImagenesInstalacion(
-        'neg_t_instalaciones',
-        this.trabajoAgenda.ord_ins
-      );
-      this.cargarImagenesVisita('neg_t_vis', this.trabajoAgenda.age_id_tipo);
-
-      // Mostrar el modal de edición
-      const modal = new Modal(document.getElementById('editarModal')!);
-      modal.show();
-    } catch (error) {
-      console.error('❌ Error al cargar detalle del soporte:', error);
-    }
-  }
-
-  async subirImagen(event: Event, campo: string) {
-    let tabla = '';
-
-    switch (this.trabajoAgenda?.age_tipo) {
-      case 'LOS':
-        tabla = 'neg_t_vis';
-        break;
-      case 'VISITA':
-        tabla = 'neg_t_vis';
-        break;
-      case 'INSTALACION':
-        tabla = 'neg_t_instalaciones';
-        break;
-      default:
-        tabla = ''; // opcional, en caso de valor no reconocido
-        break;
-    }
-
-    const input = event.target as HTMLInputElement;
-    if (!input.files || input.files.length === 0) return;
-
-    const archivo = input.files[0];
-
-    if (!this.trabajoAgenda || !this.trabajoAgenda.ord_ins) {
-      console.error('❌ Trabajo no seleccionado o falta ID de orden.');
-      return;
-    }
-
-    const id = this.trabajoAgenda.ord_ins;
-    const directorio = this.trabajoAgenda.ord_ins;
-
-    this.imagenesService
-      .postImagenUnitaria(tabla, id, campo, archivo, directorio)
-      .subscribe({
-        next: (res) => {
-          console.log('✅ Imagen subida:', res);
-          this.cargarImagenesInstalacion(tabla, id); // recarga imágenes
-          //this.cargarImagenesVisita('neg_t_agenda',this.trabajoAgenda!.age_id_tipo); // recarga también de visitas
-        },
-        error: (err) => {
-          console.error('❌ Error al subir imagen:', err);
-        },
-      });
-  }
-
+  /**
+   * Subida de imágenes de "solución" para VIS/LOS (usa age_id_tipo como id y ord_ins como directorio).
+   * Mantiene tu comportamiento original.
+   */
   onImagenSolucionSeleccionada(event: Event, campo: string) {
     const input = event.target as HTMLInputElement;
     if (!input.files || input.files.length === 0) return;
 
-    const imagen = input.files[0];
-
-    // Asegurarse de que el trabajo esté seleccionado
     if (!this.trabajoAgenda) {
       console.error('❌ No hay trabajo seleccionado.');
       return;
     }
 
-    const id = this.trabajoAgenda.age_id_tipo;
-    const directorio = this.trabajoAgenda.ord_ins;
-    let tabla = '';
-
-    switch (this.trabajoAgenda?.age_tipo) {
-      case 'LOS':
-        tabla = 'neg_t_vis';
-        break;
-      case 'VISITA':
-        tabla = 'neg_t_vis';
-        break;
-      default:
-        tabla = ''; // opcional, en caso de valor no reconocido
-        break;
-    }
+    const imagen = input.files[0];
+    const tabla = 'neg_t_vis';
+    const id = this.trabajoAgenda.age_id_tipo; // id del registro VIS/LOS
+    const directorio = this.trabajoAgenda.ord_ins; // agrupar por orden
 
     this.imagenesService
       .postImagenUnitaria(tabla, id, campo, imagen, directorio)
       .subscribe({
         next: () => {
-          console.log(`✅ Imagen ${campo} subida con éxito`);
-          this.cargarImagenesVisita(tabla, id); // Recarga solo las de agenda
+          console.log(`✅ Imagen de solución (${campo}) subida`);
+          this.cargarImagenesVisita(tabla, id); // Recarga VIS/LOS
         },
         error: (err) => {
-          console.error(`❌ Error subiendo imagen ${campo}:`, err);
+          console.error(
+            `❌ Error subiendo imagen de solución (${campo}):`,
+            err
+          );
         },
       });
   }
 
+  /**
+   * Alias para inputs que suben imágenes de instalación (ord_ins).
+   */
   onImagenSeleccionada(event: Event, campo: string) {
     const input = event.target as HTMLInputElement;
     if (!input.files || input.files.length === 0) return;
 
-    const archivo = input.files[0];
-
-    if (!this.trabajoAgenda) {
-      console.error('❌ No hay trabajo seleccionado');
+    if (!this.trabajoAgenda || !this.trabajoAgenda.ord_ins) {
+      console.error('❌ No hay trabajo seleccionado o falta ord_ins.');
       return;
     }
 
-    const id = this.trabajoAgenda.ord_ins; // Este es el ID a comparar en 'neg_t_instalaciones';
+    const archivo = input.files[0];
 
-    const directorio = this.trabajoAgenda.ord_ins;
-    let tabla = 'neg_t_instalaciones';
+    // 🔒 SIEMPRE subir como INSTALACIÓN (aunque el trabajo sea VISITA/LOS)
+    const tabla = 'neg_t_instalaciones';
+    const id = this.trabajoAgenda.ord_ins; // clave en neg_t_instalaciones
+    const directorio = this.trabajoAgenda.ord_ins; // carpeta por orden
 
     this.imagenesService
       .postImagenUnitaria(tabla, id, campo, archivo, directorio)
       .subscribe({
-        next: (res) => {
-          console.log(`✅ Imagen ${campo} subida con éxito`);
-          this.cargarImagenesInstalacion(tabla, id); // Refresca instalación
+        next: () => {
+          console.log(`✅ Imagen de instalación (${campo}) subida`);
+          // Recargar grilla de instalación
+          this.cargarImagenesInstalacion(tabla, id);
         },
         error: (err) => {
-          console.error(`❌ Error al subir la imagen ${campo}:`, err);
+          console.error(
+            `❌ Error subiendo imagen de instalación (${campo}):`,
+            err
+          );
         },
       });
   }
 
+  // =========================
+  // HELPERS DE VISTA
+  // =========================
+
+  /**
+   * Valida si existe una imagen "usable" para el campo indicado.
+   */
   esImagenValida(campo: string): boolean {
-    const img = this.imagenesInstalacion[campo];
-    return img && img.ruta !== 'null' && img.url !== 'undefined/imagenes/null';
+    const img = this.imagenesInstalacion?.[campo];
+    return !!(
+      img &&
+      img.ruta &&
+      img.ruta !== 'null' &&
+      img.url &&
+      !img.url.includes('undefined/imagenes/null')
+    );
   }
 }

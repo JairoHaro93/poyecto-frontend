@@ -5,7 +5,7 @@ import { RouterOutlet } from '@angular/router';
 @Component({
   selector: 'app-tecnico',
   standalone: true,
-  imports: [SidebarComponent, RouterOutlet],
+  imports: [RouterOutlet],
   templateUrl: './tecnico.component.html',
   styleUrl: './tecnico.component.css',
 })
