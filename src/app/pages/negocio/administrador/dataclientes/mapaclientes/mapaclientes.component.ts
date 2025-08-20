@@ -26,10 +26,15 @@ export class MapaclientesComponent {
   ngOnInit() {
     //api de geolocalizacion de js nativa
     navigator.geolocation.getCurrentPosition((position) => {
-      let center = new google.maps.LatLng(
+      //BUSCA POSICION AUTOMATICA DEL NAVEGADOR
+      /*   let center = new google.maps.LatLng(
         position.coords.latitude,
         position.coords.longitude
       );
+      this.myposition.set(center);*/
+
+      //MUESTRA UNA POSICION PREDETERMINADA
+      const center = new google.maps.LatLng(-0.937173, -78.616045);
       this.myposition.set(center);
     });
   }
