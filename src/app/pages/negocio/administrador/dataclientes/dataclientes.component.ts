@@ -28,6 +28,8 @@ export class DataclientesComponent {
   nombresFiltrados: string[] = [];
   cargando = false; // Nueva variable para la animación de carga
 
+  // Centro por defecto: (-0.939800, -78.616569)
+  private readonly DEFAULT_CENTER = { lat: -0.9398, lng: -78.616569 };
   async ngOnInit() {
     // Cargar Google Maps
     const script = document.createElement('script');
@@ -56,6 +58,8 @@ export class DataclientesComponent {
     }, 500);
   }
 
+  //FUNCION PARA BUSCAR LA GEOLOCALIZACION DEL NAVEGADOR
+  /*
   private initializeMap() {
     if (this.isGoogleMapsLoaded) {
       navigator.geolocation.getCurrentPosition((position) => {
@@ -67,6 +71,19 @@ export class DataclientesComponent {
         this.zoom.set(12);
       });
     }
+  }
+
+
+*/
+  private initializeMap() {
+    if (!this.isGoogleMapsLoaded) return;
+    // Usar centro por defecto
+    const center = new google.maps.LatLng(
+      this.DEFAULT_CENTER.lat,
+      this.DEFAULT_CENTER.lng
+    );
+    this.myposition.set(center);
+    this.zoom.set(12);
   }
 
   actualizarSugerencias() {
