@@ -15,4 +15,12 @@ export interface Isoportes {
   reg_sop_noc_id_acepta: number;
   reg_sop_sol_det: string;
   reg_sop_coordenadas: string;
+
+  // 🔽 Datos que se enriquecen desde SQL Server (batch endpoint)
+  clienteCedula?: string;
+  clienteNombre?: string;
+  clienteDireccion?: string;
+  clienteTelefonos?: string;
+  clientePlan?: string;
+  clienteIP?: string;
 }

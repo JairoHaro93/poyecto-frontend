@@ -10,13 +10,17 @@ import { UsuariosService } from '../../../../services/sistema/usuarios.service';
 import { Iusuarios } from '../../../../interfaces/sistema/iusuarios.interface';
 import { AgendaService } from '../../../../services/negocio_latacunga/agenda.service';
 import { Iagenda } from '../../../../interfaces/negocio/agenda/iagenda.interface';
-import { ClientesService } from '../../../../services/negocio_atuntaqui/clientes.service';
+import {
+  ClienteBatchItem,
+  ClientesService,
+} from '../../../../services/negocio_atuntaqui/clientes.service';
 
 import Swal from 'sweetalert2';
 import { AutenticacionService } from '../../../../services/sistema/autenticacion.service';
 import { SoketService } from '../../../../services/socket_io/soket.service';
 import { ImagenesService } from '../../../../services/negocio_latacunga/imagenes.service';
 import { Modal } from 'bootstrap';
+import { firstValueFrom } from 'rxjs';
 
 declare var bootstrap: any;
 
@@ -77,6 +81,8 @@ export class AgendaComponent {
     { codigo: 'R20', nombre: 'R20 MOTO ROJA' },
   ];
 
+  private clienteCache = new Map<string, ClienteBatchItem>();
+
   //private socket = io(`${environment.API_WEBSOKETS_IO}`); // Conexión con WebSocket
 
   async ngOnInit() {
@@ -92,13 +98,13 @@ export class AgendaComponent {
     // ✅ Escuchar solo eventos dirigidos
     this.socketService.on('trabajoAgendadoNOC', async () => {
       console.log('📥 trabajoAgendadoNOC recibido');
-      await this.cargarAgendaPorFecha();
+      await this.cargarAgendaPorFecha(); // ya llama enrich adentro
       await this.contarpendientes();
     });
 
     this.socketService.on('trabajoCulminadoNOC', async () => {
       console.log('📥 trabajoCulminadoNOC recibido');
-      await this.cargarAgendaPorFecha();
+      await this.cargarAgendaPorFecha(); // ya llama enrich adentro
       await this.contarpendientes();
     });
 
@@ -107,11 +113,67 @@ export class AgendaComponent {
       await this.contarpendientes();
       const preAgendaPrevio = this.preAgendaPendientesCount;
 
-      await this.cargarPreAgenda();
+      await this.cargarPreAgenda(); // ya llama enrich adentro
 
       if (this.preAgendaPendientesCount > preAgendaPrevio) {
         this.reproducirSonido();
       }
+    });
+  }
+
+  /**
+   * Enriquecer una lista de agenda (agendaList o preAgendaList) con datos del cliente
+   * en una sola llamada batch usando ord_ins.
+   * - No altera otras propiedades de los items.
+   * - Mantiene fallback a nombre_completo existente si no hay datos del batch.
+   */
+  private async enrichAgendaListBatch(lista: Iagenda[]): Promise<Iagenda[]> {
+    if (!Array.isArray(lista) || lista.length === 0) return lista;
+
+    // 1) ord_ins únicos y válidos
+    const ords = Array.from(
+      new Set(
+        lista
+          .map((it) => String(it?.ord_ins ?? '').trim())
+          .filter((v) => v.length > 0)
+      )
+    );
+
+    // 2) resolver faltantes (los que no están en cache)
+    const faltantes = ords.filter((k) => !this.clienteCache.has(k));
+
+    if (faltantes.length > 0) {
+      try {
+        const resp = await firstValueFrom(
+          this.clienteService.getClientesByOrdInsBatch(faltantes)
+        );
+        for (const row of resp ?? []) {
+          this.clienteCache.set(String(row.orden_instalacion), row);
+        }
+      } catch (e) {
+        console.error('❌ Error batch clientes:', e);
+      }
+    }
+
+    // 3) merge de datos enriquecidos
+    return lista.map((item) => {
+      const info = this.clienteCache.get(String(item?.ord_ins ?? ''));
+      return {
+        ...item,
+        // muestra el nombre enriquecido si existe; sino el que ya tenías; sino '---'
+        nombre_completo: info?.nombre_completo ?? item.nombre_completo ?? '---',
+        // si quieres conservar más campos enriquecidos para futuros usos:
+        // @ts-ignore (si tu Iagenda aún no los define)
+        clienteCedula: info?.cedula ?? (item as any).clienteCedula,
+        // @ts-ignore
+        clientePlan: info?.plan_nombre ?? (item as any).clientePlan,
+        // @ts-ignore
+        clienteIP: info?.ip ?? (item as any).clienteIP,
+        // @ts-ignore
+        clienteDireccion: info?.direccion ?? (item as any).clienteDireccion,
+        // @ts-ignore
+        clienteTelefonos: info?.telefonos ?? (item as any).clienteTelefonos,
+      };
     });
   }
 
@@ -137,20 +199,8 @@ export class AgendaComponent {
         this.fechaSeleccionada
       );
 
-      for (const item of this.agendaList) {
-        try {
-          if (item.ord_ins) {
-            const servicio = await this.clienteService.getInfoServicioByOrdId(
-              Number(item.ord_ins)
-            );
-            item.nombre_completo = servicio?.nombre_completo || '---';
-          } else {
-            item.nombre_completo = '---';
-          }
-        } catch {
-          item.nombre_completo = '---';
-        }
-      }
+      // ⬇️ Enriquecer por batch (reemplaza el for con consultas individuales)
+      this.agendaList = await this.enrichAgendaListBatch(this.agendaList);
 
       // 👇 Limpiar antes de renderizar
       this.agendaAsignada = {};
@@ -224,16 +274,9 @@ export class AgendaComponent {
   async cargarPreAgenda() {
     this.preAgendaList = await this.agendaService.getPreAgenda();
     this.preAgendaPendientesCount = this.preAgendaList.length;
-    for (const item of this.preAgendaList) {
-      try {
-        const info = await this.clienteService.getInfoServicioByOrdId(
-          Number(item.ord_ins)
-        );
-        item.nombre_completo = info?.nombre_completo || '---';
-      } catch {
-        item.nombre_completo = '---';
-      }
-    }
+
+    // ⬇️ Enriquecer por batch (reemplaza el loop con llamadas por cada ord_ins)
+    this.preAgendaList = await this.enrichAgendaListBatch(this.preAgendaList);
   }
 
   //FUNCIONES DE VISUALIZACION

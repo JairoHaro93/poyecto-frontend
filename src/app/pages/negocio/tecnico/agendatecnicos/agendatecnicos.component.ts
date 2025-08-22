@@ -21,7 +21,11 @@ import { SoportesService } from '../../../../services/negocio_latacunga/soportes
 import { SoketService } from '../../../../services/socket_io/soket.service';
 import { ImagenesService } from '../../../../services/negocio_latacunga/imagenes.service';
 import { VisService } from '../../../../services/negocio_latacunga/vis.service';
-import { ClientesService } from '../../../../services/negocio_atuntaqui/clientes.service';
+import {
+  ClienteBatchItem,
+  ClientesService,
+} from '../../../../services/negocio_atuntaqui/clientes.service';
+import { firstValueFrom } from 'rxjs';
 
 /** Mapa tipado para imágenes por campo (fachada, router, etc.) */
 type ImagenMap = Record<string, { url: string; ruta: string }>;
@@ -94,6 +98,8 @@ export class AgendatecnicosComponent {
   private readonly imagenesService = inject(ImagenesService);
   private readonly socketService = inject(SoketService);
 
+  private clienteCache = new Map<string, ClienteBatchItem>();
+
   // =========================
   // CICLO DE VIDA
   // =========================
@@ -110,13 +116,66 @@ export class AgendatecnicosComponent {
       this.socketService.on('trabajoAgendadoTecnico', async () => {
         console.log('📥 Trabajo agendado para este técnico');
         this.agendaTecnicosList = await this.agendaService.getAgendaTec(idtec!);
+        await this.enrichAgendaTecnicosList();
       });
 
       // ▶ carga inicial de agenda
       this.agendaTecnicosList = await this.agendaService.getAgendaTec(idtec!);
+      await this.enrichAgendaTecnicosList();
     } catch (error) {
       console.error('❌ Error al obtener la agenda del técnico', error);
     }
+  }
+
+  /**
+   * Enriquecimiento por lote de agendaTecnicosList usando ord_ins.
+   * No toca tu flujo: solo llámala después de cargar agendaTecnicosList.
+   */
+  async enrichAgendaTecnicosList(): Promise<void> {
+    const items = this.agendaTecnicosList || [];
+    if (!Array.isArray(items) || items.length === 0) return;
+
+    // ord_ins únicos que NO están en cache
+    const faltantes = Array.from(
+      new Set(
+        items
+          .map((it) => String((it as any).ord_ins))
+          .filter((key) => !!key && !this.clienteCache.has(key))
+      )
+    );
+
+    // Llamada batch SOLO por los faltantes
+    if (faltantes.length > 0) {
+      try {
+        const resp = await firstValueFrom(
+          this.clientesService.getClientesByOrdInsBatch(faltantes)
+        );
+        for (const row of resp ?? []) {
+          this.clienteCache.set(String(row.orden_instalacion), row);
+        }
+      } catch (e) {
+        console.error('❌ Error obteniendo clientes batch:', e);
+      }
+    }
+
+    // Merge: agrega campos enriquecidos a cada item (sin romper tipos existentes)
+    this.agendaTecnicosList = items.map((it) => {
+      const info = this.clienteCache.get(String((it as any).ord_ins));
+      return {
+        ...it,
+        // Campos enriquecidos (opcionales); mantiene fallback a los existentes
+        clienteNombre:
+          info?.nombre_completo ??
+          (it as any).clienteNombre ??
+          (it as any).nombre_completo ??
+          '',
+        clienteCedula: info?.cedula ?? (it as any).clienteCedula ?? '',
+        clienteDireccion: info?.direccion ?? (it as any).clienteDireccion ?? '',
+        clienteTelefonos: info?.telefonos ?? (it as any).clienteTelefonos ?? '',
+        clientePlan: info?.plan_nombre ?? (it as any).clientePlan ?? '',
+        clienteIP: info?.ip ?? (it as any).clienteIP ?? '',
+      } as any;
+    });
   }
 
   // =========================

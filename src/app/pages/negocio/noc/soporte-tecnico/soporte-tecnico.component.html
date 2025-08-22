@@ -5,7 +5,7 @@
     <table class="table table-hover">
       <thead>
         <tr class="custom-header">
-          <th>Orden</th>
+          <!-- <th>Orden</th> -->
           <th>Nombre</th>
           <th>Fecha Registro</th>
           <th>Registrado por</th>
@@ -15,8 +15,8 @@
       <tbody>
         @for (soporte of soportesPendientes; track $index) {
         <tr>
-          <td>{{ soporte.ord_ins }}</td>
-          <!-- <td>{{ soporte.reg_sop_nombre }}</td> -->
+          <!-- <td>{{ soporte.ord_ins }}</td> -->
+          <td>{{ soporte.clienteNombre }}</td>
           <td>
             {{ soporte.reg_sop_fecha | date : "EEEE dd MMMM YYYY hh:mm:ss" }}
           </td>
@@ -35,14 +35,12 @@
 
 <section class="container p-2">
   <h5>MIS SOPORTES: {{ soportesNoc.length }}</h5>
-
   <div class="table-container">
     <table class="table table-hover">
       <thead>
         <tr class="custom-header">
           <th>Nombre</th>
           <th>Fecha Registro</th>
-
           <th>Tiempo Transcurrido</th>
           <th>Registrado por</th>
           <th>Estado</th>
@@ -52,11 +50,10 @@
       <tbody>
         @for (item of soportesNoc; track $index) {
         <tr>
-          <!-- <td>{{ item.reg_sop_nombre }}</td> -->
+          <td>{{ item.clienteNombre }}</td>
           <td>
             {{ item.reg_sop_fecha | date : "EEEE dd MMMM YYYY hh:mm:ss" }}
           </td>
-
           <td>
             {{
               calcularTiempoTranscurrido(

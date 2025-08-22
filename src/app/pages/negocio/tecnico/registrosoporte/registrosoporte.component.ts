@@ -26,7 +26,7 @@ import {
   switchMap,
   catchError,
 } from 'rxjs/operators';
-import { of, from } from 'rxjs';
+import { of, from, firstValueFrom } from 'rxjs';
 
 // Sugerencia: estructura mínima que devuelve /clientes/buscar
 interface ClienteSugerencia {
@@ -136,6 +136,49 @@ export class RegistrosoporteComponent {
 
   async cargarSoportesPendientes() {
     this.soportesPendientes = await this.soporteService.getAllPendientes();
+
+    // 2) extrae ord_ins únicos (asegura número si tu batch usa ord_ins numérico)
+    const ords = Array.from(
+      new Set(
+        this.soportesPendientes
+          .map((s) => (s?.ord_ins ?? '').toString().trim())
+          .filter((v) => v !== '')
+      )
+    );
+
+    if (ords.length === 0) return;
+
+    // 3) llama batch
+    let batch;
+    try {
+      batch = await firstValueFrom(
+        this.clienteService.getClientesByOrdInsBatch(ords)
+      );
+    } catch (e) {
+      console.error('❌ Error batch clientes:', e);
+      return;
+    }
+
+    // 4) indexa por orden_instalacion
+    const byOrd = new Map<string, any>();
+    (batch ?? []).forEach((row) => {
+      // normaliza a string para comparar con s.ord_ins
+      byOrd.set(String(row.orden_instalacion), row);
+    });
+
+    // 5) enriquece
+    this.soportesPendientes = this.soportesPendientes.map((s) => {
+      const info = byOrd.get(String(s.ord_ins));
+      return {
+        ...s,
+        clienteNombre: info?.nombre_completo ?? s.reg_sop_nombre ?? '',
+        clienteCedula: info?.cedula ?? '',
+        clienteDireccion: info?.direccion ?? '',
+        clienteTelefonos: info?.telefonos ?? '',
+        clientePlan: info?.plan_nombre ?? '',
+        clienteIP: info?.ip ?? '',
+      };
+    });
   }
 
   async getDataForm2() {

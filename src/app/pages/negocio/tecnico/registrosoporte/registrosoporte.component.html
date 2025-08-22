@@ -232,7 +232,7 @@
         @for (item of soportesPendientes; track $index) {
         <tr>
           <td>{{ item.ord_ins }}</td>
-          <td>{{ item.reg_sop_nombre }}</td>
+          <td>{{ item.clienteNombre || item.reg_sop_nombre }}</td>
           <td>
             {{ item.reg_sop_fecha | date : "EEEE dd MMMM YYYY hh:mm:ss" }}
           </td>

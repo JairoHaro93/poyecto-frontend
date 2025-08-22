@@ -4,6 +4,19 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { lastValueFrom } from 'rxjs';
 import { Iclientes } from '../../interfaces/negocio/clientes/iclientes.interface';
 
+export interface ClienteBatchItem {
+  orden_instalacion: number;
+  cedula: string;
+  nombre_completo: string;
+  direccion: string;
+  telefonos: string;
+  coordenadas: string;
+  ip: string;
+  plan_nombre: string;
+  precio: number;
+  servicio: string;
+}
+
 @Injectable({
   providedIn: 'root',
 })
@@ -62,6 +75,16 @@ export class ClientesService {
       this.httpClient.get<Iclientes>(`${this.baseUrl}/${ord_ins}`, {
         withCredentials: true,
       })
+    );
+  }
+
+  getClientesByOrdInsBatch(ordIns: Array<number | string>) {
+    return this.httpClient.post<ClienteBatchItem[]>(
+      `${this.baseUrl}/multiples`,
+      { ord_ins: ordIns },
+      {
+        withCredentials: true,
+      }
     );
   }
 }

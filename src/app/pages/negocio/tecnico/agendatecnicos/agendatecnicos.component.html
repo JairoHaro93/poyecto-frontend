@@ -6,6 +6,7 @@
     <table class="table table-sm table-bordered">
       <thead class="table-light">
         <tr>
+          <th>Nombre</th>
           <th>Fecha</th>
           <th>Hora inicio</th>
           <th>Hora fin</th>
@@ -16,6 +17,9 @@
       <tbody>
         @for ( trabajo of agendaTecnicosList; track trabajo) {
         <tr>
+          <td>
+            {{ trabajo.clienteNombre || trabajo.nombre_completo || "—" }}
+          </td>
           <td>{{ trabajo.age_fecha | date : "yyyy-MM-dd" }}</td>
           <td>{{ trabajo.age_hora_inicio }}</td>
           <td>{{ trabajo.age_hora_fin }}</td>

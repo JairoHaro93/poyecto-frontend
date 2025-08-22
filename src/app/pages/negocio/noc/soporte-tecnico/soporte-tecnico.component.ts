@@ -71,7 +71,7 @@ export class SoporteTecnicoComponent {
       this.router.navigateByUrl('/login');
     }
   }
-
+  /*
   async cargarDatos(noc_id: number) {
     try {
       this.isLoading = true;
@@ -86,6 +86,71 @@ export class SoporteTecnicoComponent {
           this.soportesPendientes.length
       );
       this.soportesNoc = soportesNoc;
+      console.log(soportesPend);
+      console.log(this.soportesNoc);
+    } catch (error) {
+      console.error('Error al cargar los datos:', error);
+    } finally {
+      this.isLoading = false;
+    }
+  }
+*/
+
+  async cargarDatos(noc_id: number) {
+    try {
+      this.isLoading = true;
+      const [soportesPend, soportesNoc] = await Promise.all([
+        this.soporteService.getAllPendientes(),
+        this.soporteService.getSopByNocId(noc_id),
+      ]);
+
+      this.soportesPendientes = soportesPend;
+      this.soportesNoc = soportesNoc;
+
+      // 1) Reunir ord_ins únicos (asegura string/number según venga)
+      const allOrdIns = [
+        ...this.soportesPendientes.map((s) => s.ord_ins),
+        ...this.soportesNoc.map((s) => s.ord_ins),
+      ].filter((v) => v !== null && v !== undefined);
+
+      const uniqueOrdIns = Array.from(new Set(allOrdIns));
+      if (uniqueOrdIns.length === 0) return;
+
+      // 2) Llamada batch
+      const clientes = await this.clienteService
+        .getClientesByOrdInsBatch(uniqueOrdIns)
+        .toPromise();
+
+      // 3) Mapear resultado por ord_ins
+      const mapCliente = new Map<string | number, any>();
+      (clientes ?? []).forEach((c) => mapCliente.set(c.orden_instalacion, c));
+
+      // 4) Enriquecer arreglos (usa nombre_completo; deja fallback al nombre que ya tienes)
+      this.soportesPendientes = this.soportesPendientes.map((s) => {
+        const info = mapCliente.get(s.ord_ins);
+        return {
+          ...s,
+          clienteNombre: info?.nombre_completo ?? '',
+          clienteCedula: info?.cedula ?? '',
+          clienteDireccion: info?.direccion ?? '',
+          clienteTelefonos: info?.telefonos ?? '',
+          clienteIP: info?.ip ?? '',
+          clientePlan: info?.plan_nombre ?? '',
+        };
+      });
+
+      this.soportesNoc = this.soportesNoc.map((s) => {
+        const info = mapCliente.get(s.ord_ins);
+        return {
+          ...s,
+          clienteNombre: info?.nombre_completo ?? '',
+          clienteCedula: info?.cedula ?? '',
+          clienteDireccion: info?.direccion ?? '',
+          clienteTelefonos: info?.telefonos ?? '',
+          clienteIP: info?.ip ?? '',
+          clientePlan: info?.plan_nombre ?? '',
+        };
+      });
     } catch (error) {
       console.error('Error al cargar los datos:', error);
     } finally {
