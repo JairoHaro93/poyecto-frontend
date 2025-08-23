@@ -11,6 +11,7 @@ import { DataSharingService } from '../../../../services/data-sharing.service';
 import { environment } from '../../../../../environments/environment';
 import { Iusuarios } from '../../../../interfaces/sistema/iusuarios.interface';
 import { SoketService } from '../../../../services/socket_io/soket.service';
+import { firstValueFrom } from 'rxjs';
 
 @Component({
   selector: 'app-soporte-tecnico',
@@ -71,34 +72,11 @@ export class SoporteTecnicoComponent {
       this.router.navigateByUrl('/login');
     }
   }
-  /*
   async cargarDatos(noc_id: number) {
     try {
       this.isLoading = true;
-      let [soportesPend, soportesNoc] = await Promise.all([
-        this.soporteService.getAllPendientes(),
-        this.soporteService.getSopByNocId(noc_id),
-      ]);
+      this.isReady = false;
 
-      this.soportesPendientes = soportesPend;
-      console.log(
-        'El numero de soporte en SOPORTE TECNICO es ' +
-          this.soportesPendientes.length
-      );
-      this.soportesNoc = soportesNoc;
-      console.log(soportesPend);
-      console.log(this.soportesNoc);
-    } catch (error) {
-      console.error('Error al cargar los datos:', error);
-    } finally {
-      this.isLoading = false;
-    }
-  }
-*/
-
-  async cargarDatos(noc_id: number) {
-    try {
-      this.isLoading = true;
       const [soportesPend, soportesNoc] = await Promise.all([
         this.soporteService.getAllPendientes(),
         this.soporteService.getSopByNocId(noc_id),
@@ -107,52 +85,57 @@ export class SoporteTecnicoComponent {
       this.soportesPendientes = soportesPend;
       this.soportesNoc = soportesNoc;
 
-      // 1) Reunir ord_ins únicos (asegura string/number según venga)
+      // 1) Reunir ord_ins únicos
       const allOrdIns = [
         ...this.soportesPendientes.map((s) => s.ord_ins),
         ...this.soportesNoc.map((s) => s.ord_ins),
       ].filter((v) => v !== null && v !== undefined);
 
       const uniqueOrdIns = Array.from(new Set(allOrdIns));
-      if (uniqueOrdIns.length === 0) return;
 
-      // 2) Llamada batch
-      const clientes = await this.clienteService
-        .getClientesByOrdInsBatch(uniqueOrdIns)
-        .toPromise();
+      // 2) Enriquecimiento batch (si hay algo que enriquecer)
+      if (uniqueOrdIns.length > 0) {
+        const clientes = await firstValueFrom(
+          this.clienteService.getClientesByOrdInsBatch(uniqueOrdIns)
+        );
 
-      // 3) Mapear resultado por ord_ins
-      const mapCliente = new Map<string | number, any>();
-      (clientes ?? []).forEach((c) => mapCliente.set(c.orden_instalacion, c));
+        const mapCliente = new Map<string | number, any>();
+        (clientes ?? []).forEach((c) => mapCliente.set(c.orden_instalacion, c));
 
-      // 4) Enriquecer arreglos (usa nombre_completo; deja fallback al nombre que ya tienes)
-      this.soportesPendientes = this.soportesPendientes.map((s) => {
-        const info = mapCliente.get(s.ord_ins);
-        return {
-          ...s,
-          clienteNombre: info?.nombre_completo ?? '',
-          clienteCedula: info?.cedula ?? '',
-          clienteDireccion: info?.direccion ?? '',
-          clienteTelefonos: info?.telefonos ?? '',
-          clienteIP: info?.ip ?? '',
-          clientePlan: info?.plan_nombre ?? '',
-        };
-      });
+        this.soportesPendientes = this.soportesPendientes.map((s) => {
+          const info = mapCliente.get(s.ord_ins);
+          return {
+            ...s,
+            clienteNombre: info?.nombre_completo ?? '',
+            clienteCedula: info?.cedula ?? '',
+            clienteDireccion: info?.direccion ?? '',
+            clienteTelefonos: info?.telefonos ?? '',
+            clienteIP: info?.ip ?? '',
+            clientePlan: info?.plan_nombre ?? '',
+          };
+        });
 
-      this.soportesNoc = this.soportesNoc.map((s) => {
-        const info = mapCliente.get(s.ord_ins);
-        return {
-          ...s,
-          clienteNombre: info?.nombre_completo ?? '',
-          clienteCedula: info?.cedula ?? '',
-          clienteDireccion: info?.direccion ?? '',
-          clienteTelefonos: info?.telefonos ?? '',
-          clienteIP: info?.ip ?? '',
-          clientePlan: info?.plan_nombre ?? '',
-        };
-      });
+        this.soportesNoc = this.soportesNoc.map((s) => {
+          const info = mapCliente.get(s.ord_ins);
+          return {
+            ...s,
+            clienteNombre: info?.nombre_completo ?? '',
+            clienteCedula: info?.cedula ?? '',
+            clienteDireccion: info?.direccion ?? '',
+            clienteTelefonos: info?.telefonos ?? '',
+            clienteIP: info?.ip ?? '',
+            clientePlan: info?.plan_nombre ?? '',
+          };
+        });
+      }
+
+      // 👉 Deja que el navegador asiente layout/pintado antes de mostrar
+      await this.settleFrames();
+      this.isReady = true;
     } catch (error) {
       console.error('Error al cargar los datos:', error);
+      // Aun con error, evita dejar la UI “en blanco”
+      this.isReady = true;
     } finally {
       this.isLoading = false;
     }
@@ -195,5 +178,18 @@ export class SoporteTecnicoComponent {
     } catch (error) {
       console.error('❌ Error al aceptar soporte:', error);
     }
+  }
+
+  // Suavizado de render
+
+  isReady = false;
+
+  private nextFrame(): Promise<void> {
+    return new Promise((resolve) => requestAnimationFrame(() => resolve()));
+  }
+  private async settleFrames(): Promise<void> {
+    // 2 frames: layout + paint
+    await this.nextFrame();
+    await this.nextFrame();
   }
 }

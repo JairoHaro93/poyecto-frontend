@@ -1,80 +1,97 @@
-<section class="container p-2">
-  <h5>SOPORTES PENDIENTES : {{ soportesPendientes.length }}</h5>
+<!-- Skeleton / overlay simple -->
+@if (!isReady) {
+<div class="loading-overlay">
+  <div class="spinner"></div>
+  <p>Cargando información de soportes...</p>
+</div>
+} @else {
+<!-- 🔽 Aquí va tu template existente tal cual -->
+<section class="container p-2 fade-in">
+  <section class="container p-2">
+    <h5>SOPORTES PENDIENTES : {{ soportesPendientes.length }}</h5>
 
-  <div class="table-container">
-    <table class="table table-hover">
-      <thead>
-        <tr class="custom-header">
-          <!-- <th>Orden</th> -->
-          <th>Nombre</th>
-          <th>Fecha Registro</th>
-          <th>Registrado por</th>
-          <th></th>
-        </tr>
-      </thead>
-      <tbody>
-        @for (soporte of soportesPendientes; track $index) {
-        <tr>
-          <!-- <td>{{ soporte.ord_ins }}</td> -->
-          <td>{{ soporte.clienteNombre }}</td>
-          <td>
-            {{ soporte.reg_sop_fecha | date : "EEEE dd MMMM YYYY hh:mm:ss" }}
-          </td>
-          <td>{{ soporte.reg_sop_registrado_por_nombre }}</td>
-          <td>
-            <button (click)="aceptarSoporte(soporte.id, soporte.ord_ins)">
-              Revisar
-            </button>
-          </td>
-        </tr>
-        }
-      </tbody>
-    </table>
-  </div>
-</section>
+    <div class="table-container">
+      <table class="table table-hover">
+        <thead>
+          <tr class="custom-header">
+            <!-- <th>Orden</th> -->
+            <th>Nombre</th>
+            <th>Fecha Registro</th>
+            <th>Registrado por</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (soporte of soportesPendientes; track $index) {
+          <tr>
+            <!-- <td>{{ soporte.ord_ins }}</td> -->
+            <td>{{ soporte.clienteNombre }}</td>
+            <td>
+              {{ soporte.reg_sop_fecha | date : "EEEE dd MMMM YYYY hh:mm:ss" }}
+            </td>
+            <td>{{ soporte.reg_sop_registrado_por_nombre }}</td>
+            <td>
+              <button (click)="aceptarSoporte(soporte.id, soporte.ord_ins)">
+                Revisar
+              </button>
+            </td>
+          </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </section>
 
-<section class="container p-2">
-  <h5>MIS SOPORTES: {{ soportesNoc.length }}</h5>
-  <div class="table-container">
-    <table class="table table-hover">
-      <thead>
-        <tr class="custom-header">
-          <th>Nombre</th>
-          <th>Fecha Registro</th>
-          <th>Tiempo Transcurrido</th>
-          <th>Registrado por</th>
-          <th>Estado</th>
-          <th></th>
-        </tr>
-      </thead>
-      <tbody>
-        @for (item of soportesNoc; track $index) {
-        <tr>
-          <td>{{ item.clienteNombre }}</td>
-          <td>
-            {{ item.reg_sop_fecha | date : "EEEE dd MMMM YYYY hh:mm:ss" }}
-          </td>
-          <td>
-            {{
-              calcularTiempoTranscurrido(
-                item.reg_sop_fecha,
-                item.reg_sop_fecha_acepta
-              )
-            }}
-          </td>
-          <td>{{ item.reg_sop_registrado_por_nombre }}</td>
-          <td>{{ item.reg_sop_estado }}</td>
-          <td>
-            <a
-              class="btn btn-warning custom-btn"
-              [routerLink]="['/home', 'noc', 'info-sop', item.id, item.ord_ins]"
-            >
-              Revisar
-            </a>
-          </td>
-        </tr>
-        }
-      </tbody>
-    </table>
-  </div>
+  <section class="container p-2">
+    <h5>MIS SOPORTES: {{ soportesNoc.length }}</h5>
+    <div class="table-container">
+      <table class="table table-hover">
+        <thead>
+          <tr class="custom-header">
+            <th>Nombre</th>
+            <th>Fecha Registro</th>
+            <th>Tiempo Transcurrido</th>
+            <th>Registrado por</th>
+            <th>Estado</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (item of soportesNoc; track $index) {
+          <tr>
+            <td>{{ item.clienteNombre }}</td>
+            <td>
+              {{ item.reg_sop_fecha | date : "EEEE dd MMMM YYYY hh:mm:ss" }}
+            </td>
+            <td>
+              {{
+                calcularTiempoTranscurrido(
+                  item.reg_sop_fecha,
+                  item.reg_sop_fecha_acepta
+                )
+              }}
+            </td>
+            <td>{{ item.reg_sop_registrado_por_nombre }}</td>
+            <td>{{ item.reg_sop_estado }}</td>
+            <td>
+              <a
+                class="btn btn-warning custom-btn"
+                [routerLink]="[
+                  '/home',
+                  'noc',
+                  'info-sop',
+                  item.id,
+                  item.ord_ins
+                ]"
+              >
+                Revisar
+              </a>
+            </td>
+          </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </section>
 </section>
+}

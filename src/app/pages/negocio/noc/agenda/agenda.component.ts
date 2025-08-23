@@ -189,20 +189,24 @@ export class AgendaComponent {
       console.error('Error al contar pendientes:', error);
     }
   }
-
   async cargarAgendaPorFecha() {
-    this.contarpendientes();
+    this.isLoading = true;
+    this.isReady = false;
 
+    this.contarpendientes();
     try {
-      console.log(this.fechaSeleccionada);
       this.agendaList = await this.agendaService.getAgendaByDate(
         this.fechaSeleccionada
       );
 
-      // ⬇️ Enriquecer por batch (reemplaza el for con consultas individuales)
-      this.agendaList = await this.enrichAgendaListBatch(this.agendaList);
+      // (si aplicaste el enriquecido por batch)
+      if (typeof (this as any).enrichAgendaListBatch === 'function') {
+        this.agendaList = await (this as any).enrichAgendaListBatch(
+          this.agendaList
+        );
+      }
 
-      // 👇 Limpiar antes de renderizar
+      // Limpiar y reconstruir grillas
       this.agendaAsignada = {};
       this.horarios.forEach((hora) => {
         this.agendaAsignada[hora] = {};
@@ -213,8 +217,14 @@ export class AgendaComponent {
 
       this.mapearAgendaDesdeBD();
       this.generarRenderAgenda();
+
+      // 👇 Deja al navegador “asentar” el layout antes de mostrar
+      await this.settleFrames();
+      this.isReady = true;
     } catch (error) {
       console.error('❌ Error al cargar la agenda por fecha:', error);
+    } finally {
+      this.isLoading = false;
     }
   }
 
@@ -272,11 +282,18 @@ export class AgendaComponent {
   }
 
   async cargarPreAgenda() {
-    this.preAgendaList = await this.agendaService.getPreAgenda();
-    this.preAgendaPendientesCount = this.preAgendaList.length;
+    try {
+      this.preAgendaList = await this.agendaService.getPreAgenda();
+      this.preAgendaPendientesCount = this.preAgendaList.length;
 
-    // ⬇️ Enriquecer por batch (reemplaza el loop con llamadas por cada ord_ins)
-    this.preAgendaList = await this.enrichAgendaListBatch(this.preAgendaList);
+      if (typeof (this as any).enrichAgendaListBatch === 'function') {
+        this.preAgendaList = await (this as any).enrichAgendaListBatch(
+          this.preAgendaList
+        );
+      }
+    } catch (e) {
+      console.error('❌ Error al cargar preagenda:', e);
+    }
   }
 
   //FUNCIONES DE VISUALIZACION
@@ -632,5 +649,22 @@ export class AgendaComponent {
   esImagenValida(campo: string): boolean {
     const img = this.imagenesInstalacion[campo];
     return img && img.ruta !== 'null' && img.url !== 'undefined/imagenes/null';
+  }
+
+  //suavizado de render
+
+  // 👇 estado de render
+  isLoading = true; // datos en carga
+  isReady = false; // UI lista para mostrar
+
+  /** Espera al siguiente frame del navegador (asegura que el DOM ya pintó) */
+  private nextFrame(): Promise<void> {
+    return new Promise((resolve) => requestAnimationFrame(() => resolve()));
+  }
+
+  /** Espera 2 frames para garantizar layout + paint (reduce flicker) */
+  private async settleFrames(): Promise<void> {
+    await this.nextFrame();
+    await this.nextFrame();
   }
 }

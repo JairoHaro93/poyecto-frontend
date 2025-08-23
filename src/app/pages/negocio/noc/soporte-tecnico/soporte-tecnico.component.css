@@ -1,38 +1,83 @@
+/* =========================
+   ÁREA LOCAL DEL COMPONENTE
+   ========================= */
+:host {
+  position: relative; /* contexto local para el overlay */
+  display: block;
+}
+
+/* Overlay LOCAL, solo cubre este componente */
+.loading-overlay {
+  position: absolute; /* local, no tapa toda la app */
+  inset: 0;
+  background: #ffffff; /* fondo claro */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 10; /* encima del contenido interno */
+  opacity: 1;
+  transition: opacity 0.3s ease;
+}
+
+/* Spinner circular */
+.spinner {
+  width: 50px;
+  height: 50px;
+  border: 6px solid #f3f3f3;
+  border-top: 6px solid #d9534f; /* rojo Bootstrap; cámbialo si quieres */
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  margin-bottom: 1rem;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.loading-overlay p {
+  font-size: 1rem;
+  font-weight: 500;
+  color: #555;
+}
+
+/* =========================
+   TABLAS Y CONTENEDORES
+   ========================= */
 .container {
   max-width: 100%;
-  overflow-x: hidden; /* Evita scroll no deseado */
+  overflow-x: hidden; /* evita scroll horizontal global dentro del comp. */
 }
 
 .table-container {
   width: 100%;
-  overflow-x: auto; /* Asegura que solo haya scroll horizontal si es necesario */
+  overflow-x: auto; /* scroll horizontal si es necesario */
   max-height: 250px;
   overflow-y: auto;
   min-height: 200px;
 }
 
 .table {
-  table-layout: auto; /* Permite que las columnas se ajusten */
+  table-layout: auto; /* ajusta columnas automáticamente */
   width: 100%;
   font-size: 12px;
   border: 1px solid #252323;
-  border-collapse: separate; /* Necesario para que el border-radius funcione */
-  border-spacing: 0; /* Elimina el espacio entre celdas */
-  border-radius: 13px; /* Ajusta según el diseño deseado */
+  border-collapse: separate; /* para que el border-radius funcione */
+  border-spacing: 0;
+  border-radius: 13px;
 }
 
 .table th:first-child {
   border-top-left-radius: 10px;
 }
-
 .table th:last-child {
   border-top-right-radius: 10px;
 }
-
 .table tr:last-child td:first-child {
   border-bottom-left-radius: 10px;
 }
-
 .table tr:last-child td:last-child {
   border-bottom-right-radius: 10px;
 }
@@ -42,41 +87,36 @@
   color: #ffffff !important;
 }
 
-/* Estilo para las filas y celdas */
+/* Celdas */
 .table th,
 .table td {
-  word-wrap: break-word; /* Permite que las palabras largas se rompan */
+  word-wrap: break-word;
   text-align: left;
   border: 1px solid #252323;
-  white-space: nowrap; /* Evita que el texto haga salto de línea */
+  white-space: nowrap; /* evita saltos de línea */
   overflow: hidden;
-  text-overflow: ellipsis; /* Si el texto es largo, muestra "..." */
+  text-overflow: ellipsis; /* muestra "..." si se corta */
 }
 
-/* Centrar contenido en las celdas */
 .table td {
-  text-align: center; /* Alinea el contenido horizontalmente */
+  text-align: center;
 }
-
-/* Centrar el botón dentro de la celda */
 .table td a {
   display: flex;
   justify-content: center;
   align-items: center;
 }
 
-/* Estilo para el botón "Revisar" */
+/* Botón Revisar */
 .btn-revisar {
-  background-color: red; /* Color de fondo rojo */
-  color: white; /* Texto en color blanco */
-  border: none; /* Elimina el borde */
-  padding: 5px 10px; /* Ajusta el tamaño del botón */
-  border-radius: 5px; /* Bordes redondeados */
-  cursor: pointer; /* Cambio de cursor al pasar por encima */
-  transition: background-color 0.3s ease-in-out; /* Efecto suave al pasar el mouse */
+  background-color: red;
+  color: white;
+  border: none;
+  padding: 5px 10px;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.3s ease-in-out;
 }
-
-/* Cambio de color al pasar el mouse */
 .btn-revisar:hover {
   background-color: darkred;
 }
@@ -91,4 +131,68 @@
   padding: 1px 10px;
   font-size: 13px;
   border-radius: 12px;
+}
+
+/* =========================
+   ENTRADA SUAVE DEL CONTENIDO
+   ========================= */
+.fade-in {
+  opacity: 0;
+  animation: fadeIn 0.18s ease-out forwards;
+}
+@keyframes fadeIn {
+  to {
+    opacity: 1;
+  }
+}
+
+/* =========================
+   SKELETON (si lo usas)
+   ========================= */
+.skeleton-title {
+  height: 20px;
+  width: 240px;
+  border-radius: 6px;
+  background: linear-gradient(90deg, #eee 25%, #f5f5f5 37%, #eee 63%);
+  background-size: 400% 100%;
+  animation: shimmer 1.2s infinite;
+}
+
+.skeleton-table {
+  display: grid;
+  gap: 10px;
+}
+
+.skeleton-row {
+  height: 36px;
+  border-radius: 8px;
+  background: linear-gradient(90deg, #eee 25%, #f5f5f5 37%, #eee 63%);
+  background-size: 400% 100%;
+  animation: shimmer 1.2s infinite;
+}
+
+.skeleton-row.header {
+  height: 38px;
+  background: linear-gradient(90deg, #e8e8e8 25%, #f0f0f0 37%, #e8e8e8 63%);
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: 100% 0;
+  }
+  100% {
+    background-position: 0 0;
+  }
+}
+
+/* =========================
+   ACCESIBILIDAD (reduce motion)
+   ========================= */
+@media (prefers-reduced-motion: reduce) {
+  .fade-in,
+  .spinner,
+  .skeleton-title,
+  .skeleton-row {
+    animation: none !important;
+  }
 }
