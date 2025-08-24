@@ -16,12 +16,17 @@ export class UsuariosComponent {
 
   usuarioServices = inject(UsuariosService);
 
+  // ✅ Suavizado de render (NUEVO)
+  isReady = false;
+
   async ngOnInit() {
     try {
       const response = await this.usuarioServices.getAll();
       this.arrUsuarios = response;
     } catch (error) {
       console.log(error);
+    } finally {
+      this.isReady = true; // ⬅️ muestra el contenido
     }
   }
 

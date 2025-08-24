@@ -1,52 +1,60 @@
-<main>
-  <section class="container mt-3">
-    <h5>Trabajos agendados para el técnico</h5>
+<!-- Overlay local del componente -->
+@if (!isReady) {
+<div class="skeleton-title"></div>
+<div class="skeleton-block"></div>
+} @else {
+<div class="fade-in">
+  <main>
+    <section class="container mt-3">
+      <h5>Trabajos agendados para el técnico</h5>
 
-    @if (agendaTecnicosList.length > 0) {
-    <table class="table table-sm table-bordered">
-      <thead class="table-light">
-        <tr>
-          <th>Nombre</th>
-          <th>Fecha</th>
-          <th>Hora inicio</th>
-          <th>Hora fin</th>
-          <th>Tipo</th>
-          <th>Acciones</th>
-        </tr>
-      </thead>
-      <tbody>
-        @for ( trabajo of agendaTecnicosList; track trabajo) {
-        <tr>
-          <td>
-            {{ trabajo.clienteNombre || trabajo.nombre_completo || "—" }}
-          </td>
-          <td>{{ trabajo.age_fecha | date : "yyyy-MM-dd" }}</td>
-          <td>{{ trabajo.age_hora_inicio }}</td>
-          <td>{{ trabajo.age_hora_fin }}</td>
-          <td>{{ trabajo.age_tipo }}</td>
-          <td>
-            <button
-              class="btn btn-sm btn-primary me-1"
-              (click)="verDetalle(trabajo)"
-            >
-              Ver Detalle
-            </button>
-            <button
-              class="btn btn-sm btn-secondary"
-              (click)="abrirModalEditar(trabajo)"
-            >
-              Editar
-            </button>
-          </td>
-        </tr>
-        }
-      </tbody>
-    </table>
-    } @else {
-    <p class="text-muted">No hay trabajos agendados para este técnico.</p>
-    }
-  </section>
-</main>
+      @if (agendaTecnicosList.length > 0) {
+      <table class="table table-sm table-bordered">
+        <thead class="table-light">
+          <tr>
+            <th>Nombre</th>
+            <th>Fecha</th>
+            <th>Hora inicio</th>
+            <th>Hora fin</th>
+            <th>Tipo</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for ( trabajo of agendaTecnicosList; track trabajo) {
+          <tr>
+            <td>
+              {{ trabajo.clienteNombre || trabajo.nombre_completo || "—" }}
+            </td>
+            <td>{{ trabajo.age_fecha | date : "yyyy-MM-dd" }}</td>
+            <td>{{ trabajo.age_hora_inicio }}</td>
+            <td>{{ trabajo.age_hora_fin }}</td>
+            <td>{{ trabajo.age_tipo }}</td>
+            <td>
+              <button
+                class="btn btn-sm btn-primary me-1"
+                (click)="verDetalle(trabajo)"
+              >
+                Ver Detalle
+              </button>
+              <button
+                class="btn btn-sm btn-secondary"
+                (click)="abrirModalEditar(trabajo)"
+              >
+                Editar
+              </button>
+            </td>
+          </tr>
+          }
+        </tbody>
+      </table>
+      } @else {
+      <p class="text-muted">No hay trabajos agendados para este técnico.</p>
+      }
+    </section>
+  </main>
+</div>
+}
 
 <!-- Modal Detalle -->
 <div

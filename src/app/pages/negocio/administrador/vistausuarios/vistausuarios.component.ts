@@ -18,6 +18,8 @@ export class VistausuariosComponent {
   activatedRoute = inject(ActivatedRoute);
   employeeService = inject(UsuariosService);
   private funcionesServices = inject(FuncionesService);
+  // ✅ Suavizado de render (NUEVO)
+  isReady = false;
 
   async ngOnInit() {
     this.activatedRoute.params.subscribe(async (params: any) => {
@@ -27,7 +29,7 @@ export class VistausuariosComponent {
       this.employee = await this.employeeService.getbyId(id);
 
       this.arrfunciones = await this.funcionesServices.getbyId(id);
-      //   console.table(this.arrfunciones);
+      this.isReady = true; // ⬅️ muestra el contenido
     });
   }
 }

@@ -104,6 +104,9 @@ export class AgendatecnicosComponent {
   // CICLO DE VIDA
   // =========================
 
+  // ✅ Suavizado de render (NUEVO)
+  isReady = false;
+
   /**
    * Carga usuario, agenda inicial y queda escuchando asignaciones por socket.
    */
@@ -124,6 +127,8 @@ export class AgendatecnicosComponent {
       await this.enrichAgendaTecnicosList();
     } catch (error) {
       console.error('❌ Error al obtener la agenda del técnico', error);
+    } finally {
+      this.isReady = true; // ⬅️ muestra el contenido
     }
   }
 
