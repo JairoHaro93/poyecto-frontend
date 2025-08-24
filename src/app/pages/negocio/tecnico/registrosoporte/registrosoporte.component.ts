@@ -67,6 +67,9 @@ export class RegistrosoporteComponent {
 
   @Output() nuevoSoporte: EventEmitter<Isoportes> = new EventEmitter();
 
+  // ✅ Suavizado de render (NUEVO)
+  isReady = false;
+
   constructor() {
     this.SoporteForm2 = new FormGroup({
       reg_sop_coordenadas: new FormControl<string | null>(null),
@@ -118,6 +121,8 @@ export class RegistrosoporteComponent {
     } catch (error) {
       console.error('❌ Error al iniciar RegistrosoporteComponent:', error);
       this.router.navigateByUrl('/login');
+    } finally {
+      this.isReady = true; // ⬅️ muestra el contenido
     }
   }
 

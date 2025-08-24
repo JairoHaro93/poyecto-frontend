@@ -21,6 +21,10 @@ import { AgendaService } from '../../../../services/negocio_latacunga/agenda.ser
 export class NuevaInstalacionComponent {
   instalacionForm!: FormGroup;
   agendaService = inject(AgendaService);
+
+  // ✅ Suavizado de render (NUEVO)
+  isReady = false;
+
   constructor(
     private fb: FormBuilder,
     private instalacionesService: InstalacionesService
@@ -36,6 +40,8 @@ export class NuevaInstalacionComponent {
       coordenadas: new FormControl(null, Validators.required),
       observacion: new FormControl(null),
     });
+
+    this.isReady = true; // ⬅️ muestra el contenido
   }
 
   convertToUppercase(field: string): void {

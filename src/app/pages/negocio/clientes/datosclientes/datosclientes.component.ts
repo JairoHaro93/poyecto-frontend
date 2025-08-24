@@ -46,6 +46,8 @@ export class DatosclientesComponent {
   imagenSeleccionada: string | null = null;
 
   imagenesInstalacion: { [key: string]: { ruta: string; url: string } } = {};
+  // ✅ Suavizado de render (NUEVO)
+  isReady = false;
 
   async ngOnInit() {
     // 🔎 Búsqueda reactiva: limpia si <2, consulta si >=2
@@ -72,6 +74,7 @@ export class DatosclientesComponent {
         this.showSugerencias = list.length > 0;
         this.highlightedIndex = list.length ? 0 : -1;
       });
+    this.isReady = true; // ⬅️ muestra el contenido
   }
 
   // === Selección / navegación de sugerencias ===

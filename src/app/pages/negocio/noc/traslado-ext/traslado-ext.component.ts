@@ -21,6 +21,9 @@ import { CommonModule } from '@angular/common';
 export class TrasladoExtComponent {
   instalacionForm!: FormGroup;
   agendaService = inject(AgendaService);
+
+  // ✅ Suavizado de render (NUEVO)
+  isReady = false;
   constructor(
     private fb: FormBuilder,
     private instalacionesService: InstalacionesService
@@ -30,6 +33,8 @@ export class TrasladoExtComponent {
       coordenadas: new FormControl(null, Validators.required),
       observacion: new FormControl(null),
     });
+
+    this.isReady = true; // ⬅️ muestra el contenido
   }
 
   convertToUppercase(field: string): void {
