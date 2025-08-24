@@ -56,23 +56,42 @@ export class InfoSopComponent {
 
   private socketService = inject(SoketService);
 
+  // ✅ Suavizado de render (NUEVO)
+  isReady = false;
+  private nextFrame(): Promise<void> {
+    return new Promise((resolve) => requestAnimationFrame(() => resolve()));
+  }
+  private async settleFrames(): Promise<void> {
+    // Deja que el navegador haga layout/paint antes de mostrar
+    await this.nextFrame();
+    await this.nextFrame();
+  }
+
   async ngOnInit() {
     this.datosUsuario = await this.authService.getUsuarioAutenticado();
     this.activatedRoute.params.subscribe(async (params: any) => {
+      this.isReady = false; // ← oculta el contenido
       this.id_sop = params['id_sop'];
       this.ord_Ins = params['ord_ins'];
 
       if (!this.id_sop) {
         console.error("Error: 'id_sop' no válido");
+        this.isReady = true;
         return;
       }
 
-      await this.cargarSoporte(this.id_sop, this.ord_Ins);
-      this.cargarImagenesInstalacion('neg_t_instalaciones', this.ord_Ins);
-      await this.cargarImagenesVisitas('neg_t_vis', this.ord_Ins);
+      try {
+        await this.cargarSoporte(this.id_sop, this.ord_Ins);
+        this.cargarImagenesInstalacion('neg_t_instalaciones', this.ord_Ins);
+        await this.cargarImagenesVisitas('neg_t_vis', this.ord_Ins);
+        await this.settleFrames(); // ⬅️ deja asentar layout/pintado
+      } catch (e) {
+        console.error('❌ Error inicial InfoSop:', e);
+      } finally {
+        this.isReady = true; // ⬅️ muestra el contenido
+      }
     });
   }
-
   private cargarImagenesInstalacion(tabla: string, ord_Ins: string): void {
     this.imagenesService.getImagenesByTableAndId(tabla, ord_Ins).subscribe({
       next: (res: any) => {

@@ -1,399 +1,414 @@
-<section class="container mt-1">
-  <div class="d-flex justify-content-between border-5 m-2">
-    <!-- TABLA DATOS DEL USUARIO -->
-    <table class="table table-bordered table-striped w-50 me-3">
-      <thead class="custom-header">
-        <tr>
-          <th colspan="2" class="text-center">Datos del Usuario</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr>
-          <th scope="row">Cliente</th>
+<!-- Overlay local del componente -->
+@if (!isReady) {
+<div class="skeleton-title"></div>
+<div class="skeleton-block"></div>
+} @else {
+<div class="fade-in">
+  <!-- ======= TU CONTENIDO ORIGINAL (SIN CAMBIOS) ======= -->
+  <section class="container mt-1">
+    <section class="container mt-1">
+      <div class="d-flex justify-content-between border-5 m-2">
+        <!-- TABLA DATOS DEL USUARIO -->
+        <table class="table table-bordered table-striped w-50 me-3">
+          <thead class="custom-header">
+            <tr>
+              <th colspan="2" class="text-center">Datos del Usuario</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <th scope="row">Cliente</th>
 
-          <td>{{ servicioSeleccionado?.nombre_completo }}</td>
-        </tr>
-        <tr>
-          <th scope="row">Cédula</th>
-          <td>{{ servicioSeleccionado?.cedula }}</td>
-        </tr>
-        <tr>
-          <th scope="row">Precio</th>
-          <td>${{ servicioSeleccionado?.servicios[0]?.precio }}</td>
-        </tr>
-        <tr>
-          <th scope="row">Estado de Pago</th>
-          <td>{{ servicioSeleccionado?.servicios[0]?.estado }}</td>
-        </tr>
-        <tr>
-          <th scope="row">Plan</th>
-          <td>{{ servicioSeleccionado?.servicios[0]?.plan_nombre }}</td>
-        </tr>
-        <tr>
-          <th scope="row">Cortado</th>
-          <td>{{ servicioSeleccionado?.servicios[0]?.cortado }}</td>
-        </tr>
-      </tbody>
-    </table>
-    <!-- TABLA DATOS DEL SOPORTE -->
-    <table class="table table-bordered table-striped w-50">
-      <thead class="custom-header">
-        <tr>
-          <th colspan="2" class="text-center">Datos del Soporte</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr>
-          <th scope="row">Motivo</th>
-          <td>
-            <span>
-              @switch (soporte?.reg_sop_opc) { @case (1) {
-              <span>Sin servicio de Internet</span>
-              } @case (2) {
-              <span> Internet Intermitente</span>
-              } @case (3) {
-              <span> Cambio de contraseña</span>
-              } @case (4) {
-              <span> Manipulacion de equipos</span>
-              } @case (5) {
-              <span> Sin Definir</span>
-              } }
-            </span>
-          </td>
-        </tr>
-        <tr>
-          <th scope="row">Ingreso de Soporte</th>
-          <td>
-            {{ soporte?.reg_sop_fecha | date : "EEEE dd MMMM YYYY hh:mm:ss" }}
-          </td>
-        </tr>
-        <tr>
-          <th scope="row">Inicio Revisión</th>
-          <td>
-            {{
-              soporte?.reg_sop_fecha_acepta
-                | date : "EEEE dd MMMM YYYY hh:mm:ss"
-            }}
-          </td>
-        </tr>
-        <tr>
-          <th scope="row">Teléfonos Soporte</th>
-          <td>{{ soporte?.reg_sop_tel }}</td>
-        </tr>
-        <tr>
-          <th scope="row">Registrado por</th>
-          <td>{{ soporte?.reg_sop_registrado_por_nombre }}</td>
-        </tr>
-        <tr>
-          <th scope="row">Observación</th>
-          <td>{{ soporte?.reg_sop_coment_cliente }}</td>
-        </tr>
-      </tbody>
-    </table>
-  </div>
-  <!-- DIV TABLA DEL SERVICIO Y SECCION SOLUCION  -->
-  <div class="d-flex justify-content-between align-items-stretch">
-    <!-- TABLA DATOS DEL SERVICIO -->
-    <table class="Datos-servicio table table-bordered table-striped mb-0">
-      <tbody>
-        <tr>
-          <th scope="row">Dirección</th>
-          <td>{{ servicioSeleccionado?.servicios[0]?.direccion }}</td>
-        </tr>
-        <tr>
-          <th scope="row">Referencia</th>
-          <td>{{ servicioSeleccionado?.servicios[0]?.referencia }}</td>
-        </tr>
-        <tr>
-          <th scope="row">Coordenadas</th>
-          <td>
-            <a
-              [href]="
-                'https://www.google.com/maps/search/' +
-                servicioSeleccionado?.servicios[0]?.coordenadas
-              "
-              class="text-danger"
-              target="_blank"
-            >
-              {{ servicioSeleccionado?.servicios[0]?.coordenadas }}
-            </a>
-          </td>
-        </tr>
-        <tr>
-          <th scope="row">Fecha Instalación</th>
-          <td>
-            {{
-              servicioSeleccionado?.servicios[0]?.fecha_instalacion
-                | date : "EEEE dd MMMM YYYY"
-            }}
-          </td>
-        </tr>
-        <tr>
-          <th scope="row">IP Equipo</th>
-          <td>
-            {{ servicioSeleccionado?.servicios[0]?.ip }}
-            <button
-              (click)="copyIp(servicioSeleccionado?.servicios[0]?.ip)"
-              class="btn btn-sm btn-danger ms-2"
-            >
-              Copiar
-            </button>
-          </td>
-        </tr>
-        <tr>
-          <th scope="row">Teléfonos Instalación</th>
-          <td>{{ servicioSeleccionado?.servicios[0]?.telefonos }}</td>
-        </tr>
-        <tr>
-          <th scope="row">Técnico Instalador</th>
-          <td>{{ servicioSeleccionado?.servicios[0]?.instalado_por }}</td>
-        </tr>
-      </tbody>
-    </table>
-
-    <!-- SECCION DE SOLUCION-->
-    <div
-      class="opciones-resolucion d-flex flex-column border border-2 p-1 bg-dark-subtle"
-    >
-      <!-- SECCION DE DESCRIPCION SOLUCION-->
-      <div class="solucion w-100">
-        <textarea
-          id="solucionInput"
-          class="form-control w-100"
-          rows="3"
-          [(ngModel)]="detalleSolucion"
-          name="solucion"
-          placeholder="Describe la solución"
-        ></textarea>
+              <td>{{ servicioSeleccionado?.nombre_completo }}</td>
+            </tr>
+            <tr>
+              <th scope="row">Cédula</th>
+              <td>{{ servicioSeleccionado?.cedula }}</td>
+            </tr>
+            <tr>
+              <th scope="row">Precio</th>
+              <td>${{ servicioSeleccionado?.servicios[0]?.precio }}</td>
+            </tr>
+            <tr>
+              <th scope="row">Estado de Pago</th>
+              <td>{{ servicioSeleccionado?.servicios[0]?.estado }}</td>
+            </tr>
+            <tr>
+              <th scope="row">Plan</th>
+              <td>{{ servicioSeleccionado?.servicios[0]?.plan_nombre }}</td>
+            </tr>
+            <tr>
+              <th scope="row">Cortado</th>
+              <td>{{ servicioSeleccionado?.servicios[0]?.cortado }}</td>
+            </tr>
+          </tbody>
+        </table>
+        <!-- TABLA DATOS DEL SOPORTE -->
+        <table class="table table-bordered table-striped w-50">
+          <thead class="custom-header">
+            <tr>
+              <th colspan="2" class="text-center">Datos del Soporte</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <th scope="row">Motivo</th>
+              <td>
+                <span>
+                  @switch (soporte?.reg_sop_opc) { @case (1) {
+                  <span>Sin servicio de Internet</span>
+                  } @case (2) {
+                  <span> Internet Intermitente</span>
+                  } @case (3) {
+                  <span> Cambio de contraseña</span>
+                  } @case (4) {
+                  <span> Manipulacion de equipos</span>
+                  } @case (5) {
+                  <span> Sin Definir</span>
+                  } }
+                </span>
+              </td>
+            </tr>
+            <tr>
+              <th scope="row">Ingreso de Soporte</th>
+              <td>
+                {{
+                  soporte?.reg_sop_fecha | date : "EEEE dd MMMM YYYY hh:mm:ss"
+                }}
+              </td>
+            </tr>
+            <tr>
+              <th scope="row">Inicio Revisión</th>
+              <td>
+                {{
+                  soporte?.reg_sop_fecha_acepta
+                    | date : "EEEE dd MMMM YYYY hh:mm:ss"
+                }}
+              </td>
+            </tr>
+            <tr>
+              <th scope="row">Teléfonos Soporte</th>
+              <td>{{ soporte?.reg_sop_tel }}</td>
+            </tr>
+            <tr>
+              <th scope="row">Registrado por</th>
+              <td>{{ soporte?.reg_sop_registrado_por_nombre }}</td>
+            </tr>
+            <tr>
+              <th scope="row">Observación</th>
+              <td>{{ soporte?.reg_sop_coment_cliente }}</td>
+            </tr>
+          </tbody>
+        </table>
       </div>
-      <!-- SECCION DE OPCIONES SOLUCION-->
-      <div class="d-flex justify-content-between w-100 h-100">
+      <!-- DIV TABLA DEL SERVICIO Y SECCION SOLUCION  -->
+      <div class="d-flex justify-content-between align-items-stretch">
+        <!-- TABLA DATOS DEL SERVICIO -->
+        <table class="Datos-servicio table table-bordered table-striped mb-0">
+          <tbody>
+            <tr>
+              <th scope="row">Dirección</th>
+              <td>{{ servicioSeleccionado?.servicios[0]?.direccion }}</td>
+            </tr>
+            <tr>
+              <th scope="row">Referencia</th>
+              <td>{{ servicioSeleccionado?.servicios[0]?.referencia }}</td>
+            </tr>
+            <tr>
+              <th scope="row">Coordenadas</th>
+              <td>
+                <a
+                  [href]="
+                    'https://www.google.com/maps/search/' +
+                    servicioSeleccionado?.servicios[0]?.coordenadas
+                  "
+                  class="text-danger"
+                  target="_blank"
+                >
+                  {{ servicioSeleccionado?.servicios[0]?.coordenadas }}
+                </a>
+              </td>
+            </tr>
+            <tr>
+              <th scope="row">Fecha Instalación</th>
+              <td>
+                {{
+                  servicioSeleccionado?.servicios[0]?.fecha_instalacion
+                    | date : "EEEE dd MMMM YYYY"
+                }}
+              </td>
+            </tr>
+            <tr>
+              <th scope="row">IP Equipo</th>
+              <td>
+                {{ servicioSeleccionado?.servicios[0]?.ip }}
+                <button
+                  (click)="copyIp(servicioSeleccionado?.servicios[0]?.ip)"
+                  class="btn btn-sm btn-danger ms-2"
+                >
+                  Copiar
+                </button>
+              </td>
+            </tr>
+            <tr>
+              <th scope="row">Teléfonos Instalación</th>
+              <td>{{ servicioSeleccionado?.servicios[0]?.telefonos }}</td>
+            </tr>
+            <tr>
+              <th scope="row">Técnico Instalador</th>
+              <td>{{ servicioSeleccionado?.servicios[0]?.instalado_por }}</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <!-- SECCION DE SOLUCION-->
         <div
-          class="opciones-radio d-flex flex-column flex-wrap justify-content-between"
+          class="opciones-resolucion d-flex flex-column border border-2 p-1 bg-dark-subtle"
         >
-          <div class="form-check" style="min-width: 160px">
-            <input
-              class="form-check-input"
-              type="radio"
-              name="reg_sop_opc"
-              id="opcion1"
-              value="REVISION"
-              (change)="asignarSolucion($event)"
-              [(ngModel)]="solucionSeleccionada"
-            />
-            <label
-              class="form-check-label"
-              for="opcion1"
-              style="white-space: nowrap"
-            >
-              EN REVISIÓN
-            </label>
+          <!-- SECCION DE DESCRIPCION SOLUCION-->
+          <div class="solucion w-100">
+            <textarea
+              id="solucionInput"
+              class="form-control w-100"
+              rows="3"
+              [(ngModel)]="detalleSolucion"
+              name="solucion"
+              placeholder="Describe la solución"
+            ></textarea>
           </div>
-
-          <div class="form-check" style="min-width: 160px">
-            <input
-              class="form-check-input"
-              type="radio"
-              name="reg_sop_opc"
-              id="opcion2"
-              value="RESUELTO"
-              [(ngModel)]="solucionSeleccionada"
-              (change)="asignarSolucion($event)"
-            />
-            <label
-              class="form-check-label"
-              for="opcion2"
-              style="white-space: nowrap"
+          <!-- SECCION DE OPCIONES SOLUCION-->
+          <div class="d-flex justify-content-between w-100 h-100">
+            <div
+              class="opciones-radio d-flex flex-column flex-wrap justify-content-between"
             >
-              RESUELTO
-            </label>
-          </div>
+              <div class="form-check" style="min-width: 160px">
+                <input
+                  class="form-check-input"
+                  type="radio"
+                  name="reg_sop_opc"
+                  id="opcion1"
+                  value="REVISION"
+                  (change)="asignarSolucion($event)"
+                  [(ngModel)]="solucionSeleccionada"
+                />
+                <label
+                  class="form-check-label"
+                  for="opcion1"
+                  style="white-space: nowrap"
+                >
+                  EN REVISIÓN
+                </label>
+              </div>
 
-          <div class="form-check" style="min-width: 160px">
-            <input
-              class="form-check-input"
-              type="radio"
-              name="reg_sop_opc"
-              id="opcion3"
-              value="VISITA"
-              [(ngModel)]="solucionSeleccionada"
-              (change)="asignarSolucion($event)"
-            />
-            <label
-              class="form-check-label"
-              for="opcion3"
-              style="white-space: nowrap"
-            >
-              VISITA TÉCNICA
-            </label>
-          </div>
+              <div class="form-check" style="min-width: 160px">
+                <input
+                  class="form-check-input"
+                  type="radio"
+                  name="reg_sop_opc"
+                  id="opcion2"
+                  value="RESUELTO"
+                  [(ngModel)]="solucionSeleccionada"
+                  (change)="asignarSolucion($event)"
+                />
+                <label
+                  class="form-check-label"
+                  for="opcion2"
+                  style="white-space: nowrap"
+                >
+                  RESUELTO
+                </label>
+              </div>
 
-          <div class="form-check" style="min-width: 160px">
-            <input
-              class="form-check-input"
-              type="radio"
-              name="reg_sop_opc"
-              id="opcion4"
-              value="LOS"
-              [(ngModel)]="solucionSeleccionada"
-              (change)="asignarSolucion($event)"
-            />
-            <label
-              class="form-check-label"
-              for="opcion4"
-              style="white-space: nowrap"
-            >
-              VISITA TÉCNICA LOS
-            </label>
-          </div>
+              <div class="form-check" style="min-width: 160px">
+                <input
+                  class="form-check-input"
+                  type="radio"
+                  name="reg_sop_opc"
+                  id="opcion3"
+                  value="VISITA"
+                  [(ngModel)]="solucionSeleccionada"
+                  (change)="asignarSolucion($event)"
+                />
+                <label
+                  class="form-check-label"
+                  for="opcion3"
+                  style="white-space: nowrap"
+                >
+                  VISITA TÉCNICA
+                </label>
+              </div>
 
-          <div class="form-check" style="min-width: 200px">
-            <input
-              class="form-check-input"
-              type="radio"
-              name="reg_sop_opc"
-              id="opcion5"
-              value="INFRAESTRUCTURA"
-              [(ngModel)]="solucionSeleccionada"
-              (change)="asignarSolucion($event)"
-            />
-            <label
-              class="form-check-label"
-              for="opcion5"
-              style="white-space: nowrap"
-            >
-              MONTAJE DE INFRAESTRUCTURA
-            </label>
-          </div>
+              <div class="form-check" style="min-width: 160px">
+                <input
+                  class="form-check-input"
+                  type="radio"
+                  name="reg_sop_opc"
+                  id="opcion4"
+                  value="LOS"
+                  [(ngModel)]="solucionSeleccionada"
+                  (change)="asignarSolucion($event)"
+                />
+                <label
+                  class="form-check-label"
+                  for="opcion4"
+                  style="white-space: nowrap"
+                >
+                  VISITA TÉCNICA LOS
+                </label>
+              </div>
 
-          <div class="form-check" style="min-width: 160px">
-            <input
-              class="form-check-input"
-              type="radio"
-              name="reg_sop_opc"
-              id="opcion6"
-              value="NO CONTESTA"
-              [(ngModel)]="solucionSeleccionada"
-              (change)="asignarSolucion($event)"
-            />
-            <label
-              class="form-check-label"
-              for="opcion6"
-              style="white-space: nowrap"
-            >
-              NO CONTESTA
-            </label>
-          </div>
-        </div>
+              <div class="form-check" style="min-width: 200px">
+                <input
+                  class="form-check-input"
+                  type="radio"
+                  name="reg_sop_opc"
+                  id="opcion5"
+                  value="INFRAESTRUCTURA"
+                  [(ngModel)]="solucionSeleccionada"
+                  (change)="asignarSolucion($event)"
+                />
+                <label
+                  class="form-check-label"
+                  for="opcion5"
+                  style="white-space: nowrap"
+                >
+                  MONTAJE DE INFRAESTRUCTURA
+                </label>
+              </div>
 
-        <div class="d-flex flex-column flex-wrap justify-content-center">
-          <button
-            (click)="guardarSolucion()"
-            class="btn btn-danger"
-            [disabled]="!detalleSolucion.trim()"
-          >
-            Guardar
-          </button>
-        </div>
-      </div>
-    </div>
-  </div>
+              <div class="form-check" style="min-width: 160px">
+                <input
+                  class="form-check-input"
+                  type="radio"
+                  name="reg_sop_opc"
+                  id="opcion6"
+                  value="NO CONTESTA"
+                  [(ngModel)]="solucionSeleccionada"
+                  (change)="asignarSolucion($event)"
+                />
+                <label
+                  class="form-check-label"
+                  for="opcion6"
+                  style="white-space: nowrap"
+                >
+                  NO CONTESTA
+                </label>
+              </div>
+            </div>
 
-  <!-- DIV INSTALACION-->
-  <div>
-    <h1 class="titulo-seccion">Instalación</h1>
-  </div>
-
-  <div class="imagenes-grid row">
-    @for (campo of ['fachada', 'router', 'ont', 'potencia', 'speedtest',
-    'cable_1', 'cable_2', 'equipo_1', 'equipo_2', 'equipo_3']; track campo) {
-    @if ( imagenesInstalacion[campo] && imagenesInstalacion[campo].ruta !==
-    'null' && imagenesInstalacion[campo].url !== 'undefined/imagenes/null' ) {
-    <div class="col-6 col-md-3 col-lg-2">
-      <div class="card shadow-sm border rounded">
-        <div class="card-body p-2 text-center">
-          <div class="fw-bold text-capitalize mb-1">{{ campo }}</div>
-          <img
-            [src]="imagenesInstalacion[campo].url"
-            alt="{{ campo }}"
-            class="img-thumbnail"
-            style="cursor: pointer; max-height: 150px"
-            (click)="abrirImagenModal(imagenesInstalacion[campo].url)"
-          />
-        </div>
-      </div>
-    </div>
-    } }
-  </div>
-
-  <!-- DIV VISITAS -->
-  <div class="mt-4">
-    <h1 class="titulo-seccion">Visitas</h1>
-  </div>
-
-  @for (visita of imagenesVisitas; track visita.id) {
-  <div class="mb-4 border rounded shadow-sm p-2">
-    <div class="mb-2">
-      <!-- <strong>ID Visita:</strong> {{ visita.id }} <br /> -->
-
-      <strong>Tipo:</strong> {{ visita.vis_tipo }} | <strong>Estado:</strong>
-      {{ visita.vis_estado }} <br />
-      <strong>Comentario cliente:</strong> {{ visita.vis_coment_cliente }}<br />
-      <strong>Diagnóstico:</strong> {{ visita.vis_diagnostico }} <br />
-      <strong>Detalle Solución:</strong> {{ visita.vis_solucion }} <br />
-      <strong>Fecha resolución del problema:</strong>
-      {{ visita.fecha_actualizacion | date : "dd/MM/yyyy HH:mm" }}
-    </div>
-
-    <div class="imagenes-grid row">
-      @for (campo of ['img_1', 'img_2', 'img_3', 'img_4']; track campo) { @if
-      (visita.imagenes[campo] && visita.imagenes[campo].ruta !== 'null' &&
-      visita.imagenes[campo].url !== 'undefined/imagenes/null') {
-      <div class="col-6 col-md-3 col-lg-2">
-        <div class="card shadow-sm border rounded">
-          <div class="card-body p-2 text-center">
-            <div class="fw-bold text-uppercase mb-1">{{ campo }}</div>
-            <img
-              [src]="visita.imagenes[campo].url"
-              alt="{{ campo }}"
-              class="img-thumbnail"
-              style="cursor: pointer; max-height: 150px"
-              (click)="abrirImagenModal(visita.imagenes[campo].url)"
-            />
+            <div class="d-flex flex-column flex-wrap justify-content-center">
+              <button
+                (click)="guardarSolucion()"
+                class="btn btn-danger"
+                [disabled]="!detalleSolucion.trim()"
+              >
+                Guardar
+              </button>
+            </div>
           </div>
         </div>
       </div>
-      } }
-    </div>
-  </div>
-  }
 
-  <!-- Modal Imagen Ampliada -->
-  <div
-    class="modal fade"
-    id="modalImagenAmpliada"
-    tabindex="-1"
-    aria-hidden="true"
-  >
-    <div class="modal-dialog modal-dialog-centered modal-lg">
-      <div class="modal-content bg-dark text-white text-center">
-        <div class="modal-body p-0">
-          <img
-            [src]="imagenSeleccionada"
-            class="img-fluid w-100 rounded"
-            alt="Imagen ampliada"
-          />
+      <!-- DIV INSTALACION-->
+      <div>
+        <h1 class="titulo-seccion">Instalación</h1>
+      </div>
+
+      <div class="imagenes-grid row">
+        @for (campo of ['fachada', 'router', 'ont', 'potencia', 'speedtest',
+        'cable_1', 'cable_2', 'equipo_1', 'equipo_2', 'equipo_3']; track campo)
+        { @if ( imagenesInstalacion[campo] && imagenesInstalacion[campo].ruta
+        !== 'null' && imagenesInstalacion[campo].url !==
+        'undefined/imagenes/null' ) {
+        <div class="col-6 col-md-3 col-lg-2">
+          <div class="card shadow-sm border rounded">
+            <div class="card-body p-2 text-center">
+              <div class="fw-bold text-capitalize mb-1">{{ campo }}</div>
+              <img
+                [src]="imagenesInstalacion[campo].url"
+                alt="{{ campo }}"
+                class="img-thumbnail"
+                style="cursor: pointer; max-height: 150px"
+                (click)="abrirImagenModal(imagenesInstalacion[campo].url)"
+              />
+            </div>
+          </div>
         </div>
-        <div class="modal-footer justify-content-center border-0">
-          <button
-            type="button"
-            class="btn btn-outline-light"
-            data-bs-dismiss="modal"
-          >
-            Cerrar
-          </button>
+        } }
+      </div>
+
+      <!-- DIV VISITAS -->
+      <div class="mt-4">
+        <h1 class="titulo-seccion">Visitas</h1>
+      </div>
+
+      @for (visita of imagenesVisitas; track visita.id) {
+      <div class="mb-4 border rounded shadow-sm p-2">
+        <div class="mb-2">
+          <!-- <strong>ID Visita:</strong> {{ visita.id }} <br /> -->
+
+          <strong>Tipo:</strong> {{ visita.vis_tipo }} |
+          <strong>Estado:</strong> {{ visita.vis_estado }} <br />
+          <strong>Comentario cliente:</strong> {{ visita.vis_coment_cliente
+          }}<br />
+          <strong>Diagnóstico:</strong> {{ visita.vis_diagnostico }} <br />
+          <strong>Detalle Solución:</strong> {{ visita.vis_solucion }} <br />
+          <strong>Fecha resolución del problema:</strong>
+          {{ visita.fecha_actualizacion | date : "dd/MM/yyyy HH:mm" }}
+        </div>
+
+        <div class="imagenes-grid row">
+          @for (campo of ['img_1', 'img_2', 'img_3', 'img_4']; track campo) {
+          @if (visita.imagenes[campo] && visita.imagenes[campo].ruta !== 'null'
+          && visita.imagenes[campo].url !== 'undefined/imagenes/null') {
+          <div class="col-6 col-md-3 col-lg-2">
+            <div class="card shadow-sm border rounded">
+              <div class="card-body p-2 text-center">
+                <div class="fw-bold text-uppercase mb-1">{{ campo }}</div>
+                <img
+                  [src]="visita.imagenes[campo].url"
+                  alt="{{ campo }}"
+                  class="img-thumbnail"
+                  style="cursor: pointer; max-height: 150px"
+                  (click)="abrirImagenModal(visita.imagenes[campo].url)"
+                />
+              </div>
+            </div>
+          </div>
+          } }
         </div>
       </div>
-    </div>
-  </div>
-</section>
+      }
+
+      <!-- Modal Imagen Ampliada -->
+      <div
+        class="modal fade"
+        id="modalImagenAmpliada"
+        tabindex="-1"
+        aria-hidden="true"
+      >
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+          <div class="modal-content bg-dark text-white text-center">
+            <div class="modal-body p-0">
+              <img
+                [src]="imagenSeleccionada"
+                class="img-fluid w-100 rounded"
+                alt="Imagen ampliada"
+              />
+            </div>
+            <div class="modal-footer justify-content-center border-0">
+              <button
+                type="button"
+                class="btn btn-outline-light"
+                data-bs-dismiss="modal"
+              >
+                Cerrar
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </section>
+</div>
+}
