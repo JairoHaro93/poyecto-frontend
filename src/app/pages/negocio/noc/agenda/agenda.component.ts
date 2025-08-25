@@ -65,7 +65,7 @@ export class AgendaComponent {
   modoEdicion = false;
   edicionHabilitada = true;
   datosUsuario!: Iusuarios;
-
+  isReady = false;
   horarios: string[] = [];
 
   agendaAsignada: { [hora: string]: { [vehiculo: string]: Iagenda | null } } =
@@ -86,14 +86,18 @@ export class AgendaComponent {
   //private socket = io(`${environment.API_WEBSOKETS_IO}`); // Conexión con WebSocket
 
   async ngOnInit() {
-    await this.contarpendientes();
+    try {
+      await this.contarpendientes();
 
-    this.datosUsuario = await this.authService.getUsuarioAutenticado();
+      this.datosUsuario = await this.authService.getUsuarioAutenticado();
 
-    this.generarHorarios();
-    await this.cargarAgendaPorFecha();
-    await this.cargarPreAgenda();
-    this.tecnicosList = await this.usuariosService.getAllAgendaTecnicos();
+      this.generarHorarios();
+      await this.cargarAgendaPorFecha();
+      await this.cargarPreAgenda();
+      this.tecnicosList = await this.usuariosService.getAllAgendaTecnicos();
+    } catch (error) {
+    } finally {
+    }
 
     // ✅ Escuchar solo eventos dirigidos
     this.socketService.on('trabajoAgendadoNOC', async () => {
@@ -190,9 +194,6 @@ export class AgendaComponent {
     }
   }
   async cargarAgendaPorFecha() {
-    this.isLoading = true;
-    this.isReady = false;
-
     this.contarpendientes();
     try {
       this.agendaList = await this.agendaService.getAgendaByDate(
@@ -219,12 +220,10 @@ export class AgendaComponent {
       this.generarRenderAgenda();
 
       // 👇 Deja al navegador “asentar” el layout antes de mostrar
-      await this.settleFrames();
-      this.isReady = true;
+      //    await this.settleFrames();
     } catch (error) {
       console.error('❌ Error al cargar la agenda por fecha:', error);
     } finally {
-      this.isLoading = false;
     }
   }
 
@@ -293,6 +292,8 @@ export class AgendaComponent {
       }
     } catch (e) {
       console.error('❌ Error al cargar preagenda:', e);
+    } finally {
+      this.isReady = true;
     }
   }
 
@@ -649,22 +650,5 @@ export class AgendaComponent {
   esImagenValida(campo: string): boolean {
     const img = this.imagenesInstalacion[campo];
     return img && img.ruta !== 'null' && img.url !== 'undefined/imagenes/null';
-  }
-
-  //suavizado de render
-
-  // 👇 estado de render
-  isLoading = true; // datos en carga
-  isReady = false; // UI lista para mostrar
-
-  /** Espera al siguiente frame del navegador (asegura que el DOM ya pintó) */
-  private nextFrame(): Promise<void> {
-    return new Promise((resolve) => requestAnimationFrame(() => resolve()));
-  }
-
-  /** Espera 2 frames para garantizar layout + paint (reduce flicker) */
-  private async settleFrames(): Promise<void> {
-    await this.nextFrame();
-    await this.nextFrame();
   }
 }
