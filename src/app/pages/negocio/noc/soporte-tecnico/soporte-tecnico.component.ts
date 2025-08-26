@@ -21,9 +21,6 @@ import { firstValueFrom } from 'rxjs';
   styleUrl: './soporte-tecnico.component.css',
 })
 export class SoporteTecnicoComponent {
-  //private socket = io('http://localhost:3000'); // Conexión con WebSocket
-  // private socket = io(`${environment.API_WEBSOKETS_IO}`); // Conexión con WebSocket
-
   clienteService = inject(ClientesService);
   authService = inject(AutenticacionService);
   soporteService = inject(SoportesService);

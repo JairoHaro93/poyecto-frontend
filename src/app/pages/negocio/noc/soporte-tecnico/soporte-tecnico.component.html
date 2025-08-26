@@ -3,7 +3,7 @@
 <!-- 🔽 Aquí va tu template existente tal cual -->
 <section class="container p-2 fade-in">
   <section class="container p-2">
-    <h5>SOPORTES PENDIENTES : {{ soportesPendientes.length }}</h5>
+    <h5>SOPORTES POR REVISAR : {{ soportesPendientes.length }}</h5>
 
     <div class="table-container">
       <table class="table table-hover">
@@ -38,15 +38,16 @@
   </section>
 
   <section class="container p-2">
-    <h5>MIS SOPORTES: {{ soportesNoc.length }}</h5>
+    <h5>SOPORTES POR CONCLUIR: {{ soportesNoc.length }}</h5>
     <div class="table-container">
       <table class="table table-hover">
         <thead>
           <tr class="custom-header">
             <th>Nombre</th>
-            <th>Fecha Registro</th>
-            <th>Tiempo Transcurrido</th>
+           
+            <!-- <th>Tiempo Transcurrido</th> -->
             <th>Registrado por</th>
+            <th>Revisado por</th>
             <th>Estado</th>
             <th></th>
           </tr>
@@ -55,18 +56,17 @@
           @for (item of soportesNoc; track $index) {
           <tr>
             <td>{{ item.clienteNombre }}</td>
-            <td>
-              {{ item.reg_sop_fecha | date : "EEEE dd MMMM YYYY hh:mm:ss" }}
-            </td>
-            <td>
+           
+            <!-- <td>
               {{
                 calcularTiempoTranscurrido(
                   item.reg_sop_fecha,
                   item.reg_sop_fecha_acepta
                 )
               }}
-            </td>
+            </td> -->
             <td>{{ item.reg_sop_registrado_por_nombre }}</td>
+            <td>{{ item.reg_sop_aceptado_por_nombre }}</td>
             <td>{{ item.reg_sop_estado }}</td>
             <td>
               <a

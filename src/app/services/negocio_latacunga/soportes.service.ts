@@ -37,12 +37,9 @@ export class SoportesService {
 
   getSopByNocId(id_noc: number): Promise<Isoportes[]> {
     return firstValueFrom(
-      this.httpClient.get<Isoportes[]>(
-        `${this.baseUrl}/mis-soportes/${id_noc}`,
-        {
-          withCredentials: true,
-        }
-      )
+      this.httpClient.get<Isoportes[]>(`${this.baseUrl}/revisados`, {
+        withCredentials: true,
+      })
     );
   }
 
