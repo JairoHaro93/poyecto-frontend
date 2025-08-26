@@ -2,7 +2,7 @@
 .mapa-container {
   position: relative;
   width: 100%;
-  height: 600px; /* debe coincidir con el alto del google-map */
+
 }
 
 /* overlay solo sobre el google-map */
