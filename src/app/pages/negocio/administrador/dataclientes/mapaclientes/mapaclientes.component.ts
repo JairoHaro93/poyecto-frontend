@@ -23,16 +23,6 @@ export class MapaclientesComponent {
   clientes: any[] = [];
   filtro: string = 'TODOS';
 
-  ngOnInit() {
-    //api de geolocalizacion de js nativa
-    navigator.geolocation.getCurrentPosition((position) => {
-      let center = new google.maps.LatLng(
-        position.coords.latitude,
-        position.coords.longitude
-      );
-      this.myposition.set(center);
-    });
-  }
   getposition(coords: any) {
     let resultado: string = coords;
     let array: any[] = resultado.split(',');

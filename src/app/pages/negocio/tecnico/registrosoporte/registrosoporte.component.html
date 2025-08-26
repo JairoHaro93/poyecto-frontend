@@ -1,237 +1,254 @@
-<main>
-  <!-- Datos generales -->
-  <section
-    class="container m-3 border border-1 border-black p-2 datos_generales shadow"
-  >
-    <h3>REGISTRAR SOPORTE</h3>
-    <!-- Campo de búsqueda por nombre -->
-    <!-- Campo de búsqueda por nombre -->
-    <div class="mb-3 d-flex gap-2 align-items-center">
-      <label for="cliente-input" style="min-width: 100px">Nombre</label>
-      <input
-        id="cliente-input"
-        type="text"
-        class="form-control"
-        [(ngModel)]="busqueda"
-        (input)="actualizarSugerencias()"
-        (change)="buscarClienteSeleccionado()"
-        placeholder="Ingrese el nombre del cliente"
-        style="width: 100%; max-width: 500px"
-      />
-    </div>
+<!-- Overlay local del componente -->
+@if (isReady) {
+<div class="fade-in">
+  <!-- ======= TU CONTENIDO ORIGINAL (SIN CAMBIOS) ======= -->
 
-    <!-- Lista personalizada de sugerencias -->
-    <!-- Lista personalizada de sugerencias -->
-    <div *ngIf="nombresFiltrados.length > 0" class="sugerencias">
-      <div
-        *ngFor="let nombre of nombresFiltrados"
-        (click)="seleccionarNombre(nombre)"
-        [ngClass]="{ selected: nombre === busqueda }"
-        class="sugerencia-item"
-      >
-        {{ nombre }}
-      </div>
-    </div>
-
-    <!-- Campo de búsqueda por cédula (sin sugerencias) -->
-    <div class="mb-3 d-flex gap-2 align-items-center">
-      <label for="cliente-cedula-input" style="min-width: 100px">Cédula</label>
-      <input
-        id="cliente-cedula-input"
-        type="text"
-        class="form-control"
-        [(ngModel)]="busquedaCedula"
-        (change)="buscarClientePorCedula()"
-        placeholder="Ingrese la cédula del cliente"
-        style="width: 100%; max-width: 500px"
-      />
-    </div>
-  </section>
-
-  <!-- Mostrar la información de los servicios del cliente seleccionado -->
-  <!-- Mostrar la información de los servicios del cliente seleccionado -->
-  <section
-    class="container"
-    *ngIf="clienteSeleccionado && clienteSeleccionado.servicios?.length"
-  >
-    <table border="2" class="table tabla-servicios">
-      <thead>
-        <tr class="custom-header">
-          <th></th>
-          <th>Orden</th>
-          <th>Dirección</th>
-          <th>Referencia</th>
-          <th>Plan Contratado</th>
-          <th>Precio</th>
-          <th>Pago</th>
-          <th>Cortado</th>
-          <th>Servicio</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr
-          *ngFor="let servicio of clienteSeleccionado.servicios"
-          [ngClass]="{ 'selected-row': servicio === servicioSeleccionado }"
-        >
-          <td class="align-items-center text-center">
-            <input
-              type="radio"
-              name="servicioSeleccionado"
-              [value]="servicio"
-              [(ngModel)]="servicioSeleccionado"
-            />
-          </td>
-          <td class="text-nowrap">{{ servicio.orden_instalacion }}</td>
-          <td>{{ servicio.direccion | uppercase }}</td>
-          <td>{{ servicio.referencia | uppercase }}</td>
-          <td class="text-nowrap">{{ servicio.plan_nombre }}</td>
-          <td class="text-nowrap">{{ servicio.precio }}</td>
-          <td class="text-nowrap">{{ servicio.estado }}</td>
-          <td class="text-nowrap">{{ servicio.cortado }}</td>
-          <td class="text-nowrap">{{ servicio.servicio }}</td>
-        </tr>
-      </tbody>
-    </table>
-  </section>
-
-  <!-- Formulario OBSERVACIONES DEL SOPORTE-->
-
-  <form [formGroup]="SoporteForm2" (ngSubmit)="getDataForm2()">
-    <div
-      class="d-flex border-1 border border-black Observaciones shadow"
-      *ngIf="servicioSeleccionado"
+  <main>
+    <!-- Datos generales -->
+    <section
+      class="container m-3 border border-1 border-black p-2 datos_generales shadow"
     >
-      <!-- Cuadro de estritura observaciones-->
-      <section class="container mt-3">
-        <textarea
-          id="observaciones"
-          class="form-control"
-          rows="4"
-          placeholder="Observaciones"
-          formControlName="reg_sop_observaciones"
-        ></textarea>
-      </section>
-      <!-- Radios y telefonos-->
-      <section class="container d-flex justify-content-between">
-        <div>
-          <div class="form-check">
-            <input
-              class="form-check-input"
-              type="radio"
-              name="reg_sop_opc"
-              id="opcion1"
-              value="1"
-              formControlName="reg_sop_opc"
-            />
-            <label class="form-check-label" for="opcion1"
-              >Sin servicio de Internet</label
-            >
-          </div>
+      <h3>REGISTRAR SOPORTE</h3>
 
-          <div class="form-check">
-            <input
-              class="form-check-input"
-              type="radio"
-              name="reg_sop_opc"
-              id="opcion2"
-              value="2"
-              formControlName="reg_sop_opc"
-            />
-            <label class="form-check-label" for="opcion2"
-              >Servicio Intermitente</label
-            >
-          </div>
+      <!-- Campo de búsqueda por nombre (server-side, mínimo 2 letras) -->
+      <div class="mb-3 d-flex gap-2 align-items-center">
+        <label for="cliente-input" style="min-width: 100px">Nombre</label>
 
-          <div class="form-check">
-            <input
-              class="form-check-input"
-              type="radio"
-              name="reg_sop_opc"
-              id="opcion3"
-              value="3"
-              formControlName="reg_sop_opc"
-            />
-            <label class="form-check-label" for="opcion3"
-              >Cambio de contraseña</label
-            >
-          </div>
-
-          <div class="form-check">
-            <input
-              class="form-check-input"
-              type="radio"
-              name="reg_sop_opc"
-              id="opcion4"
-              value="4"
-              formControlName="reg_sop_opc"
-            />
-            <label class="form-check-label" for="opcion4"
-              >Manipulación de equipos</label
-            >
-          </div>
-
-          <div class="form-check">
-            <input
-              checked
-              class="form-check-input"
-              type="radio"
-              name="reg_sop_opc"
-              id="opcion5"
-              value="5"
-              formControlName="reg_sop_opc"
-            />
-            <label class="form-check-label" for="opcion5">Otro</label>
-          </div>
-        </div>
-
-        <div class="d-flex flex-column justify-content-between">
-          <div>
-            <label for="form-control">Teléfonos:</label>
-            <input
-              type="text"
-              class="form-control mb-2"
-              placeholder="Teléfonos"
-              formControlName="reg_sop_tel"
-            />
-          </div>
-
+        <!-- Wrapper: alinea la lista justo debajo del input -->
+        <div class="sugerencias-wrap">
           <input
-            class="btn btn-danger"
-            type="submit"
-            value="Registrar"
-            [disabled]="!SoporteForm2.valid"
+            id="cliente-input"
+            type="text"
+            class="form-control"
+            [formControl]="busquedaCtrl"
+            (keydown)="onNombreKeydown($event)"
+            (blur)="onInputBlur()"
+            (focus)="onInputFocus()"
+            placeholder="Ingrese el nombre del cliente"
+            style="width: 100%; max-width: 500px"
+            autocomplete="off"
+            [attr.aria-autocomplete]="'list'"
+            [attr.aria-expanded]="
+              showSugerencias && nombresFiltrados.length > 0 ? 'true' : 'false'
+            "
+            [attr.aria-controls]="'lista-sugerencias'"
           />
-        </div>
-      </section>
-    </div>
-  </form>
 
-  <!-- Soportes Pendientes -->
-  <section
-    class="container m-3 border border-1 border-black tabla_pendientes p-2 shadow"
-  >
-    <h3>SOPORTES PENDIENTES {{ soportesPendientes.length }}</h3>
-    <table border="2" class="table">
-      <thead>
-        <tr class="custom-header">
-          <th>Orden</th>
-          <th>Nombre</th>
-          <th>Fecha Registro</th>
-          <th>Registrado por</th>
-        </tr>
-      </thead>
-      <tbody>
-        @for (item of soportesPendientes; track $index) {
-        <tr>
-          <td>{{ item.ord_ins }}</td>
-          <td>{{ item.reg_sop_nombre }}</td>
-          <td>
-            {{ item.reg_sop_fecha | date : "EEEE dd MMMM YYYY hh:mm:ss" }}
-          </td>
-          <td>{{ item.reg_sop_registrado_por_nombre }}</td>
-        </tr>
-        }
-      </tbody>
-    </table>
-  </section>
-</main>
+          @if (showSugerencias && nombresFiltrados.length > 0) {
+          <div id="lista-sugerencias" class="sugerencias" role="listbox">
+            @for (c of nombresFiltrados; track c.cedula; let i = $index) {
+            <div
+              role="option"
+              [attr.aria-selected]="i === highlightedIndex"
+              class="sugerencia-item"
+              [class.active]="i === highlightedIndex"
+              (mouseenter)="highlightedIndex = i"
+              (mousedown)="seleccionarNombre(c)"
+            >
+              {{ c.nombre_completo }}
+            </div>
+            }
+          </div>
+          }
+        </div>
+      </div>
+
+      <!-- Campo de búsqueda por cédula (directo) -->
+      <div class="mb-3 d-flex gap-2 align-items-center">
+        <label for="cliente-cedula-input" style="min-width: 100px"
+          >Cédula</label
+        >
+        <input
+          id="cliente-cedula-input"
+          type="text"
+          class="form-control"
+          [(ngModel)]="busquedaCedula"
+          (change)="buscarClientePorCedula()"
+          (keyup.enter)="buscarClientePorCedula()"
+          placeholder="Ingrese la cédula del cliente"
+          style="width: 100%; max-width: 500px"
+        />
+      </div>
+    </section>
+
+    <!-- Servicios del cliente seleccionado -->
+    @if (clienteSeleccionado && clienteSeleccionado.servicios.length) {
+    <section class="container">
+      <table border="2" class="table tabla-servicios">
+        <thead>
+          <tr class="custom-header">
+            <th></th>
+            <th>Orden</th>
+            <th>Dirección</th>
+            <th>Referencia</th>
+            <th>Plan Contratado</th>
+            <th>Precio</th>
+            <th>Pago</th>
+            <th>Cortado</th>
+            <th>Servicio</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (servicio of clienteSeleccionado.servicios; track
+          servicio.orden_instalacion) {
+          <tr [ngClass]="{ 'selected-row': servicio === servicioSeleccionado }">
+            <td class="align-items-center text-center">
+              <input
+                type="radio"
+                name="servicioSeleccionado"
+                [value]="servicio"
+                [(ngModel)]="servicioSeleccionado"
+              />
+            </td>
+            <td class="text-nowrap">{{ servicio.orden_instalacion }}</td>
+            <td>{{ servicio.direccion | uppercase }}</td>
+            <td>{{ servicio.referencia | uppercase }}</td>
+            <td class="text-nowrap">{{ servicio.plan_nombre }}</td>
+            <td class="text-nowrap">{{ servicio.precio }}</td>
+            <td class="text-nowrap">{{ servicio.estado }}</td>
+            <td class="text-nowrap">{{ servicio.cortado }}</td>
+            <td class="text-nowrap">{{ servicio.servicio }}</td>
+          </tr>
+          }
+        </tbody>
+      </table>
+    </section>
+    }
+
+    <!-- Formulario OBSERVACIONES DEL SOPORTE -->
+    <form [formGroup]="SoporteForm2" (ngSubmit)="getDataForm2()">
+      @if (servicioSeleccionado) {
+      <div class="d-flex border-1 border border-black Observaciones shadow">
+        <!-- Observaciones -->
+        <section class="container mt-3">
+          <textarea
+            id="observaciones"
+            class="form-control"
+            rows="4"
+            placeholder="Observaciones"
+            formControlName="reg_sop_coment_cliente"
+          ></textarea>
+        </section>
+        <!-- Radios y teléfonos -->
+        <section class="container d-flex justify-content-between">
+          <div>
+            <div class="form-check">
+              <input
+                class="form-check-input"
+                type="radio"
+                name="reg_sop_opc"
+                id="opcion1"
+                value="1"
+                formControlName="reg_sop_opc"
+              />
+              <label class="form-check-label" for="opcion1"
+                >Sin servicio de Internet</label
+              >
+            </div>
+            <div class="form-check">
+              <input
+                class="form-check-input"
+                type="radio"
+                name="reg_sop_opc"
+                id="opcion2"
+                value="2"
+                formControlName="reg_sop_opc"
+              />
+              <label class="form-check-label" for="opcion2"
+                >Servicio Intermitente</label
+              >
+            </div>
+            <div class="form-check">
+              <input
+                class="form-check-input"
+                type="radio"
+                name="reg_sop_opc"
+                id="opcion3"
+                value="3"
+                formControlName="reg_sop_opc"
+              />
+              <label class="form-check-label" for="opcion3"
+                >Cambio de contraseña</label
+              >
+            </div>
+            <div class="form-check">
+              <input
+                class="form-check-input"
+                type="radio"
+                name="reg_sop_opc"
+                id="opcion4"
+                value="4"
+                formControlName="reg_sop_opc"
+              />
+              <label class="form-check-label" for="opcion4"
+                >Manipulación de equipos</label
+              >
+            </div>
+            <div class="form-check">
+              <input
+                checked
+                class="form-check-input"
+                type="radio"
+                name="reg_sop_opc"
+                id="opcion5"
+                value="5"
+                formControlName="reg_sop_opc"
+              />
+              <label class="form-check-label" for="opcion5">Otro</label>
+            </div>
+          </div>
+
+          <div class="d-flex flex-column justify-content-between">
+            <div>
+              <label for="form-control">Teléfonos:</label>
+              <input
+                type="text"
+                class="form-control mb-2"
+                placeholder="Teléfonos"
+                formControlName="reg_sop_tel"
+              />
+            </div>
+
+            <input
+              class="btn btn-danger"
+              type="submit"
+              value="Registrar"
+              [disabled]="!SoporteForm2.valid"
+            />
+          </div>
+        </section>
+      </div>
+      }
+    </form>
+
+    <!-- Soportes Pendientes -->
+    <section
+      class="container m-3 border border-1 border-black tabla_pendientes p-2 shadow"
+    >
+      <h3>SOPORTES PENDIENTES {{ soportesPendientes.length }}</h3>
+      <table border="2" class="table">
+        <thead>
+          <tr class="custom-header">
+            <th>Orden</th>
+            <th>Nombre</th>
+            <th>Fecha Registro</th>
+            <th>Registrado por</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (item of soportesPendientes; track $index) {
+          <tr>
+            <td>{{ item.ord_ins }}</td>
+            <td>{{ item.clienteNombre || item.reg_sop_nombre }}</td>
+            <td>
+              {{ item.reg_sop_fecha | date : "EEEE dd MMMM YYYY hh:mm:ss" }}
+            </td>
+            <td>{{ item.reg_sop_registrado_por_nombre }}</td>
+          </tr>
+          }
+        </tbody>
+      </table>
+    </section>
+  </main>
+</div>
+}

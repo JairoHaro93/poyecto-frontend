@@ -27,35 +27,67 @@ export class DataclientesComponent {
   busqueda: string = '';
   nombresFiltrados: string[] = [];
   cargando = false; // Nueva variable para la animación de carga
+  // 👇 NUEVO: control de reveal suave
+  isReady = false;
 
-  async ngOnInit() {
-    // Cargar Google Maps
-    const script = document.createElement('script');
-    script.src = `https://maps.googleapis.com/maps/api/js?key=${environment.token_map}`;
-    script.defer = true;
-    script.async = true;
-    document.head.appendChild(script);
-
-    script.onload = () => {
-      this.isGoogleMapsLoaded = true;
-      this.initializeMap();
-    };
-
-    script.onerror = () => {
-      console.error('Error al cargar Google Maps');
-    };
-
-    // Cargar clientes de manera asíncrona
-    this.cargando = true;
-    this.clientelista = await this.clienteService.getInfoClientesMapa();
-
-    // Para evitar bloqueo de UI, usar setTimeout
-    setTimeout(() => {
-      this.marcasList = this.mapearClientes(this.clientelista);
-      this.cargando = false;
-    }, 500);
+  // 👇 NUEVO: helpers para esperar frames de render
+  private nextFrame(): Promise<void> {
+    return new Promise((r) => requestAnimationFrame(() => r()));
+  }
+  private async settleFrames(): Promise<void> {
+    await this.nextFrame();
+    await this.nextFrame();
   }
 
+  // Centro por defecto: (-0.939800, -78.616569)
+  private readonly DEFAULT_CENTER = { lat: -0.9398, lng: -78.616569 };
+  async ngOnInit() {
+    try {
+      this.isReady = false; // 👈 ocultamos el contenido real
+      this.cargando = true;
+
+      // Cargar Google Maps
+      const script = document.createElement('script');
+      script.src = `https://maps.googleapis.com/maps/api/js?key=${environment.token_map}`;
+      script.defer = true;
+      script.async = true;
+      document.head.appendChild(script);
+
+      script.onload = () => {
+        this.isGoogleMapsLoaded = true;
+        this.initializeMap(); // centrado por defecto
+      };
+      script.onerror = () => console.error('Error al cargar Google Maps');
+
+      // Cargar clientes
+      this.clientelista = await this.clienteService.getInfoClientesMapa();
+
+      // Evitar bloqueo UI; mapear y terminar “cargando”
+      setTimeout(() => {
+        this.marcasList = this.mapearClientes(this.clientelista);
+        this.cargando = false;
+      }, 300);
+
+      // 👇 Espera a que el DOM asiente antes de mostrar
+      await this.settleFrames();
+      this.isReady = true;
+    } catch (e) {
+      console.error(e);
+      this.isReady = true; // en error, evita dejar la vista en blanco
+      this.cargando = false;
+    }
+  }
+
+  private initializeMap() {
+    if (this.isGoogleMapsLoaded) {
+      // 👇 Centrado por defecto, sin geolocalización del navegador
+      const center = new google.maps.LatLng(-0.9398, -78.616569);
+      this.myposition.set(center);
+      this.zoom.set(12);
+    }
+  }
+  //FUNCION PARA BUSCAR LA GEOLOCALIZACION DEL NAVEGADOR
+  /*
   private initializeMap() {
     if (this.isGoogleMapsLoaded) {
       navigator.geolocation.getCurrentPosition((position) => {
@@ -69,6 +101,19 @@ export class DataclientesComponent {
     }
   }
 
+
+
+  private initializeMap() {
+    if (!this.isGoogleMapsLoaded) return;
+    // Usar centro por defecto
+    const center = new google.maps.LatLng(
+      this.DEFAULT_CENTER.lat,
+      this.DEFAULT_CENTER.lng
+    );
+    this.myposition.set(center);
+    this.zoom.set(12);
+  }
+*/
   actualizarSugerencias() {
     const texto = this.busqueda.trim().toLowerCase();
     if (texto.length > 0) {

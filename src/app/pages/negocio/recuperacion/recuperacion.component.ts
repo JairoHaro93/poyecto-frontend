@@ -5,7 +5,7 @@ import { RouterOutlet } from '@angular/router';
 @Component({
   selector: 'app-recuperacion',
   standalone: true,
-  imports: [SidebarComponent, RouterOutlet],
+  imports: [RouterOutlet],
   templateUrl: './recuperacion.component.html',
   styleUrl: './recuperacion.component.css',
 })

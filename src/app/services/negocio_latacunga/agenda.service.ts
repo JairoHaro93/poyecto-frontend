@@ -19,6 +19,17 @@ export class AgendaService {
     );
   }
 
+  getAgendaPendienteByFecha(fecha_age: string) {
+    return firstValueFrom(
+      this.httpClient.get<{ soportes_pendientes: number }>(
+        `${this.baseUrl}/pendientes/${fecha_age}`,
+        {
+          withCredentials: true,
+        }
+      )
+    );
+  }
+
   getPreAgenda() {
     return firstValueFrom(
       this.httpClient.get<Iagenda[]>(`${this.baseUrl}/preagenda`, {
@@ -38,6 +49,17 @@ export class AgendaService {
     );
   }
 
+  getInfoSolByAgeId(age_id: number) {
+    return firstValueFrom(
+      this.httpClient.get<Iagenda[]>(`${this.baseUrl}/sol/${age_id}`, {
+        withCredentials: true,
+      })
+    );
+  }
+
+  // CREA UN SOPORTE EN LA AGENDA
+  //router.post("/agenda-sop", checkToken, postAgenda);
+
   postSopAgenda(body: any) {
     return firstValueFrom(
       this.httpClient.post<Iagenda[]>(`${this.baseUrl}/agenda-sop`, body, {
@@ -54,11 +76,16 @@ export class AgendaService {
     );
   }
 
-  actualizarAgendaSolucuion(id: number, body: Iagenda): Promise<any> {
+  actualizarAgendaSolucion(id: number, body: Iagenda): Promise<any> {
     return firstValueFrom(
       this.httpClient.put(`${this.baseUrl}/edita-sol/${id}`, body, {
         withCredentials: true,
       })
     );
+  }
+
+  getImagenesPorTrabajo(tabla: string, trabajo_id: number | string) {
+    const url = `${this.baseUrl}/images/${tabla}/${trabajo_id}`;
+    return this.httpClient.get<any>(url);
   }
 }

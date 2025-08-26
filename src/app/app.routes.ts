@@ -13,7 +13,6 @@ import { InformediarioComponent } from './pages/negocio/noc/informediario/inform
 import { DatosclientesComponent } from './pages/negocio/clientes/datosclientes/datosclientes.component';
 import { AgendatecnicosComponent } from './pages/negocio/tecnico/agendatecnicos/agendatecnicos.component';
 import { MorososComponent } from './pages/negocio/recuperacion/morosos/morosos.component';
-
 import { DataclientesComponent } from './pages/negocio/administrador/dataclientes/dataclientes.component';
 import { RegistrosoporteComponent } from './pages/negocio/tecnico/registrosoporte/registrosoporte.component';
 import { RecuperacionComponent } from './pages/negocio/recuperacion/recuperacion.component';
@@ -24,12 +23,13 @@ import { MapeoCajasComponent } from './pages/negocio/noc/mapeo-cajas/mapeo-cajas
 import { SoporteTecnicoComponent } from './pages/negocio/noc/soporte-tecnico/soporte-tecnico.component';
 import { MapaMorososComponent } from './pages/negocio/recuperacion/mapa-morosos/mapa-morosos.component';
 import { GestionMorososComponent } from './pages/negocio/recuperacion/gestion-morosos/gestion-morosos.component';
-
 import { InfoSopComponent } from './pages/negocio/noc/info-sop/info-sop.component';
 import { AsignarTrabajosComponent } from './pages/negocio/noc/asignar-trabajos/asignar-trabajos.component';
 import { AgendaComponent } from './pages/negocio/noc/agenda/agenda.component';
 import { LayoutComponent } from './pages/sistema/layout/layout.component';
 import { permisosGuard } from './guards/permisos.guard';
+import { NuevaInstalacionComponent } from './pages/negocio/noc/nueva-instalacion/nueva-instalacion.component';
+import { TrasladoExtComponent } from './pages/negocio/noc/traslado-ext/traslado-ext.component';
 
 export const routes: Routes = [
   { path: '', pathMatch: 'full', redirectTo: 'login' },
@@ -143,6 +143,16 @@ export const routes: Routes = [
             path: 'info-sop/:id_sop/:ord_ins',
             component: InfoSopComponent,
             canActivate: [permisosGuard('NSoporte Tecnico')],
+          },
+          {
+            path: 'nueva-instalacion',
+            component: NuevaInstalacionComponent,
+            canActivate: [permisosGuard('NNueva Instalacion')],
+          },
+          {
+            path: 'traslado-ext',
+            component: TrasladoExtComponent,
+            canActivate: [permisosGuard('NTraslado Externo')],
           },
           { path: 'agenda', component: AgendaComponent },
         ],

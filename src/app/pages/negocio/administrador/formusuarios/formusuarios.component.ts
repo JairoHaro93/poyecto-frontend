@@ -167,6 +167,9 @@ export class FormusuariosComponent {
     );
   }
 
+  // ✅ Suavizado de render (NUEVO)
+  isReady = false;
+
   async ngOnInit() {
     this.loadFunciones();
 
@@ -176,6 +179,7 @@ export class FormusuariosComponent {
         await this.loadUsuario(params.id);
         this.syncFuncionesWithRoles();
       }
+      this.isReady = true; // ⬅️ muestra el contenido
     });
   }
 
