@@ -150,38 +150,3 @@ img.img-fluid.w-100.rounded {
     opacity: 1;
   }
 }
-
-/*-----------------------------*/
-/* Skeletons genéricos         */
-/*-----------------------------*/
-
-/* Barra que simula un título o encabezado */
-.skeleton-title {
-  height: 20px;
-  width: 200px;
-  margin-bottom: 1rem;
-  border-radius: 6px;
-  background: linear-gradient(90deg, #eee 25%, #f5f5f5 37%, #eee 63%);
-  background-size: 400% 100%;
-  animation: shimmer 1.2s infinite;
-}
-
-/* Bloque genérico para simular tabla, card o secciones */
-.skeleton-block {
-  height: 200px; /* Ajusta según el tamaño del contenido */
-  width: 100%;
-  border-radius: 10px;
-  background: linear-gradient(90deg, #eee 25%, #f5f5f5 37%, #eee 63%);
-  background-size: 400% 100%;
-  animation: shimmer 1.2s infinite;
-}
-
-/* Animación "shimmer" */
-@keyframes shimmer {
-  0% {
-    background-position: 100% 0;
-  }
-  100% {
-    background-position: 0 0;
-  }
-}

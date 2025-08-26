@@ -1,6 +1,6 @@
 /* === Contenedor Scroll === */
 .agenda-scroll-wrapper {
-  max-height: calc(100vh); /* altura dinámica */
+  max-height: 100vh; /* altura dinámica */
   overflow-y: auto;
   overflow-x: auto;
   width: 100%;
@@ -21,61 +21,35 @@
   top: 0;
   background-color: #cc2929;
   color: white;
-  z-index: 5;
+  z-index: 10; /* sube si hiciera falta */
   text-align: center;
   vertical-align: middle;
 }
 
-td {
-  text-align: center;
-  vertical-align: middle;
-}
-
-thead th {
-  background-color: #cc2929;
-  color: white;
-}
+td { text-align: center; vertical-align: middle; }
+thead th { background-color: #cc2929; color: white; }
 
 /* === Botones === */
-td button {
-  font-size: 0.75rem;
-  padding: 2px 6px;
-}
+td button { font-size: 0.75rem; padding: 2px 6px; }
+.btn-success { background-color: #28a745; border-color: #28a745; }
+.btn-success:hover { background-color: #218838; }
 
-.btn-success {
-  background-color: #28a745;
-  border-color: #28a745;
-}
-
-.btn-success:hover {
-  background-color: #218838;
-}
-
-.boton-soportes {
-  position: relative;
-}
+.boton-soportes { position: relative; }
 
 /* === Modal === */
-.modal-content {
-  border-radius: 12px;
-}
+.modal-content { border-radius: 12px; }
 
 /* === Celdas de Agenda === */
-.agenda-table {
-  table-layout: fixed;
-  width: 100%;
-}
-
 .col-horario {
   width: 100px;
   white-space: nowrap;
-  padding: 0px;
+  padding: 0;
 }
 
 .celda-agenda {
   max-width: 120px;
-  position: relative; /* ✅ Esto encierra bien a los botones */
-  padding: 0px;
+  position: relative; /* para ubicar botones absolutos */
+  padding: 0;
 }
 
 .celda-soporte {
@@ -89,48 +63,24 @@ td button {
 .contenido-celda {
   white-space: normal;
   word-break: break-word;
-  padding: 0rem 2.5rem; /* espacio horizontal sin afectar botones */
   text-align: center;
-  padding: 0px;
-  border: 0px;
+  padding: 0;    /* evita duplicados: dejas solo este */
+  border: 0;
 }
 
 /* === Estados === */
-.bg-warning {
-  background-color: #1fe5f4 !important;
-}
+.bg-warning { background-color: #1fe5f4 !important; }
+.bg-primary { background-color: #007bff !important; }
+.bg-success { background-color: #28a745 !important; color: white; }
+.bg-danger  { background-color: #dc3545 !important; }
+.bg-light   { background-color: #f8f9fa !important; }
+.bg-yellow  { background-color: rgb(255, 233, 0) !important; color: white; }
+.bg-blue    { background-color: #007bff !important; color: white; }
 
-.bg-primary {
-  background-color: #007bff !important;
-}
+/* ⚠️ reconsidera esto si quieres “muted” gris */
+.text-muted { color: #cc2929 !important; }
 
-.bg-success {
-  background-color: #28a745 !important;
-  color: white;
-}
-
-.bg-danger {
-  background-color: #dc3545 !important;
-}
-
-.bg-light {
-  background-color: #f8f9fa !important;
-}
-
-.bg-yellow {
-  background-color: rgb(255, 233, 0) !important;
-  color: white;
-}
-
-.bg-blue {
-  background-color: #007bff !important;
-  color: white;
-}
-
-.text-muted {
-  color: #cc2929 !important;
-}
-
+/* Botones flotantes en celdas */
 .btn-editar-badge,
 .btn-vista-badge {
   position: absolute;
@@ -142,154 +92,113 @@ td button {
   border: none;
   z-index: 1;
 }
+.btn-editar-badge { right: 2px; }
+.btn-vista-badge  { left: 2px; }
 
-.cuadro-detalle-idea .card {
-  border: 2px dashed red;
-}
-
+/* Ideas de detalle (si usas) */
+.cuadro-detalle-idea .card { border: 2px dashed red; }
 .cuadro-detalle-idea .detalle-pico {
   position: absolute;
   bottom: -10px;
   left: 20px;
-  width: 0;
-  height: 0;
+  width: 0; height: 0;
   border-left: 8px solid transparent;
   border-right: 8px solid transparent;
   border-top: 10px solid #fffbea;
 }
 
-.modal-right {
-  position: fixed;
-  left: 0;
-  margin: 0;
-  top: 0;
-  height: 100%;
-  display: flex;
-  align-items: center;
-  z-index: 1055;
-  width: 250px;
-}
+/* Si aún quieres un modal pequeño genérico */
+.modal-dialog.modal-sm { max-width: 230px; }
 
-.modal-dialog.modal-sm {
-  max-width: 230px;
-  margin-right: auto;
-}
-
-.btn-editar-badge {
-  right: 2px;
-}
-
-.btn-vista-badge {
-  left: 2px;
-}
-
-.agenda-scroll-wrapper {
-  max-height: calc(
-    100vh
-  ); /* ajusta según la altura de tu encabezado/flotantes */
-  overflow-y: auto;
-}
-
+/* Badges */
 .badge-circle {
   display: inline-block;
-  width: 30px;
-  height: 30px;
-  line-height: 30px;
+  width: 30px; height: 30px; line-height: 30px;
   border-radius: 50%;
   text-align: center;
-  font-weight: bold;
-  font-size: 14px;
+  font-weight: bold; font-size: 14px;
 }
 
-/*------------------------IMAGENES-----------------------------*/
+/* ------------------------ IMAGENES ----------------------------- */
 .imagenes-grid {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 1rem;
-  margin-top: 1rem;
+  display: flex; flex-wrap: wrap;
+  gap: 1rem; margin-top: 1rem;
   justify-content: center;
 }
-
 .imagen-card {
-  width: 200px; /* Tamaño fijo del card */
-  border: 1px solid #ddd;
-  border-radius: 8px;
-  overflow: hidden;
-  text-align: center;
-  background-color: #fff;
-  padding: 0.5rem;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+  width: 200px;
+  border: 1px solid #ddd; border-radius: 8px;
+  overflow: hidden; text-align: center; background-color: #fff;
+  padding: 0.5rem; box-shadow: 0 2px 6px rgba(0,0,0,.1);
 }
-
 .imagen-card img {
-  width: 100%;
-  height: 200px; /* Altura fija */
-  object-fit: cover; /* Puedes usar 'contain' si prefieres ver todo el contenido */
-  border-radius: 4px;
-  cursor: pointer;
-  transition: transform 0.2s ease;
+  width: 100%; height: 200px; object-fit: cover;
+  border-radius: 4px; cursor: pointer;
+  transition: transform .2s ease;
 }
-
-.imagen-card img:hover {
-  transform: scale(1.05);
-}
-
-.imagen-label {
-  font-weight: 600;
-  margin-bottom: 0.5rem;
-  text-transform: capitalize;
-}
+.imagen-card img:hover { transform: scale(1.05); }
+.imagen-label { font-weight: 600; margin-bottom: .5rem; text-transform: capitalize; }
 
 img.img-fluid.w-100.rounded {
-  max-height: 75vh;
-  object-fit: contain;
+  max-height: 75vh; object-fit: contain;
 }
 
 /*--------------------------------------------------------------------*/
 /* Transición suave al mostrar el contenido real */
 .fade-in {
   opacity: 0;
-  animation: fadeIn 0.18s ease-out forwards;
+  animation: fadeIn .35s ease-out forwards;
 }
-@keyframes fadeIn {
-  to {
-    opacity: 1;
-  }
+@keyframes fadeIn { to { opacity: 1; } }
+
+/* ====== Variables de animación ====== */
+:root{
+  --modal-dur: 220ms;
+  --modal-ease: cubic-bezier(.2,.7,.2,1);
+  --backdrop-op: 0.35;
 }
 
-/* Skeleton */
-.skeleton-title {
-  height: 20px;
-  width: 240px;
-  border-radius: 6px;
-  background: linear-gradient(90deg, #eee 25%, #f5f5f5 37%, #eee 63%);
-  background-size: 400% 100%;
-  animation: shimmer 1.2s infinite;
-}
+/* ====== Transición base de todos los modales ====== */
+.modal.fade { opacity: 0; transition: opacity var(--modal-dur) var(--modal-ease); }
+.modal.show { opacity: 1; }
 
-.skeleton-table {
-  display: grid;
-  gap: 10px;
+/* Desplazamiento + opacidad del dialog centrado */
+.modal.fade .modal-dialog {
+  transform: translate3d(0, -12px, 0);
+  opacity: 0;
+  transition: transform var(--modal-dur) var(--modal-ease), opacity var(--modal-dur) var(--modal-ease);
+  will-change: transform, opacity;
 }
+.modal.show .modal-dialog { transform: translate3d(0,0,0); opacity: 1; }
 
-.skeleton-row {
-  height: 36px;
-  border-radius: 8px;
-  background: linear-gradient(90deg, #eee 25%, #f5f5f5 37%, #eee 63%);
-  background-size: 400% 100%;
-  animation: shimmer 1.2s infinite;
+/* Backdrop suave */
+.modal-backdrop { opacity: 0; transition: opacity var(--modal-dur) var(--modal-ease); }
+.modal-backdrop.show { opacity: var(--backdrop-op); }
+
+/* ====== Drawer lateral (modal-right) ====== */
+.modal-dialog.modal-right {
+  margin: 0;
+  height: 100%;
+  max-width: 280px; /* ajusta a gusto o usa solo esta sin modal-sm */
+  transform: translate3d(-18px, 0, 0);
+  opacity: 0;
+  transition: transform var(--modal-dur) var(--modal-ease), opacity var(--modal-dur) var(--modal-ease);
+  will-change: transform, opacity;
 }
+.modal.show .modal-dialog.modal-right { transform: translate3d(0,0,0); opacity: 1; }
+.modal-dialog.modal-right .modal-content { min-height: 100%; border-radius: 0 12px 12px 0; }
 
-.skeleton-row.header {
-  height: 38px;
-  background: linear-gradient(90deg, #e8e8e8 25%, #f0f0f0 37%, #e8e8e8 63%);
+/* ====== Zoom sutil para el modal de imagen ====== */
+#modalImagenAmpliada.modal.fade .modal-dialog {
+  transform: scale(.98);
+  opacity: 0;
+  transition: transform var(--modal-dur) var(--modal-ease), opacity var(--modal-dur) var(--modal-ease);
 }
+#modalImagenAmpliada.modal.show .modal-dialog { transform: scale(1); opacity: 1; }
 
-@keyframes shimmer {
-  0% {
-    background-position: 100% 0;
-  }
-  100% {
-    background-position: 0 0;
-  }
+/* ====== Reduced motion ====== */
+@media (prefers-reduced-motion: reduce) {
+  .modal, .modal-dialog, .modal-backdrop { transition: none !important; }
+  .modal.fade { opacity: 1; }
+  .modal.fade .modal-dialog { transform: none; opacity: 1; }
 }

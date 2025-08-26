@@ -58,14 +58,6 @@ export class InfoSopComponent {
 
   // ✅ Suavizado de render (NUEVO)
   isReady = false;
-  private nextFrame(): Promise<void> {
-    return new Promise((resolve) => requestAnimationFrame(() => resolve()));
-  }
-  private async settleFrames(): Promise<void> {
-    // Deja que el navegador haga layout/paint antes de mostrar
-    await this.nextFrame();
-    await this.nextFrame();
-  }
 
   async ngOnInit() {
     this.datosUsuario = await this.authService.getUsuarioAutenticado();
@@ -84,7 +76,6 @@ export class InfoSopComponent {
         await this.cargarSoporte(this.id_sop, this.ord_Ins);
         this.cargarImagenesInstalacion('neg_t_instalaciones', this.ord_Ins);
         await this.cargarImagenesVisitas('neg_t_vis', this.ord_Ins);
-        await this.settleFrames(); // ⬅️ deja asentar layout/pintado
       } catch (e) {
         console.error('❌ Error inicial InfoSop:', e);
       } finally {

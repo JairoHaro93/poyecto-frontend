@@ -16,8 +16,7 @@ export class UsuariosComponent {
 
   usuarioServices = inject(UsuariosService);
 
-  // ✅ Suavizado de render (NUEVO)
-  isReady = false;
+  isReady = false; // ✅ Suavizado de render (NUEVO)
 
   async ngOnInit() {
     try {
@@ -26,7 +25,7 @@ export class UsuariosComponent {
     } catch (error) {
       console.log(error);
     } finally {
-      this.isReady = true; // ⬅️ muestra el contenido
+      this.isReady = true;
     }
   }
 

@@ -46,8 +46,8 @@ export class DatosclientesComponent {
   imagenSeleccionada: string | null = null;
 
   imagenesInstalacion: { [key: string]: { ruta: string; url: string } } = {};
-  // ✅ Suavizado de render (NUEVO)
-  isReady = false;
+
+  isReady = false; // ✅ Suavizado de render
 
   async ngOnInit() {
     // 🔎 Búsqueda reactiva: limpia si <2, consulta si >=2

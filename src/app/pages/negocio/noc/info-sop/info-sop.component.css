@@ -11,37 +11,84 @@
   }
 }
 
-/*-----------------------------*/
-/* Skeletons genéricos         */
-/*-----------------------------*/
 
-/* Barra que simula un título o encabezado */
-.skeleton-title {
-  height: 20px;
-  width: 200px;
-  margin-bottom: 1rem;
-  border-radius: 6px;
-  background: linear-gradient(90deg, #eee 25%, #f5f5f5 37%, #eee 63%);
-  background-size: 400% 100%;
-  animation: shimmer 1.2s infinite;
+/* ====== Aparición suave de la vista ====== */
+.fade-in {
+  opacity: 0;
+  animation: fadeIn .30s ease-out forwards;
+}
+@keyframes fadeIn { to { opacity: 1; } }
+
+/* ====== Variables y easing unificados ====== */
+:root{
+  --modal-dur: 220ms;
+  --modal-ease: cubic-bezier(.2,.7,.2,1);
+  --backdrop-op: 0.35;
 }
 
-/* Bloque genérico para simular tabla, card o secciones */
-.skeleton-block {
-  height: 200px; /* Ajusta según el tamaño del contenido */
-  width: 100%;
-  border-radius: 10px;
-  background: linear-gradient(90deg, #eee 25%, #f5f5f5 37%, #eee 63%);
-  background-size: 400% 100%;
-  animation: shimmer 1.2s infinite;
+/* ====== Transición base de modales (Bootstrap) ====== */
+.modal.fade {
+  opacity: 0;
+  transition: opacity var(--modal-dur) var(--modal-ease);
+}
+.modal.show { opacity: 1; }
+
+.modal.fade .modal-dialog {
+  transform: translate3d(0, -12px, 0);
+  opacity: 0;
+  transition:
+    transform var(--modal-dur) var(--modal-ease),
+    opacity   var(--modal-dur) var(--modal-ease);
+  will-change: transform, opacity;
+}
+.modal.show .modal-dialog {
+  transform: translate3d(0, 0, 0);
+  opacity: 1;
 }
 
-/* Animación "shimmer" */
-@keyframes shimmer {
-  0% {
-    background-position: 100% 0;
+/* Backdrop suave */
+.modal-backdrop {
+  opacity: 0;
+  transition: opacity var(--modal-dur) var(--modal-ease);
+}
+.modal-backdrop.show { opacity: var(--backdrop-op); }
+
+/* ====== Modal de imagen: zoom-in sutil ====== */
+#modalImagenAmpliada.modal.fade .modal-dialog {
+  transform: scale(.985);
+  opacity: 0;
+  transition:
+    transform var(--modal-dur) var(--modal-ease),
+    opacity   var(--modal-dur) var(--modal-ease);
+}
+#modalImagenAmpliada.modal.show .modal-dialog {
+  transform: scale(1);
+  opacity: 1;
+}
+
+/* ====== Sticky header de tablas (por si lo necesitas aquí también) ====== */
+.table .custom-header th,
+table thead.custom-header th {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+}
+
+/* ====== Imágenes en modal (ya lo tenías) ====== */
+img.img-fluid.w-100.rounded {
+  max-height: 75vh;
+  object-fit: contain;
+}
+
+/* ====== Respeta reduced motion ====== */
+@media (prefers-reduced-motion: reduce) {
+  .fade-in,
+  .modal,
+  .modal-dialog,
+  .modal-backdrop {
+    animation: none !important;
+    transition: none !important;
   }
-  100% {
-    background-position: 0 0;
-  }
+  .modal.fade { opacity: 1; }
+  .modal.fade .modal-dialog { transform: none; opacity: 1; }
 }

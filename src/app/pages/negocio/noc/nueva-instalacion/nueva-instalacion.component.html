@@ -1,62 +1,48 @@
-<!-- Overlay local del componente -->
-@if (!isReady) {
-<div class="skeleton-title"></div>
-<div class="skeleton-block"></div>
-} @else {
-<div class="fade-in">
-  <main class="container mt-4">
-    <form
-      [formGroup]="instalacionForm"
-      (ngSubmit)="submitForm()"
-      class="shadow p-4 bg-white rounded"
-    >
-      <h4 class="mb-3">Nueva Instalación</h4>
+@if (isReady)  {
+  <div class="fade-in">
+    <main class="container mt-4">
+      <form
+        [formGroup]="instalacionForm"
+        (ngSubmit)="submitForm()"
+        class="shadow p-4 bg-white rounded"
+      >
+        <h4 class="mb-3">Nueva Instalación</h4>
 
-      <div class="mb-3">
-        <label>Orden de instalación</label>
-        <input type="text" formControlName="ord_ins" class="form-control" />
-        <p *ngIf="checkError('ord_ins', 'required')" class="text-danger">
-          Requerido
-        </p>
-      </div>
+        <div class="">
+          <div class="mb-3">
+            <label>Orden de instalación</label>
+            <input type="text" formControlName="ord_ins" class="form-control" />
+            <p *ngIf="checkError('ord_ins','required')" class="text-danger">Requerido</p>
+          </div>
 
-      <div class="mb-3">
-        <label>Teléfonos</label>
-        <input type="text" formControlName="telefonos" class="form-control" />
-        <p *ngIf="checkError('telefonos', 'required')" class="text-danger">
-          Requerido
-        </p>
-      </div>
+          <div class="mb-3">
+            <label>Teléfonos</label>
+            <input type="text" formControlName="telefonos" class="form-control" />
+            <p *ngIf="checkError('telefonos','required')" class="text-danger">Requerido</p>
+          </div>
 
-      <div class="mb-3">
-        <label>Coordenadas</label>
-        <input type="text" formControlName="coordenadas" class="form-control" />
-        <p *ngIf="checkError('coordenadas', 'required')" class="text-danger">
-          Requerido
-        </p>
-      </div>
+          <div class="mb-3">
+            <label>Coordenadas</label>
+            <input type="text" formControlName="coordenadas" class="form-control" />
+            <p *ngIf="checkError('coordenadas','required')" class="text-danger">Requerido</p>
+          </div>
 
-      <label>Observacion</label>
-      <input
-        type="text"
-        formControlName="observacion"
-        class="form-control"
-        (input)="convertToUppercase('observacion')"
-      />
-      <p *ngIf="checkError('observacion', 'required')" class="text-danger">
-        Requerido
-      </p>
+          <label>Observación</label>
+          <input
+            type="text"
+            formControlName="observacion"
+            class="form-control"
+            (input)="convertToUppercase('observacion')"
+          />
+          <p *ngIf="checkError('observacion','required')" class="text-danger">Requerido</p>
 
-      <div class="text-center">
-        <button
-          class="btn btn-primary"
-          type="submit"
-          [disabled]="!instalacionForm.valid"
-        >
-          Guardar Instalación
-        </button>
-      </div>
-    </form>
-  </main>
-</div>
+          <div class="text-center">
+            <button class="btn btn-primary" type="submit" [disabled]="!instalacionForm.valid">
+              Guardar Instalación
+            </button>
+          </div>
+        </div>
+      </form>
+    </main>
+  </div>
 }
