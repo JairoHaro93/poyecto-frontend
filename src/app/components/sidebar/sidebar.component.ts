@@ -1,17 +1,13 @@
 import { Component, inject, OnDestroy, OnInit } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { AutenticacionService } from '../../services/sistema/autenticacion.service';
-import { JwtPayload } from 'jwt-decode';
 import { DataSharingService } from '../../services/data-sharing.service';
 import { SoportesService } from '../../services/negocio_latacunga/soportes.service';
 import { SoketService } from '../../services/socket_io/soket.service'; // ✅ Usa tu servicio
-
-interface CustomPayload extends JwtPayload {
-  usuario_id: number;
-  usuario_usuario: string;
-  usuario_rol: [];
-  usuario_nombre: string;
-}
+import { Iusuarios } from '../../interfaces/sistema/iusuarios.interface';
+import { toDate } from 'date-fns';
+import { AgendaService } from '../../services/negocio_latacunga/agenda.service';
+import { Iagenda } from '../../interfaces/negocio/agenda/iagenda.interface';
 
 declare var bootstrap: any;
 
@@ -28,19 +24,27 @@ export class SidebarComponent implements OnInit, OnDestroy {
   router = inject(Router);
   authService = inject(AutenticacionService);
   soporteService = inject(SoportesService);
+  agendaService = inject(AgendaService);
   soketService = inject(SoketService); // ✅ Inyección correcta del servicio
   dataSharingService = inject(DataSharingService);
-
-  data: CustomPayload = {
-    usuario_id: 0,
-    usuario_usuario: '',
-    usuario_rol: [],
-    usuario_nombre: '',
+  data: Iusuarios = {
+    id: 0,
+    usuario: '',
+    nombre: '',
+    apellido: '',
+    ci: '',
+    password: '',
+    fecha_cont: new Date(), // ✅ valor de tipo Date válido
+    fecha_nac: new Date(), // ✅ valor de tipo Date válido
+    genero: '',
+    rol: [],
   };
 
   soportesPendientesCount = 0;
   soportesNocCount = 0;
+  preAgendaPendientesCount = 0;
 
+  preAgendaList: Iagenda[] = [];
   arrAdmin: string[] = [];
   arrBodega: string[] = [];
   arrNoc: string[] = [];
@@ -49,64 +53,99 @@ export class SidebarComponent implements OnInit, OnDestroy {
   arrRecuperacion: string[] = [];
 
   async ngOnInit() {
+    this.obtenerSoportesPendientes();
+    this.cargarPreAgenda();
     this.soketService.connectSocket();
+
     this.dataSharingService.currentData.subscribe((data) => {
       this.soportesPendientesCount = data.pendientes;
       this.soportesNocCount = data.noc;
     });
 
-    const datosUsuario = this.authService.datosLogged();
-    if (datosUsuario) {
+    try {
+      const datosUsuario = await this.authService.getUsuarioAutenticado();
+
       this.data = datosUsuario;
-      this.arrAdmin = this.data.usuario_rol.filter((rol: string) =>
+
+      this.arrAdmin = this.data.rol.filter((rol: string) =>
         rol.startsWith('A')
       );
-      this.arrBodega = this.data.usuario_rol.filter((rol: string) =>
+      this.arrBodega = this.data.rol.filter((rol: string) =>
         rol.startsWith('B')
       );
-      this.arrNoc = this.data.usuario_rol.filter((rol: string) =>
-        rol.startsWith('N')
-      );
-      this.arrTecnico = this.data.usuario_rol.filter((rol: string) =>
+      this.arrNoc = this.data.rol.filter((rol: string) => rol.startsWith('N'));
+
+      this.arrTecnico = this.data.rol.filter((rol: string) =>
         rol.startsWith('T')
       );
-      this.arrClientes = this.data.usuario_rol.filter((rol: string) =>
+      this.arrClientes = this.data.rol.filter((rol: string) =>
         rol.startsWith('C')
       );
-      this.arrRecuperacion = this.data.usuario_rol.filter((rol: string) =>
+      this.arrRecuperacion = this.data.rol.filter((rol: string) =>
         rol.startsWith('R')
       );
-    }
 
-    // Solo conectar y escuchar si es NOC
-    if (this.arrNoc.length > 0) {
-      //this.soketService.connectSocket(); // ✅ conectar desde el servicio
-      await this.obtenerSoportesPendientes();
+      // Solo si es NOC conectamos eventos del socket
 
-      this.soketService.on('actualizarSoportes', async () => {
-        console.log('🔄 Recibiendo actualización de soportes');
+      this.soketService.on('soporteCreadoNOC', async () => {
+        console.log(
+          '📢 Evento recibido EN SIDEBAR solo por NOC: soporteCreadoNOC'
+        );
         const soportesPrevios = this.soportesPendientesCount;
         await this.obtenerSoportesPendientes();
+        // await this.cargarPreAgenda();
         if (this.soportesPendientesCount > soportesPrevios) {
           this.reproducirSonido();
         }
       });
 
-      this.soketService.on('soporteCreado', async () => {
-        console.log('📢 Nuevo soporte creado');
+      this.soketService.on('soporteActualizadoNOC', async () => {
+        console.log(
+          '📢 Evento recibido EN SIDEBAR solo por NOC: soporteActualizadoNOC'
+        );
         const soportesPrevios = this.soportesPendientesCount;
         await this.obtenerSoportesPendientes();
+        //   await this.cargarPreAgenda();
         if (this.soportesPendientesCount > soportesPrevios) {
           this.reproducirSonido();
         }
       });
+
+      this.soketService.on('trabajoPreagendadoNOC', async () => {
+        console.log('📥 trabajoPreagendadoNOC recibido EN SIDEBAR');
+        const preAgendaPrevio = this.preAgendaPendientesCount;
+        console.log(
+          'LA PREAGENDA ANTES DEL IF EN SIDEBAR ES' + preAgendaPrevio
+        );
+        await this.cargarPreAgenda();
+        console.log(
+          'LA PREAGENDA despues DEL IF EN SIDEBAR ES' + preAgendaPrevio
+        );
+        if (this.preAgendaPendientesCount > preAgendaPrevio) {
+          this.reproducirSonido();
+        }
+      });
+    } catch (error) {
+      console.error('❌ No se pudo obtener datos del usuario', error);
+      // Redirigir o manejar error de sesión
     }
+  }
+
+  async cargarPreAgenda() {
+    this.preAgendaList = await this.agendaService.getPreAgenda();
+    this.preAgendaPendientesCount = this.preAgendaList.length;
+    console.log(
+      'la preagenda es en SIDEBAR es ' + this.preAgendaPendientesCount
+    );
   }
 
   async obtenerSoportesPendientes() {
     try {
       const soportesPendientes = await this.soporteService.getAllPendientes();
       this.soportesPendientesCount = soportesPendientes.length;
+      console.log(
+        'El numero de soporte en SIDEBAR es ' + this.soportesPendientesCount
+      );
     } catch (error) {
       console.error('❌ Error al obtener soportes pendientes:', error);
     }
@@ -120,13 +159,12 @@ export class SidebarComponent implements OnInit, OnDestroy {
   }
 
   async onClickLogout() {
-    this.soketService.disconnectSocket(); // 🔴 primero desconectamos socket
+    this.soketService.disconnect(); // 🔴 primero desconectamos socket
 
-    localStorage.removeItem('token_proyecto'); // 🧹 limpiar token
-    await this.authService.logout(this.data.usuario_id); // API logout
+    await this.authService.logout(this.data.id!);
+    window.close(); // o this.router.navigateByUrl('/login')
 
-    //this.router.navigateByUrl('/login');
-    window.close(); // si fue abierto con window.open
+    this.router.navigateByUrl('/login');
   }
 
   onClickMenu() {
@@ -134,9 +172,9 @@ export class SidebarComponent implements OnInit, OnDestroy {
   }
 
   async ngOnDestroy() {
-    //this.soketService.disconnectSocket(); // ✅ desconectar también al destruir
+    //this.soketService.disconnect(); // ✅ desconectar también al destruir
     //  localStorage.removeItem('token_proyecto');
-    await this.authService.logout(this.data.usuario_id);
+    await this.authService.logout(this.data.id!);
 
     //this.router.navigateByUrl('/login');
   }

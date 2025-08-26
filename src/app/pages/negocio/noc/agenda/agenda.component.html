@@ -1,196 +1,176 @@
-<main class="container mt-3">
-  <div
-    class="d-flex justify-content-between align-items-center mb-3 px-2 flex-wrap pe-3"
-  >
-    <!--  NOMBRE Y CALENDARIO-->
-    <div class="d-flex align-items-center gap-2 mb-2 mb-lg-0">
-      <p class="text-muted small mb-0">
-        <strong>{{ nombreDelDia }}</strong>
-      </p>
-      <input
-        id="fechaAgenda"
-        type="date"
-        class="form-control form-control-sm w-auto"
-        [(ngModel)]="fechaSeleccionada"
-        (change)="alCambiarFecha()"
-      />
-    </div>
-    <!--  BOTON MOSTRAR PREAGENDA-->
-    <button
-      class="btn btn-outline-primary btn-sm boton-soportes"
-      [disabled]="preAgendaList.length === 0"
-      (click)="abrirModalPreagenda()"
-    >
-      Mostrar Preagenda
-      <span
-        class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger"
-      >
-        {{ preAgendaList.length }}
-      </span>
-    </button>
-  </div>
-  <!-- TABLA HORARIO -->
-  <!-- TABLA HORARIO -->
-  <div class="row m-2">
-    <div class="col-lg-12">
+<!-- Estado de carga -->
+@if (isReady)  {
+<!-- CONTENIDO REAL -->
+<main class="fade-in">
+  <main class="mt-3">
+    <!-- TABLA HORARIO -->
+    <!-- TABLA HORARIO -->
+    <div class="row m-2">
       <div
-        *ngIf="renderAgenda && horarios.length"
-        class="agenda-scroll-wrapper"
+        class="d-flex justify-content-between align-items-center flex-wrap sticky-top bg-white"
+        style="z-index: 1030"
       >
+        <!--  NOMBRE Y CALENDARIO-->
+        <div
+          class="d-flex align-items-start gap-2 mb-2 mb-lg-0 flex-column flex-lg-row w-100"
+        >
+          <p class="badge-circle bg-danger text-white">
+            {{ pendientes }}
+          </p>
+          <p class="text-muted small mb-0">
+            <strong>{{ nombreDelDia }}</strong>
+          </p>
+          <input
+            id="fechaAgenda"
+            type="date"
+            class="form-control form-control-sm w-auto"
+            [(ngModel)]="fechaSeleccionada"
+            (change)="alCambiarFecha()"
+          />
+          @if(preAgendaPendientesCount>0){
+          <div class="flex-grow-1">
+            <table class="table table-bordered table-striped small w-100">
+              <thead class="table-primary text-center">
+                <tr>
+                  <th>Tipo</th>
+
+                  <th>Cliente</th>
+                  <th>Observaciones</th>
+                  <th class="col-horario">Coordenadas</th>
+                  <th>Acción</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let item of preAgendaList">
+                  <td>{{ item.age_tipo }}</td>
+
+                  <td>{{ item.nombre_completo }}</td>
+                  <td>{{ item.age_diagnostico }}</td>
+                  <td class="col-horario">
+                    <a
+                      [href]="
+                        'https://www.google.com/maps/search/' +
+                        item.age_coordenadas
+                      "
+                      class="text-danger"
+                      target="_blank"
+                    >
+                      {{ item.age_coordenadas }}
+                    </a>
+                  </td>
+                  <td class="text-center">
+                    <button
+                      class="btn btn-sm btn-primary"
+                      (click)="asignarDesdePreagenda(item)"
+                    >
+                      Asignar
+                    </button>
+                  </td>
+                </tr>
+                <tr *ngIf="preAgendaList.length === 0">
+                  <td colspan="5" class="text-center text-muted">
+                    No hay trabajos pendientes
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          }
+        </div>
+
         <table
-          class="table table-bordered table-sm text-center align-middle small agenda-table"
+          class="table-bordered table-sm text-center align-middle small agenda-table"
         >
           <!-- HEADER DE LA TABLA-->
-          <thead class="table-light">
+          <thead class="table-light sticky-top" style="z-index: 1020">
             <tr>
               <th class="col-horario">Horario</th>
               <th *ngFor="let veh of vehiculos">{{ veh.nombre }}</th>
             </tr>
           </thead>
+        </table>
+      </div>
+      <div>
+        <div *ngIf="renderAgenda && horarios.length">
+          <table
+            class="table table-bordered table-sm text-center align-middle small agenda-table"
+          >
+            <!-- BODY DE LA TABLA -->
+            <tbody>
+              <tr *ngFor="let hora of horarios">
+                <td class="text-nowrap col-horario">{{ hora }}</td>
 
-          <!-- BODY DE LA TABLA -->
-          <tbody>
-            <tr *ngFor="let hora of horarios">
-              <td class="text-nowrap col-horario">{{ hora }}</td>
-
-              <ng-container *ngFor="let vehiculo of vehiculos">
-                <ng-container
-                  *ngIf="
-                    renderAgenda[hora] &&
-                    renderAgenda[hora][vehiculo.codigo] as celda
-                  "
-                >
-                  <td
-                    [attr.rowspan]="celda.rowspan"
-                    [hidden]="!celda.mostrar"
-                    [ngClass]="getEstadoClass(celda.trabajo?.age_subtipo)"
-                    class="celda-agenda position-relative"
+                <ng-container *ngFor="let vehiculo of vehiculos">
+                  <ng-container
+                    *ngIf="
+                      renderAgenda[hora] &&
+                      renderAgenda[hora][vehiculo.codigo] as celda
+                    "
                   >
-                    <div *ngIf="celda.trabajo">
-                      <div
-                        class="celda-contenido d-flex flex-column h-100 justify-content-between"
-                      >
-                        <!-- Botón EDITAR -->
-                        @if (!esFechaPasada(celda.trabajo.age_fecha) &&
-                        celda.trabajo.age_estado !== 'CONCLUIDO') {
-                        <button
-                          class="btn btn-editar-badge position-absolute"
-                          (click)="
-                            iniciarEdicionDesdeTabla(hora, vehiculo.codigo)
-                          "
+                    <td
+                      [attr.rowspan]="celda.rowspan"
+                      [hidden]="!celda.mostrar"
+                      [ngClass]="getEstadoClass(celda.trabajo?.age_tipo)"
+                      class="celda-agenda position-relative"
+                    >
+                      <div *ngIf="celda.trabajo">
+                        <div
+                          class="celda-contenido d-flex flex-column h-100 justify-content-between"
                         >
-                          <i class="fas fa-pencil-alt"></i>
-                        </button>
-                        }
+                          <!-- Botón EDITAR -->
+                          @if (!esFechaPasada(celda.trabajo.age_fecha) &&
+                          celda.trabajo.age_estado !== 'CONCLUIDO') {
+                          <button
+                            class="btn btn-editar-badge position-absolute"
+                            (click)="
+                              iniciarEdicionDesdeTabla(hora, vehiculo.codigo)
+                            "
+                          >
+                            <i class="fas fa-pencil-alt"></i>
+                          </button>
+                          }
 
-                        <!-- Botón VISTA -->
-                        <button
-                          class="btn btn-vista-badge position-absolute"
-                          (click)="abrirVistaDetalle(hora, vehiculo.codigo)"
-                        >
-                          <i class="fas fa-eye"></i>
-                        </button>
-                      </div>
+                          <!-- Botón VISTA -->
+                          <button
+                            class="btn btn-vista-badge position-absolute"
+                            (click)="abrirVistaDetalle(hora, vehiculo.codigo)"
+                          >
+                            <i class="fas fa-eye"></i>
+                          </button>
+                        </div>
 
-                      <!-- Contenido Principal -->
-                      <div class="contenido-celda px-4 text-center">
-                        <i class="bi bi-person-fill"></i>
-                        {{ celda.trabajo.nombre_completo }}<br />
-                        <small>
-                          👷
-                          {{ getNombreTecnicoPorId(celda.trabajo.age_tecnico) }}
-                        </small>
+                        <!-- Contenido Principal -->
+                        <div class="contenido-celda px-4 text-center">
+                          <i class="bi bi-person-fill"></i>
+                          {{ celda.trabajo.nombre_completo }}<br />
+                          <small>
+                            👷
+                            {{
+                              getNombreTecnicoPorId(celda.trabajo.age_tecnico)
+                            }}
+
+                            @if (celda.trabajo.age_estado === 'CONCLUIDO') { ✅
+                            }
+                          </small>
+                        </div>
                       </div>
-                    </div>
-                  </td>
+                    </td>
+                  </ng-container>
                 </ng-container>
-              </ng-container>
-            </tr>
-          </tbody>
-        </table>
+              </tr>
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
-  </div>
+  </main>
 </main>
-
-<!-- Modal Preagenda -->
-<div
-  class="modal fade"
-  id="modalSoportes"
-  tabindex="-1"
-  aria-labelledby="modalSoportesLabel"
-  aria-hidden="true"
->
-  <div class="modal-dialog modal-xl">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title">Preagenda disponible</h5>
-        <button
-          type="button"
-          class="btn-close"
-          data-bs-dismiss="modal"
-          aria-label="Cerrar"
-        ></button>
-      </div>
-      <div class="modal-body">
-        <table class="table table-bordered table-striped table-sm small">
-          <thead class="table-primary text-center">
-            <tr>
-              <th>Tipo</th>
-              <th>ESTADO</th>
-              <th>Cliente</th>
-              <th>Observaciones</th>
-              <th class="col-horario">Coordenadas</th>
-              <th>Acción</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr *ngFor="let item of preAgendaList">
-              <td>{{ item.age_tipo }}</td>
-              <td>{{ item.age_subtipo }}</td>
-              <td>{{ item.nombre_completo }}</td>
-              <td>{{ item.age_observaciones }}</td>
-              <td class="col-horario">
-                <a
-                  [href]="
-                    'https://www.google.com/maps/search/' + item.age_coordenadas
-                  "
-                  class="text-danger"
-                  target="_blank"
-                >
-                  {{ item.age_coordenadas }}
-                </a>
-              </td>
-              <td class="text-center">
-                <button
-                  class="btn btn-sm btn-primary"
-                  (click)="asignarDesdePreagenda(item)"
-                >
-                  Asignar
-                </button>
-              </td>
-            </tr>
-            <tr *ngIf="preAgendaList.length === 0">
-              <td colspan="5" class="text-center text-muted">
-                No hay trabajos pendientes
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
-  </div>
-</div>
+}
 
 <!-- Modal Asignación -->
-<div
-  class="modal fade"
-  id="asignarModal"
-  tabindex="-1"
-  aria-labelledby="asignarModalLabel"
-  aria-hidden="true"
->
-  <div class="modal-dialog modal-dialog-centered modal-sm modal-right">
+<div class="modal fade" id="asignarModal" tabindex="-1" aria-labelledby="asignarModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-sm modal-right"><!-- ← modal-right aquí -->
+    
     <div class="modal-content">
       <div class="modal-header">
         <h5 class="modal-title">Editar Trabajo</h5>
@@ -307,17 +287,15 @@
 </div>
 
 <!-- Modal Detalle Soporte -->
-<div
-  class="modal fade"
-  id="modalVistaSoporte"
-  tabindex="-1"
-  aria-labelledby="modalVistaSoporteLabel"
-  aria-hidden="true"
->
-  <div class="modal-dialog modal-dialog-centered">
+<div class="modal fade" id="modalVistaSoporte" tabindex="-1" aria-labelledby="modalVistaSoporteLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg">
     <div class="modal-content">
-      <div class="modal-header bg-danger text-white py-2">
-        <h6 class="modal-title">Detalle del Trabajo</h6>
+      <div class="modal-header bg-danger py-2">
+        <h5 class="modal-title text-white">
+          Detalle de @switch (trabajoVista?.age_tipo) { @case ('LOS') {
+          <span>LOS</span> } @case ('TRABAJO') { <span>Trabajo</span> } @case
+          ('INSTALACION') { <span>Instalación</span> } }
+        </h5>
         <button
           type="button"
           class="btn-close btn-close-white"
@@ -326,35 +304,124 @@
         ></button>
       </div>
       <div class="modal-body small">
-        <p>
-          <strong>📛 Nombre:</strong><br />{{ trabajoVista?.nombre_completo }}
-        </p>
-        <p>
-          <strong>👷 Técnico: </strong><br />
-          {{ getNombreTecnicoPorId(trabajoVista?.age_tecnico) }}
-        </p>
-        <p>
-          <strong>📞 Teléfono:</strong><br />{{ trabajoVista?.age_telefono }}
-        </p>
-        <p>
-          <strong>📞 Observaciones:</strong><br />{{
-            trabajoVista?.age_observaciones
-          }}
-        </p>
-        <p>
-          <strong>📍 Coordenadas:</strong><br />
-          <a
-            [href]="
-              'https://www.google.com/maps/search/' +
-              trabajoVista?.age_coordenadas
-            "
-            class="text-danger"
-            target="_blank"
-          >
-            {{ trabajoVista?.age_coordenadas }}
-          </a>
-        </p>
+        <div>
+          <div class="row">
+            <!-- INFORMACION -->
+
+            <div class="col-12 col-md-4 Informacion">
+              <p>
+                <strong>📛 Cliente :</strong> <br />
+                {{ trabajoVista?.nombre_completo }}
+              </p>
+              <p>
+                <strong>👷 Técnico: </strong> <br />
+                {{ getNombreTecnicoPorId(trabajoVista?.age_tecnico) }}
+              </p>
+              <p>
+                <strong>📞 Teléfono:</strong> <br />
+                {{ trabajoVista?.age_telefono }}
+              </p>
+              <p>
+                <strong>👁️‍🗨️ Diagnóstico NOC:</strong> <br />
+                {{ trabajoVista?.age_diagnostico }}
+              </p>
+              <p>
+                <strong>📍 Coordenadas:</strong> <br />
+                <a
+                  [href]="
+                    'https://www.google.com/maps/search/' +
+                    trabajoVista?.age_coordenadas
+                  "
+                  class="text-danger"
+                  target="_blank"
+                >
+                  {{ trabajoVista?.age_coordenadas }}
+                </a>
+              </p>
+            </div>
+
+            <!-- SOLUCION -->
+
+            @if (trabajoVista?.age_estado === 'CONCLUIDO') {
+            <div class="col-12 col-md-8 Solucion">
+              <p>
+                <strong>Solución:</strong> {{ solucionVista[0].age_solucion }}
+              </p>
+              <hr />
+              <div class="row">
+                @for (campo of ['img_1', 'img_2', 'img_3', 'img_4']; track
+                campo) { @if (imagenesVisita[campo] &&
+                imagenesVisita[campo].ruta !== 'null') {
+                <div class="col-6 col-md-4 col-lg-3">
+                  <div class="card border p-2 text-center">
+                    <div class="fw-bold text-capitalize">{{ campo }}</div>
+                    <img
+                      [src]="imagenesVisita[campo].url"
+                      alt="{{ campo }}"
+                      class="img-thumbnail"
+                      style="cursor: pointer; max-height: 150px"
+                      (click)="abrirImagenModal(imagenesVisita[campo].url)"
+                    />
+                  </div>
+                </div>
+                } }
+              </div>
+            </div>
+            }
+          </div>
+        </div>
+        <hr />
+        <h6 class="">Imágenes de instalación</h6>
+        <!-- Grid de imágenes de instalacion -->
+        <div class="imagenes-grid">
+          @for (campo of ['fachada', 'router', 'ont', 'potencia', 'speedtest',
+          'cable_1', 'cable_2', 'equipo_1', 'equipo_2', 'equipo_3']; track
+          campo) { @if ( imagenesInstalacion[campo] &&
+          imagenesInstalacion[campo].ruta !== 'null' &&
+          imagenesInstalacion[campo].url !== 'undefined/imagenes/null' ) {
+          <div class="col-6 col-md-3 col-lg-2">
+            <div class="card shadow-sm border rounded">
+              <div class="card-body p-2 text-center">
+                <div class="fw-bold text-capitalize mb-1">{{ campo }}</div>
+                <img
+                  [src]="imagenesInstalacion[campo].url"
+                  alt="{{ campo }}"
+                  class="img-thumbnail"
+                  style="cursor: pointer; max-height: 150px"
+                  (click)="abrirImagenModal(imagenesInstalacion[campo].url)"
+                />
+              </div>
+            </div>
+          </div>
+          } }
+        </div>
       </div>
     </div>
   </div>
 </div>
+
+<!-- Modal Imagen Ampliada -->
+<div class="modal fade" id="modalImagenAmpliada" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-content bg-dark text-white text-center">
+      <div class="modal-body p-0">
+        <img
+          [src]="imagenSeleccionada"
+          class="img-fluid w-100 rounded"
+          alt="Imagen ampliada"
+        />
+      </div>
+      <div class="modal-footer justify-content-center border-0">
+        <button
+          type="button"
+          class="btn btn-outline-light"
+          data-bs-dismiss="modal"
+        >
+          Cerrar
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+

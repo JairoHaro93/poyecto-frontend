@@ -1,3 +1,4 @@
+// usuarios.services.ts
 import { HttpClient } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { environment } from '../../../environments/environment';
@@ -8,52 +9,57 @@ import { Iusuarios } from '../../interfaces/sistema/iusuarios.interface';
   providedIn: 'root',
 })
 export class UsuariosService {
-  //variables
   private baseUrl: string = `${environment.API_URL}/usuarios`;
-
-  //injectables
   private httpClient = inject(HttpClient);
 
-  //METODOS
-
-  //OBTENER TODOS LOS USUARIOS
   getAll() {
-    return lastValueFrom(this.httpClient.get<Iusuarios[]>(this.baseUrl));
+    return lastValueFrom(
+      this.httpClient.get<Iusuarios[]>(this.baseUrl, {
+        withCredentials: true,
+      })
+    );
   }
 
-  //OBTENER TODOS LOS USUARIOS CON AGENDA - TECNICOS
   getAllAgendaTecnicos() {
     return lastValueFrom(
-      this.httpClient.get<Iusuarios[]>(`${this.baseUrl}/agenda-tecnicos`)
+      this.httpClient.get<Iusuarios[]>(`${this.baseUrl}/agenda-tecnicos`, {
+        withCredentials: true,
+      })
     );
   }
 
-  //OBTENER USUARIO POR ID
   getbyId(id: string): Promise<Iusuarios> {
     return firstValueFrom(
-      this.httpClient.get<Iusuarios>(`${this.baseUrl}/${id}`)
+      this.httpClient.get<Iusuarios>(`${this.baseUrl}/${id}`, {
+        withCredentials: true,
+      })
     );
   }
 
-  //ACTUALIZAR USUARIO
   update(body: Iusuarios): Promise<Iusuarios> {
-    let id = body.id;
-
+    const id = body.id;
     delete body.id;
-    console.log(`${this.baseUrl}/${id}`, body);
+
     return firstValueFrom(
-      this.httpClient.put<Iusuarios>(`${this.baseUrl}/${id}`, body)
+      this.httpClient.put<Iusuarios>(`${this.baseUrl}/${id}`, body, {
+        withCredentials: true,
+      })
     );
   }
-  //CREAR USUARIOS
+
   insert(body: Iusuarios): Promise<Iusuarios> {
-    return firstValueFrom(this.httpClient.post<Iusuarios>(this.baseUrl, body));
+    return firstValueFrom(
+      this.httpClient.post<Iusuarios>(this.baseUrl, body, {
+        withCredentials: true,
+      })
+    );
   }
 
-  //BORRAR USUARUIOS
   delete(id: number): Promise<Iusuarios> {
     return firstValueFrom(
-      this.httpClient.delete<Iusuarios>(`${this.baseUrl}/${id}`)
+      this.httpClient.delete<Iusuarios>(`${this.baseUrl}/${id}`, {
+        withCredentials: true,
+      })
     );
   }
 }

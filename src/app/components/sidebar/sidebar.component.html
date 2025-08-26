@@ -19,7 +19,7 @@
   <div class="border-bottom border-3 pb-2"></div>
 
   <div class="div2">
-    <p class="my-2 texto-amarillo">{{ data.usuario_nombre }}</p>
+    <p class="my-2 texto-amarillo">{{ data.nombre }}</p>
 
     <div class="accordion" id="accordionSidebar">
       <!-- BOTON ADMINISTRADOR -->
@@ -123,36 +123,50 @@
         class="button-primary btn-toggle rounded my-2"
         (click)="toggleCollapse('noc-collapse')"
       >
-        <div class="d-flex justify-content-around">
-          @if(soportesPendientesCount>0){
-          <span class="badge-circle">
-            {{ soportesPendientesCount }}
-          </span>
+        <div class="d-flex justify-content-around align-items-center w-100">
+          <!-- Badge izquierda -->
+          @if (preAgendaPendientesCount > 0) {
+          <span class="badge-circle-age">{{ preAgendaPendientesCount }}</span>
+          } @else {
+          <span class="badge-circle-age invisible">0</span>
           }
+
+          <!-- Icono central -->
           <div>
             <i class="fa-solid fa-circle-nodes"></i>
             Noc
           </div>
-          @if(soportesPendientesCount>0){
-          <span class="badge-circle">
-            {{ soportesPendientesCount }}
-          </span>
+
+          <!-- Badge derecha -->
+          @if (soportesPendientesCount > 0) {
+          <span class="badge-circle-sop">{{ soportesPendientesCount }}</span>
+          } @else {
+          <span class="badge-circle-sop invisible">0</span>
           }
         </div>
       </button>
+
       }
       <div class="accordion-collapse collapse" id="noc-collapse">
         <ul class="btn-toggle-nav list-unstyled fw-normal pb-1 small">
           @if (arrNoc.includes("NAgenda")) {
           <li (click)="onClickMenu()" [routerLink]="['/home/noc/agenda']">
-            Agenda
+            Agenda @if(preAgendaPendientesCount>0){
+            <span class="badge-circle-age">
+              {{ preAgendaPendientesCount }}
+            </span>
+            }
           </li>
           } @if (arrNoc.includes("NSoporte Tecnico")) {
           <li
             (click)="onClickMenu()"
             [routerLink]="['/home/noc/soporte-tecnico']"
           >
-            Soporte Tecnico
+            Soporte Tecnico @if(soportesPendientesCount>0){
+            <span class="badge-circle-sop">
+              {{ soportesPendientesCount }}
+            </span>
+            }
           </li>
           } @if (arrNoc.includes("NInforme Diario")) {
           <li
@@ -171,6 +185,17 @@
             [routerLink]="['/home/noc/asignar-trabajos']"
           >
             Asignar Trabajos
+          </li>
+          } @if (arrNoc.includes("NNueva Instalacion")) {
+          <li
+            (click)="onClickMenu()"
+            [routerLink]="['/home/noc/nueva-instalacion']"
+          >
+            Nueva Instalación
+          </li>
+          }@if (arrNoc.includes("NTraslado Externo")) {
+          <li (click)="onClickMenu()" [routerLink]="['/home/noc/traslado-ext']">
+            Traslado Externo
           </li>
           }
         </ul>

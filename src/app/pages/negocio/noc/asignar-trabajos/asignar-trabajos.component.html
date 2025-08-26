@@ -6,51 +6,60 @@
   <form (ngSubmit)="agendar()" #agendaForm="ngForm">
     <fieldset>
       <legend>Tipo de Actividad</legend>
-  
+
       <label>
-        <input type="radio" name="age_tipo" [(ngModel)]="formData.age_tipo" value="TRABAJO" required />
+        <input
+          type="radio"
+          name="age_tipo"
+          [(ngModel)]="formData.age_tipo"
+          value="TRABAJO"
+          required
+        />
         TRABAJO
       </label>
       <label>
-        <input type="radio" name="age_tipo" [(ngModel)]="formData.age_tipo" value="GESTION" />
+        <input
+          type="radio"
+          name="age_tipo"
+          [(ngModel)]="formData.age_tipo"
+          value="GESTION"
+        />
         GESTION
       </label>
-      <label>
-        <input type="radio" name="age_tipo" [(ngModel)]="formData.age_tipo" value="INSTALACION" />
-        INSTALACION
-      </label>
     </fieldset>
-  
+
     <div>
       <label for="age_subtipo">Subtipo:</label>
-      <input type="text" id="age_subtipo" name="age_subtipo" [(ngModel)]="formData.age_subtipo" />
-    </div>
-  
-    <div>
-      <label for="age_coordenadas">Coordenadas:</label>
-      <input type="text" id="age_coordenadas" name="age_coordenadas" [(ngModel)]="formData.age_coordenadas" />
+      <input
+        type="text"
+        id="age_subtipo"
+        name="age_subtipo"
+        [(ngModel)]="formData.age_subtipo"
+      />
     </div>
 
     <div>
-      <label for="age_observaciones">Observaciones:</label><br />
+      <label for="age_coordenadas">Coordenadas:</label>
+      <input
+        type="text"
+        id="age_coordenadas"
+        name="age_coordenadas"
+        [(ngModel)]="formData.age_coordenadas"
+      />
+    </div>
+
+    <div>
+      <label for="age_diagnostico">Observaciones:</label><br />
       <textarea
-        id="age_observaciones"
-        name="age_observaciones"
+        id="age_diagnostico"
+        name="age_diagnostico"
         rows="4"
         cols="50"
-        [(ngModel)]="formData.age_observaciones"
+        [(ngModel)]="formData.age_diagnostico"
         placeholder="Escribe aquí las observaciones..."
       ></textarea>
     </div>
-    
-  
+
     <button type="submit">Guardar</button>
   </form>
-  
-
-
-
-
-
-
 </section>

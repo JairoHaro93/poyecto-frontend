@@ -10,10 +10,17 @@ import { UsuariosService } from '../../../../services/sistema/usuarios.service';
 import { Iusuarios } from '../../../../interfaces/sistema/iusuarios.interface';
 import { AgendaService } from '../../../../services/negocio_latacunga/agenda.service';
 import { Iagenda } from '../../../../interfaces/negocio/agenda/iagenda.interface';
-import { ClientesService } from '../../../../services/negocio_atuntaqui/clientes.service';
-import { environment } from '../../../../../environments/environment';
-import { io } from 'socket.io-client';
+import {
+  ClienteBatchItem,
+  ClientesService,
+} from '../../../../services/negocio_atuntaqui/clientes.service';
+
 import Swal from 'sweetalert2';
+import { AutenticacionService } from '../../../../services/sistema/autenticacion.service';
+import { SoketService } from '../../../../services/socket_io/soket.service';
+import { ImagenesService } from '../../../../services/negocio_latacunga/imagenes.service';
+import { Modal } from 'bootstrap';
+import { firstValueFrom } from 'rxjs';
 
 declare var bootstrap: any;
 
@@ -30,6 +37,9 @@ export class AgendaComponent {
   clienteService = inject(ClientesService);
   usuariosService = inject(UsuariosService);
   agendaService = inject(AgendaService);
+  authService = inject(AutenticacionService);
+  private socketService = inject(SoketService);
+  imagenesService = inject(ImagenesService);
 
   //arrays
   tecnicosList: Iusuarios[] = [];
@@ -37,75 +47,167 @@ export class AgendaComponent {
   preAgendaList: Iagenda[] = [];
 
   //variables estrategicas
+  preAgendaPendientesCount = 0;
   idTecnico = 0;
   fechaTrabajoSeleccionada = '';
   fechaSeleccionada = this.obtenerFechaHoy();
   nombreDelDia = this.obtenerNombreDelDia(this.fechaSeleccionada);
+  pendientes: any;
 
   trabajoVista: Iagenda | null = null;
+  solucionVista: any;
   trabajoSeleccionado: Iagenda | null = null;
+  imagenSeleccionada: string | null = null;
 
   horaInicio = '';
   horaFin = '';
   vehiculoSeleccionado = '';
   modoEdicion = false;
   edicionHabilitada = true;
-
+  datosUsuario!: Iusuarios;
+  isReady = false;
   horarios: string[] = [];
 
   agendaAsignada: { [hora: string]: { [vehiculo: string]: Iagenda | null } } =
     {};
 
+  imagenesInstalacion: { [key: string]: { ruta: string; url: string } } = {};
+  imagenesVisita: Record<string, { url: string; ruta: string }> = {};
+
   vehiculos = [
-    { codigo: 'F17', nombre: 'F17 FURGONETA' },
-    { codigo: 'F18', nombre: 'F18 CAMIONETA' },
-    { codigo: 'F19', nombre: 'F19 CAMION' },
-    { codigo: 'F20', nombre: 'F20 MOTO ROJA' },
+    { codigo: 'R17', nombre: 'R17 FURGONETA' },
+    { codigo: 'R18', nombre: 'R18 CAMIONETA' },
+    { codigo: 'R19', nombre: 'R19 CAMION' },
+    { codigo: 'R20', nombre: 'R20 MOTO ROJA' },
   ];
 
-  private socket = io(`${environment.API_WEBSOKETS_IO}`); // Conexión con WebSocket
+  private clienteCache = new Map<string, ClienteBatchItem>();
+
+  //private socket = io(`${environment.API_WEBSOKETS_IO}`); // Conexión con WebSocket
 
   async ngOnInit() {
-    this.generarHorarios();
-    await this.cargarAgendaPorFecha();
-    await this.cargarPreAgenda();
-    this.tecnicosList = await this.usuariosService.getAllAgendaTecnicos();
+    try {
+      await this.contarpendientes();
 
-    // 🔄 Escuchar evento de actualización de trabajos
-    this.socket.on('trabajoAgendado', async () => {
-      console.log('📥 trabajoAgendado recibido');
+      this.datosUsuario = await this.authService.getUsuarioAutenticado();
+
+      this.generarHorarios();
       await this.cargarAgendaPorFecha();
+      await this.cargarPreAgenda();
+      this.tecnicosList = await this.usuariosService.getAllAgendaTecnicos();
+    } catch (error) {
+    } finally {
+    }
+
+    // ✅ Escuchar solo eventos dirigidos
+    this.socketService.on('trabajoAgendadoNOC', async () => {
+      console.log('📥 trabajoAgendadoNOC recibido');
+      await this.cargarAgendaPorFecha(); // ya llama enrich adentro
+      await this.contarpendientes();
     });
 
-    // 🔄 Escuchar evento de culminación de trabajos
-    this.socket.on('trabajoCulminado', async () => {
-      console.log(`📥 trabajoCulminado recibido para el trabajo`);
-      await this.cargarAgendaPorFecha(); // o actualizar solo ese trabajo si lo deseas
+    this.socketService.on('trabajoCulminadoNOC', async () => {
+      console.log('📥 trabajoCulminadoNOC recibido');
+      await this.cargarAgendaPorFecha(); // ya llama enrich adentro
+      await this.contarpendientes();
+    });
+
+    this.socketService.on('trabajoPreagendadoNOC', async () => {
+      console.log('📥 trabajoPreagendadoNOC recibido');
+      await this.contarpendientes();
+      const preAgendaPrevio = this.preAgendaPendientesCount;
+
+      await this.cargarPreAgenda(); // ya llama enrich adentro
+
+      if (this.preAgendaPendientesCount > preAgendaPrevio) {
+        this.reproducirSonido();
+      }
     });
   }
 
+  /**
+   * Enriquecer una lista de agenda (agendaList o preAgendaList) con datos del cliente
+   * en una sola llamada batch usando ord_ins.
+   * - No altera otras propiedades de los items.
+   * - Mantiene fallback a nombre_completo existente si no hay datos del batch.
+   */
+  private async enrichAgendaListBatch(lista: Iagenda[]): Promise<Iagenda[]> {
+    if (!Array.isArray(lista) || lista.length === 0) return lista;
+
+    // 1) ord_ins únicos y válidos
+    const ords = Array.from(
+      new Set(
+        lista
+          .map((it) => String(it?.ord_ins ?? '').trim())
+          .filter((v) => v.length > 0)
+      )
+    );
+
+    // 2) resolver faltantes (los que no están en cache)
+    const faltantes = ords.filter((k) => !this.clienteCache.has(k));
+
+    if (faltantes.length > 0) {
+      try {
+        const resp = await firstValueFrom(
+          this.clienteService.getClientesByOrdInsBatch(faltantes)
+        );
+        for (const row of resp ?? []) {
+          this.clienteCache.set(String(row.orden_instalacion), row);
+        }
+      } catch (e) {
+        console.error('❌ Error batch clientes:', e);
+      }
+    }
+
+    // 3) merge de datos enriquecidos
+    return lista.map((item) => {
+      const info = this.clienteCache.get(String(item?.ord_ins ?? ''));
+      return {
+        ...item,
+        // muestra el nombre enriquecido si existe; sino el que ya tenías; sino '---'
+        nombre_completo: info?.nombre_completo ?? item.nombre_completo ?? '---',
+        // si quieres conservar más campos enriquecidos para futuros usos:
+        // @ts-ignore (si tu Iagenda aún no los define)
+        clienteCedula: info?.cedula ?? (item as any).clienteCedula,
+        // @ts-ignore
+        clientePlan: info?.plan_nombre ?? (item as any).clientePlan,
+        // @ts-ignore
+        clienteIP: info?.ip ?? (item as any).clienteIP,
+        // @ts-ignore
+        clienteDireccion: info?.direccion ?? (item as any).clienteDireccion,
+        // @ts-ignore
+        clienteTelefonos: info?.telefonos ?? (item as any).clienteTelefonos,
+      };
+    });
+  }
+
+  async contarpendientes() {
+    try {
+      const response = await this.agendaService.getAgendaPendienteByFecha(
+        this.fechaSeleccionada
+      );
+      this.pendientes = response.soportes_pendientes;
+
+      console.log('LOS SOPORTES PENDIENTES SON ' + this.pendientes);
+    } catch (error) {
+      console.error('Error al contar pendientes:', error);
+    }
+  }
   async cargarAgendaPorFecha() {
+    this.contarpendientes();
     try {
       this.agendaList = await this.agendaService.getAgendaByDate(
         this.fechaSeleccionada
       );
 
-      for (const item of this.agendaList) {
-        try {
-          if (item.age_ord_ins) {
-            const servicio = await this.clienteService.getInfoServicioByOrdId(
-              Number(item.age_ord_ins)
-            );
-            item.nombre_completo = servicio?.nombre_completo || '---';
-          } else {
-            item.nombre_completo = '---';
-          }
-        } catch {
-          item.nombre_completo = '---';
-        }
+      // (si aplicaste el enriquecido por batch)
+      if (typeof (this as any).enrichAgendaListBatch === 'function') {
+        this.agendaList = await (this as any).enrichAgendaListBatch(
+          this.agendaList
+        );
       }
 
-      // 👇 Limpiar antes de renderizar
+      // Limpiar y reconstruir grillas
       this.agendaAsignada = {};
       this.horarios.forEach((hora) => {
         this.agendaAsignada[hora] = {};
@@ -116,9 +218,12 @@ export class AgendaComponent {
 
       this.mapearAgendaDesdeBD();
       this.generarRenderAgenda();
-      console.log(this.agendaList);
+
+      // 👇 Deja al navegador “asentar” el layout antes de mostrar
+      //    await this.settleFrames();
     } catch (error) {
       console.error('❌ Error al cargar la agenda por fecha:', error);
+    } finally {
     }
   }
 
@@ -162,7 +267,13 @@ export class AgendaComponent {
 
     await this.agendaService.actualizarAgendaHorario(body.id, body);
     // Emitir evento de actualización de soportes a través de WebSocket
-    this.socket.emit('trabajoAgendado');
+    this.socketService.emit('trabajoAgendado', {
+      tecnicoId: this.idTecnico,
+    });
+
+    // ✅ Emitir evento de preagenda para que NOC reciba notificación
+    this.socketService.emit('trabajoPreagendado');
+
     await this.ngOnInit();
     bootstrap.Modal.getInstance(
       document.getElementById('asignarModal')
@@ -170,16 +281,19 @@ export class AgendaComponent {
   }
 
   async cargarPreAgenda() {
-    this.preAgendaList = await this.agendaService.getPreAgenda();
-    for (const item of this.preAgendaList) {
-      try {
-        const info = await this.clienteService.getInfoServicioByOrdId(
-          Number(item.age_ord_ins)
+    try {
+      this.preAgendaList = await this.agendaService.getPreAgenda();
+      this.preAgendaPendientesCount = this.preAgendaList.length;
+
+      if (typeof (this as any).enrichAgendaListBatch === 'function') {
+        this.preAgendaList = await (this as any).enrichAgendaListBatch(
+          this.preAgendaList
         );
-        item.nombre_completo = info?.nombre_completo || '---';
-      } catch {
-        item.nombre_completo = '---';
       }
+    } catch (e) {
+      console.error('❌ Error al cargar preagenda:', e);
+    } finally {
+      this.isReady = true;
     }
   }
 
@@ -231,16 +345,23 @@ export class AgendaComponent {
     }
   }
 
-  getEstadoClass(sub_tipo: string | undefined): string {
-    switch (sub_tipo) {
+  reproducirSonido() {
+    const audio = new Audio('./sounds/ding_sop.mp3');
+    audio
+      .play()
+      .catch((err) => console.error('🎵 Error al reproducir sonido:', err));
+  }
+
+  getEstadoClass(tipo: string | undefined): string {
+    switch (tipo) {
       case 'LOS':
         return 'bg-yellow  text-black';
       case 'VISITA':
         return 'bg-blue text-white';
+      case 'INSTALACION':
+        return 'bg-success text-green';
       case 'TRABAJO':
         return 'bg-warning text-dark';
-      case 'INSTALACION':
-        return 'bg-success text-white';
       case 'ALMUERZO':
         return 'bg-primary text-white';
       case 'Cancelado':
@@ -264,7 +385,7 @@ export class AgendaComponent {
 
   generarHorarios() {
     const inicio = 8 * 60;
-    const fin = 18 * 60;
+    const fin = 21 * 60;
     const paso = 15; // PASO EN MINUTOS
     this.horarios = [];
     this.agendaAsignada = {};
@@ -347,11 +468,12 @@ export class AgendaComponent {
     this.trabajoSeleccionado = trabajo;
     this.horaInicio = '';
     this.horaFin = '';
-    this.fechaTrabajoSeleccionada = this.obtenerFechaHoy();
+    this.fechaTrabajoSeleccionada = this.fechaSeleccionada;
 
     const modal = bootstrap.Modal.getOrCreateInstance(
       document.getElementById('asignarModal')
     );
+
     modal.show();
   }
 
@@ -385,18 +507,71 @@ export class AgendaComponent {
     return `${y}-${m}-${d}`;
   }
 
-  abrirVistaDetalle(hora: string, vehiculo: string) {
+  async abrirVistaDetalle(hora: string, vehiculo: string) {
     const trabajo = this.agendaAsignada[hora][vehiculo];
+
+    const sol = await this.agendaService.getInfoSolByAgeId(trabajo!.id);
+
     if (!trabajo) return;
     this.trabajoVista = trabajo;
+    this.solucionVista = sol;
+
+    this.cargarImagenesInstalacion('neg_t_instalaciones', trabajo.ord_ins);
+
+    if (trabajo.age_tipo === 'LOS' || trabajo.age_tipo === 'VISITA') {
+      this.cargarImagenesVisita('neg_t_vis', trabajo.age_id_tipo);
+    }
+
     bootstrap.Modal.getOrCreateInstance(
       document.getElementById('modalVistaSoporte')
     ).show();
   }
 
+  private cargarImagenesInstalacion(tabla: string, ord_Ins: string): void {
+    this.imagenesService.getImagenesByTableAndId(tabla, ord_Ins).subscribe({
+      next: (res: any) => {
+        if (res?.imagenes) {
+          this.imagenesInstalacion = res.imagenes;
+        } else {
+          this.imagenesInstalacion = {};
+        }
+      },
+      error: (err) => {
+        console.error('❌ Error cargando imágenes:', err);
+        this.imagenesInstalacion = {};
+      },
+    });
+  }
+
+  private cargarImagenesVisita(tabla: string, age_id_sop: string): void {
+    this.imagenesService.getImagenesByTableAndId(tabla, age_id_sop).subscribe({
+      next: (res: any) => {
+        if (res?.imagenes) {
+          this.imagenesVisita = res.imagenes;
+        } else {
+          this.imagenesVisita = {};
+        }
+        console.log(this.imagenesVisita);
+      },
+      error: (err) => {
+        console.error('❌ Error cargando imágenes:', err);
+        this.imagenesVisita = {};
+      },
+    });
+  }
+
+  abrirImagenModal(url: string) {
+    this.imagenSeleccionada = url;
+    const modal = bootstrap.Modal.getOrCreateInstance(
+      document.getElementById('modalImagenAmpliada')!
+    );
+
+    modal.show();
+  }
+
   asignarDesdePreagenda(trabajo: Iagenda) {
     this.trabajoSeleccionado = trabajo;
-    this.fechaTrabajoSeleccionada = this.obtenerFechaHoy();
+    this.fechaTrabajoSeleccionada = this.fechaSeleccionada;
     this.horaInicio = '';
     this.horaFin = '';
     this.vehiculoSeleccionado = '';
@@ -412,18 +587,9 @@ export class AgendaComponent {
       const modalAsignar = bootstrap.Modal.getOrCreateInstance(
         document.getElementById('asignarModal')
       );
+
       modalAsignar.show();
     });
-  }
-
-  abrirModalPreagenda() {
-    const element = document.getElementById('modalSoportes');
-    if (element) {
-      const modal = bootstrap.Modal.getOrCreateInstance(element);
-      modal.show();
-    } else {
-      console.warn('❌ Modal #modalSoportes no encontrado en el DOM');
-    }
   }
 
   cerrarModalPreagenda() {
@@ -479,5 +645,10 @@ export class AgendaComponent {
     }
 
     return false;
+  }
+
+  esImagenValida(campo: string): boolean {
+    const img = this.imagenesInstalacion[campo];
+    return img && img.ruta !== 'null' && img.url !== 'undefined/imagenes/null';
   }
 }

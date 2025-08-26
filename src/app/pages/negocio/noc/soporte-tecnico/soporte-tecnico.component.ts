@@ -9,6 +9,9 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { io } from 'socket.io-client';
 import { DataSharingService } from '../../../../services/data-sharing.service';
 import { environment } from '../../../../../environments/environment';
+import { Iusuarios } from '../../../../interfaces/sistema/iusuarios.interface';
+import { SoketService } from '../../../../services/socket_io/soket.service';
+import { firstValueFrom } from 'rxjs';
 
 @Component({
   selector: 'app-soporte-tecnico',
@@ -17,9 +20,10 @@ import { environment } from '../../../../../environments/environment';
   templateUrl: './soporte-tecnico.component.html',
   styleUrl: './soporte-tecnico.component.css',
 })
-export class SoporteTecnicoComponent implements OnDestroy {
+export class SoporteTecnicoComponent {
   //private socket = io('http://localhost:3000'); // Conexión con WebSocket
-  private socket = io(`${environment.API_WEBSOKETS_IO}`); // Conexión con WebSocket
+  // private socket = io(`${environment.API_WEBSOKETS_IO}`); // Conexión con WebSocket
+
   clienteService = inject(ClientesService);
   authService = inject(AutenticacionService);
   soporteService = inject(SoportesService);
@@ -28,51 +32,110 @@ export class SoporteTecnicoComponent implements OnDestroy {
 
   soportesPendientes: Isoportes[] = [];
   soportesNoc: Isoportes[] = [];
-  datosUsuario: any;
+
+  datosUsuario!: Iusuarios;
+
+  private socketService = inject(SoketService);
+
   isLoading = true;
 
   constructor(private dataSharingService: DataSharingService) {}
 
   async ngOnInit() {
-    //this.reproducirSonido(); // Ve
-    this.datosUsuario = this.authService.datosLogged();
-    let noc_id = this.datosUsuario.usuario_id;
+    try {
+      // Obtener datos del usuario autenticado desde cookie JWT
+      this.datosUsuario = await this.authService.getUsuarioAutenticado();
+      const noc_id = this.datosUsuario.id!;
 
-    await this.cargarDatos(noc_id);
+      this.cargarDatos(noc_id);
 
-    // Escuchar evento de actualización desde el servidor
-    this.socket.on('actualizarSoportes', async () => {
-      console.log(
-        '🔄 Recibiendo actualización de soportes en SoporteTecnicoComponent'
-      );
+      this.socketService.on('soporteCreadoNOC', async () => {
+        console.log(
+          '📢 Evento recibido EN SOPORTE TECNICO solo por NOC: soporteCreadoNOC'
+        );
+        await this.cargarDatos(noc_id);
+      });
 
-      const soportesPrevios = [...this.soportesPendientes]; // Guardar lista anterior
+      this.socketService.on('soporteActualizadoNOC', async () => {
+        console.log(
+          '📢 Evento recibido EN SOPORTE TECNICO solo por NOC: soporteActualizadoNOC'
+        );
+        await this.cargarDatos(noc_id);
+      });
 
-      await this.cargarDatos(noc_id); // Cargar nuevos datos
-    });
-
-    // 📢 Escuchar cuando se crea un nuevo soporte y reproducir sonido
-    this.socket.on('soporteCreado', async () => {
-      console.log('📢 Se ha creado un nuevo soporte.');
-
-      const soportesPrevios = [...this.soportesPendientes]; // Guardar lista anterior
-
-      await this.cargarDatos(noc_id); // Cargar nuevos datos
-    });
+      this.socketService.on('trabajoCulminadoNOC', async () => {
+        console.log('📥 trabajoCulminadoNOC recibido');
+        await this.cargarDatos(noc_id);
+      });
+    } catch (error) {
+      console.error('❌ Error al iniciar soporte técnico:', error);
+      this.router.navigateByUrl('/login');
+    }
   }
-
-  async cargarDatos(noc_id: string) {
+  async cargarDatos(noc_id: number) {
     try {
       this.isLoading = true;
-      let [soportesPend, soportesNoc] = await Promise.all([
+      this.isReady = false;
+
+      const [soportesPend, soportesNoc] = await Promise.all([
         this.soporteService.getAllPendientes(),
         this.soporteService.getSopByNocId(noc_id),
       ]);
 
       this.soportesPendientes = soportesPend;
       this.soportesNoc = soportesNoc;
+
+      // 1) Reunir ord_ins únicos
+      const allOrdIns = [
+        ...this.soportesPendientes.map((s) => s.ord_ins),
+        ...this.soportesNoc.map((s) => s.ord_ins),
+      ].filter((v) => v !== null && v !== undefined);
+
+      const uniqueOrdIns = Array.from(new Set(allOrdIns));
+
+      // 2) Enriquecimiento batch (si hay algo que enriquecer)
+      if (uniqueOrdIns.length > 0) {
+        const clientes = await firstValueFrom(
+          this.clienteService.getClientesByOrdInsBatch(uniqueOrdIns)
+        );
+
+        const mapCliente = new Map<string | number, any>();
+        (clientes ?? []).forEach((c) => mapCliente.set(c.orden_instalacion, c));
+
+        this.soportesPendientes = this.soportesPendientes.map((s) => {
+          const info = mapCliente.get(s.ord_ins);
+          return {
+            ...s,
+            clienteNombre: info?.nombre_completo ?? '',
+            clienteCedula: info?.cedula ?? '',
+            clienteDireccion: info?.direccion ?? '',
+            clienteTelefonos: info?.telefonos ?? '',
+            clienteIP: info?.ip ?? '',
+            clientePlan: info?.plan_nombre ?? '',
+          };
+        });
+
+        this.soportesNoc = this.soportesNoc.map((s) => {
+          const info = mapCliente.get(s.ord_ins);
+          return {
+            ...s,
+            clienteNombre: info?.nombre_completo ?? '',
+            clienteCedula: info?.cedula ?? '',
+            clienteDireccion: info?.direccion ?? '',
+            clienteTelefonos: info?.telefonos ?? '',
+            clienteIP: info?.ip ?? '',
+            clientePlan: info?.plan_nombre ?? '',
+          };
+        });
+      }
+
+      // 👉 Deja que el navegador asiente layout/pintado antes de mostrar
+      await this.settleFrames();
+      this.isReady = true;
     } catch (error) {
       console.error('Error al cargar los datos:', error);
+      // Aun con error, evita dejar la UI “en blanco”
+      this.isReady = true;
     } finally {
       this.isLoading = false;
     }
@@ -95,17 +158,11 @@ export class SoporteTecnicoComponent implements OnDestroy {
 
     return `${dias} días ${horas} horas ${minutos} minutos`;
   }
-
   async aceptarSoporte(id: number, ord_ins: string) {
     try {
-      // Obtener datos del usuario autenticado
-      this.datosUsuario = this.authService.datosLogged();
-      let reg_sop_registrado_por_id = this.datosUsuario.usuario_id;
+      const usuario = await this.authService.getUsuarioAutenticado();
+      const body = { reg_sop_noc_id_acepta: usuario.id };
 
-      // Crear el objeto `body` con los datos requeridos
-      const body = { reg_sop_noc_id_acepta: reg_sop_registrado_por_id };
-
-      // Asegurar que `aceptarSoporte` se ejecute primero
       await this.soporteService.aceptarSoporte(id, body);
       console.log(`✅ Soporte ${id} aceptado con éxito`);
 
@@ -114,9 +171,7 @@ export class SoporteTecnicoComponent implements OnDestroy {
         this.soportesNoc.length
       );
 
-      // Emitir evento de actualización para otros clientes
-      this.socket.emit('soporteActualizado');
-
+      this.socketService.emit('soporteActualizado');
       console.log('📢 Soporte actualizado en tiempo real');
 
       await this.router.navigateByUrl(`/home/noc/info-sop/${id}/${ord_ins}`);
@@ -125,7 +180,16 @@ export class SoporteTecnicoComponent implements OnDestroy {
     }
   }
 
-  ngOnDestroy() {
-    this.socket.disconnect();
+  // Suavizado de render
+
+  isReady = false;
+
+  private nextFrame(): Promise<void> {
+    return new Promise((resolve) => requestAnimationFrame(() => resolve()));
+  }
+  private async settleFrames(): Promise<void> {
+    // 2 frames: layout + paint
+    await this.nextFrame();
+    await this.nextFrame();
   }
 }

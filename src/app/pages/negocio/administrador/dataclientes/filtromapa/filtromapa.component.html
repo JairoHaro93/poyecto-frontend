@@ -2,54 +2,6 @@
   <div>
     <h6>Filtro:</h6>
     <div class="gap-1">
-      <!-- <div class="row my-2 px-2">
-        <h5 class="col">Materias:</h5>
-        <select
-          class="form-select col"
-          name="materiaNombre"
-          ngModel
-          (change)="selectFilter(filterForm.value)"
-        >
-          <option value="0">Todas las materias</option>
-          <option *ngFor="let materia of materiaList" [value]="materia.nombre">
-            {{ materia.nombre }}
-          </option>
-        </select>
-      </div> -->
-      <!-- <div class="row my-2 px-2">
-        <h5 class="col">Puntuación:</h5>
-        <select
-          class="form-select col"
-          name="puntuacion"
-          ngModel
-          (change)="selectFilter(filterForm.value)"
-        >
-          <option value="0">Todas</option>
-          <option value="5">5 ⭐⭐⭐⭐⭐</option>
-          <option value="4">4 ⭐⭐⭐⭐</option>
-          <option value="3">3 ⭐⭐⭐</option>
-          <option value="2">2 ⭐⭐</option>
-          <option value="1">1 ⭐</option>
-        </select>
-      </div> -->
-
-      <!-- <div class="row my-2 px-2">
-        <h5 class="col">Experiencia:</h5>
-        <select
-          class="form-select col"
-          name="experiencia"
-          ngModel
-          (change)="selectFilter(filterForm.value)"
-        >
-          <option value="0">Todas</option>
-          <option value="5">Más de 5 años</option>
-          <option value="4">De 3 a 4 años</option>
-          <option value="3">De 2 a 3 años</option>
-          <option value="2">De 1 a 2 años</option>
-          <option value="1">Menos de 1 año</option>
-          <option value="0"></option>
-        </select>
-      </div> -->
       <h6>Tipo de enlace:</h6>
       <div class="d-flex justify-content-between gap-1">
         <label>
@@ -87,81 +39,6 @@
           Radio Enlace
         </label>
       </div>
-
-      <!-- <div class="row my-2 px-2">
-        <h5 class="col">Rango:</h5>
-
-        <div class="d-flex gap-1 col px-0">
-          <input
-            class="form-control"
-            type="number"
-            placeholder="desde"
-            name="valmin"
-            value="0"
-            min="1"
-            ngModel
-            (change)="selectFilter(filterForm.value)"
-          />
-
-          <input
-            class="form-control"
-            type="number"
-            placeholder="hasta"
-            name="valmax"
-            ngModel
-            (change)="selectFilter(filterForm.value)"
-          />
-        </div>
-      </div> -->
     </div>
   </div>
-  <!-- <div>
-    <h6>Ordenar Por:</h6>
-    <div class="d-flex justify-content-between gap-1">
-      <label>
-        <input
-          type="radio"
-          name="criterio"
-          value="nombre"
-          ngModel
-          (change)="selectFilter(filterForm.value)"
-          checked
-        />
-        Nombre
-      </label>
-      <br />
-      <label>
-        <input
-          type="radio"
-          name="criterio"
-          value="puntuacion"
-          ngModel
-          (change)="selectFilter(filterForm.value)"
-        />
-        Puntuación
-      </label>
-      <br />
-      <label>
-        <input
-          type="radio"
-          name="criterio"
-          value="experiencia"
-          ngModel
-          (change)="selectFilter(filterForm.value)"
-        />
-        Experiencia
-      </label>
-      <br />
-      <label>
-        <input
-          type="radio"
-          name="criterio"
-          value="precio"
-          ngModel
-          (change)="selectFilter(filterForm.value)"
-        />
-        Precio
-      </label>
-    </div>
-  </div> -->
 </form>

@@ -1,5 +1,5 @@
 import { inject, Injectable } from '@angular/core';
-import { firstValueFrom, lastValueFrom } from 'rxjs';
+import { firstValueFrom } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { HttpClient } from '@angular/common/http';
 import { Iagenda } from '../../interfaces/negocio/agenda/iagenda.interface';
@@ -8,56 +8,84 @@ import { Iagenda } from '../../interfaces/negocio/agenda/iagenda.interface';
   providedIn: 'root',
 })
 export class AgendaService {
-  //variables
   private baseUrl: string = `${environment.API_URL}/agenda`;
-
-  //injectables
   private httpClient = inject(HttpClient);
 
-  //METODO OBTENER LA AGENDA POR FECHA
   getAgendaByDate(fecha_age: string) {
     return firstValueFrom(
-      this.httpClient.get<Iagenda[]>(`${this.baseUrl}/${fecha_age}`)
+      this.httpClient.get<Iagenda[]>(`${this.baseUrl}/${fecha_age}`, {
+        withCredentials: true,
+      })
     );
   }
 
-  //METODO OBTENER LA PREAGENDA
-  getPreAgenda() {
+  getAgendaPendienteByFecha(fecha_age: string) {
     return firstValueFrom(
-      this.httpClient.get<Iagenda[]>(`${this.baseUrl}/preagenda`)
-    );
-  }
-
-  //METODO OBTENER LOS DATOS AGENDADOS A UN TECNICO
-  getAgendaTec(id_tec: number) {
-    console.log(`${this.baseUrl}/mis-trabajos-tec/${id_tec}`);
-    return firstValueFrom(
-      this.httpClient.get<Iagenda[]>(
-        `${this.baseUrl}/mis-trabajos-tec/${id_tec}`
+      this.httpClient.get<{ soportes_pendientes: number }>(
+        `${this.baseUrl}/pendientes/${fecha_age}`,
+        {
+          withCredentials: true,
+        }
       )
     );
   }
 
-  //METODO PARA AGREGAR UN SOPORTE A LA AGENDA
+  getPreAgenda() {
+    return firstValueFrom(
+      this.httpClient.get<Iagenda[]>(`${this.baseUrl}/preagenda`, {
+        withCredentials: true,
+      })
+    );
+  }
+
+  getAgendaTec(id_tec: number) {
+    return firstValueFrom(
+      this.httpClient.get<Iagenda[]>(
+        `${this.baseUrl}/mis-trabajos-tec/${id_tec}`,
+        {
+          withCredentials: true,
+        }
+      )
+    );
+  }
+
+  getInfoSolByAgeId(age_id: number) {
+    return firstValueFrom(
+      this.httpClient.get<Iagenda[]>(`${this.baseUrl}/sol/${age_id}`, {
+        withCredentials: true,
+      })
+    );
+  }
+
+  // CREA UN SOPORTE EN LA AGENDA
+  //router.post("/agenda-sop", checkToken, postAgenda);
+
   postSopAgenda(body: any) {
     return firstValueFrom(
-      this.httpClient.post<Iagenda[]>(`${this.baseUrl}/agenda-sop`, body)
+      this.httpClient.post<Iagenda[]>(`${this.baseUrl}/agenda-sop`, body, {
+        withCredentials: true,
+      })
     );
   }
 
-  // METODO PARA ACTUALIZAR EL HORARIO DE UN TRABAJO
   actualizarAgendaHorario(id: number, body: Iagenda): Promise<any> {
-    console.log(`${this.baseUrl}/edita-hora/${id}`, body);
     return firstValueFrom(
-      this.httpClient.put(`${this.baseUrl}/edita-hora/${id}`, body)
+      this.httpClient.put(`${this.baseUrl}/edita-hora/${id}`, body, {
+        withCredentials: true,
+      })
     );
   }
 
-  // METODO PARA ACTUALIZAR LA SOLUCIONES DE UN TRABAJO
-  actualizarAgendaSolucuion(id: number, body: Iagenda): Promise<any> {
-    console.log(`${this.baseUrl}/edita-sol/${id}`, body);
+  actualizarAgendaSolucion(id: number, body: Iagenda): Promise<any> {
     return firstValueFrom(
-      this.httpClient.put(`${this.baseUrl}/edita-sol/${id}`, body)
+      this.httpClient.put(`${this.baseUrl}/edita-sol/${id}`, body, {
+        withCredentials: true,
+      })
     );
+  }
+
+  getImagenesPorTrabajo(tabla: string, trabajo_id: number | string) {
+    const url = `${this.baseUrl}/images/${tabla}/${trabajo_id}`;
+    return this.httpClient.get<any>(url);
   }
 }

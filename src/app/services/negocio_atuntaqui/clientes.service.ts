@@ -1,58 +1,90 @@
 import { inject, Injectable } from '@angular/core';
 import { environment } from '../../../environments/environment';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { lastValueFrom } from 'rxjs';
 import { Iclientes } from '../../interfaces/negocio/clientes/iclientes.interface';
+
+export interface ClienteBatchItem {
+  orden_instalacion: number;
+  cedula: string;
+  nombre_completo: string;
+  direccion: string;
+  telefonos: string;
+  coordenadas: string;
+  ip: string;
+  plan_nombre: string;
+  precio: number;
+  servicio: string;
+}
 
 @Injectable({
   providedIn: 'root',
 })
 export class ClientesService {
-  //variables
   private baseUrl: string = `${environment.API_URL}/clientes`;
-
-  //injectables
   private httpClient = inject(HttpClient);
 
-  //GET PARA INFORMACION NOMBRE COMPLETO Y CEDULA TODOS LOS CLIENTES DE LATACUNGA
-  getInfoClientes() {
-    return lastValueFrom(this.httpClient.get<[]>(`${this.baseUrl}`));
-  }
-
-  //GET PARA INFORMACION NOMBRE COMPLETO Y CEDULA TODOS LOS CLIENTES DE LATACUNGA CON SERVICIO ACTIVO
-  getInfoClientesActivos() {
-    return lastValueFrom(this.httpClient.get<[]>(`${this.baseUrl}/activos`));
-  }
-
-  //GET PARA INFORMACION TODOS LOS CLIENTES DE LATACUNGA CON SERVICIOS EN ARRAY
-  getInfoClientesArray(cedula: string): Promise<Iclientes> {
+  buscarClientesActivos(q: string, limit = 10) {
+    const params = new HttpParams().set('q', q).set('limit', String(limit));
     return lastValueFrom(
-      this.httpClient.get<Iclientes>(`${this.baseUrl}/data/${cedula}`)
+      this.httpClient.get<{ cedula: string; nombre_completo: string }[]>(
+        `${this.baseUrl}/activos`,
+        { params, withCredentials: true }
+      )
     );
   }
 
-  //GET PARA INFORMACION TODOS LOS CLIENTES DE LATACUNGA CON SERVICIOS EN ARRAY CON SERVICIOS ACTIVOS
+  buscarClientes(q: string, limit = 10) {
+    const params = new HttpParams().set('q', q).set('limit', String(limit));
+    return lastValueFrom(
+      this.httpClient.get<{ cedula: string; nombre_completo: string }[]>(
+        `${this.baseUrl}`,
+        { params, withCredentials: true }
+      )
+    );
+  }
+
+  getInfoClientesArray(cedula: string): Promise<Iclientes> {
+    return lastValueFrom(
+      this.httpClient.get<Iclientes>(`${this.baseUrl}/data/${cedula}`, {
+        withCredentials: true,
+      })
+    );
+  }
+
   getInfoClientesArrayActivos(cedula: string): Promise<Iclientes> {
     return lastValueFrom(
-      this.httpClient.get<Iclientes>(`${this.baseUrl}/data-act/${cedula}`)
+      this.httpClient.get<Iclientes>(`${this.baseUrl}/data-act/${cedula}`, {
+        withCredentials: true,
+      })
     );
   }
 
   getInfoClientesMapa() {
-    return lastValueFrom(this.httpClient.get<[]>(`${this.baseUrl}/mapas`));
+    return lastValueFrom(
+      this.httpClient.get<[]>(`${this.baseUrl}/mapas`, {
+        withCredentials: true,
+      })
+    );
   }
 
-  getInfoServicioByOrdId(ord_ins: number) {
+  //OBTENER INFORMACION DE SERVICIO POR ORDINS
+  //router.get("/:servicioOrdIns", checkToken, getServicioByOrdIns);
+  getInfoServicioByOrdId(ord_ins: number): Promise<Iclientes> {
     return lastValueFrom(
-      this.httpClient.get<{
-        nombre_completo: string;
-        coordenadas: string;
-        telefonos: string;
-        direccion: string;
-        referencia: string;
-        plan_nombre: string;
-        [key: string]: any; // para permitir campos adicionales
-      }>(`${this.baseUrl}/${ord_ins}`)
+      this.httpClient.get<Iclientes>(`${this.baseUrl}/${ord_ins}`, {
+        withCredentials: true,
+      })
+    );
+  }
+
+  getClientesByOrdInsBatch(ordIns: Array<number | string>) {
+    return this.httpClient.post<ClienteBatchItem[]>(
+      `${this.baseUrl}/multiples`,
+      { ord_ins: ordIns },
+      {
+        withCredentials: true,
+      }
     );
   }
 }

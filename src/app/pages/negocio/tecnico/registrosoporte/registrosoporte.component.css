@@ -1,11 +1,13 @@
-/* Aplica el fondo rojo y texto blanco a todas las celdas de la fila seleccionada */
+/* Fila seleccionada en tabla */
 .selected-row td {
   background-color: #ce2929 !important;
   color: white !important;
 }
+
 .custom-header th {
   white-space: nowrap;
 }
+
 html,
 body {
   height: 100%;
@@ -22,14 +24,11 @@ body {
 
 .table {
   width: 100%;
-  /* Permite que se apliquen bordes redondeados */
-  border-collapse: separate;
+  border-collapse: separate; /* Permite bordes redondeados */
   border-spacing: 0;
-  /* Borde de la tabla */
   border: 1px solid black;
   border-radius: 7px;
-  /* Asegura que el contenido no se desborde del borde redondeado */
-  overflow: hidden;
+  overflow: hidden; /* Evita desborde del borde redondeado */
 }
 
 .table th,
@@ -37,11 +36,9 @@ body {
   font-size: 12px;
   padding: 8px;
   text-align: left;
-  /* Si deseas bordes internos en cada celda, puedes mantenerlos */
-  border: 1px gray;
+  border: 1px solid gray; /* ✅ Arreglado: antes era "1px gray" */
 }
 
-/* Opcional: fondo para los encabezados */
 .table th {
   background-color: #f8f8f8;
 }
@@ -58,22 +55,15 @@ body {
 }
 
 aside {
-  width: 300px;
+  width: 250px;
 }
 
 .datos_generales {
   width: 95%;
   border-radius: 10px;
 }
-/*
-.tabla_pendientes {
-  width: 98%;
-  border-radius: 10px;
-  font-size: 12px;
- 
-}
-*/
 
+/* Tabla de soportes pendientes con header fijo */
 .tabla_pendientes {
   width: 95%;
   border-radius: 10px;
@@ -84,21 +74,21 @@ aside {
 .tabla_pendientes thead {
   position: sticky;
   top: 0;
-  background-color: #ffffff; /* Mantiene el fondo fijo */
+  background-color: #ffffff;
   z-index: 10;
 }
 
 .tabla_pendientes tbody {
   display: block;
-  max-height: 250px; /* Altura máxima antes de activar el scroll */
-  overflow-y: auto; /* Scroll solo en el body */
+  max-height: 250px;
+  overflow-y: auto;
   width: 100%;
 }
 
 .tabla_pendientes tr {
   display: table;
   width: 100%;
-  table-layout: fixed; /* Mantiene el ancho de las columnas */
+  table-layout: fixed;
 }
 
 .tabla_pendientes th,
@@ -108,10 +98,10 @@ aside {
   border: 1px solid #ddd;
 }
 
-/* Ajusta la columna "Orden" */
+/* Ajuste de columna Orden */
 .tabla_pendientes th:nth-child(1),
 .tabla_pendientes td:nth-child(1) {
-  width: 80px; /* Ajusta el ancho según lo necesario */
+  width: 80px;
   min-width: 80px;
   max-width: 80px;
   text-align: center;
@@ -123,23 +113,52 @@ aside {
   }
 }
 
-.sugerencias {
-  border: 1px solid #ccc;
+/* ======================== */
+/*  SUGERENCIAS AUTOCOMPLETE */
+/* ======================== */
+
+/* Envueltor opcional para posicionar la lista bajo el input */
+.sugerencias-wrap {
+  position: relative;
+  width: 100%;
   max-width: 500px;
-  background-color: #fff;
+}
+
+/* Lista desplegable */
+.sugerencias {
   position: absolute; /* Posiciona la lista debajo del input */
+  top: calc(100% + 4px);
+  left: 0;
+  width: 100%;
+  max-height: none;
+  overflow: visible;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  background-color: #fff;
   z-index: 1000;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
 }
 
 .sugerencia-item {
-  padding: 5px;
+  padding: 6px 10px;
   cursor: pointer;
 }
 
-.sugerencia-item:hover {
+/* Unificamos estilo de hover + selección por teclado */
+.sugerencia-item:hover,
+.sugerencia-item.active,
+.sugerencia-item[aria-selected="true"] {
   background-color: #ce2929;
+  color: #fff;
 }
 
+/* Accesibilidad: resalta al navegar con teclado */
+.sugerencia-item:focus-visible {
+  outline: 2px solid #333;
+  outline-offset: -2px;
+}
+
+/* Caja de observaciones */
 .Observaciones {
   background-color: #d5d7c9;
   border-collapse: separate;
@@ -150,4 +169,18 @@ aside {
   padding: 8px;
   text-align: left;
   margin: 16px;
+}
+/*-----------------------------------------------------*/
+
+/*-----------------------------*/
+/* Transición de entrada suave */
+/*-----------------------------*/
+.fade-in {
+  opacity: 0;
+  animation: fadeIn 0.25s ease-out forwards;
+}
+@keyframes fadeIn {
+  to {
+    opacity: 1;
+  }
 }
