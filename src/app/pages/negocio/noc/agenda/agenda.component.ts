@@ -355,15 +355,21 @@ export class AgendaComponent {
   getEstadoClass(tipo: string | undefined): string {
     switch (tipo) {
       case 'LOS':
-        return 'bg-yellow  text-black';
+        return 'bg-los  text-black';
       case 'VISITA':
-        return 'bg-blue text-white';
+        return 'bg-visita text-white';
       case 'INSTALACION':
-        return 'bg-success text-green';
+        return 'bg-instalacion text-green';
       case 'TRABAJO':
-        return 'bg-warning text-dark';
+        return 'bg-trabajo text-dark';
+      case 'TRASLADO EXT':
+        return 'bg-traslado-ext text-dark';
+      case 'MIGRACION':
+        return 'bg-migracion text-white';
+      case 'RETIRO':
+        return 'bg-retiro text-dark';
       case 'ALMUERZO':
-        return 'bg-primary text-white';
+        return 'bg-almuerzo text-white';
       case 'Cancelado':
         return 'bg-danger text-white';
       default:

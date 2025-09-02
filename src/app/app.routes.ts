@@ -30,6 +30,8 @@ import { LayoutComponent } from './pages/sistema/layout/layout.component';
 import { permisosGuard } from './guards/permisos.guard';
 import { NuevaInstalacionComponent } from './pages/negocio/noc/nueva-instalacion/nueva-instalacion.component';
 import { TrasladoExtComponent } from './pages/negocio/noc/traslado-ext/traslado-ext.component';
+import { RetiroComponent } from './pages/negocio/noc/retiro/retiro.component';
+import { MigracionComponent } from './pages/negocio/noc/migracion/migracion.component';
 
 export const routes: Routes = [
   { path: '', pathMatch: 'full', redirectTo: 'login' },
@@ -153,6 +155,16 @@ export const routes: Routes = [
             path: 'traslado-ext',
             component: TrasladoExtComponent,
             canActivate: [permisosGuard('NTraslado Externo')],
+          },
+          {
+            path: 'retiro',
+            component: RetiroComponent,
+            canActivate: [permisosGuard('NRetiro')],
+          },
+          {
+            path: 'migracion',
+            component: MigracionComponent,
+            canActivate: [permisosGuard('NMigracion')],
           },
           { path: 'agenda', component: AgendaComponent },
         ],

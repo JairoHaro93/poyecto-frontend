@@ -69,14 +69,21 @@ td button { font-size: 0.75rem; padding: 2px 6px; }
 }
 
 /* === Estados === */
-.bg-warning { background-color: #1fe5f4 !important; }
-.bg-primary { background-color: #007bff !important; }
+.bg-trabajo { background-color: #1fe5f4 !important; }
 .bg-success { background-color: #28a745 !important; color: white; }
 .bg-danger  { background-color: #dc3545 !important; }
 .bg-light   { background-color: #f8f9fa !important; }
-.bg-yellow  { background-color: rgb(255, 233, 0) !important; color: white; }
+.bg-yellow  { background-color: #ffe900 !important; color: white; }
 .bg-blue    { background-color: #007bff !important; color: white; }
 
+
+.bg-visita    { background-color: #007bff !important; color: white; }
+.bg-los  { background-color: #ffe900 !important; color: white; }
+.bg-retiro  { background-color: oklch(59.153% 0.20203 21.222) !important; }
+.bg-instalacion { background-color: #28a745 !important; color: white; }
+.bg-almuerzo   { background-color: #f8f9fa !important; }
+.bg-traslado-ext   { background-color: oklch(62.523% 0.25625 341.84) !important; }
+.bg-migracion    { background-color: rgb(113, 17, 192) !important; color: white; }
 /* ⚠️ reconsidera esto si quieres “muted” gris */
 .text-muted { color: #cc2929 !important; }
 

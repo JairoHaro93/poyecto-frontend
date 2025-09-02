@@ -198,6 +198,17 @@
             Traslado Externo
           </li>
           }
+          @if (arrNoc.includes("NMigracion")) {
+          <li (click)="onClickMenu()" [routerLink]="['/home/noc/migracion']">
+            Migracion
+          </li>
+          }
+          
+          @if (arrNoc.includes("NRetiro")) {
+          <li (click)="onClickMenu()" [routerLink]="['/home/noc/retiro']">
+            Retiro
+          </li>
+          }
         </ul>
       </div>
 

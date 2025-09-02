@@ -13,7 +13,7 @@ export class VisService {
 
   //CREA UNA VISITA
   //router.post("/", checkToken, createVis);
-  createVis(body: IVis): Promise<IVis> {
+  createVis(body: any): Promise<IVis> {
     return firstValueFrom(
       this.httpClient.post<IVis>(this.baseUrl, body, {
         withCredentials: true,

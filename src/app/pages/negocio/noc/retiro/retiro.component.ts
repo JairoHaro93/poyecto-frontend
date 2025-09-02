@@ -8,37 +8,38 @@ import {
 } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import Swal from 'sweetalert2';
-
 import { AgendaService } from '../../../../services/negocio_latacunga/agenda.service';
 // import { InstalacionesService } from '../../../../services/negocio_latacunga/instalaciones.service'; // ❌ No usado
 import { VisService } from '../../../../services/negocio_latacunga/vis.service';
+import { ClientesService } from '../../../../services/negocio_atuntaqui/clientes.service';
 
 @Component({
-  selector: 'app-traslado-ext',
+  selector: 'app-retiro',
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule],
-  templateUrl: './traslado-ext.component.html',
-  styleUrls: ['./traslado-ext.component.css'], // plural recomendado
+  templateUrl: './retiro.component.html',
+  styleUrl: './retiro.component.css',
 })
-export class TrasladoExtComponent {
-  TrasladoForm!: FormGroup;
+export class RetiroComponent {
+  retiroForm!: FormGroup;
   agendaService = inject(AgendaService);
+  clientesServie = inject(ClientesService);
 
   // ✅ Suavizado de render
   isReady = false;
 
   constructor(private fb: FormBuilder, private visitaService: VisService) {
-    this.TrasladoForm = this.fb.group({
+    this.retiroForm = this.fb.group({
       ord_ins: new FormControl<string | null>(null, [
         Validators.required,
         Validators.pattern(/^\d+$/), // solo números
       ]),
       telefonos: new FormControl<string | null>(null, [Validators.required]),
-      coordenadas: new FormControl<string | null>(null, [
+      /*  coordenadas: new FormControl<string | null>(null, [
         Validators.required,
         // Acepta: -0.12345,-78.56789 (con o sin espacios alrededor de la coma)
         Validators.pattern(/^\s*-?\d+(\.\d+)?\s*,\s*-?\d+(\.\d+)?\s*$/),
-      ]),
+      ]),*/
       observacion: new FormControl<string | null>(null, [Validators.required]),
     });
 
@@ -47,7 +48,7 @@ export class TrasladoExtComponent {
   }
 
   convertToUppercase(field: string): void {
-    const control = this.TrasladoForm.get(field);
+    const control = this.retiroForm.get(field);
     if (control) {
       const value = String(control.value ?? '');
       control.setValue(value.toUpperCase(), { emitEvent: false });
@@ -55,52 +56,52 @@ export class TrasladoExtComponent {
   }
 
   async submitForm(): Promise<void> {
-    if (this.TrasladoForm.invalid) {
-      this.TrasladoForm.markAllAsTouched();
+    if (this.retiroForm.invalid) {
+      this.retiroForm.markAllAsTouched();
       return;
     }
 
     try {
-      const data = this.TrasladoForm.value; // { ord_ins, telefonos, coordenadas, observacion }
+      const data = this.retiroForm.value; // { ord_ins, telefonos, coordenadas, observacion }
 
-      // 1) Crear el traslado en la tabla neg_t_vis
+      // 1) Crear el retiro en la tabla neg_t_vis
       const response = await this.visitaService.createVis({
         ord_ins: data.ord_ins,
         vis_diagnostico: data.observacion,
-        vis_tipo: 'TRASLADO EXT',
-        vis_coment_cliente: data.coordenadas,
+        vis_tipo: 'RETIRO',
+        //   vis_coment_cliente: data.coordenadas,
         vis_estado: 'PENDIENTE',
       });
+
+      const response2 = await this.clientesServie.getInfoServicioByOrdId(
+        data.ord_ins
+      );
 
       // 2) Crear el caso en la tabla neg_t_agenda
       const bodyAge = {
         ord_ins: Number(data.ord_ins),
-        age_tipo: 'TRASLADO EXT',
-        age_id_tipo: response.id, // asegúrate que el backend devuelva { id }
+        age_tipo: 'RETIRO',
+        age_id_tipo: response.id,
         age_diagnostico: data.observacion,
-        age_coordenadas: data.coordenadas,
+        age_coordenadas: response2.servicios[0].coordenadas,
         age_telefono: data.telefonos,
       };
       await this.agendaService.postSopAgenda(bodyAge);
 
-      Swal.fire(
-        'Éxito',
-        'Traslado externo registrado correctamente',
-        'success'
-      );
-      this.TrasladoForm.reset();
+      Swal.fire('Éxito', 'Retiro registrado correctamente', 'success');
+      this.retiroForm.reset();
     } catch (error: any) {
-      console.error('❌ Error al crear el traslado externo:', error);
+      console.error('❌ Error al crear el Retiro:', error);
       Swal.fire(
         'Error',
-        error?.message || 'No se pudo registrar el traslado externo',
+        error?.message || 'No se pudo registrar el retiro',
         'error'
       );
     }
   }
 
   checkError(controlName: string, error: string): boolean {
-    const control = this.TrasladoForm.get(controlName);
+    const control = this.retiroForm.get(controlName);
     return !!(control?.touched && control.hasError(error));
   }
 }

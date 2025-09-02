@@ -2,11 +2,11 @@
 <div class="fade-in">
   <main class="container mt-4">
     <form
-      [formGroup]="TrasladoForm"
+      [formGroup]="migracionForm"
       (ngSubmit)="submitForm()"
       class="shadow p-4 bg-white rounded"
     >
-      <h4 class="mb-3">Traslado Externo</h4>
+      <h4 class="mb-3">Migracion</h4>
 
       <div class="mb-3">
         <label>Orden de instalación</label>
@@ -20,13 +20,13 @@
         <input type="tel" formControlName="telefonos" class="form-control" />
         <p *ngIf="checkError('telefonos', 'required')" class="text-danger">Requerido</p>
       </div>
-
+<!-- 
       <div class="mb-3">
         <label>Coordenadas</label>
         <input type="text" formControlName="coordenadas" class="form-control" placeholder="-0.12345,-78.56789" />
         <p *ngIf="checkError('coordenadas', 'required')" class="text-danger">Requerido</p>
         <p *ngIf="checkError('coordenadas', 'pattern')" class="text-danger">Formato: lat,lng</p>
-      </div>
+      </div> -->
 
       <div class="mb-3">
         <label>Observación</label>
@@ -40,8 +40,8 @@
       </div>
 
       <div class="text-center">
-        <button class="btn btn-primary" type="submit" [disabled]="!TrasladoForm.valid">
-          Guardar Traslado
+        <button class="btn btn-primary" type="submit" [disabled]="!migracionForm.valid">
+          Guardar Migracion
         </button>
       </div>
     </form>
