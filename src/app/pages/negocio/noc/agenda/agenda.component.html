@@ -292,8 +292,18 @@
     <div class="modal-content">
       <div class="modal-header bg-danger py-2">
         <h5 class="modal-title text-white">
-          Detalle de @switch (trabajoVista?.age_tipo) { @case ('LOS') {
-          <span>LOS</span> } @case ('TRABAJO') { <span>Trabajo</span> } @case
+          Detalle de @switch (trabajoVista?.age_tipo) {
+             @case ('LOS') {
+          <span>LOS</span> }
+           @case ('RETIRO') {
+          <span>Retiro</span> }
+           @case ('TRASLADO EXT') {
+          <span>Traslado Externo</span> }
+              @case ('VISITA') {
+          <span>Visita</span> }
+              @case ('MIGRACION') {
+          <span>Migración</span> }
+          @case ('TRABAJO') { <span>Trabajo</span> } @case
           ('INSTALACION') { <span>Instalación</span> } }
         </h5>
         <button
