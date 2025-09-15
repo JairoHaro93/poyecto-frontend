@@ -514,6 +514,9 @@ export class AgendaComponent {
   }
 
   async abrirVistaDetalle(hora: string, vehiculo: string) {
+    this.imagenesInstalacion = {};
+    this.imagenesVisita = {};
+
     const trabajo = this.agendaAsignada[hora][vehiculo];
 
     const sol = await this.agendaService.getInfoSolByAgeId(trabajo!.id);
