@@ -1,5 +1,5 @@
 <!-- Estado de carga -->
-@if (isReady)  {
+@if (isReady) {
 <!-- CONTENIDO REAL -->
 <main class="fade-in">
   <main class="mt-3">
@@ -168,9 +168,16 @@
 }
 
 <!-- Modal Asignación -->
-<div class="modal fade" id="asignarModal" tabindex="-1" aria-labelledby="asignarModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-dialog-centered modal-sm modal-right"><!-- ← modal-right aquí -->
-    
+<div
+  class="modal fade"
+  id="asignarModal"
+  tabindex="-1"
+  aria-labelledby="asignarModalLabel"
+  aria-hidden="true"
+>
+  <div class="modal-dialog modal-dialog-centered modal-sm modal-right">
+    <!-- ← modal-right aquí -->
+
     <div class="modal-content">
       <div class="modal-header">
         <h5 class="modal-title">Editar Trabajo</h5>
@@ -287,24 +294,23 @@
 </div>
 
 <!-- Modal Detalle Soporte -->
-<div class="modal fade" id="modalVistaSoporte" tabindex="-1" aria-labelledby="modalVistaSoporteLabel" aria-hidden="true">
+<div
+  class="modal fade"
+  id="modalVistaSoporte"
+  tabindex="-1"
+  aria-labelledby="modalVistaSoporteLabel"
+  aria-hidden="true"
+>
   <div class="modal-dialog modal-dialog-scrollable modal-lg">
     <div class="modal-content">
       <div class="modal-header bg-danger py-2">
         <h5 class="modal-title text-white">
-          Detalle de @switch (trabajoVista?.age_tipo) {
-             @case ('LOS') {
-          <span>LOS</span> }
-           @case ('RETIRO') {
-          <span>Retiro</span> }
-           @case ('TRASLADO EXT') {
-          <span>Traslado Externo</span> }
-              @case ('VISITA') {
-          <span>Visita</span> }
-              @case ('MIGRACION') {
-          <span>Migración</span> }
-          @case ('TRABAJO') { <span>Trabajo</span> } @case
-          ('INSTALACION') { <span>Instalación</span> } }
+          Detalle de @switch (trabajoVista?.age_tipo) { @case ('LOS') {
+          <span>LOS</span> } @case ('RETIRO') { <span>Retiro</span> } @case
+          ('TRASLADO EXT') { <span>Traslado Externo</span> } @case ('VISITA') {
+          <span>Visita</span> } @case ('MIGRACION') { <span>Migración</span> }
+          @case ('TRABAJO') { <span>Trabajo</span> } @case ('INSTALACION') {
+          <span>Instalación</span> } }
         </h5>
         <button
           type="button"
@@ -323,6 +329,31 @@
                 <strong>📛 Cliente :</strong> <br />
                 {{ trabajoVista?.nombre_completo }}
               </p>
+              <p>
+                <strong>IP:</strong><br />
+                <ng-container *ngIf="trabajoVista?.clienteIP as ip">
+                  <a
+                    [href]="formatIpUrl(ip)"
+                    class="text-danger"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    {{ ip }}
+                  </a>
+
+                  <button
+                    type="button"
+                    (click)="copyIp(ip)"
+                    class="btn btn-sm btn-danger ms-2"
+                    [disabled]="!ip"
+                  >
+                    Copiar
+                  </button>
+
+                  <small *ngIf="copied" class="text-success ms-2">✓</small>
+                </ng-container>
+              </p>
+
               <p>
                 <strong>👷 Técnico: </strong> <br />
                 {{ getNombreTecnicoPorId(trabajoVista?.age_tecnico) }}
@@ -411,7 +442,12 @@
 </div>
 
 <!-- Modal Imagen Ampliada -->
-<div class="modal fade" id="modalImagenAmpliada" tabindex="-1" aria-hidden="true">
+<div
+  class="modal fade"
+  id="modalImagenAmpliada"
+  tabindex="-1"
+  aria-hidden="true"
+>
   <div class="modal-dialog modal-dialog-centered modal-lg">
     <div class="modal-content bg-dark text-white text-center">
       <div class="modal-body p-0">
@@ -433,5 +469,3 @@
     </div>
   </div>
 </div>
-
-

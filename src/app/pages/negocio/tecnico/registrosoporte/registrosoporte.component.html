@@ -127,6 +127,7 @@
             rows="4"
             placeholder="Observaciones"
             formControlName="reg_sop_coment_cliente"
+            (input)="convertToUppercase('reg_sop_coment_cliente')"
           ></textarea>
         </section>
         <!-- Radios y teléfonos -->

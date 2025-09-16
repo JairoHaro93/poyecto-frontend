@@ -660,4 +660,46 @@ export class AgendaComponent {
     const img = this.imagenesInstalacion[campo];
     return img && img.ruta !== 'null' && img.url !== 'undefined/imagenes/null';
   }
+  copied = false;
+
+  formatIpUrl(ip?: string): string {
+    if (!ip) return '#';
+    const clean = ip.trim();
+    return /^https?:\/\//i.test(clean) ? clean : `http://${clean}`;
+  }
+
+  copyIp(ip?: string): void {
+    const text = (ip ?? '').trim();
+    if (!text) return;
+
+    if (navigator.clipboard && window.isSecureContext) {
+      navigator.clipboard
+        .writeText(text)
+        .then(() => this.showCopied())
+        .catch(() => this.fallbackCopy(text));
+    } else {
+      this.fallbackCopy(text);
+    }
+  }
+
+  private fallbackCopy(text: string) {
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.focus();
+    ta.select();
+    try {
+      document.execCommand('copy');
+      this.showCopied();
+    } finally {
+      document.body.removeChild(ta);
+    }
+  }
+
+  private showCopied() {
+    this.copied = true;
+    setTimeout(() => (this.copied = false), 1500);
+  }
 }

@@ -77,7 +77,9 @@ export class RegistrosoporteComponent {
       reg_sop_coment_cliente: new FormControl<string | null>(null),
       reg_sop_tel: new FormControl<string>('', [
         Validators.required,
-        Validators.pattern('^[0-9]{10,}$'),
+        Validators.pattern(
+          /^\s*\+?\s*(?:\d\s*){10,}(?:\s*(?:[;,\/]|\s{2,})\s*\+?\s*(?:\d\s*){10,})*\s*$/
+        ),
       ]),
       reg_sop_opc: new FormControl<string | null>(null, [Validators.required]),
       reg_sop_registrado_por_id: new FormControl<number | string>(''),
@@ -315,5 +317,12 @@ export class RegistrosoporteComponent {
     navigator.clipboard
       .writeText(ip)
       .catch((err) => console.error('Error al copiar IP: ', err));
+  }
+
+  convertToUppercase(field: string): void {
+    const control = this.SoporteForm2.get(field);
+    if (control) {
+      control.setValue(control.value.toUpperCase(), { emitEvent: false });
+    }
   }
 }
