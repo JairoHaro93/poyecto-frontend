@@ -179,9 +179,8 @@
                     {{ funcion.nombre.slice(1) }}
                     <input
                       type="checkbox"
-                      [value]="funcion.id"
                       [checked]="selectedIds.includes(funcion.id)"
-                      (change)="addStatus({ funcion: funcion.id }, $event)"
+                      (change)="onToggleRol(funcion.id, $event)"
                     />
                   </p>
                   } }

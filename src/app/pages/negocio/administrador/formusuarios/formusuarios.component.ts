@@ -28,7 +28,7 @@ export class FormusuariosComponent {
   funcionesForm!: FormGroup;
 
   arrfunciones: any[] = [];
-  selectedIds: string[] = [];
+  selectedIds: number[] = [];
 
   authService = inject(AutenticacionService);
 
@@ -72,7 +72,7 @@ export class FormusuariosComponent {
       fecha_nac: new FormControl(null, [Validators.required]),
       fecha_cont: new FormControl(null, [Validators.required]),
       genero: new FormControl('M', [Validators.required]),
-      rol: [null],
+      rol: this.fb.control<number[]>([]), // antes: [null]
     });
 
     this.funcionesForm = this.fb.group({
@@ -172,15 +172,23 @@ export class FormusuariosComponent {
 
   async ngOnInit() {
     this.loadFunciones();
+    const id = this.activatedRoute.snapshot.paramMap.get('id');
 
-    this.activatedRoute.params.subscribe(async (params: any) => {
-      if (params.id) {
-        this.tipo = 'Actualizar';
-        await this.loadUsuario(params.id);
-        this.syncFuncionesWithRoles();
-      }
-      this.isReady = true; // ⬅️ muestra el contenido
-    });
+    if (id) {
+      this.tipo = 'Actualizar';
+      await this.loadUsuario(id);
+      const passCtrl = this.usuarioForm.get('password');
+      passCtrl?.clearValidators();
+      passCtrl?.setValidators([Validators.minLength(6)]);
+      passCtrl?.updateValueAndValidity({ emitEvent: false });
+    } else {
+      this.tipo = 'Crear';
+      const passCtrl = this.usuarioForm.get('password');
+      passCtrl?.setValidators([Validators.required, Validators.minLength(6)]);
+      passCtrl?.updateValueAndValidity({ emitEvent: false });
+    }
+
+    this.isReady = true;
   }
 
   private syncFuncionesWithRoles() {
@@ -211,41 +219,40 @@ export class FormusuariosComponent {
           ? format(new Date(usuario.fecha_cont), 'yyyy-MM-dd')
           : null,
       });
-      this.selectedIds = usuario.rol || [];
+      this.selectedIds = (usuario.rol || []).map(Number); // asegura números
+      this.usuarioForm.get('rol')!.setValue([...this.selectedIds]); // <-- clave
       //console.log(usuario);
     } catch (error) {
       console.error('Error loading usuario:', error);
     }
   }
 
-  addStatus(item: { funcion: string }, event: Event): void {
-    const input = event.target as HTMLInputElement;
-    if (input.checked) {
-      if (!this.selectedIds.includes(item.funcion)) {
-        this.selectedIds.push(item.funcion);
-      }
-    } else {
-      this.selectedIds = this.selectedIds.filter((id) => id !== item.funcion);
-    }
-    this.usuarioForm.value.rol = this.selectedIds;
+  onToggleRol(funcionId: number, event: Event): void {
+    const checked = (event.target as HTMLInputElement).checked; // casteo seguro
+    const id = Number(funcionId);
 
-    //this.usuarioForm.patchValue({ rol: this.selectedIds });
-    // console.log(this.usuarioForm.value.rol);
+    if (checked) {
+      if (!this.selectedIds.includes(id)) this.selectedIds.push(id);
+    } else {
+      this.selectedIds = this.selectedIds.filter((x) => x !== id);
+    }
+    this.usuarioForm.get('rol')!.setValue([...this.selectedIds]);
+    this.usuarioForm.get('rol')!.markAsDirty();
   }
 
   async getDataForm() {
     try {
-      const usuarioData = this.usuarioForm.value;
+      const formValue = this.usuarioForm.value;
+      const payload = {
+        ...formValue,
+        rol: (formValue.rol || []).map((x: any) => Number(x)),
+      };
 
-      if (usuarioData.id) {
-        // console.log(usuarioData);
-        // Actualizar
-        const response = await this.usuarioServices.update(usuarioData);
-        console.log(usuarioData);
+      if (payload.id) {
+        await this.usuarioServices.update(payload);
         Swal.fire('Realizado', 'Usuario Actualizado', 'success');
       } else {
-        // Insertar
-        const response = await this.usuarioServices.insert(usuarioData);
+        await this.usuarioServices.insert(payload);
         Swal.fire('Realizado', 'Usuario Creado', 'success');
       }
 
