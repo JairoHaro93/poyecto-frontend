@@ -140,8 +140,10 @@
           <!-- Badge derecha -->
           @if (soportesPendientesCount > 0) {
           <span class="badge-circle-sop">{{ soportesPendientesCount }}</span>
-          } @else {
-          <span class="badge-circle-sop invisible">0</span>
+          }@if(soportesRevisadosCount>0){
+          <span class="badge-circle-sop">
+            {{ soportesRevisadosCount }}
+          </span>
           }
         </div>
       </button>
@@ -162,9 +164,13 @@
             (click)="onClickMenu()"
             [routerLink]="['/home/noc/soporte-tecnico']"
           >
-            Soporte Tecnico @if(soportesPendientesCount>0){
+            @if(soportesPendientesCount>0){
             <span class="badge-circle-sop">
               {{ soportesPendientesCount }}
+            </span>
+            } Soporte Tecnico @if(soportesRevisadosCount>0){
+            <span class="badge-circle-sop">
+              {{ soportesRevisadosCount }}
             </span>
             }
           </li>
@@ -197,14 +203,11 @@
           <li (click)="onClickMenu()" [routerLink]="['/home/noc/traslado-ext']">
             Traslado Externo
           </li>
-          }
-          @if (arrNoc.includes("NMigracion")) {
+          } @if (arrNoc.includes("NMigracion")) {
           <li (click)="onClickMenu()" [routerLink]="['/home/noc/migracion']">
             Migracion
           </li>
-          }
-          
-          @if (arrNoc.includes("NRetiro")) {
+          } @if (arrNoc.includes("NRetiro")) {
           <li (click)="onClickMenu()" [routerLink]="['/home/noc/retiro']">
             Retiro
           </li>

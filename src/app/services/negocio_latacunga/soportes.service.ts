@@ -35,7 +35,7 @@ export class SoportesService {
     );
   }
 
-  getSopByNocId(id_noc: number): Promise<Isoportes[]> {
+  getAllSopRevisados(): Promise<Isoportes[]> {
     return firstValueFrom(
       this.httpClient.get<Isoportes[]>(`${this.baseUrl}/revisados`, {
         withCredentials: true,

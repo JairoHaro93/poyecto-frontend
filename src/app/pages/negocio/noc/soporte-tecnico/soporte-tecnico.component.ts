@@ -76,7 +76,7 @@ export class SoporteTecnicoComponent {
 
       const [soportesPend, soportesNoc] = await Promise.all([
         this.soporteService.getAllPendientes(),
-        this.soporteService.getSopByNocId(noc_id),
+        this.soporteService.getAllSopRevisados(),
       ]);
 
       this.soportesPendientes = soportesPend;

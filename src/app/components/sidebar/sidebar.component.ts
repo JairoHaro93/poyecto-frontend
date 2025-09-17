@@ -41,6 +41,7 @@ export class SidebarComponent implements OnInit, OnDestroy {
   };
 
   soportesPendientesCount = 0;
+  soportesRevisadosCount = 0;
   soportesNocCount = 0;
   preAgendaPendientesCount = 0;
 
@@ -142,6 +143,8 @@ export class SidebarComponent implements OnInit, OnDestroy {
   async obtenerSoportesPendientes() {
     try {
       const soportesPendientes = await this.soporteService.getAllPendientes();
+      const soportesRevisados = await this.soporteService.getAllSopRevisados();
+      this.soportesRevisadosCount = soportesRevisados.length;
       this.soportesPendientesCount = soportesPendientes.length;
       console.log(
         'El numero de soporte en SIDEBAR es ' + this.soportesPendientesCount
