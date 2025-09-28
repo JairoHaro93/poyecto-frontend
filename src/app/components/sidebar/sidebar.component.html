@@ -127,8 +127,6 @@
           <!-- Badge izquierda -->
           @if (preAgendaPendientesCount > 0) {
           <span class="badge-circle-age">{{ preAgendaPendientesCount }}</span>
-          } @else {
-          <span class="badge-circle-age invisible">0</span>
           }
 
           <!-- Icono central -->
@@ -210,6 +208,13 @@
           } @if (arrNoc.includes("NRetiro")) {
           <li (click)="onClickMenu()" [routerLink]="['/home/noc/retiro']">
             Retiro
+          </li>
+          } @if (arrNoc.includes("NInfraestructura")) {
+          <li
+            (click)="onClickMenu()"
+            [routerLink]="['/home/noc/infraestructura']"
+          >
+            Infraestructura
           </li>
           }
         </ul>

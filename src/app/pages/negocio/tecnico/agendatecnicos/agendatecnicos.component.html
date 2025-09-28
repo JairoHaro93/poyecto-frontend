@@ -68,7 +68,9 @@
           Detalle de @switch (trabajoAgenda?.age_tipo) { @case ('LOS') {
           <span>LOS</span> } @case ('TRABAJO') { <span>Trabajo</span> } @case
           ('INSTALACION') { <span>Instalación</span> } @case ('VISITA') {
-          <span>Visita</span> } }
+          <span>Visita</span> }
+          <!-- 🔹 NUEVO -->
+          @case ('INFRAESTRUCTURA') { <span>Infraestructura</span> } }
         </h5>
         <button
           type="button"
@@ -79,7 +81,6 @@
       </div>
       <div class="modal-body small">
         <ng-container *ngIf="trabajoTabla; else cargandoDetalle">
-          <!-- <p><strong>Cliente:</strong> {{ trabajoTabla.reg_sop_nombre }}</p> -->
           <p>
             <strong>Diagnóstico NOC:</strong>
             {{ trabajoAgenda?.age_diagnostico }}
@@ -120,7 +121,7 @@
         <ng-template #cargandoDetalle>
           <p class="text-muted">Cargando detalles...</p>
         </ng-template>
-
+        @if (trabajoAgenda?.age_tipo !== 'INFRAESTRUCTURA') {
         <hr />
         <h6 class="mt-3 mb-2">Imágenes de instalación</h6>
         <!-- Grid de imágenes -->
@@ -146,13 +147,39 @@
           </div>
           } }
         </div>
-      </div>
+        }
+        <!-- 🔹 NUEVO: Galería INFRA en detalle -->
+        @if (trabajoAgenda?.age_tipo === 'INFRAESTRUCTURA') {
+        <hr />
+        <h6 class="mt-3 mb-2">Imágenes de infraestructura</h6>
+        <div class="row g-2">
+          <div
+            class="col-6 col-md-3 col-lg-2"
+            *ngFor="let img of imagenesInfra; trackBy: trackInfra"
+          >
+            <div class="card shadow-sm border rounded">
+              <div class="card-body p-2 text-center">
+                <div class="fw-bold text-capitalize mb-1">
+                  {{ img.tag || "—" }}
+                  <small *ngIf="img.position">#{{ img.position }}</small>
+                </div>
+                <img
+                  [src]="img.url"
+                  [alt]="img.filename"
+                  class="img-thumbnail"
+                  style="cursor: pointer; max-height: 150px"
+                  (click)="abrirImagenModal(img.url)"
+                />
+              </div>
+            </div>
+          </div>
 
-      <!-- <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-          Cerrar
-        </button>
-      </div> -->
+          <div *ngIf="!imagenesInfra.length" class="text-muted">
+            Sin imágenes de infraestructura
+          </div>
+        </div>
+        }
+      </div>
     </div>
   </div>
 </div>
@@ -169,7 +196,7 @@
       <div class="modal-body p-0">
         <img
           [src]="imagenSeleccionada"
-          class="img-fluid w-100  object-fit-contain rounded"
+          class="img-fluid w-100 object-fit-contain rounded"
           alt="Imagen ampliada"
         />
       </div>
@@ -200,7 +227,8 @@
         <h5 class="modal-title">
           Editar @switch (trabajoAgenda?.age_tipo) { @case ('LOS') {
           <span>LOS</span> } @case ('TRABAJO') { <span>Trabajo</span> } @case
-          ('INSTALACION') { <span>Instalación</span> } }
+          ('INSTALACION') { <span>Instalación</span> } @case ('INFRAESTRUCTURA')
+          { <span>Infraestructura</span> } }
         </h5>
         <button
           type="button"
@@ -211,6 +239,7 @@
       </div>
 
       <div class="modal-body small">
+        @if(trabajoAgenda?.age_tipo !=="INFRAESTRUCTURA"){
         <h6 class="mb-3">
           Imágenes de instalación {{ clienteSeleccionado.nombre_completo }}
         </h6>
@@ -244,6 +273,7 @@
           </div>
           }
         </div>
+        }
 
         <form *ngIf="trabajoAgenda" #formSolucion="ngForm">
           <div class="mb-3">
@@ -267,9 +297,8 @@
         </form>
 
         <!-- Imágenes de solución -->
-
-        @if(trabajoAgenda?.age_tipo !=="INSTALACION"){
-
+        @if(trabajoAgenda?.age_tipo ==="VISITA" || trabajoAgenda?.age_tipo
+        ==="LOS"){
         <hr />
         <h6 class="mt-3">Imágenes de solución</h6>
         <div class="row g-3">
@@ -302,6 +331,65 @@
           }
         </div>
         }
+
+        <!-- 🔹 NUEVO: Subida y galería para INFRAESTRUCTURA -->
+        <!-- Solo cuando es INFRAESTRUCTURA -->
+        <div *ngIf="trabajoAgenda?.age_tipo === 'INFRAESTRUCTURA'">
+          <hr />
+          <h6 class="mt-3">Imágenes de infraestructura</h6>
+
+          <div class="row g-2">
+            <!-- existentes -->
+            <div
+              class="col-6 col-md-3 col-lg-2"
+              *ngFor="let img of imagenesInfra; trackBy: trackInfra"
+            >
+              <div class="card shadow-sm border rounded h-100">
+                <div class="card-body p-2 text-center d-flex flex-column">
+                  <div class="fw-bold text-capitalize mb-1">
+                    {{ img.tag || "—" }} <small>#{{ img.position }}</small>
+                  </div>
+                  <img
+                    [src]="img.url"
+                    [alt]="img.filename || 'sol ' + img.position"
+                    class="img-thumbnail"
+                    style="
+                      cursor: pointer;
+                      max-height: 150px;
+                      object-fit: cover;
+                    "
+                    (click)="abrirImagenModal(img.url)"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <!-- SLOT de subida (siempre visible) -->
+            <div class="col-6 col-md-3 col-lg-2">
+              <div class="card border p-2 text-center h-100 d-flex">
+                <div class="fw-bold mb-1">
+                  Agregar solución
+                  <small>(sol #{{ nextSolPosition }})</small>
+                </div>
+
+                <label class="btn btn-sm btn-outline-primary mt-auto">
+                  Seleccionar imagen
+                  <input
+                    type="file"
+                    accept="image/*"
+                    class="d-none"
+                    (change)="onImagenInfraSeleccionada($event)"
+                  />
+                </label>
+              </div>
+            </div>
+
+            <div *ngIf="!imagenesInfra.length" class="text-muted">
+              Aún no hay imágenes de infraestructura
+            </div>
+          </div>
+        </div>
+
         <ng-container *ngIf="!trabajoAgenda">
           <p class="text-muted">No hay información cargada.</p>
         </ng-container>

@@ -32,6 +32,7 @@ import { NuevaInstalacionComponent } from './pages/negocio/noc/nueva-instalacion
 import { TrasladoExtComponent } from './pages/negocio/noc/traslado-ext/traslado-ext.component';
 import { RetiroComponent } from './pages/negocio/noc/retiro/retiro.component';
 import { MigracionComponent } from './pages/negocio/noc/migracion/migracion.component';
+import { InfraestructuraComponent } from './pages/negocio/noc/infraestructura/infraestructura.component';
 
 export const routes: Routes = [
   { path: '', pathMatch: 'full', redirectTo: 'login' },
@@ -165,6 +166,11 @@ export const routes: Routes = [
             path: 'migracion',
             component: MigracionComponent,
             canActivate: [permisosGuard('NMigracion')],
+          },
+          {
+            path: 'infraestructura',
+            component: InfraestructuraComponent,
+            canActivate: [permisosGuard('NInfraestructura')],
           },
           { path: 'agenda', component: AgendaComponent },
         ],

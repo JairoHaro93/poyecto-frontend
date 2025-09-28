@@ -4,7 +4,6 @@ import { FormControl } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { ClientesService } from '../../../../services/negocio_atuntaqui/clientes.service';
 import { Modal } from 'bootstrap';
-import { ImagenesService } from '../../../../services/negocio_latacunga/imagenes.service';
 import { of, from } from 'rxjs';
 import {
   debounceTime,
@@ -13,6 +12,9 @@ import {
   switchMap,
   catchError,
 } from 'rxjs/operators';
+import { ImagesService } from '../../../../services/negocio_latacunga/images.service';
+import { ImageItem } from '../../../../interfaces/negocio/images/images';
+import { environment } from '../../../../../environments/environment';
 
 interface ClienteSugerencia {
   cedula: string;
@@ -28,7 +30,7 @@ interface ClienteSugerencia {
 })
 export class DatosclientesComponent {
   private clienteService = inject(ClientesService);
-  private imagenesService = inject(ImagenesService);
+  private imagesService = inject(ImagesService);
 
   // ===== Buscador (server-side, mínimo 2 letras) =====
   queryCtrl = new FormControl<string>('', { nonNullable: true });
@@ -37,20 +39,20 @@ export class DatosclientesComponent {
   highlightedIndex = -1;
 
   // Campos del formulario
-  busqueda: string = ''; // nombre (lo seguimos usando para mostrar/llenar)
-  busquedaCedula: string = ''; // cédula
+  busqueda: string = '';
+  busquedaCedula: string = '';
 
   // Datos completos del cliente y sus servicios
   clienteSeleccionado: any = null;
   servicioSeleccionado: any = null;
   imagenSeleccionada: string | null = null;
 
+  // Solo instalación
   imagenesInstalacion: { [key: string]: { ruta: string; url: string } } = {};
 
-  isReady = false; // ✅ Suavizado de render
+  isReady = false;
 
   async ngOnInit() {
-    // 🔎 Búsqueda reactiva: limpia si <2, consulta si >=2
     this.queryCtrl.valueChanges
       .pipe(
         map((v) => (v ?? '').trim()),
@@ -74,7 +76,8 @@ export class DatosclientesComponent {
         this.showSugerencias = list.length > 0;
         this.highlightedIndex = list.length ? 0 : -1;
       });
-    this.isReady = true; // ⬅️ muestra el contenido
+
+    this.isReady = true;
   }
 
   // === Selección / navegación de sugerencias ===
@@ -126,14 +129,14 @@ export class DatosclientesComponent {
       this.showSugerencias = true;
   }
 
-  // === Búsqueda directa por cédula (se mantiene) ===
+  // === Búsqueda directa por cédula ===
   async buscarClientePorCedula() {
     const cedulaBuscada = this.busquedaCedula.trim();
     if (!cedulaBuscada) return;
     await this.cargarDetalleClientePorCedula();
   }
 
-  // Carga el detalle completo del cliente por su cédula (se mantiene y mejora)
+  // === Detalle del cliente ===
   async cargarDetalleClientePorCedula() {
     const cedula = this.busquedaCedula.trim();
     if (!cedula) return;
@@ -144,13 +147,11 @@ export class DatosclientesComponent {
         this.clienteSeleccionado = detalle;
         this.servicioSeleccionado = detalle.servicios[0];
 
-        // Autollenar nombre en input y variable de apoyo
         this.busqueda = detalle.nombre_completo;
         this.queryCtrl.setValue(detalle.nombre_completo, { emitEvent: false });
 
-        // Mantener imágenes de instalación (igual que antes)
+        // SOLO instalación (nuevo backend)
         this.cargarImagenesInstalacion(
-          'neg_t_instalaciones',
           this.servicioSeleccionado?.orden_instalacion
         );
       } else {
@@ -163,35 +164,64 @@ export class DatosclientesComponent {
     }
   }
 
-  // === Imágenes (se mantiene igual) ===
+  // === Modal imagen ===
   abrirImagenModal(url: string) {
     this.imagenSeleccionada = url;
     const modal = new Modal(document.getElementById('modalImagenAmpliada')!);
     modal.show();
   }
 
-  private cargarImagenesInstalacion(tabla: string, ord_Ins: string): void {
-    this.imagenesService.getImagenesByTableAndId(tabla, ord_Ins).subscribe({
-      next: (res: any) => {
-        if (res?.imagenes) {
-          this.imagenesInstalacion = res.imagenes;
-        } else {
-          this.imagenesInstalacion = {};
-        }
+  // === Instalación -> nuevo backend (module='instalaciones') ===
+  private cargarImagenesInstalacion(ordIns: string): void {
+    if (!ordIns) return;
+
+    console.debug('[INST] fetch ordIns ->', ordIns);
+
+    this.imagesService.list('instalaciones', ordIns).subscribe({
+      next: (items) => {
+        this.imagenesInstalacion = this.adaptInstToLegacyMap(items);
+        console.debug(
+          '[INST] mapped keys ->',
+          Object.keys(this.imagenesInstalacion)
+        );
       },
       error: (err) => {
-        console.error('❌ Error cargando imágenes:', err);
+        console.error('❌ Error cargando imágenes (instalación):', err);
         this.imagenesInstalacion = {};
       },
     });
   }
 
+  // Convierte ImageItem[] => { [clave]: { url, ruta } }
+  // clave = tag o tag_position si trae position > 0
+  private adaptInstToLegacyMap(
+    items: ImageItem[]
+  ): Record<string, { url: string; ruta: string }> {
+    const map: Record<string, { url: string; ruta: string }> = {};
+    for (const it of items ?? []) {
+      const base = (it.tag || 'otros').trim();
+      const key =
+        typeof it.position === 'number' && it.position > 0
+          ? `${base}_${it.position}`
+          : base;
+
+      const rel = (it as any).ruta_relativa as string | undefined;
+      const url =
+        it.url ??
+        (rel
+          ? `${environment.API_URL.replace(/\/api$/, '')}/imagenes/${rel}`
+          : '');
+      if (!url) continue;
+
+      map[key] = { url, ruta: url };
+    }
+    return map;
+  }
+
   onServicioSeleccionado() {
-    if (this.servicioSeleccionado?.orden_instalacion) {
-      this.cargarImagenesInstalacion(
-        'neg_t_instalaciones',
-        this.servicioSeleccionado.orden_instalacion
-      );
+    const ordIns = this.servicioSeleccionado?.orden_instalacion;
+    if (ordIns) {
+      this.cargarImagenesInstalacion(ordIns);
     }
   }
 

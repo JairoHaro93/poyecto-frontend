@@ -10,7 +10,6 @@ import Swal from 'sweetalert2';
 
 // Interfaces (dominio)
 import { Iagenda } from '../../../../interfaces/negocio/agenda/iagenda.interface';
-import { Isoportes } from '../../../../interfaces/negocio/soportes/isoportes.interface';
 import { Iusuarios } from '../../../../interfaces/sistema/iusuarios.interface';
 import { Iclientes } from '../../../../interfaces/negocio/clientes/iclientes.interface';
 
@@ -19,13 +18,16 @@ import { AgendaService } from '../../../../services/negocio_latacunga/agenda.ser
 import { AutenticacionService } from '../../../../services/sistema/autenticacion.service';
 import { SoportesService } from '../../../../services/negocio_latacunga/soportes.service';
 import { SoketService } from '../../../../services/socket_io/soket.service';
-import { ImagenesService } from '../../../../services/negocio_latacunga/imagenes.service';
 import { VisService } from '../../../../services/negocio_latacunga/vis.service';
 import {
   ClienteBatchItem,
   ClientesService,
 } from '../../../../services/negocio_atuntaqui/clientes.service';
 import { firstValueFrom } from 'rxjs';
+
+// 👇 NUEVO: API de imágenes unificada
+import { ImagesService } from '../../../../services/negocio_latacunga/images.service';
+import { ImageItem } from '../../../../interfaces/negocio/images/images';
 
 /** Mapa tipado para imágenes por campo (fachada, router, etc.) */
 type ImagenMap = Record<string, { url: string; ruta: string }>;
@@ -35,7 +37,7 @@ type ImagenMap = Record<string, { url: string; ruta: string }>;
   standalone: true,
   imports: [DatePipe, CommonModule, FormsModule],
   templateUrl: './agendatecnicos.component.html',
-  styleUrls: ['./agendatecnicos.component.css'], // ✅ Angular espera un array
+  styleUrls: ['./agendatecnicos.component.css'],
 })
 export class AgendatecnicosComponent {
   // =========================
@@ -83,6 +85,9 @@ export class AgendatecnicosComponent {
   /** Imágenes de visita/LOS (tabla neg_t_vis, id = age_id_tipo) */
   imagenesVisita: ImagenMap = {};
 
+  /** 👇 NUEVO: Imágenes de infraestructura (API nueva) */
+  imagenesInfra: ImageItem[] = [];
+
   /** Buffer temporal para inputs file por campo */
   imagenesSeleccionadas: Record<string, File> = {};
 
@@ -95,7 +100,8 @@ export class AgendatecnicosComponent {
   private readonly soporteService = inject(SoportesService);
   private readonly visService = inject(VisService);
   private readonly clientesService = inject(ClientesService);
-  private readonly imagenesService = inject(ImagenesService);
+
+  private readonly imagesService = inject(ImagesService); // NUEVO (infraestructura)
   private readonly socketService = inject(SoketService);
 
   private clienteCache = new Map<string, ClienteBatchItem>();
@@ -104,43 +110,35 @@ export class AgendatecnicosComponent {
   // CICLO DE VIDA
   // =========================
 
-  // ✅ Suavizado de render (NUEVO)
   isReady = false;
 
-  /**
-   * Carga usuario, agenda inicial y queda escuchando asignaciones por socket.
-   */
   async ngOnInit() {
     try {
       this.datosUsuario = await this.authService.getUsuarioAutenticado();
       const idtec = this.datosUsuario.id;
 
-      // 🔔 evento socket: cuando agendan algo a este técnico, recargar
       this.socketService.on('trabajoAgendadoTecnico', async () => {
         console.log('📥 Trabajo agendado para este técnico');
         this.agendaTecnicosList = await this.agendaService.getAgendaTec(idtec!);
         await this.enrichAgendaTecnicosList();
       });
 
-      // ▶ carga inicial de agenda
       this.agendaTecnicosList = await this.agendaService.getAgendaTec(idtec!);
       await this.enrichAgendaTecnicosList();
     } catch (error) {
       console.error('❌ Error al obtener la agenda del técnico', error);
     } finally {
-      this.isReady = true; // ⬅️ muestra el contenido
+      this.isReady = true;
     }
   }
 
   /**
    * Enriquecimiento por lote de agendaTecnicosList usando ord_ins.
-   * No toca tu flujo: solo llámala después de cargar agendaTecnicosList.
    */
   async enrichAgendaTecnicosList(): Promise<void> {
     const items = this.agendaTecnicosList || [];
     if (!Array.isArray(items) || items.length === 0) return;
 
-    // ord_ins únicos que NO están en cache
     const faltantes = Array.from(
       new Set(
         items
@@ -149,7 +147,6 @@ export class AgendatecnicosComponent {
       )
     );
 
-    // Llamada batch SOLO por los faltantes
     if (faltantes.length > 0) {
       try {
         const resp = await firstValueFrom(
@@ -163,12 +160,10 @@ export class AgendatecnicosComponent {
       }
     }
 
-    // Merge: agrega campos enriquecidos a cada item (sin romper tipos existentes)
     this.agendaTecnicosList = items.map((it) => {
       const info = this.clienteCache.get(String((it as any).ord_ins));
       return {
         ...it,
-        // Campos enriquecidos (opcionales); mantiene fallback a los existentes
         clienteNombre:
           info?.nombre_completo ??
           (it as any).clienteNombre ??
@@ -187,33 +182,32 @@ export class AgendatecnicosComponent {
   // ACCIONES PRINCIPALES
   // =========================
 
-  /**
-   * Muestra el detalle básico del trabajo (modal de lectura rápida).
-   */
   async verDetalle(trabajo: Iagenda) {
     try {
-      // 1) Seleccionar trabajo y limpiar estado visual
       this.trabajoAgenda = trabajo;
       this.trabajoTabla = this.trabajoAgenda;
 
-      // 2) (Re)inicializa las imágenes para evitar que se vean las del item anterior
+      // limpiar buffers
       this.imagenesInstalacion = {};
+      this.imagenesVisita = {};
+      this.imagenesInfra = [];
 
-      // 3) Cargar imágenes de INSTALACIÓN por ord_ins (siempre)
-      //    ⚠️ Usa la misma tabla que venías usando para descarga: 'neg_t_instalaciones'
-      //    (si tu backend espera otra, cámbialo por la que corresponda)
-      this.cargarImagenesInstalacion(
-        'neg_t_instalaciones',
-        String(trabajo.ord_ins)
-      );
+      // ⬇️ SOLO si NO es INFRAESTRUCTURA
+      if (trabajo.age_tipo !== 'INFRAESTRUCTURA') {
+        this.cargarImagenesInstalacion(String(trabajo.ord_ins));
+      }
 
-      // 4) Cargar info del cliente asociada a la orden
+      // datos de cliente
       this.clienteSeleccionado =
         await this.clientesService.getInfoServicioByOrdId(
           Number(trabajo.ord_ins)
         );
 
-      // 5) Abrir modal
+      // ⬇️ SOLO si ES INFRAESTRUCTURA
+      if (trabajo.age_tipo === 'INFRAESTRUCTURA') {
+        this.cargarImagenesInfraestructura(trabajo.age_id_tipo);
+      }
+
       const el = document.getElementById('detalleModal');
       if (el) new Modal(el).show();
     } catch (error) {
@@ -221,12 +215,6 @@ export class AgendatecnicosComponent {
     }
   }
 
-  /**
-   * Guarda la solución del trabajo:
-   * - Actualiza la agenda (CONCLUIDO)
-   * - Si no es INSTALACION, actualiza también VIS/LOS y/o SOPORTE
-   * - Emite evento socket y refresca agenda
-   */
   async guardarSolucion() {
     if (!this.trabajoAgenda) return;
 
@@ -237,12 +225,9 @@ export class AgendatecnicosComponent {
         age_solucion: this.trabajoAgenda.age_solucion,
       };
 
-      // Mantiene tu llamada original (usa body.id)
       await this.agendaService.actualizarAgendaSolucion(body.id, body);
 
-      // Si no es instalación, actualiza VIS/LOS y SOPORTE.
       if (this.trabajoAgenda.age_tipo !== 'INSTALACION') {
-        // id de VIS/LOS: si no está en trabajoTabla, usar age_id_tipo
         const idVis = Number(
           this.trabajoTabla?.id ?? this.trabajoAgenda.age_id_tipo
         );
@@ -257,12 +242,11 @@ export class AgendatecnicosComponent {
           reg_sop_sol_det: this.trabajoAgenda.age_solucion,
         };
         await this.soporteService.actualizarEstadoSop(
-          this.trabajoAgenda.age_id_sop, // campo original
+          this.trabajoAgenda.age_id_sop,
           bodySop
         );
       }
 
-      // 🔄 Notificar por socket y recargar la agenda
       this.socketService.emit('trabajoCulminado', {
         tecnicoId: this.datosUsuario.id,
       });
@@ -295,30 +279,37 @@ export class AgendatecnicosComponent {
     }
   }
 
-  /**
-   * Abre el modal de edición con datos completos:
-   * - Cliente por ord_ins
-   * - Define trabajoTabla según tipo (SOPORTE / VIS/LOS / INSTALACIÓN)
-   * - Carga imágenes de instalación y visita
-   */
   async abrirModalEditar(trabajo: Iagenda) {
     try {
-      // 1) Datos del cliente por ORD_INS
       this.clienteSeleccionado =
         await this.clientesService.getInfoServicioByOrdId(
           Number(trabajo.ord_ins)
         );
 
-      // 2) Seleccionar trabajo
       this.trabajoAgenda = { ...trabajo };
 
-      this.cargarImagenesInstalacion(
-        'neg_t_instalaciones',
-        this.trabajoAgenda.ord_ins
-      );
-      this.cargarImagenesVisita('neg_t_vis', this.trabajoAgenda.age_id_tipo);
+      if (this.trabajoAgenda.age_tipo === 'INFRAESTRUCTURA') {
+        // Solo infraestructura
+        this.cargarImagenesInfraestructura(this.trabajoAgenda.age_id_tipo);
+        this.imagenesInstalacion = {};
+        this.imagenesVisita = {};
+      } else {
+        // Inst/Vis/Los/Trabajo
+        this.refrescarInstalacion(this.trabajoAgenda.ord_ins);
 
-      // 3) trabajoTabla según tipo (para que guardarSolucion tenga IDs correctos)
+        // 🔴 antes: siempre llamabas visitas → 404 en instalación
+        // ✅ ahora: solo VIS/LOS
+        if (
+          this.trabajoAgenda.age_tipo === 'VISITA' ||
+          this.trabajoAgenda.age_tipo === 'LOS'
+        ) {
+          this.cargarImagenesVisita(this.trabajoAgenda.age_id_tipo);
+        } else {
+          this.imagenesVisita = {};
+        }
+      }
+
+      // trabajoTabla (igual que ya tenías)
       if (this.trabajoAgenda.age_tipo === 'SOPORTE') {
         this.trabajoTabla = await this.soporteService.getSopById(
           Number(this.trabajoAgenda.age_id_tipo)
@@ -327,21 +318,11 @@ export class AgendatecnicosComponent {
         this.trabajoAgenda.age_tipo === 'VISITA' ||
         this.trabajoAgenda.age_tipo === 'LOS'
       ) {
-        // si no hay endpoint para VIS por id, al menos guardamos el id
         this.trabajoTabla = { id: Number(this.trabajoAgenda.age_id_tipo) };
       } else {
-        // INSTALACION u otros
         this.trabajoTabla = this.trabajoAgenda;
       }
 
-      // 4) Cargar imágenes (instalación y visita)
-      this.cargarImagenesInstalacion(
-        'neg_t_instalaciones',
-        this.trabajoAgenda.ord_ins
-      );
-      this.cargarImagenesVisita('neg_t_vis', this.trabajoAgenda.age_id_tipo);
-
-      // 5) Mostrar modal
       const el = document.getElementById('editarModal');
       if (el) new Modal(el).show();
     } catch (error) {
@@ -353,43 +334,24 @@ export class AgendatecnicosComponent {
   // CARGA DE IMÁGENES (GET)
   // =========================
 
-  /**
-   * Descarga y setea las imágenes de instalación (tabla neg_t_instalaciones).
-   * @param tabla  normalmente 'neg_t_instalaciones'
-   * @param ord_ins ID de orden de instalación (string)
-   */
-  private cargarImagenesInstalacion(tabla: string, ord_ins: string): void {
-    this.imagenesService.getImagenesByTableAndId(tabla, ord_ins).subscribe({
-      next: (res: any) => {
-        this.imagenesInstalacion = res?.imagenes ?? {};
-      },
+  private cargarImagenesInstalacion(ord_ins: string): void {
+    this.refrescarInstalacion(ord_ins);
+  }
+
+  private cargarImagenesVisita(id: string | number): void {
+    this.refrescarVisita(id);
+  }
+
+  private cargarImagenesInfraestructura(entityId: string | number): void {
+    this.imagesService.list('infraestructura', entityId).subscribe({
+      next: (imgs) => (this.imagenesInfra = imgs ?? []),
       error: (err) => {
-        console.error('❌ Error cargando imágenes:', err);
-        this.imagenesInstalacion = {};
+        console.error('❌ Error cargando imágenes infraestructura:', err);
+        this.imagenesInfra = [];
       },
     });
   }
 
-  /**
-   * Descarga y setea las imágenes de visita/LOS (tabla neg_t_vis).
-   * @param tabla  'neg_t_vis'
-   * @param id     id del registro VIS/LOS (age_id_tipo)
-   */
-  private cargarImagenesVisita(tabla: string, id: string | number): void {
-    this.imagenesService.getImagenesByTableAndId(tabla, String(id)).subscribe({
-      next: (res: any) => {
-        this.imagenesVisita = res?.imagenes ?? {};
-      },
-      error: (err) => {
-        console.error('❌ Error cargando imágenes:', err);
-        this.imagenesVisita = {};
-      },
-    });
-  }
-
-  /**
-   * Abre el modal para ver una imagen en grande.
-   */
   abrirImagenModal(url: string) {
     this.imagenSeleccionada = url;
     const el = document.getElementById('modalImagenAmpliada');
@@ -400,72 +362,120 @@ export class AgendatecnicosComponent {
   // SUBIDA DE IMÁGENES (POST)
   // =========================
 
-  /**
-   * Subida de imágenes de "solución" para VIS/LOS (usa age_id_tipo como id y ord_ins como directorio).
-   * Mantiene tu comportamiento original.
-   */
+  /** LEGADO: subida para VIS/LOS (solución) */
   onImagenSolucionSeleccionada(event: Event, campo: string) {
     const input = event.target as HTMLInputElement;
-    if (!input.files || input.files.length === 0) return;
+    const file = input.files?.[0];
+    if (!file || !this.trabajoAgenda) return;
 
-    if (!this.trabajoAgenda) {
-      console.error('❌ No hay trabajo seleccionado.');
-      return;
-    }
+    const idVis = this.trabajoAgenda.age_id_tipo;
+    const pos = Number(campo.split('_')[1]) || undefined;
 
-    const imagen = input.files[0];
-    const tabla = 'neg_t_vis';
-    const id = this.trabajoAgenda.age_id_tipo; // id del registro VIS/LOS
-    const directorio = this.trabajoAgenda.ord_ins; // agrupar por orden
+    // preview optimista
+    const objectUrl = URL.createObjectURL(file);
+    const key = `img_${pos ?? ''}`.trim();
+    this.imagenesVisita = {
+      ...this.imagenesVisita,
+      [key]: { url: objectUrl, ruta: objectUrl },
+    };
 
-    this.imagenesService
-      .postImagenUnitaria(tabla, id, campo, imagen, directorio)
+    this.imagesService
+      .upload('visitas', idVis, file, { tag: 'img', position: pos })
       .subscribe({
-        next: () => {
-          console.log(`✅ Imagen de solución (${campo}) subida`);
-          this.cargarImagenesVisita(tabla, id); // Recarga VIS/LOS
+        next: (resp: any) => {
+          const backendUrl =
+            resp?.item?.url || resp?.imagen?.url || resp?.url || null;
+          if (backendUrl) {
+            this.imagenesVisita = {
+              ...this.imagenesVisita,
+              [key]: { url: backendUrl, ruta: backendUrl },
+            };
+          } else {
+            this.refrescarVisita(idVis);
+          }
+          URL.revokeObjectURL(objectUrl);
         },
         error: (err) => {
-          console.error(
-            `❌ Error subiendo imagen de solución (${campo}):`,
-            err
-          );
+          console.error(`❌ Error subiendo imagen de solución (${campo})`, err);
+          URL.revokeObjectURL(objectUrl);
+          this.refrescarVisita(idVis);
         },
       });
   }
 
-  /**
-   * Alias para inputs que suben imágenes de instalación (ord_ins).
-   */
+  /** LEGADO: subida para instalación (ord_ins) */
   onImagenSeleccionada(event: Event, campo: string) {
     const input = event.target as HTMLInputElement;
-    if (!input.files || input.files.length === 0) return;
+    const file = input.files?.[0];
+    if (!file || !this.trabajoAgenda) return;
 
-    if (!this.trabajoAgenda || !this.trabajoAgenda.ord_ins) {
-      console.error('❌ No hay trabajo seleccionado o falta ord_ins.');
-      return;
-    }
+    const ordIns = this.trabajoAgenda.ord_ins;
 
-    const archivo = input.files[0];
+    // 1) Preview inmediato (optimista)
+    const objectUrl = URL.createObjectURL(file);
+    this.imagenesInstalacion = {
+      ...this.imagenesInstalacion,
+      [campo]: { url: objectUrl, ruta: objectUrl },
+    };
 
-    // 🔒 SIEMPRE subir como INSTALACIÓN (aunque el trabajo sea VISITA/LOS)
-    const tabla = 'neg_t_instalaciones';
-    const id = this.trabajoAgenda.ord_ins; // clave en neg_t_instalaciones
-    const directorio = this.trabajoAgenda.ord_ins; // carpeta por orden
-
-    this.imagenesService
-      .postImagenUnitaria(tabla, id, campo, archivo, directorio)
+    // 2) Subir y luego consolidar con la respuesta (o refrescar)
+    this.imagesService
+      .upload('instalaciones', ordIns, file, { tag: campo })
       .subscribe({
-        next: () => {
-          console.log(`✅ Imagen de instalación (${campo}) subida`);
-          // Recargar grilla de instalación
-          this.cargarImagenesInstalacion(tabla, id);
+        next: (resp: any) => {
+          // trata de tomar la URL del backend si viene
+          const backendUrl =
+            resp?.item?.url || resp?.imagen?.url || resp?.url || null;
+
+          if (backendUrl) {
+            this.imagenesInstalacion = {
+              ...this.imagenesInstalacion,
+              [campo]: { url: backendUrl, ruta: backendUrl },
+            };
+          } else {
+            // si la API no devuelve el item, recarga el listado
+            this.refrescarInstalacion(ordIns);
+          }
+
+          URL.revokeObjectURL(objectUrl); // limpiamos el blob temporal
         },
         error: (err) => {
           console.error(
-            `❌ Error subiendo imagen de instalación (${campo}):`,
+            `❌ Error subiendo imagen de instalación (${campo})`,
             err
           );
+          URL.revokeObjectURL(objectUrl);
+          // opcional: revertir al estado del servidor
+          this.refrescarInstalacion(ordIns);
+        },
+      });
+  }
+
+  /** 👇 NUEVO: subida para INFRAESTRUCTURA (API nueva) */
+  // Reemplaza el método existente por este (firma sin opts)
+  onImagenInfraSeleccionada(event: Event) {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (!file || !this.trabajoAgenda) return;
+
+    const entityId = this.trabajoAgenda.age_id_tipo;
+    const position = this.nextSolPosition;
+
+    // (opcional) preview optimista:
+    // const url = URL.createObjectURL(file);
+    // this.imagenesInfra = [...this.imagenesInfra, { id: undefined, url, tag: 'sol', position } as any];
+
+    this.imagesService
+      .upload('infraestructura', entityId, file, { tag: 'sol', position })
+      .subscribe({
+        next: () => {
+          this.cargarImagenesInfraestructura(entityId); // refresca lista
+          input.value = ''; // resetea input para permitir mismo archivo de nuevo
+          // URL.revokeObjectURL(url); // si usaste preview optimista
+        },
+        error: (err) => {
+          console.error('❌ Error subiendo imagen de infraestructura:', err);
+          // URL.revokeObjectURL(url); // si usaste preview optimista
         },
       });
   }
@@ -474,9 +484,6 @@ export class AgendatecnicosComponent {
   // HELPERS DE VISTA
   // =========================
 
-  /**
-   * Valida si existe una imagen "usable" para el campo indicado.
-   */
   esImagenValida(campo: string): boolean {
     const img = this.imagenesInstalacion?.[campo];
     return !!(
@@ -487,4 +494,58 @@ export class AgendatecnicosComponent {
       !img.url.includes('undefined/imagenes/null')
     );
   }
+
+  private refrescarInstalacion(ordIns: string) {
+    this.imagesService.list('instalaciones', ordIns).subscribe({
+      next: (items) => (this.imagenesInstalacion = this.adaptListToMap(items)),
+      error: () => (this.imagenesInstalacion = {}),
+    });
+  }
+
+  private refrescarVisita(idVis: number | string) {
+    this.imagesService.list('visitas', idVis).subscribe({
+      next: (items) => (this.imagenesVisita = this.adaptVisToMap(items)),
+      error: () => (this.imagenesVisita = {}),
+    });
+  }
+
+  /** instala/infra: usa tag como clave; si viene (tag,position) => tag_position */
+  private adaptListToMap(items: ImageItem[]): ImagenMap {
+    const map: ImagenMap = {};
+    for (const it of items ?? []) {
+      const base = (it.tag || 'otros').trim();
+      const key =
+        typeof it.position === 'number' ? `${base}_${it.position}` : base;
+      map[key] = { url: it.url, ruta: it.url };
+    }
+    return map;
+  }
+
+  /** visitas: queremos claves img_1..img_4 desde (tag='img', position) */
+  private adaptVisToMap(items: ImageItem[]): ImagenMap {
+    const map: ImagenMap = {};
+    for (const it of items ?? []) {
+      const key =
+        it.tag === 'img' && typeof it.position === 'number'
+          ? `img_${it.position}`
+          : it.tag || 'otros';
+      map[key] = { url: it.url, ruta: it.url };
+    }
+    return map;
+  }
+
+  // 👇 añade este getter en la clase
+  get nextSolPosition(): number {
+    const sols = (this.imagenesInfra ?? []).filter(
+      (i) => (i.tag || '').toLowerCase() === 'sol'
+    );
+    const maxPos = Math.max(
+      0,
+      ...sols.map((i) => (typeof i.position === 'number' ? i.position : 0))
+    );
+    return maxPos + 1;
+  }
+
+  /** (opcional) trackBy para imágenes de infraestructura */
+  trackInfra = (_: number, img: ImageItem) => img.id ?? img.url;
 }

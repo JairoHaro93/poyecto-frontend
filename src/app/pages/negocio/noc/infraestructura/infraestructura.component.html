@@ -1,0 +1,140 @@
+@if (isReady) {
+<div class="fade-in">
+  <main class="container mt-2">
+    <form [formGroup]="infraestructuraForm" (ngSubmit)="submitForm()">
+      <h4 class="mb-3">INFRAESTRUCTURA</h4>
+
+      <!-- Dos columnas -->
+      <div class="row g-3">
+        <!-- Izquierda: nombre + coordenadas -->
+        <div class="col-12 col-md-6">
+          <div class="mb-3">
+            <label>Nombre</label>
+            <input
+              type="text"
+              formControlName="nombre"
+              class="form-control"
+              (input)="convertToUppercase('nombre')"
+            />
+            <p *ngIf="checkError('nombre', 'required')" class="text-danger">
+              Requerido
+            </p>
+          </div>
+
+          <div class="mb-3">
+            <label>Coordenadas</label>
+            <input
+              type="text"
+              formControlName="coordenadas"
+              class="form-control"
+              placeholder="-0.12345,-78.56789"
+            />
+            <p
+              *ngIf="checkError('coordenadas', 'required')"
+              class="text-danger"
+            >
+              Requerido
+            </p>
+            <p *ngIf="checkError('coordenadas', 'pattern')" class="text-danger">
+              Formato: lat,lng
+            </p>
+          </div>
+        </div>
+
+        <!-- Derecha: instrucciones -->
+        <div class="col-12 col-md-6">
+          <div class="mb-3 h-100 d-flex flex-column">
+            <label>Instrucciones</label>
+            <textarea
+              formControlName="observacion"
+              class="form-control"
+              rows="5"
+              (input)="convertToUppercase('observacion')"
+              placeholder="Descripcion de instrucciones "
+            ></textarea>
+            <p
+              *ngIf="checkError('observacion', 'required')"
+              class="text-danger mb-0 mt-2"
+            >
+              Requerido
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Imágenes (opcionales) pegar desde portapapeles -->
+      <div class="mt-1">
+        <div class="row g-3">
+          <!-- Slot 1 -->
+          <div class="col-12 col-md-6">
+            <label class="form-label">Referencia 1</label>
+            <div
+              class="paste-zone"
+              tabindex="0"
+              (click)="$any($event.currentTarget).focus()"
+              (paste)="handlePaste($event, 'img_ref1')"
+            >
+              <ng-container *ngIf="previewImg_ref1; else hint1">
+                <button
+                  type="button"
+                  class="remove-btn btn btn-sm btn-danger"
+                  (click)="$event.stopPropagation(); clearImage('img_ref1')"
+                  aria-label="Quitar imagen 1"
+                  title="Quitar imagen"
+                >
+                  ×
+                </button>
+                <img [src]="previewImg_ref1" alt="Vista previa 1" />
+              </ng-container>
+              <ng-template #hint1>
+                <small class="text-muted">
+                  Haz clic aquí y pega con <strong>Ctrl+V</strong>
+                </small>
+              </ng-template>
+            </div>
+          </div>
+
+          <!-- Slot 2 -->
+          <div class="col-12 col-md-6">
+            <label class="form-label">Referencia 2</label>
+            <div
+              class="paste-zone"
+              tabindex="0"
+              (click)="$any($event.currentTarget).focus()"
+              (paste)="handlePaste($event, 'img_ref2')"
+            >
+              <ng-container *ngIf="previewImg_ref2; else hint2">
+                <button
+                  type="button"
+                  class="remove-btn btn btn-sm btn-danger"
+                  (click)="$event.stopPropagation(); clearImage('img_ref2')"
+                  aria-label="Quitar imagen 2"
+                  title="Quitar imagen"
+                >
+                  ×
+                </button>
+                <img [src]="previewImg_ref2" alt="Vista previa 2" />
+              </ng-container>
+              <ng-template #hint2>
+                <small class="text-muted">
+                  Haz clic aquí y pega con <strong>Ctrl+V</strong>
+                </small>
+              </ng-template>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="text-center mt-4">
+        <button
+          class="btn btn-primary"
+          type="submit"
+          [disabled]="!infraestructuraForm.valid || isSubmitting"
+        >
+          Guardar INSTRUCCIONES
+        </button>
+      </div>
+    </form>
+  </main>
+</div>
+}
