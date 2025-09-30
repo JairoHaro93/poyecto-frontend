@@ -343,17 +343,6 @@
                   >
                     {{ ip }}
                   </a>
-
-                  <button
-                    type="button"
-                    (click)="copyIp(ip)"
-                    class="btn btn-sm btn-danger ms-2"
-                    [disabled]="!ip"
-                  >
-                    Copiar
-                  </button>
-
-                  <small *ngIf="copied" class="text-success ms-2">✓</small>
                 </ng-container>
               </p>
               }

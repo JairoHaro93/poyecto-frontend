@@ -234,4 +234,10 @@ export class DatosclientesComponent {
     this.imagenesInstalacion = {};
     this.imagenSeleccionada = null;
   }
+
+  formatIpUrl(ip?: string): string {
+    if (!ip) return '#';
+    const clean = ip.trim();
+    return /^https?:\/\//i.test(clean) ? clean : `http://${clean}`;
+  }
 }

@@ -29,12 +29,7 @@
 
       <div class="mb-3">
         <label>Nuevas Coordenadas</label>
-        <input
-          type="text"
-          formControlName="coordenadas"
-          class="form-control"
-          placeholder="-0.12345,-78.56789"
-        />
+        <input type="text" formControlName="coordenadas" class="form-control" />
         <p *ngIf="checkError('coordenadas', 'required')" class="text-danger">
           Requerido
         </p>

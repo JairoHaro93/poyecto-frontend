@@ -157,6 +157,19 @@
             </td>
           </tr>
           <tr>
+            <td>IP</td>
+            <td>
+              <a
+                [href]="formatIpUrl(servicioSeleccionado.ip)"
+                style="color: red"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                {{ servicioSeleccionado.ip }}
+              </a>
+            </td>
+          </tr>
+          <tr>
             <td>Fecha Instalación</td>
             <td>
               {{
