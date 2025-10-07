@@ -453,7 +453,12 @@ export class AgendaComponent {
           next: (imgs) => (this.imagenesInfra = imgs ?? []),
           error: () => (this.imagenesInfra = []),
         });
-    } else if (trabajo.age_tipo === 'VISITA' || trabajo.age_tipo === 'LOS') {
+    } else if (
+      trabajo.age_tipo === 'VISITA' ||
+      trabajo.age_tipo === 'LOS' ||
+      trabajo.age_tipo === 'MIGRACION' ||
+      trabajo.age_tipo === 'TRASLADO EXT'
+    ) {
       // ✅ visita + instalación
       this.cargarImagenesVisita(trabajo.age_id_tipo);
       this.cargarImagenesInstalacion(trabajo.ord_ins);
