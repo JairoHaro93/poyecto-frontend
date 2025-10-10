@@ -24,7 +24,6 @@ import { SoporteTecnicoComponent } from './pages/negocio/noc/soporte-tecnico/sop
 import { MapaMorososComponent } from './pages/negocio/recuperacion/mapa-morosos/mapa-morosos.component';
 import { GestionMorososComponent } from './pages/negocio/recuperacion/gestion-morosos/gestion-morosos.component';
 import { InfoSopComponent } from './pages/negocio/noc/info-sop/info-sop.component';
-import { AsignarTrabajosComponent } from './pages/negocio/noc/asignar-trabajos/asignar-trabajos.component';
 import { AgendaComponent } from './pages/negocio/noc/agenda/agenda.component';
 import { LayoutComponent } from './pages/sistema/layout/layout.component';
 import { permisosGuard } from './guards/permisos.guard';
@@ -132,11 +131,7 @@ export const routes: Routes = [
             component: MapeoCajasComponent,
             canActivate: [permisosGuard('NMapeo Cajas')],
           },
-          {
-            path: 'asignar-trabajos',
-            component: AsignarTrabajosComponent,
-            canActivate: [permisosGuard('NSoporte Tecnico')],
-          },
+
           {
             path: 'soporte-tecnico',
             component: SoporteTecnicoComponent,
