@@ -117,36 +117,42 @@
         </ul>
       </div>
 
-      <!-- BOTON NOC -->
-      @if (arrNoc.length>0) {
+      <!-- BOTÓN NOC (posición estable del label) -->
+      @if (arrNoc.length > 0) {
       <button
-        class="button-primary btn-toggle rounded my-2"
+        class="button-primary btn-toggle rounded my-2 position-relative w-100 py-2"
         (click)="toggleCollapse('noc-collapse')"
       >
-        <div class="d-flex justify-content-around align-items-center w-100">
-          <!-- Badge izquierda -->
+        <!-- Riel izquierdo: pre-agenda -->
+        <div
+          class="position-absolute top-50 start-0 translate-middle-y ps-2 d-flex gap-2"
+        >
           @if (preAgendaPendientesCount > 0) {
           <span class="badge-circle-age">{{ preAgendaPendientesCount }}</span>
           }
+        </div>
 
-          <!-- Icono central -->
-          <div>
-            <i class="fa-solid fa-circle-nodes"></i>
-            Noc
-          </div>
+        <!-- Label centrado SIEMPRE -->
+        <div
+          class="position-absolute top-50 start-50 translate-middle d-inline-flex align-items-center gap-2 noc-center"
+        >
+          <i class="fa-solid fa-circle-nodes"></i>
+          <span>Noc</span>
+        </div>
 
-          <!-- Badge derecha -->
+        <!-- Riel derecho: soportes -->
+        <div
+          class="position-absolute top-50 end-0 translate-middle-y pe-2 d-flex gap-2"
+        >
           @if (soportesPendientesCount > 0) {
           <span class="badge-circle-sop">{{ soportesPendientesCount }}</span>
-          }@if(soportesRevisadosCount>0){
-          <span class="badge-circle-sop">
-            {{ soportesRevisadosCount }}
-          </span>
+          } @if (soportesRevisadosCount > 0) {
+          <span class="badge-circle-sop">{{ soportesRevisadosCount }}</span>
           }
         </div>
       </button>
-
       }
+
       <div class="accordion-collapse collapse" id="noc-collapse">
         <ul class="btn-toggle-nav list-unstyled fw-normal pb-1 small">
           @if (arrNoc.includes("NAgenda")) {
