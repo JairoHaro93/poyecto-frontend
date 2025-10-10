@@ -21,7 +21,12 @@
 
       <div class="mb-3">
         <label>Teléfonos</label>
-        <input type="tel" formControlName="telefonos" class="form-control" />
+        <input
+          type="tel"
+          formControlName="telefonos"
+          class="form-control"
+          placeholder="Separa con ,"
+        />
         <p *ngIf="checkError('telefonos', 'required')" class="text-danger">
           Requerido
         </p>

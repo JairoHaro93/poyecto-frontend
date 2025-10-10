@@ -11,16 +11,27 @@
       <div class="mb-3">
         <label>Orden de instalación</label>
         <input type="text" formControlName="ord_ins" class="form-control" />
-        <p *ngIf="checkError('ord_ins', 'required')" class="text-danger">Requerido</p>
-        <p *ngIf="checkError('ord_ins', 'pattern')" class="text-danger">Solo números</p>
+        <p *ngIf="checkError('ord_ins', 'required')" class="text-danger">
+          Requerido
+        </p>
+        <p *ngIf="checkError('ord_ins', 'pattern')" class="text-danger">
+          Solo números
+        </p>
       </div>
 
       <div class="mb-3">
         <label>Teléfonos</label>
-        <input type="tel" formControlName="telefonos" class="form-control" />
-        <p *ngIf="checkError('telefonos', 'required')" class="text-danger">Requerido</p>
+        <input
+          type="tel"
+          formControlName="telefonos"
+          class="form-control"
+          placeholder="Separa con ,"
+        />
+        <p *ngIf="checkError('telefonos', 'required')" class="text-danger">
+          Requerido
+        </p>
       </div>
-<!-- 
+      <!-- 
       <div class="mb-3">
         <label>Coordenadas</label>
         <input type="text" formControlName="coordenadas" class="form-control" placeholder="-0.12345,-78.56789" />
@@ -36,11 +47,17 @@
           class="form-control"
           (input)="convertToUppercase('observacion')"
         />
-        <p *ngIf="checkError('observacion', 'required')" class="text-danger">Requerido</p>
+        <p *ngIf="checkError('observacion', 'required')" class="text-danger">
+          Requerido
+        </p>
       </div>
 
       <div class="text-center">
-        <button class="btn btn-primary" type="submit" [disabled]="!migracionForm.valid">
+        <button
+          class="btn btn-primary"
+          type="submit"
+          [disabled]="!migracionForm.valid"
+        >
           Guardar Migracion
         </button>
       </div>
