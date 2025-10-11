@@ -151,7 +151,7 @@ export class InfoSopComponent {
       const reg_sop_registrado_por_id = this.datosUsuario.id;
 
       const body = { reg_sop_noc_id_acepta: reg_sop_registrado_por_id };
-      await this.soporteService.aceptarSoporte(id, body);
+      //await this.soporteService.aceptarSoporte(id, body);
 
       this.soporte = await this.soporteService.getSopById(id);
       this.solucionSeleccionada = this.soporte?.reg_sop_estado || 'REVISION';
@@ -238,6 +238,7 @@ export class InfoSopComponent {
     const body = {
       reg_sop_estado: this.solucionSeleccionada,
       reg_sop_sol_det: this.detalleSolucion.trim(),
+      reg_sop_noc_id_acepta: this.datosUsuario.id,
     };
 
     if (this.solucionSeleccionada === 'RESUELTO') {

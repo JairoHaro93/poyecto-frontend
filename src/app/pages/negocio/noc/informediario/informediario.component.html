@@ -1,5 +1,452 @@
 <main>
-  <section class="container mt-3">
-    <p>informediario works!</p>
+  <section class="container-fluid mt-1 compact-ui">
+    <div class="container-fluid py-3">
+      <div class="row g-3 align-items-end">
+        <div class="col-auto">
+          <label class="form-label fw-semibold">Fecha</label>
+          <input
+            type="date"
+            class="form-control form-control-sm"
+            [formControl]="fechaCtrl"
+          />
+        </div>
+
+        <div class="col-auto ms-auto">
+          <!-- Resumen general: Soportes + Agenda -->
+          <div class="row mt-2">
+            <div class="col">
+              <div class="d-flex flex-wrap gap-2">
+                <span class="badge text-bg-primary"
+                  >Total trabajos: {{ totalGeneral() }}</span
+                >
+                <span class="badge text-bg-success"
+                  >Resueltos: {{ resueltosGeneral() }}</span
+                >
+                <span class="badge text-bg-warning text-dark"
+                  >Pendientes: {{ pendientesGeneral() }}</span
+                >
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== Soportes ===== -->
+      <div class="mt-3">
+        <h5>Soportes</h5>
+        @if (loading()) {
+        <div class="alert alert-light border d-flex align-items-center gap-2">
+          <div
+            class="spinner-border spinner-border-sm"
+            role="status"
+            aria-hidden="true"
+          ></div>
+          <div>Cargando soportes…</div>
+        </div>
+        } @else if (errorMsg()) {
+        <div class="alert alert-danger">{{ errorMsg() }}</div>
+        } @else if (soportes().length === 0) {
+        <div class="alert alert-info">
+          No hay soportes para la fecha seleccionada.
+        </div>
+        } @else {
+        <div class="card shadow-sm">
+          <div class="card-body p-0">
+            <div class="table-responsive table-fixed-head">
+              <table class="table table-sm table-hover align-middle mb-0 w-100">
+                <thead class="table-light">
+                  <tr>
+                    <th style="min-width: 30px">#</th>
+                    <th style="min-width: 60px">Hora</th>
+                    <th style="min-width: 170px">Opcion</th>
+                    <th style="min-width: 200px">Cliente</th>
+                    <th style="min-width: 320px">Técnico</th>
+                    <th style="min-width: 90px">Estado</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (s of soportes(); track trackById($index, s)) {
+                  <tr
+                    role="button"
+                    class="row-click"
+                    (click)="openModal(s)"
+                    title="Ver detalle"
+                  >
+                    <td>{{ $index + 1 }}</td>
+                    <td>{{ s.reg_sop_fecha | date : "shortTime" }}</td>
+                    <td>
+                      <div>
+                        <span>
+                          @switch (s.reg_sop_opc) { @case (1) {
+                          <span>Sin servicio de Internet</span> } @case (2) {
+                          <span> Internet Intermitente</span> } @case (3) {
+                          <span> Cambio de contraseña</span> } @case (4) {
+                          <span> Manipulacion de equipos</span> } @case (5) {
+                          <span> Sin Definir</span> } }
+                        </span>
+                      </div>
+                    </td>
+                    <td>
+                      <div class="fw-semibold">
+                        {{ s.clienteNombre || "—" }}
+                      </div>
+                    </td>
+                    <td>
+                      <div class="fw-semibold">
+                        {{ s.reg_sop_aceptado_por_nombre }}
+                      </div>
+                    </td>
+                    <td>
+                      @if ((s.reg_sop_estado || '').toUpperCase() ===
+                      'RESUELTO') {
+                      <span class="badge text-bg-success">RESUELTO</span>
+                      } @else if ((s.reg_sop_estado || '').toUpperCase() ===
+                      'PENDIENTE') {
+                      <span class="badge text-bg-warning text-dark"
+                        >PENDIENTE</span
+                      >
+                      } @else {
+                      <span class="badge text-bg-secondary">{{
+                        s.reg_sop_estado || "—"
+                      }}</span>
+                      }
+                    </td>
+                  </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+        }
+      </div>
+
+      <!-- Modal Soportes -->
+      @if (showModal()) {
+      <div
+        class="modal fade show d-block"
+        tabindex="-1"
+        role="dialog"
+        (click)="closeModal()"
+      >
+        <div
+          class="modal-dialog modal-lg modal-dialog-scrollable"
+          role="document"
+          (click)="$event.stopPropagation()"
+        >
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title">Detalle de soporte</h5>
+              <button
+                type="button"
+                class="btn-close"
+                aria-label="Close"
+                (click)="closeModal()"
+              ></button>
+            </div>
+
+            <div class="modal-body">
+              <div class="row g-3">
+                <div class="col-md-6">
+                  <div class="mb-2">
+                    <span class="text-muted">Fecha Registro:</span>
+                    {{ selected()?.reg_sop_fecha | date : "short" }}
+                  </div>
+                  <div class="mb-2" *ngIf="selected()?.reg_sop_fecha_acepta">
+                    <span class="text-muted">Inicio de revisión:</span>
+                    {{ selected()?.reg_sop_fecha_acepta | date : "short" }}
+                  </div>
+                  <div class="mb-2">
+                    <span class="text-muted">Opción:</span>
+                    <span>
+                      @switch (selected()?.reg_sop_opc) { @case (1) {
+                      <span>Sin servicio de Internet</span> } @case (2) {
+                      <span> Internet Intermitente</span> } @case (3) {
+                      <span> Cambio de contraseña</span> } @case (4) {
+                      <span> Manipulacion de equipos</span> } @case (5) {
+                      <span> Sin Definir</span> } }
+                    </span>
+                  </div>
+                  <div class="mb-2">
+                    <span class="text-muted">Teléfono(s):</span>
+                    {{ selected()?.reg_sop_tel }}
+                  </div>
+                </div>
+
+                <div class="col-md-6">
+                  <div class="mb-2">
+                    <span class="text-muted">Registrado por:</span>
+                    {{ selected()?.reg_sop_registrado_por_nombre }}
+                  </div>
+                  <div class="mb-2" *ngIf="selected()?.nombre_tecnico">
+                    <span class="text-muted">Técnico:</span>
+                    {{ selected()?.nombre_tecnico }}
+                    <span
+                      class="text-muted"
+                      *ngIf="selected()?.reg_sop_tec_asignado"
+                      >(ID: {{ selected()?.reg_sop_tec_asignado }})</span
+                    >
+                  </div>
+                  <div class="mb-2" *ngIf="selected()?.reg_sop_noc_id_acepta">
+                    <span class="text-muted">Revisado por:</span>
+                    {{ selected()?.reg_sop_aceptado_por_nombre }}
+                  </div>
+                </div>
+              </div>
+
+              <hr />
+
+              <div class="mb-2" *ngIf="selected()?.clienteNombre">
+                <span class="text-muted">Cliente:</span>
+                {{ selected()?.clienteNombre }}
+              </div>
+              <div class="mb-2" *ngIf="selected()?.clienteTelefonos">
+                <span class="text-muted">Teléfonos cliente:</span>
+                {{ selected()?.clienteTelefonos }}
+              </div>
+
+              <div class="mt-3" *ngIf="selected()?.reg_sop_coment_cliente">
+                <div class="fw-semibold mb-1">Comentario del cliente</div>
+                <div class="form-control bg-body-tertiary">
+                  {{ selected()?.reg_sop_coment_cliente }}
+                </div>
+              </div>
+
+              <div class="mt-3" *ngIf="selected()?.reg_sop_sol_det">
+                <div class="fw-semibold mb-1">Detalle de solución</div>
+                <div class="form-control bg-body-tertiary">
+                  {{ selected()?.reg_sop_sol_det }}
+                </div>
+              </div>
+            </div>
+
+            <div class="modal-footer">
+              <button class="btn btn-secondary" (click)="closeModal()">
+                Cerrar
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-backdrop fade show"></div>
+      }
+
+      <!-- ===== Agenda ===== -->
+      <div class="mt-4">
+        <h5>Agenda</h5>
+
+        @if (loadingAgenda()) {
+        <div class="alert alert-light border d-flex align-items-center gap-2">
+          <div
+            class="spinner-border spinner-border-sm"
+            role="status"
+            aria-hidden="true"
+          ></div>
+          <div>Cargando agenda…</div>
+        </div>
+        } @else if (errorAgenda()) {
+        <div class="alert alert-danger">{{ errorAgenda() }}</div>
+        } @else if (agenda().length === 0) {
+        <div class="alert alert-info">
+          No hay trabajos agendados para la fecha seleccionada.
+        </div>
+        } @else {
+        <div class="card shadow-sm">
+          <div class="card-body p-0">
+            <div class="table-responsive table-fixed-head">
+              <table class="table table-sm table-hover align-middle mb-0 w-100">
+                <thead class="table-light">
+                  <tr>
+                    <th style="min-width: 30px">#</th>
+                    <th style="min-width: 100px">Hora</th>
+                    <th style="min-width: 130px">Tipo</th>
+                    <th style="min-width: 220px">Cliente</th>
+                    <th style="min-width: 320px">Técnico</th>
+                    <th style="min-width: 90">Estado</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (a of agenda(); track trackByAgendaId($index, a)) {
+                  <tr
+                    role="button"
+                    class="row-click"
+                    (click)="openAgendaModal(a)"
+                    title="Ver detalle"
+                  >
+                    <td>{{ $index + 1 }}</td>
+                    <td>
+                      {{ a.age_hora_inicio || "—" }}
+                      <span *ngIf="a.age_hora_fin">– {{ a.age_hora_fin }}</span>
+                    </td>
+                    <td>{{ a.age_tipo || "—" }}</td>
+                    <td>
+                      <div class="fw-semibold">
+                        {{ a.clienteNombre || "—" }}
+                      </div>
+                    </td>
+                    <td>
+                      <div class="fw-semibold">
+                        {{ a.nombre_completo || "—" }}
+                      </div>
+                    </td>
+
+                    <td>
+                      @if (isAgendaResuelto(a.age_estado)) {
+                      <span class="badge text-bg-success">{{
+                        a.age_estado || "RESUELTO"
+                      }}</span>
+                      } @else if ((a.age_estado || '').toUpperCase() ===
+                      'PENDIENTE') {
+                      <span class="badge text-bg-warning text-dark"
+                        >PENDIENTE</span
+                      >
+                      } @else {
+                      <span class="badge text-bg-secondary">{{
+                        a.age_estado || "—"
+                      }}</span>
+                      }
+                    </td>
+                  </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+        }
+      </div>
+
+      <!-- Modal Agenda -->
+      @if (showAgendaModal()) {
+      <div
+        class="modal fade show d-block"
+        tabindex="-1"
+        role="dialog"
+        aria-modal="true"
+        (click)="closeAgendaModal()"
+      >
+        <div
+          class="modal-dialog modal-lg modal-dialog-scrollable"
+          role="document"
+          (click)="$event.stopPropagation()"
+        >
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title">
+                Detalle de agenda
+                <span class="text-muted" *ngIf="selectedAgenda()?.id"
+                  >#{{ selectedAgenda()?.id }}</span
+                >
+              </h5>
+              <button
+                type="button"
+                class="btn-close"
+                aria-label="Close"
+                (click)="closeAgendaModal()"
+              ></button>
+            </div>
+
+            @if (selectedAgenda()) {
+            <div class="modal-body">
+              <div class="row g-3">
+                <div class="col-md-6">
+                  <div class="mb-2">
+                    <span class="text-muted">Fecha:</span>
+                    {{ selectedAgenda()?.age_fecha | date : "shortDate" }}
+                  </div>
+                  <div class="mb-2">
+                    <span class="text-muted">Hora:</span>
+                    {{ selectedAgenda()?.age_hora_inicio || "—" }}
+                    <span *ngIf="selectedAgenda()?.age_hora_fin"
+                      >– {{ selectedAgenda()?.age_hora_fin }}</span
+                    >
+                  </div>
+                  <div class="mb-2">
+                    <span class="text-muted">Tipo:</span>
+                    {{ selectedAgenda()?.age_tipo || "—" }}
+                  </div>
+                  <div class="mb-2">
+                    <span class="text-muted">Ord. Ins:</span>
+                    {{ selectedAgenda()?.ord_ins || "—" }}
+                  </div>
+                  <div class="mb-2">
+                    <span class="text-muted">Teléfono:</span>
+                    {{ selectedAgenda()?.age_telefono || "—" }}
+                  </div>
+                </div>
+
+                <div class="col-md-6">
+                  <div class="mb-2">
+                    <span class="text-muted">Técnico:</span>
+                    {{ selectedAgenda()?.nombre_completo || "—" }}
+                  </div>
+                  <div class="mb-2">
+                    <span class="text-muted">Vehículo:</span>
+                    {{ selectedAgenda()?.age_vehiculo || "—" }}
+                  </div>
+                  <div class="mb-2">
+                    <span class="text-muted">Estado:</span>
+                    {{ selectedAgenda()?.age_estado || "—" }}
+                  </div>
+                  <div class="mb-2" *ngIf="selectedAgenda()?.age_coordenadas">
+                    <span class="text-muted">Coordenadas:</span>
+                    <code>{{ selectedAgenda()?.age_coordenadas }}</code>
+                  </div>
+                </div>
+              </div>
+
+              <hr />
+
+              <div class="mb-2" *ngIf="selectedAgenda()?.clienteNombre">
+                <span class="text-muted">Cliente:</span>
+                {{ selectedAgenda()?.clienteNombre }}
+              </div>
+              <div class="mb-2" *ngIf="selectedAgenda()?.clienteDireccion">
+                <span class="text-muted">Dirección:</span>
+                {{ selectedAgenda()?.clienteDireccion }}
+              </div>
+              <div class="mb-2" *ngIf="selectedAgenda()?.clienteTelefonos">
+                <span class="text-muted">Teléfonos cliente:</span>
+                {{ selectedAgenda()?.clienteTelefonos }}
+              </div>
+
+              <div class="mt-3" *ngIf="selectedAgenda()?.age_diagnostico">
+                <div class="fw-semibold mb-1">Diagnóstico</div>
+                <div class="form-control bg-body-tertiary">
+                  {{ selectedAgenda()?.age_diagnostico }}
+                </div>
+              </div>
+
+              <div class="mt-3" *ngIf="selectedAgenda()?.age_solucion">
+                <div class="fw-semibold mb-1">Solución</div>
+                <div class="form-control bg-body-tertiary">
+                  {{ selectedAgenda()?.age_solucion }}
+                </div>
+              </div>
+            </div>
+            } @else {
+            <div class="modal-body">
+              <div class="text-center py-5">
+                <div
+                  class="spinner-border"
+                  role="status"
+                  aria-hidden="true"
+                ></div>
+                <div class="mt-2">Cargando detalle…</div>
+              </div>
+            </div>
+            }
+
+            <div class="modal-footer">
+              <button class="btn btn-secondary" (click)="closeAgendaModal()">
+                Cerrar
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-backdrop fade show"></div>
+      }
+    </div>
   </section>
 </main>

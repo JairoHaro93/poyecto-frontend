@@ -1,0 +1,120 @@
+.table-fixed-head {
+  max-height: 65vh;
+  overflow: auto;
+}
+.table-fixed-head thead th {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+}
+
+.row-click {
+  cursor: pointer;
+}
+.row-click:hover {
+  background: rgba(0, 0, 0, 0.03);
+}
+
+.modal-backdrop {
+  z-index: 1040;
+}
+.modal.d-block {
+  z-index: 1050;
+}
+
+/* =========================
+   Modo compacto (scoped)
+   ========================= */
+.compact-ui {
+  --space-1: 0.25rem; /* 4px  */
+  --space-2: 0.5rem; /* 8px  */
+  --fs-xs: 0.75rem; /* 12px */
+  --fs-sm: 0.8125rem; /* 13px */
+  --fs-md: 0.875rem; /* 14px */
+}
+
+/* Reducir paddings globales dentro de la sección compacta */
+.compact-ui .container-fluid.py-3 {
+  padding-top: var(--space-2) !important;
+  padding-bottom: var(--space-2) !important;
+}
+.compact-ui .mt-3 {
+  margin-top: 0.75rem !important;
+}
+.compact-ui .mt-4 {
+  margin-top: 1rem !important;
+}
+
+/* Títulos/badges más pequeños */
+.compact-ui h5 {
+  font-size: 1rem;
+  margin-bottom: var(--space-1);
+}
+.compact-ui .badge {
+  font-size: var(--fs-xs);
+  padding: 0.3em 0.45em;
+}
+
+/* Etiquetas e inputs */
+.compact-ui .form-label {
+  font-size: var(--fs-sm);
+  margin-bottom: var(--space-1);
+}
+.compact-ui .form-control,
+.compact-ui .form-select {
+  font-size: var(--fs-sm);
+  padding: 0.25rem 0.5rem;
+  height: calc(1.5em + 0.5rem + 2px);
+}
+
+/* Tablas más densas */
+.compact-ui .table {
+  font-size: var(--fs-sm);
+  width: 100% !important;
+  table-layout: auto;
+}
+.compact-ui .table th,
+.compact-ui .table td {
+  padding: 0.3rem 0.5rem;
+  vertical-align: middle;
+}
+.compact-ui .table thead th {
+  font-size: var(--fs-sm);
+}
+
+/* Altura del listado un poco menor */
+.compact-ui .table-fixed-head {
+  max-height: 55vh;
+}
+
+/* Forzar que los contenedores de tabla usen todo el ancho */
+.compact-ui .table-responsive {
+  width: 100% !important;
+}
+
+/* Dar más espacio a la columna de Cliente (4ta) en ambas tablas */
+.compact-ui .table th:nth-child(4),
+.compact-ui .table td:nth-child(4) {
+  width: 40%;
+}
+
+/* Modal compacto */
+.compact-ui .modal .modal-header,
+.compact-ui .modal .modal-footer {
+  padding: 0.5rem 1rem;
+}
+.compact-ui .modal .modal-title {
+  font-size: var(--fs-md);
+}
+.compact-ui .modal .modal-body {
+  padding: 0.75rem 1rem;
+  font-size: var(--fs-sm);
+}
+.compact-ui .modal .form-control {
+  font-size: var(--fs-sm);
+}
+
+/* Hover más sutil en filas */
+.compact-ui .row-click:hover {
+  background: rgba(0, 0, 0, 0.02);
+}

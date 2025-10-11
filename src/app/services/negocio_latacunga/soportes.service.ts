@@ -27,6 +27,15 @@ export class SoportesService {
     );
   }
 
+  //router.get("/diario/:fecha", checkToken, getSoportesByDate);
+  obtenerSoportesDiario(fecha: string): Promise<any> {
+    return firstValueFrom(
+      this.httpClient.get<any>(`${this.baseUrl}/diario/${fecha}`, {
+        withCredentials: true,
+      })
+    );
+  }
+
   getSopById(id_sop: number): Promise<Isoportes> {
     return firstValueFrom(
       this.httpClient.get<Isoportes>(`${this.baseUrl}/${id_sop}`, {

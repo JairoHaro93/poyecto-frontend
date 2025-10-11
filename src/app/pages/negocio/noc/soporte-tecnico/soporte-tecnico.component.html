@@ -1,5 +1,5 @@
 <!-- Skeleton / overlay simple -->
-@if (isReady)  {
+@if (isReady) {
 <!-- 🔽 Aquí va tu template existente tal cual -->
 <section class="container p-2 fade-in">
   <section class="container p-2">
@@ -44,7 +44,7 @@
         <thead>
           <tr class="custom-header">
             <th>Nombre</th>
-           
+
             <!-- <th>Tiempo Transcurrido</th> -->
             <th>Registrado por</th>
             <th>Revisado por</th>
@@ -56,7 +56,7 @@
           @for (item of soportesNoc; track $index) {
           <tr>
             <td>{{ item.clienteNombre }}</td>
-           
+
             <!-- <td>
               {{
                 calcularTiempoTranscurrido(
