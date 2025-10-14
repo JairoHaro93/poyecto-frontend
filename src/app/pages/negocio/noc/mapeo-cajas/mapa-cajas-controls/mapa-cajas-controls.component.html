@@ -1,0 +1,93 @@
+<div class="panel">
+  <div class="panel-head">
+    <h4>Nueva caja</h4>
+    <button
+      type="button"
+      class="icon-close"
+      aria-label="Cerrar"
+      (click)="close.emit()"
+      title="Cerrar"
+    >
+      ✕
+    </button>
+  </div>
+
+  <div class="panel-body">
+    <form [formGroup]="form" (ngSubmit)="submit()">
+      <div class="form-inline">
+        <!-- Fila 1: Tipo | Nombre | Estado -->
+        <div class="col col-tipo">
+          <input type="text" formControlName="caja_tipo" placeholder="TIPO" />
+          @for (msg of [ (f.caja_tipo.touched &&
+          f.caja_tipo.hasError('required')) ? 'Campo requerido' : null,
+          (f.caja_tipo.touched && f.caja_tipo.hasError('maxlength')) ? 'Máx. 50
+          caracteres' : null ]; track $index) { @if (msg) {
+          <small class="err">{{ msg }}</small> } }
+        </div>
+
+        <div class="col col-nombre">
+          <input
+            type="text"
+            formControlName="caja_nombre"
+            placeholder="NOMBRE"
+          />
+          @for (msg of [ (f.caja_nombre.touched &&
+          f.caja_nombre.hasError('required')) ? 'Campo requerido' : null,
+          (f.caja_nombre.touched && f.caja_nombre.hasError('maxlength')) ? 'Máx.
+          120 caracteres' : null ]; track $index) { @if (msg) {
+          <small class="err">{{ msg }}</small> } }
+        </div>
+
+        <div class="col col-estado">
+          <input
+            type="text"
+            formControlName="caja_estado"
+            placeholder="ESTADO"
+          />
+          @if (f.caja_estado.touched && f.caja_estado.hasError('maxlength')) {
+          <small class="err">Máx. 50 caracteres</small>
+          }
+        </div>
+
+        <!-- Fila 2: Hilo | Coordenadas | Acciones -->
+        <div class="col col-hilo">
+          <input type="text" formControlName="caja_hilo" placeholder="HILO" />
+          @if (f.caja_hilo.touched && f.caja_hilo.hasError('maxlength')) {
+          <small class="err">Máx. 120 caracteres</small>
+          }
+        </div>
+
+        <div class="col col-coords">
+          <div class="coords-inline">
+            <input
+              type="text"
+              formControlName="caja_coordenadas"
+              placeholder="COORDENADAS"
+            />
+            <button
+              class="btn ghost"
+              type="button"
+              (click)="requestPick.emit()"
+            >
+              Seleccionar en mapa
+            </button>
+          </div>
+          @if (f.caja_coordenadas.touched && f.caja_coordenadas.errors) {
+          <small class="err">{{ f.caja_coordenadas.errors["coords"] }}</small>
+          }
+        </div>
+
+        <!-- Acciones (fila completa, alineado a la derecha) -->
+        <div class="col col-actions">
+          <button
+            class="btn btn-red"
+            type="submit"
+            [disabled]="isSaving || form.invalid"
+          >
+            {{ isSaving ? "Guardando…" : "Guardar" }}
+          </button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>

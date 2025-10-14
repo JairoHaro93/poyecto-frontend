@@ -1,0 +1,26 @@
+<section class="mapa-container">
+  @if (!isReady) {
+  <div class="loading-overlay">
+    <div class="spinner"></div>
+    <p>Cargando mapa…</p>
+  </div>
+  } @else { @if (isGoogleMapsLoaded) {
+  <google-map
+    width="100%"
+    height="100%"
+    [zoom]="zoom()"
+    [center]="myposition()"
+    [options]="{
+      mapTypeId: 'satellite',
+      streetViewControl: false,
+      mapTypeControl: false,
+      fullscreenControl: false
+    }"
+  ></google-map>
+  } @else {
+  <div class="loading-overlay">
+    <div class="spinner"></div>
+    <p>Cargando Google Maps…</p>
+  </div>
+  } }
+</section>

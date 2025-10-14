@@ -1,5 +1,26 @@
-<main>
-  <section class="container mt-3">
-    <p>mapeo-cajas works!</p>
+<div class="mapeo-cajas" [class.overlay-open]="activeModal() === 'caja'">
+  <!-- MAPA (100%) con botones/hints dentro para respetar márgenes -->
+  <section class="map-area m-3">
+    <app-mapa-cajas-view></app-mapa-cajas-view>
+
+    <div class="fab-toolbar" [class.hide]="activeModal() === 'caja'">
+      <button class="btn-red" (click)="openCrearCaja()">Crear caja</button>
+    </div>
+
+    @if (picking()) {
+    <div class="pick-hint">Haz clic en el mapa para elegir la ubicación…</div>
+    }
   </section>
-</main>
+
+  <!-- OVERLAY de formulario (ancho completo, sobrepuesto) -->
+  <section class="overlay mx-3" [class.open]="activeModal() === 'caja'">
+    <div class="overlay-card full">
+      <app-mapa-cajas-controls
+        [coords]="pickedCoords()"
+        (requestPick)="startPickingFromMap()"
+        (created)="onCajaCreated($event)"
+        (close)="closeModal()"
+      ></app-mapa-cajas-controls>
+    </div>
+  </section>
+</div>
