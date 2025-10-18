@@ -39,3 +39,7 @@
 .fade-in {
   animation: fade 0.25s ease-in both;
 }
+.mapa-container.picking,
+.mapa-container.picking * {
+  cursor: url("/assets/cursors/target.svg") 16 16, crosshair !important;
+}

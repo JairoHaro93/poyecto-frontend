@@ -5,6 +5,7 @@
     <p>Cargando mapa…</p>
   </div>
   } @else { @if (isGoogleMapsLoaded) {
+
   <google-map
     width="100%"
     height="100%"
@@ -16,7 +17,27 @@
       mapTypeControl: false,
       fullscreenControl: false
     }"
-  ></google-map>
+    (mapClick)="onMapClickHandler($event)"
+    (mapIdle)="onMapIdle()"
+  >
+    <!-- Marcadores de cajas -->
+    @for (m of markers; track m.id) {
+    <map-marker
+      [position]="m.position"
+      [title]="m.title"
+      [options]="m.options"
+    ></map-marker>
+    }
+
+    <!-- Pin temporal elegido -->
+    @if (selectedLatLng) {
+    <map-marker
+      [position]="selectedLatLng"
+      [title]="'Ubicación seleccionada'"
+    ></map-marker>
+    }
+  </google-map>
+
   } @else {
   <div class="loading-overlay">
     <div class="spinner"></div>

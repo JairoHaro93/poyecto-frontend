@@ -1,10 +1,18 @@
 <div class="mapeo-cajas" [class.overlay-open]="activeModal() === 'caja'">
   <!-- MAPA (100%) con botones/hints dentro para respetar márgenes -->
-  <section class="map-area m-3">
-    <app-mapa-cajas-view></app-mapa-cajas-view>
+  <section class="map-area">
+    <app-mapa-cajas-view
+      [picking]="picking()"
+      [selectedCoords]="pickedCoords()"
+      [instantCajas]="cajas"
+      (mapClick)="onMapClick($event)"
+    ></app-mapa-cajas-view>
 
-    <div class="fab-toolbar" [class.hide]="activeModal() === 'caja'">
-      <button class="btn-red" (click)="openCrearCaja()">Crear caja</button>
+    <!-- SIEMPRE visible; el overlay lo cubrirá cuando esté abierto -->
+    <div class="fab-toolbar">
+      <button class="btn-red" type="button" (click)="openCrearCaja()">
+        Crear caja
+      </button>
     </div>
 
     @if (picking()) {
@@ -13,7 +21,7 @@
   </section>
 
   <!-- OVERLAY de formulario (ancho completo, sobrepuesto) -->
-  <section class="overlay mx-3" [class.open]="activeModal() === 'caja'">
+  <section class="overlay" [class.open]="activeModal() === 'caja'">
     <div class="overlay-card full">
       <app-mapa-cajas-controls
         [coords]="pickedCoords()"
