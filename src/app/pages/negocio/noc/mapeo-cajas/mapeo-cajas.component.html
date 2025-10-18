@@ -2,6 +2,7 @@
   <!-- MAPA (100%) con botones/hints dentro para respetar márgenes -->
   <section class="map-area">
     <app-mapa-cajas-view
+      [iconSizeMap]="iconSizeMap"
       [picking]="picking()"
       [selectedCoords]="pickedCoords()"
       [instantCajas]="cajas"

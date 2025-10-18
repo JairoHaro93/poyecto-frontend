@@ -20,7 +20,7 @@ import { ICajas } from '../../../../../interfaces/negocio/infraestructura/icajas
 
 function coordsValidator(ctrl: AbstractControl): ValidationErrors | null {
   const v = (ctrl.value ?? '').toString().trim();
-  if (!v) return null; // opcional
+  if (!v) return null;
   const parts = v.split(',').map((s: string) => s.trim());
   if (parts.length !== 2) return { coords: 'Formato inválido. Use lat,lng' };
   const lat = Number(parts[0]),
@@ -40,10 +40,10 @@ function coordsValidator(ctrl: AbstractControl): ValidationErrors | null {
   styleUrls: ['./mapa-cajas-controls.component.css'],
 })
 export class MapaCajasControlsComponent implements OnChanges {
-  @Input() coords: string | null = null; // coordenadas desde el mapa
-  @Output() created = new EventEmitter<ICajas>(); // emite la caja creada
-  @Output() requestPick = new EventEmitter<void>(); // pedir selección en mapa
-  @Output() close = new EventEmitter<void>(); // cerrar panel
+  @Input() coords: string | null = null;
+  @Output() created = new EventEmitter<ICajas>();
+  @Output() requestPick = new EventEmitter<void>();
+  @Output() close = new EventEmitter<void>();
 
   private fb = inject(FormBuilder);
   private cajasService = inject(CajasService);
@@ -53,33 +53,46 @@ export class MapaCajasControlsComponent implements OnChanges {
 
   // opciones
   ciudades = ['LATACUNGA', 'SALCEDO'] as const;
-  slots = [0, 1, 2, 4];
-  pones = Array.from({ length: 16 }, (_, i) => i); // 0..15
-  salidasNap = Array.from({ length: 16 }, (_, i) => i + 1); // 1..16
-  simpleHilos = [1, 2]; // para DROP y FLAT
+  sFinalOptions = [2, 4, 8, 16, 32, 64]; // selector "S final"
+
+  // fibra / hilo (sin cambios)
+  simpleHilos = [1, 2];
   buffers = [1, 2, 3, 4];
   hilos = [1, 2, 3, 4, 5, 6];
 
+  // Mapa de abreviaturas de ciudad
+  private cityAbbr: Record<string, string> = {
+    LATACUNGA: 'LAT',
+    SALCEDO: 'SAL',
+  };
+
   form = this.fb.group({
-    // estándar
+    // Selecciones base
     caja_ciudad: ['LATACUNGA', Validators.required],
     caja_tipo: ['PON', Validators.required], // PON | NAP
-    slot: [null as number | null, Validators.required],
-    pon: [null as number | null, Validators.required],
-    nap: [null as number | null], // req si NAP
-    caja_nombre: [{ value: '', disabled: true }], // auto
+
+    // NUEVO: el usuario solo escribe este segmento
+    nombre_segmento: ['', [Validators.required, Validators.maxLength(80)]], // ej: 4/7/S2/1
+
+    // NUEVO: selector de splitero final
+    s_final: [null as number | null, Validators.required], // ej: 8 -> "/S8"
+
+    // Nombre autogenerado (solo lectura)
+    caja_nombre: [{ value: '', disabled: true }, Validators.required],
+
+    // Estado
     caja_estado: ['DISEÑO', Validators.required], // DISEÑO | ACTIVO
 
-    // fibra
+    // Fibra / hilo (como lo tenías)
     fibra_tipo: ['DROP', Validators.required], // DROP | FLAT | ADSS | MINIADSS
     hilo_desconocido: [false],
-    simple_hilo: [null as number | null], // req si DROP/FLAT y no desconocido
-    buffer: [null as number | null], // req si ADSS/MINIADSS y no desconocido
-    hilo_num: [null as number | null], // req si ADSS/MINIADSS y no desconocido
-    caja_hilo: [{ value: '', disabled: true }], // preview auto
+    simple_hilo: [null as number | null],
+    buffer: [null as number | null],
+    hilo_num: [null as number | null],
+    caja_hilo: [{ value: '', disabled: true }],
 
-    // geo
-    caja_coordenadas: ['', coordsValidator], // opcional
+    // Geo
+    caja_coordenadas: ['', coordsValidator],
   });
 
   get f() {
@@ -87,9 +100,6 @@ export class MapaCajasControlsComponent implements OnChanges {
   }
   get hiloDesconocido(): boolean {
     return this.form.get('hilo_desconocido')!.value === true;
-  }
-  isTipoNAP(): boolean {
-    return this.form.get('caja_tipo')!.value === 'NAP';
   }
   isFibraSimple(): boolean {
     const t = this.form.get('fibra_tipo')!.value as string;
@@ -105,25 +115,14 @@ export class MapaCajasControlsComponent implements OnChanges {
   }
 
   constructor() {
-    // Reglas dinámicas por tipo de caja
-    this.form.get('caja_tipo')!.valueChanges.subscribe(() => {
-      this.syncNombre();
-      const napCtrl = this.form.get('nap')!;
-      if (this.isTipoNAP()) {
-        napCtrl.setValidators([Validators.required]);
-      } else {
-        napCtrl.clearValidators();
-        napCtrl.setValue(null, { emitEvent: false });
+    // Cuando cambien ciudad, tipo, segmento o S final => recomponer nombre
+    ['caja_ciudad', 'caja_tipo', 'nombre_segmento', 's_final'].forEach(
+      (key) => {
+        this.form.get(key)!.valueChanges.subscribe(() => this.syncNombre());
       }
-      napCtrl.updateValueAndValidity({ emitEvent: false });
-    });
+    );
 
-    // Componer nombre al cambiar piezas
-    ['slot', 'pon', 'nap'].forEach((k) => {
-      this.form.get(k)!.valueChanges.subscribe(() => this.syncNombre());
-    });
-
-    // Reglas de fibra y preview
+    // Reglas de fibra y preview (igual que antes)
     this.form.get('fibra_tipo')!.valueChanges.subscribe(() => {
       this.syncHiloRules();
       this.syncHiloPreview();
@@ -142,24 +141,28 @@ export class MapaCajasControlsComponent implements OnChanges {
     this.syncHiloPreview();
   }
 
-  // ==== Nombre auto ====
+  // === Nombre auto => "LAT-PON-4/7/S2/1/S8"
   private syncNombre() {
-    const tipo = this.form.get('caja_tipo')!.value as 'PON' | 'NAP';
-    const slot = this.form.get('slot')!.value;
-    const pon = this.form.get('pon')!.value;
-    const nap = this.form.get('nap')!.value;
+    const ciudad = (this.form.get('caja_ciudad')!.value || '').toString();
+    const tipo = (this.form.get('caja_tipo')!.value || '')
+      .toString()
+      .toUpperCase();
+    const seg = (this.form.get('nombre_segmento')!.value || '')
+      .toString()
+      .trim();
+    const sFinal = this.form.get('s_final')!.value as number | null;
 
-    let nombre = '';
-    if (tipo === 'PON') {
-      if (slot !== null && pon !== null) nombre = `PON ${slot}/${pon}`;
-    } else {
-      if (slot !== null && pon !== null && nap !== null)
-        nombre = `NAP ${slot}/${pon}/${nap}`;
-    }
+    const abbr = this.cityAbbr[ciudad] ?? ciudad.slice(0, 3).toUpperCase();
+    const tail = sFinal ? `/S${sFinal}` : '';
+
+    const nombre = seg
+      ? `${abbr}-${tipo}-${seg}${tail}`
+      : `${abbr}-${tipo}${tail}`;
+
     this.form.get('caja_nombre')!.setValue(nombre, { emitEvent: false });
   }
 
-  // ==== Reglas de hilo ====
+  // ==== Reglas / preview de hilo (como lo tenías) ====
   private syncHiloRules() {
     const tipo = this.form.get('fibra_tipo')!.value as
       | 'DROP'
@@ -198,7 +201,6 @@ export class MapaCajasControlsComponent implements OnChanges {
     hilo.updateValueAndValidity({ emitEvent: false });
   }
 
-  // ==== Preview de hilo ====
   private syncHiloPreview() {
     const tipo = this.form.get('fibra_tipo')!.value as
       | 'DROP'
@@ -229,47 +231,22 @@ export class MapaCajasControlsComponent implements OnChanges {
     }
     this.isSaving = true;
     try {
-      const tipo = this.form.get('caja_tipo')!.value as 'PON' | 'NAP';
-      const slot = this.form.get('slot')!.value!;
-      const pon = this.form.get('pon')!.value!;
-      const nap = this.form.get('nap')!.value;
-      const nombre =
-        tipo === 'PON' ? `PON ${slot}/${pon}` : `NAP ${slot}/${pon}/${nap}`;
-
-      const fibra = this.form.get('fibra_tipo')!.value as
-        | 'DROP'
-        | 'FLAT'
-        | 'ADSS'
-        | 'MINIADSS';
-      const unknown = this.hiloDesconocido;
-
-      let hiloStr = '';
-      if (unknown) {
-        hiloStr = `${fibra} DESCONOCIDO`;
-      } else if (fibra === 'DROP' || fibra === 'FLAT') {
-        hiloStr = `${fibra} ${this.form.get('simple_hilo')!.value}`;
-      } else {
-        hiloStr = `${fibra} ${this.form.get('buffer')!.value}/${
-          this.form.get('hilo_num')!.value
-        }`;
-      }
-
-      const estado = this.form.get('caja_estado')!.value as string;
-      const coords = this.form.get('caja_coordenadas')!.value as string;
-      const ciudad = this.form.get('caja_ciudad')!.value as
-        | 'LATACUNGA'
-        | 'SALCEDO';
-
-      const payload: Partial<ICajas> = {
-        caja_tipo: tipo,
-        caja_nombre: nombre,
-        caja_estado: estado,
-        caja_hilo: hiloStr,
-        caja_coordenadas: coords || undefined,
-        caja_ciudad: ciudad,
+      const payload: Partial<ICajas> & { s_final?: number | null } = {
+        caja_tipo: this.form.get('caja_tipo')!.value as 'PON' | 'NAP',
+        caja_nombre: (this.form.get('caja_nombre')!.value || '').toString(),
+        caja_estado: this.form.get('caja_estado')!.value as string,
+        caja_hilo: (this.form.get('caja_hilo')!.value || '').toString(),
+        caja_coordenadas:
+          (this.form.get('caja_coordenadas')!.value || '').toString() ||
+          undefined,
+        caja_ciudad: this.form.get('caja_ciudad')!.value as
+          | 'LATACUNGA'
+          | 'SALCEDO',
+        // “para luego”: si quieres guardarlo en BD cuando el backend lo soporte
+        s_final: this.form.get('s_final')!.value,
       };
 
-      const res = await this.cajasService.createCaja(payload);
+      const res = await this.cajasService.createCaja(payload as any);
       const nueva: ICajas = {
         id: res.data.id,
         caja_tipo: res.data.caja_tipo,
@@ -282,12 +259,12 @@ export class MapaCajasControlsComponent implements OnChanges {
 
       this.created.emit(nueva);
       this.serverMsg = 'Caja creada correctamente.';
+
       this.form.reset({
         caja_ciudad: 'LATACUNGA',
         caja_tipo: 'PON',
-        slot: null,
-        pon: null,
-        nap: null,
+        nombre_segmento: '',
+        s_final: null,
         caja_nombre: '',
         caja_estado: 'DISEÑO',
         fibra_tipo: 'DROP',
@@ -299,8 +276,8 @@ export class MapaCajasControlsComponent implements OnChanges {
         caja_coordenadas: '',
       });
       this.syncHiloRules();
-      this.syncNombre();
       this.syncHiloPreview();
+      this.syncNombre();
     } catch (e) {
       console.error(e);
       this.serverMsg = 'Error al crear la caja.';
@@ -309,10 +286,11 @@ export class MapaCajasControlsComponent implements OnChanges {
     }
   }
 
+  // ancho del input “Nombre” (si lo sigues mostrando)
   get nameWidth(): number {
     const v = this.form.get('caja_nombre')!.value as string | null;
     const len = v?.length ?? 0;
-    const base = len > 0 ? len : 10; // ancho mínimo equivalente a 10 chars
-    return Math.max(140, base * 8); // 8px aprox por carácter
+    const base = len > 0 ? len : 10;
+    return Math.max(140, base * 8);
   }
 }

@@ -11,8 +11,8 @@
   </div>
 
   <div class="card-body py-1 px-2">
-    <!-- ===== FILA 1: ciudad/tipo/slot/pon/nap + resumen derecha ===== -->
     <form [formGroup]="form" (ngSubmit)="submit()">
+      <!-- ===== FILA 1: ciudad / tipo / segmento / S final / NOMBRE+HILO (auto) ===== -->
       <div class="row g-1 align-items-end">
         <!-- Ciudad -->
         <div class="col-auto">
@@ -44,72 +44,75 @@
               <option value="NAP">NAP</option>
             </select>
           </div>
-        </div>
-
-        <!-- Slot -->
-        <div class="col-auto">
-          <div class="input-group input-group-sm w-auto">
-            <span class="input-group-text">Slot</span>
-            <select class="form-select form-select-sm" formControlName="slot">
-              @for (s of slots; track s) {
-              <option [ngValue]="s">{{ s }}</option>
-              }
-            </select>
-          </div>
-          @if (f.slot.touched && f.slot.hasError('required')) {
+          @if (f.caja_tipo.touched && f.caja_tipo.hasError('required')) {
           <div class="form-text text-danger">Requerido</div>
           }
         </div>
 
-        <!-- PON -->
+        <!-- Segmento -->
         <div class="col-auto">
           <div class="input-group input-group-sm w-auto">
-            <span class="input-group-text">PON</span>
-            <select class="form-select form-select-sm" formControlName="pon">
-              @for (p of pones; track p) {
-              <option [ngValue]="p">{{ p }}</option>
-              }
-            </select>
+            <span class="input-group-text">Segmento</span>
+            <input
+              class="form-control form-control-sm"
+              type="text"
+              formControlName="nombre_segmento"
+              placeholder="4/7/S2/1"
+              style="width: 160px"
+            />
           </div>
-          @if (f.pon.touched && f.pon.hasError('required')) {
+          @if (f.nombre_segmento.touched &&
+          f.nombre_segmento.hasError('required')) {
           <div class="form-text text-danger">Requerido</div>
           }
         </div>
 
-        <!-- NAP (solo si aplica) -->
-        @if (isTipoNAP()) {
+        <!-- S final -->
         <div class="col-auto">
           <div class="input-group input-group-sm w-auto">
-            <span class="input-group-text">Salida</span>
-            <select class="form-select form-select-sm" formControlName="nap">
-              @for (n of salidasNap; track n) {
-              <option [ngValue]="n">{{ n }}</option>
+            <span class="input-group-text">S final</span>
+            <select
+              class="form-select form-select-sm"
+              formControlName="s_final"
+              style="width: 90px"
+            >
+              <option [ngValue]="null">—</option>
+              @for (s of sFinalOptions; track s) {
+              <option [ngValue]="s">S{{ s }}</option>
               }
             </select>
           </div>
-          @if (f.nap.touched && f.nap.hasError('required')) {
+          @if (f.s_final.touched && f.s_final.hasError('required')) {
           <div class="form-text text-danger">Requerido</div>
           }
         </div>
-        }
 
-        <!-- Resumen a la derecha -->
-        <div
-          class="col ms-auto d-flex align-items-center justify-content-end gap-2"
-        >
-          <small class="text-muted d-none d-xl-inline">Resumen:</small>
-          <span class="badge bg-light text-dark border fw-normal">
-            <span class="text-muted">Caja:</span>
-            <strong class="ms-1">{{ f.caja_nombre.value || "—" }}</strong>
-          </span>
-          <span class="badge bg-light text-dark border fw-normal">
-            <span class="text-muted">Hilo:</span>
-            <strong class="ms-1">{{ f.caja_hilo.value || "—" }}</strong>
-          </span>
+        <!-- NOMBRE + HILO ocupan el resto -->
+        <div class="col min-w-0">
+          <div class="row g-1">
+            <div class="col-xxl-7 col-lg-6 col-12">
+              <input
+                class="form-control form-control-sm text-end w-100"
+                type="text"
+                formControlName="caja_nombre"
+                [attr.title]="f.caja_nombre.value || ''"
+                readonly
+              />
+            </div>
+            <div class="col-xxl-5 col-lg-6 col-12">
+              <input
+                class="form-control form-control-sm text-start w-100"
+                type="text"
+                formControlName="caja_hilo"
+                [attr.title]="f.caja_hilo.value || ''"
+                readonly
+              />
+            </div>
+          </div>
         </div>
       </div>
 
-      <!-- ===== FILA 2: estado/fibra/hilo/coords/guardar ===== -->
+      <!-- ===== FILA 2: estado / fibra / hilo / coordenadas / guardar ===== -->
       <div class="row g-1 align-items-end mt-1">
         <!-- Estado -->
         <div class="col-auto">
@@ -141,7 +144,7 @@
           </div>
         </div>
 
-        <!-- Hilo / Unknown / Buffer/Hilo -->
+        <!-- Hilo / Desconocido / Buffer/Hilo -->
         <div class="col-auto d-flex align-items-end gap-1 flex-wrap">
           <div class="form-check form-check-inline mb-0">
             <input
@@ -197,9 +200,9 @@
               }
             </select>
           </div>
-          @if (!hiloDesconocido && ((f.buffer.touched &&
+          @if ( !hiloDesconocido && ((f.buffer.touched &&
           f.buffer.hasError('required')) || (f.hilo_num.touched &&
-          f.hilo_num.hasError('required')))) {
+          f.hilo_num.hasError('required'))) ) {
           <div class="form-text text-danger">Ambos requeridos</div>
           } }
         </div>
@@ -212,12 +215,14 @@
               class="form-control form-control-sm"
               type="text"
               formControlName="caja_coordenadas"
+              placeholder="-0.934521,-78.615834"
               style="width: 180px"
             />
             <button
               class="btn btn-outline-danger btn-sm pick-btn"
               type="button"
               (click)="requestPick.emit()"
+              title="Seleccionar en mapa"
             >
               Seleccionar
             </button>

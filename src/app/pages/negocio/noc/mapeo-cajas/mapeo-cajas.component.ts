@@ -21,6 +21,14 @@ export class MapeoCajasComponent {
   // listado visible en el mapa (puedes llenarlo al iniciar con un fetch)
   cajas: ICajas[] = [];
 
+  iconSizeMap: Record<number, number> = {
+    12: 20,
+    14: 25,
+    16: 30,
+    18: 42,
+    20: 56,
+  };
+
   openCrearCaja() {
     this.activeModal.set('caja');
   }
