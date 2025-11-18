@@ -67,7 +67,7 @@ export class InfoSopComponent {
     this.activatedRoute.params.subscribe(async (params: any) => {
       this.isReady = false; // ← oculta el contenido
       this.id_sop = params['id_sop'];
-      this.ord_Ins = params['ord_ins'];
+      this.ord_Ins = String(params['ord_ins'] ?? '').trim(); // ✅ normalizado
 
       if (!this.id_sop) {
         console.error("Error: 'id_sop' no válido");
@@ -78,7 +78,7 @@ export class InfoSopComponent {
       try {
         await this.cargarSoporte(this.id_sop, this.ord_Ins);
         this.cargarImagenesInstalacion('neg_t_instalaciones', this.ord_Ins);
-        await this.cargarImagenesVisitas('neg_t_vis', this.ord_Ins);
+        await this.cargarImagenesVisitas(this.ord_Ins);
       } catch (e) {
         console.error('❌ Error inicial InfoSop:', e);
       } finally {
@@ -98,17 +98,13 @@ export class InfoSopComponent {
     });
   }
 
-  private async cargarImagenesVisitas(
-    _tabla: string,
-    ord_Ins: string
-  ): Promise<void> {
+  private async cargarImagenesVisitas(ord_Ins: string): Promise<void> {
     return new Promise<void>((resolve) => {
       if (!ord_Ins) {
         this.imagenesVisitas = [];
         return resolve();
       }
 
-      // Log para verificar que el ord_ins y la URL sean los correctos
       console.debug(
         '[VIS][InfoSop] GET:',
         `${environment.API_URL}/images/visitas/by-ord/${ord_Ins}`
@@ -116,15 +112,17 @@ export class InfoSopComponent {
 
       this.imagesService.listVisitasByOrdIns(ord_Ins).subscribe({
         next: (visitas) => {
-          // Defensivo: si por algo llega objeto en vez de array
           const arr = Array.isArray(visitas)
             ? visitas
             : visitas
             ? [visitas]
             : [];
-          this.imagenesVisitas = arr as any; // tipa a IVisConImagenes[] si coincide
+          // ✅ Normaliza "imagenes" a { img_1..N: { url, ruta } }
+          this.imagenesVisitas = (arr as any[]).map((v) => ({
+            ...v,
+            imagenes: this._adaptVisitaImgsToLegacyMap(v?.imagenes),
+          }));
 
-          // Logs útiles para validar contenido en el navegador (como en Postman)
           console.debug('[VIS][InfoSop] visitas ->', this.imagenesVisitas);
           console.debug(
             '[VIS][InfoSop] keys por visita ->',
@@ -133,7 +131,6 @@ export class InfoSopComponent {
               keys: Object.keys(v?.imagenes || {}),
             }))
           );
-
           resolve();
         },
         error: (err) => {
@@ -184,6 +181,46 @@ export class InfoSopComponent {
       map[key] = { url, ruta: url };
     }
     return map;
+  }
+
+  private _adaptVisitaImgsToLegacyMap(
+    imgs: Record<string, any> | ImageItem[] | undefined
+  ): Record<string, { url: string; ruta: string }> {
+    const out: Record<string, { url: string; ruta: string }> = {};
+
+    // 1) Si ya es mapa {clave: {url|ruta}}, lo saneamos y salimos
+    if (imgs && !Array.isArray(imgs)) {
+      for (const [k, v] of Object.entries(imgs)) {
+        const url = (v as any)?.url || (v as any)?.ruta || '';
+        if (!url) continue;
+        out[k] = { url, ruta: url };
+      }
+      return out;
+    }
+
+    // 2) Si viene como array de ImageItem, convertir a { img_N: {url,ruta} }
+    const arr = Array.isArray(imgs) ? (imgs as ImageItem[]) : [];
+    for (const it of arr) {
+      const tag = (it.tag || 'img').trim();
+      const pos = typeof it.position === 'number' ? it.position : 0;
+      // Clave legacy:
+      const key =
+        tag === 'img' && pos > 0
+          ? `img_${pos}`
+          : pos > 0
+          ? `${tag}_${pos}`
+          : tag;
+
+      const url =
+        (it as any).url ||
+        (it as any).ruta_absoluta ||
+        (it as any).ruta_relativa ||
+        '';
+      if (!url) continue;
+      out[key] = { url, ruta: url };
+    }
+
+    return out;
   }
 
   copyIp(ip: string): void {

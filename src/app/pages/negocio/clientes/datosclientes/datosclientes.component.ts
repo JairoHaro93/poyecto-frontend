@@ -15,6 +15,7 @@ import {
 import { ImagesService } from '../../../../services/negocio_latacunga/images.service';
 import { ImageItem } from '../../../../interfaces/negocio/images/images';
 import { environment } from '../../../../../environments/environment';
+import { IVisConImagenes } from '../../../../interfaces/negocio/imagenes/imagenes.interface';
 
 interface ClienteSugerencia {
   cedula: string;
@@ -47,8 +48,11 @@ export class DatosclientesComponent {
   servicioSeleccionado: any = null;
   imagenSeleccionada: string | null = null;
 
-  // Solo instalación
+  // Imágenes de instalación (legacy map)
   imagenesInstalacion: { [key: string]: { ruta: string; url: string } } = {};
+
+  // Imágenes de visitas (lista de visitas con su mapa de imágenes)
+  imagenesVisitas: IVisConImagenes[] = [];
 
   isReady = false;
 
@@ -123,6 +127,7 @@ export class DatosclientesComponent {
   onNombreBlur() {
     setTimeout(() => (this.showSugerencias = false), 150);
   }
+
   onNombreFocus() {
     const v = (this.queryCtrl.value ?? '').trim();
     if (v.length >= 2 && this.sugerencias.length > 0)
@@ -150,14 +155,20 @@ export class DatosclientesComponent {
         this.busqueda = detalle.nombre_completo;
         this.queryCtrl.setValue(detalle.nombre_completo, { emitEvent: false });
 
-        // SOLO instalación (nuevo backend)
-        this.cargarImagenesInstalacion(
-          this.servicioSeleccionado?.orden_instalacion
-        );
+        const ordIns = String(
+          this.servicioSeleccionado?.orden_instalacion ?? ''
+        ).trim();
+
+        // Instalación (nuevo backend)
+        this.cargarImagenesInstalacion(ordIns);
+
+        // Visitas por ORD_INS (nuevo backend)
+        this.cargarImagenesVisitas(ordIns);
       } else {
         this.clienteSeleccionado = null;
         this.servicioSeleccionado = null;
         this.imagenesInstalacion = {};
+        this.imagenesVisitas = [];
       }
     } catch (error) {
       console.error('❌ Error al cargar detalle del cliente:', error);
@@ -172,12 +183,13 @@ export class DatosclientesComponent {
   }
 
   // === Instalación -> nuevo backend (module='instalaciones') ===
-  private cargarImagenesInstalacion(ordIns: string): void {
-    if (!ordIns) return;
+  private cargarImagenesInstalacion(ordIns: string | number): void {
+    const id = String(ordIns ?? '').trim();
+    if (!id) return;
 
-    console.debug('[INST] fetch ordIns ->', ordIns);
+    console.debug('[INST] fetch ordIns ->', id);
 
-    this.imagesService.list('instalaciones', ordIns).subscribe({
+    this.imagesService.list('instalaciones', id).subscribe({
       next: (items) => {
         this.imagenesInstalacion = this.adaptInstToLegacyMap(items);
         console.debug(
@@ -189,6 +201,55 @@ export class DatosclientesComponent {
         console.error('❌ Error cargando imágenes (instalación):', err);
         this.imagenesInstalacion = {};
       },
+    });
+  }
+
+  // === Visitas por ORD_INS -> nuevo backend (module='visitas') ===
+  private async cargarImagenesVisitas(ord_Ins: string | number): Promise<void> {
+    return new Promise<void>((resolve) => {
+      const ord = String(ord_Ins ?? '').trim();
+      if (!ord) {
+        this.imagenesVisitas = [];
+        return resolve();
+      }
+
+      console.debug(
+        '[VIS][Datosclientes] GET:',
+        `${environment.API_URL}/images/visitas/by-ord/${ord}`
+      );
+
+      this.imagesService.listVisitasByOrdIns(ord).subscribe({
+        next: (visitas) => {
+          const arr = Array.isArray(visitas)
+            ? visitas
+            : visitas
+            ? [visitas]
+            : [];
+          // Normaliza a { img_1..N: {url,ruta} } como InfoSop
+          this.imagenesVisitas = (arr as any[]).map((v) => ({
+            ...v,
+            imagenes: this._adaptVisitaImgsToLegacyMap(v?.imagenes),
+          }));
+
+          console.debug(
+            '[VIS][Datosclientes] visitas ->',
+            this.imagenesVisitas
+          );
+          console.debug(
+            '[VIS][Datosclientes] keys por visita ->',
+            this.imagenesVisitas.map((v: any) => ({
+              id: v.id,
+              keys: Object.keys(v?.imagenes || {}),
+            }))
+          );
+          resolve();
+        },
+        error: (err) => {
+          console.error('❌ Error cargando imágenes de visitas:', err);
+          this.imagenesVisitas = [];
+          resolve();
+        },
+      });
     });
   }
 
@@ -218,10 +279,54 @@ export class DatosclientesComponent {
     return map;
   }
 
+  // Igual que en InfoSop: normaliza { img_1..img_4 } desde mapa/array
+  private _adaptVisitaImgsToLegacyMap(
+    imgs: Record<string, any> | ImageItem[] | undefined
+  ): Record<string, { url: string; ruta: string }> {
+    const out: Record<string, { url: string; ruta: string }> = {};
+
+    // Si ya viene como mapa {clave: {url|ruta}} lo limpiamos y devolvemos
+    if (imgs && !Array.isArray(imgs)) {
+      for (const [k, v] of Object.entries(imgs)) {
+        const url = (v as any)?.url || (v as any)?.ruta || '';
+        if (!url) continue;
+        out[k] = { url, ruta: url };
+      }
+      return out;
+    }
+
+    // Si viene como array de items, convertir a claves legacy (img_1..img_4)
+    const arr = Array.isArray(imgs) ? (imgs as ImageItem[]) : [];
+    for (const it of arr) {
+      const tag = (it.tag || 'img').trim();
+      const pos = typeof it.position === 'number' ? it.position : 0;
+
+      const key =
+        tag === 'img' && pos > 0
+          ? `img_${pos}`
+          : pos > 0
+          ? `${tag}_${pos}`
+          : tag;
+
+      const url =
+        (it as any).url ||
+        (it as any).ruta_absoluta ||
+        (it as any).ruta_relativa ||
+        '';
+      if (!url) continue;
+      out[key] = { url, ruta: url };
+    }
+
+    return out;
+  }
+
   onServicioSeleccionado() {
-    const ordIns = this.servicioSeleccionado?.orden_instalacion;
+    const ordIns = String(
+      this.servicioSeleccionado?.orden_instalacion ?? ''
+    ).trim();
     if (ordIns) {
       this.cargarImagenesInstalacion(ordIns);
+      this.cargarImagenesVisitas(ordIns);
     }
   }
 
@@ -232,6 +337,7 @@ export class DatosclientesComponent {
     this.clienteSeleccionado = null;
     this.servicioSeleccionado = null;
     this.imagenesInstalacion = {};
+    this.imagenesVisitas = [];
     this.imagenSeleccionada = null;
   }
 
