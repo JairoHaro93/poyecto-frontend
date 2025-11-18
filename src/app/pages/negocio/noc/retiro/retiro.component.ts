@@ -63,7 +63,7 @@ export class RetiroComponent {
 
     try {
       const data = this.retiroForm.value; // { ord_ins, telefonos, coordenadas, observacion }
-
+      /*
       // 1) Crear el retiro en la tabla neg_t_vis
       const response = await this.visitaService.createVis({
         ord_ins: data.ord_ins,
@@ -72,7 +72,7 @@ export class RetiroComponent {
         //   vis_coment_cliente: data.coordenadas,
         vis_estado: 'PENDIENTE',
       });
-
+*/
       const response2 = await this.clientesServie.getInfoServicioByOrdId(
         data.ord_ins
       );
@@ -81,7 +81,7 @@ export class RetiroComponent {
       const bodyAge = {
         ord_ins: Number(data.ord_ins),
         age_tipo: 'RETIRO',
-        age_id_tipo: response.id,
+        //  age_id_tipo: response.id,
         age_diagnostico: data.observacion,
         age_coordenadas: response2.servicios[0].coordenadas,
         age_telefono: data.telefonos,

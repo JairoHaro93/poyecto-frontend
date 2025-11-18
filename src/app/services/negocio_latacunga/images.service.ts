@@ -44,12 +44,14 @@ export class ImagesService {
         params,
       })
       .pipe(
-        map((r) =>
-          (r?.imagenes ?? []).map((it) => ({
-            ...it,
-            url: it.url ?? `${environment.API_URL}/static/${it.ruta_relativa}`, // ajusta prefix si aplica
-          }))
-        ),
+        map((r) => {
+          const items = r?.imagenes ?? [];
+          return items.map((it) => {
+            // ✅ Confiar en la URL que entrega el backend
+            const url = (it as any).url as string | undefined;
+            return { ...it, url: url ?? '' } as ImageItem;
+          });
+        }),
         catchError((err: HttpErrorResponse) =>
           err.status === 404 ? of([]) : of([])
         )
@@ -59,14 +61,15 @@ export class ImagesService {
   /**
    * Sube una imagen con el backend nuevo.
    * - module: 'infraestructura' | 'instalaciones' | 'visitas'
-   * - entityId: id lógico (infra_id, ord_ins, id visita, etc.)
+   * - entityId: id lógico (infra_id, ord_ins, age_id para visitas, etc.)
    * - tag/position: etiquetado y orden dentro del tag
+   * - ordIns: (opcional) si es VISITA y quieres anidar en la carpeta de la instalación
    */
   upload(
     module: string,
     entityId: number | string,
     file: File,
-    opts?: { tag?: string; position?: number }
+    opts?: { tag?: string; position?: number; ordIns?: number | string } // 👈 NUEVO ordIns
   ): Observable<UploadResponse> {
     const fd = new FormData();
     fd.append('module', module);
@@ -74,9 +77,9 @@ export class ImagesService {
     if (opts?.tag) fd.append('tag', opts.tag);
     if (typeof opts?.position === 'number')
       fd.append('position', String(opts.position));
+    if (opts?.ordIns != null) fd.append('ord_ins', String(opts.ordIns)); // 👈 ENVÍA ord_ins
     fd.append('image', file);
 
-    // Importante: no fijes manualmente Content-Type; HttpClient lo hace
     return this.http.post<UploadResponse>(`${this.API}/upload`, fd).pipe(
       catchError((err: HttpErrorResponse) => {
         console.error('Upload error', err);
@@ -84,20 +87,23 @@ export class ImagesService {
       })
     );
   }
-  /*
-  listVisitasByOrdIns(
-    ordIns: number | string
-  ): Observable<VisitaConImagenes[]> {
-    console.log(`${this.API}/visitas/by-ord/${ordIns}`);
-    return this.http.get<VisitaConImagenes[]>(
-      `${this.API}/visitas/by-ord/${ordIns}`
-    );
+
+  // ==== Helpers alineados al backend nuevo ====
+
+  /** Imágenes de INSTALACIÓN por ord_ins (directo al módulo 'instalaciones') */
+  listInstalacion(ordIns: string | number): Observable<ImageItem[]> {
+    return this.list('instalaciones', ordIns);
   }
-*/
-  // images.service.ts
+
+  /** Imágenes de VISITA por age_id (entity_id = id de agenda) */
+  listVisitaByAgeId(ageId: string | number): Observable<ImageItem[]> {
+    return this.list('visitas', ageId);
+  }
+
+  // ==== Legacy (si aún usas este endpoint, deja este método; si no, elimínalo) ====
+
+  /** LEGACY: visitas por ORD_INS desde endpoint antiguo basado en neg_t_vis */
   listVisitasByOrdIns(ordIns: string | number) {
-    return this.http.get<any[]>(
-      `${environment.API_URL}/images/visitas/by-ord/${ordIns}`
-    );
+    return this.http.get<any[]>(`${this.API}/visitas/by-ord/${ordIns}`);
   }
 }

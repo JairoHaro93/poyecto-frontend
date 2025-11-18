@@ -13,6 +13,7 @@ export class VisService {
 
   //CREA UNA VISITA
   //router.post("/", checkToken, createVis);
+  /*
   createVis(body: any): Promise<IVis> {
     return firstValueFrom(
       this.httpClient.post<IVis>(this.baseUrl, body, {
@@ -20,9 +21,11 @@ export class VisService {
       })
     );
   }
-
+*/
   //OBTIENE UNA VISITA POR ID
   //router.get("/:id_vis", checkToken, getVisById);
+
+  /*
   getVisById(id_vis: number): Promise<IVis> {
     return firstValueFrom(
       this.httpClient.get<IVis>(`${this.baseUrl}/${id_vis}`, {
@@ -30,9 +33,10 @@ export class VisService {
       })
     );
   }
-
+*/
   //ACTUALIZA UNA VISITA
   //router.put("/:id_vis", checkToken, updateVisById);
+  /*
   updateVisById(
     id_vis: number,
     estado: string,
@@ -45,5 +49,5 @@ export class VisService {
         { withCredentials: true }
       )
     );
-  }
+  }*/
 }

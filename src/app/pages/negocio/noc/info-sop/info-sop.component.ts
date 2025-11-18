@@ -312,13 +312,13 @@ export class InfoSopComponent {
             bodyVis.vis_tipo = 'LOS';
           }
 
-          const result = await this.visService.createVis(bodyVis);
+          // const result = await this.visService.createVis(bodyVis);
 
           await this.soporteService.actualizarEstadoSop(this.id_sop, body);
 
           let bodyAge: any = {
             ord_ins: this.ord_Ins,
-            age_id_tipo: result.id,
+            // age_id_tipo: result.id,
             age_id_sop: this.id_sop,
             age_diagnostico: this.detalleSolucion,
             age_coordenadas: this.servicioSeleccionado.servicios[0].coordenadas,

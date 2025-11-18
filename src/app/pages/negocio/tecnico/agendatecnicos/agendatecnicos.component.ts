@@ -231,11 +231,11 @@ export class AgendatecnicosComponent {
         const idVis = Number(
           this.trabajoTabla?.id ?? this.trabajoAgenda.age_id_tipo
         );
-        await this.visService.updateVisById(
+        /* await this.visService.updateVisById(
           idVis,
           'RESUELTO',
           this.trabajoAgenda.age_solucion
-        );
+        );*/
 
         const bodySop = {
           reg_sop_estado: 'RESUELTO',

@@ -63,7 +63,7 @@ export class MigracionComponent {
 
     try {
       const data = this.migracionForm.value; // { ord_ins, telefonos, coordenadas, observacion }
-
+      /*
       // 1) Crear el traslado en la tabla neg_t_vis
       const response = await this.visitaService.createVis({
         ord_ins: data.ord_ins,
@@ -71,7 +71,7 @@ export class MigracionComponent {
         vis_tipo: 'MIGRACION',
         vis_estado: 'PENDIENTE',
       });
-
+*/
       const response2 = await this.clientesServie.getInfoServicioByOrdId(
         data.ord_ins
       );
@@ -80,7 +80,7 @@ export class MigracionComponent {
       const bodyAge = {
         ord_ins: Number(data.ord_ins),
         age_tipo: 'MIGRACION',
-        age_id_tipo: response.id, // asegúrate que el backend devuelva { id }
+        // age_id_tipo: response.id, // asegúrate que el backend devuelva { id }
         age_diagnostico: data.observacion,
         age_coordenadas: response2.servicios[0].coordenadas,
         age_telefono: data.telefonos,

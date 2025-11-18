@@ -456,11 +456,12 @@ export class AgendaComponent {
     } else if (
       trabajo.age_tipo === 'VISITA' ||
       trabajo.age_tipo === 'LOS' ||
+      trabajo.age_tipo === 'RETIRO' ||
       trabajo.age_tipo === 'MIGRACION' ||
       trabajo.age_tipo === 'TRASLADO EXT'
     ) {
       // ✅ visita + instalación
-      this.cargarImagenesVisita(trabajo.age_id_tipo);
+      this.cargarImagenesVisita(trabajo.id);
       this.cargarImagenesInstalacion(trabajo.ord_ins);
     } else if (trabajo.age_tipo === 'INSTALACION') {
       // ✅ solo instalación
@@ -478,26 +479,18 @@ export class AgendaComponent {
    *   GET /api/images/list/instalaciones/:ord_ins
    * Adaptamos a { [campo]: {url,ruta} } para que el template siga igual.
    */
-  private cargarImagenesInstalacion(
-    _tabla: string | null,
-    ord_Ins?: string
-  ): void;
-  private cargarImagenesInstalacion(ord_Ins: string): void;
-  private cargarImagenesInstalacion(a: any, b?: any): void {
-    const ordIns = typeof a === 'string' && !b ? a : (b as string);
-    if (!ordIns) {
+  private cargarImagenesInstalacion(ordIns: string | number): void {
+    const id = String(ordIns);
+    if (!id) {
       this.imagenesInstalacion = {};
       return;
     }
 
-    this.imagesService
-      .list('instalaciones', ordIns)
-
-      .subscribe({
-        next: (items) =>
-          (this.imagenesInstalacion = this.adaptInstalacion(items)),
-        error: () => (this.imagenesInstalacion = {}),
-      });
+    this.imagesService.list('instalaciones', id).subscribe({
+      next: (items) =>
+        (this.imagenesInstalacion = this.adaptInstalacion(items)),
+      error: () => (this.imagenesInstalacion = {}),
+    });
   }
 
   /**
@@ -534,27 +527,28 @@ export class AgendaComponent {
     const map: Record<string, { url: string; ruta: string }> = {};
     for (const it of items ?? []) {
       const base = (it.tag || 'otros').trim();
-      const pos = typeof it.position === 'number' ? it.position : null;
+      const pos = typeof it.position === 'number' ? it.position : 0;
+      const url = (it as any).url || ''; // ✅ confiar en la URL del backend
 
-      // si tu API no manda .url pero sí .ruta_relativa, construye la URL en el servicio
-      const url =
-        (it as any).url ?? (it as any).ruta ?? (it as any).ruta_relativa;
-
-      const key = pos == null || pos === 0 ? base : `${base}_${pos}`;
+      const key = pos > 0 ? `${base}_${pos}` : base;
+      if (!url) continue; // evita “undefined/imagenes/null”
       map[key] = { url, ruta: url };
     }
     return map;
   }
 
-  /** Adaptador: visitas → `img_1..img_4` desde (tag='img', position). */
-  private adaptVisita(items: ImageItem[]): Record<string, LegacyImg> {
-    const map: Record<string, LegacyImg> = {};
+  private adaptVisita(
+    items: ImageItem[]
+  ): Record<string, { url: string; ruta: string }> {
+    const map: Record<string, { url: string; ruta: string }> = {};
     for (const it of items ?? []) {
+      const url = (it as any).url || '';
+      if (!url) continue;
       const key =
         it.tag === 'img' && typeof it.position === 'number'
           ? `img_${it.position}`
           : it.tag || 'otros';
-      map[key] = { url: it.url, ruta: it.url };
+      map[key] = { url, ruta: url };
     }
     return map;
   }

@@ -62,7 +62,7 @@ export class TrasladoExtComponent {
 
     try {
       const data = this.TrasladoForm.value; // { ord_ins, telefonos, coordenadas, observacion }
-
+      /*
       // 1) Crear el traslado en la tabla neg_t_vis
       const response = await this.visitaService.createVis({
         ord_ins: data.ord_ins,
@@ -71,15 +71,16 @@ export class TrasladoExtComponent {
         vis_coment_cliente: data.coordenadas,
         vis_estado: 'PENDIENTE',
       });
-
+*/
       // 2) Crear el caso en la tabla neg_t_agenda
       const bodyAge = {
         ord_ins: Number(data.ord_ins),
         age_tipo: 'TRASLADO EXT',
-        age_id_tipo: response.id, // asegúrate que el backend devuelva { id }
+        // age_id_tipo: response.id, // asegúrate que el backend devuelva { id }
         age_diagnostico: data.observacion,
         age_coordenadas: data.coordenadas,
         age_telefono: data.telefonos,
+        age_coment_cliente: data.coordenadas,
       };
       await this.agendaService.postSopAgenda(bodyAge);
 
