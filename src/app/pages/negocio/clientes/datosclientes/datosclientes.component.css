@@ -185,3 +185,23 @@ img.img-fluid.w-100.rounded {
 .btn-group[aria-label="Secciones"] .btn-outline-primary:focus-visible {
   box-shadow: 0 0 0 0.2rem rgba(206, 41, 41, 0.25);
 }
+
+.bg-visita {
+  background-color: #007bff !important;
+  color: white;
+}
+.bg-los {
+  background-color: #ffe900 !important;
+  color: rgb(0, 0, 0);
+}
+.bg-retiro {
+  background-color: oklch(59.153% 0.20203 21.222) !important;
+}
+
+.bg-traslado-ext {
+  background-color: oklch(62.523% 0.25625 341.84) !important;
+}
+.bg-migracion {
+  background-color: rgb(113, 17, 192) !important;
+  color: white;
+}

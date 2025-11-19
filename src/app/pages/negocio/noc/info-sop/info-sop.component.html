@@ -407,9 +407,9 @@
         <em>Comentario Cliente:</em> {{ s.reg_sop_coment_cliente }}
       </div>
       } @if (s.reg_sop_sol_det) {
-      <pre class="mb-0" style="white-space: pre-wrap">{{
-        s.reg_sop_sol_det
-      }}</pre>
+      <pre class="mb-0" style="white-space: pre-wrap">
+Solución :{{ s.reg_sop_sol_det }}</pre
+      >
       }
     </div>
     } } @else {
@@ -425,14 +425,14 @@
       <div class="mb-2">
         <strong>Tipo:</strong> {{ visita.vis_tipo }} | <strong>Estado:</strong>
         {{ visita.vis_estado }} <br />
-        <strong>Comentario cliente:</strong>
-        {{ visita.vis_coment_cliente || "—" }}<br />
+        <!-- <strong>Comentario cliente:</strong>
+        {{ visita.vis_coment_cliente || "—" }}<br /> -->
         <strong>Diagnóstico:</strong> {{ visita.vis_diagnostico || "—" }}
         <br />
         <strong>Detalle Solución:</strong> {{ visita.vis_solucion || "—" }}
         <br />
-        <strong>Fecha resolución del problema:</strong>
-        {{ visita.fecha_actualizacion | date : "dd/MM/yyyy HH:mm" }}
+        <!-- <strong>Fecha resolución del problema:</strong>
+        {{ visita.fecha_actualizacion | date : "dd/MM/yyyy HH:mm" }} -->
       </div>
 
       <div class="imagenes-grid row">
