@@ -124,22 +124,15 @@
         <tbody>
           <tr>
             <td>Modalidad</td>
-            <td>
-              {{ servicioSeleccionado.tipo }}
-            </td>
+            <td>{{ servicioSeleccionado.tipo }}</td>
           </tr>
-
           <tr>
             <td>Tipo de instalacion</td>
-            <td>
-              {{ servicioSeleccionado.tipo_instalacion }}
-            </td>
+            <td>{{ servicioSeleccionado.tipo_instalacion }}</td>
           </tr>
           <tr>
             <td>Estado de la instalacion</td>
-            <td>
-              {{ servicioSeleccionado.estado_instalacion }}
-            </td>
+            <td>{{ servicioSeleccionado.estado_instalacion }}</td>
           </tr>
           <tr>
             <td>Coordenadas</td>
@@ -180,15 +173,11 @@
           </tr>
           <tr>
             <td>Tecnico Instalador</td>
-            <td>
-              {{ servicioSeleccionado.instalado_por }}
-            </td>
+            <td>{{ servicioSeleccionado.instalado_por }}</td>
           </tr>
           <tr>
             <td>Telefonos</td>
-            <td>
-              {{ servicioSeleccionado.telefonos }}
-            </td>
+            <td>{{ servicioSeleccionado.telefonos }}</td>
           </tr>
         </tbody>
       </table>
@@ -201,9 +190,9 @@
       <div class="imagenes-grid row">
         @for (campo of ['fachada', 'router', 'ont', 'potencia', 'speedtest',
         'cable_1', 'cable_2', 'equipo_1', 'equipo_2', 'equipo_3']; track campo)
-        { @if ( imagenesInstalacion[campo] && imagenesInstalacion[campo].ruta
-        !== 'null' && imagenesInstalacion[campo].url !==
-        'undefined/imagenes/null' ) {
+        { @if (imagenesInstalacion[campo] && imagenesInstalacion[campo].ruta !==
+        'null' && imagenesInstalacion[campo].url !== 'undefined/imagenes/null')
+        {
         <div class="col-6 col-md-3 col-lg-2">
           <div class="card shadow-sm border rounded">
             <div class="card-body p-2 text-center">
@@ -221,6 +210,61 @@
         } }
       </div>
 
+      <!-- DIV SOPORTES RESUELTOS -->
+      <div class="mt-4">
+        <h1 class="titulo-seccion">Soportes resueltos</h1>
+      </div>
+
+      @if (soportesResueltos?.length) { @for (s of soportesResueltos; track
+      s.id) {
+      <div class="mb-4 border rounded shadow-sm p-2">
+        <div class="d-flex flex-wrap gap-2 align-items-center mb-2">
+          <span class="badge bg-secondary">{{
+            s.reg_sop_opc || "SOPORTE"
+          }}</span>
+          <span class="badge bg-success">{{ s.reg_sop_estado }}</span>
+          <span class="ms-auto small text-muted">
+            {{
+              s.reg_sop_fecha_acepta || s.reg_sop_fecha
+                | date : "dd/MM/yyyy HH:mm"
+            }}
+          </span>
+        </div>
+
+        <div class="small mb-2">
+          <strong>Tel:</strong>
+          {{ s.reg_sop_tel || "—" }}
+          &nbsp;·&nbsp;
+          <strong>Registrado por:</strong>
+          {{
+            s.reg_sop_registrado_por_nombre ||
+              s.reg_sop_registrado_por_id ||
+              "—"
+          }}
+          &nbsp;·&nbsp;
+          <strong>Aceptado NOC:</strong>
+          {{ s.reg_sop_aceptado_por_nombre || "—" }}
+        </div>
+
+        @if (s.reg_sop_coment_cliente) {
+        <div class="mb-1">
+          <em> Comentario Cliente:</em> {{ s.reg_sop_coment_cliente }}
+        </div>
+        } @if (s.reg_sop_sol_det) {
+        <details class="mt-1">
+          <summary class="cursor-pointer">Ver solución</summary>
+          <pre class="mb-0" style="white-space: pre-wrap">{{
+            s.reg_sop_sol_det
+          }}</pre>
+        </details>
+        }
+      </div>
+      } } @else {
+      <div class="text-muted text-center py-2">
+        Sin soportes resueltos para esta orden.
+      </div>
+      }
+
       <!-- DIV VISITAS -->
       <div class="mt-4">
         <h1 class="titulo-seccion">Visitas</h1>
@@ -229,8 +273,6 @@
       @for (visita of imagenesVisitas; track visita.id) {
       <div class="mb-4 border rounded shadow-sm p-2">
         <div class="mb-2">
-          <!-- <strong>ID Visita:</strong> {{ visita.id }} <br /> -->
-
           <strong>Tipo:</strong> {{ visita.vis_tipo }} |
           <strong>Estado:</strong> {{ visita.vis_estado }} <br />
           <strong>Comentario cliente:</strong> {{ visita.vis_coment_cliente

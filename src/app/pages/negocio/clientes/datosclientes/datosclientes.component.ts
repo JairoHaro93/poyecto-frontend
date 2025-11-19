@@ -1,9 +1,7 @@
 import { Component, inject } from '@angular/core';
+import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { FormControl } from '@angular/forms';
-import { CommonModule } from '@angular/common';
-import { ClientesService } from '../../../../services/negocio_atuntaqui/clientes.service';
-import { Modal } from 'bootstrap';
 import { of, from } from 'rxjs';
 import {
   debounceTime,
@@ -12,15 +10,29 @@ import {
   switchMap,
   catchError,
 } from 'rxjs/operators';
+import { Modal } from 'bootstrap';
+
+import { ClientesService } from '../../../../services/negocio_atuntaqui/clientes.service';
 import { ImagesService } from '../../../../services/negocio_latacunga/images.service';
+import { SoportesService } from '../../../../services/negocio_latacunga/soportes.service';
+
 import { ImageItem } from '../../../../interfaces/negocio/images/images';
-import { environment } from '../../../../../environments/environment';
 import { IVisConImagenes } from '../../../../interfaces/negocio/imagenes/imagenes.interface';
+import { Isoportes } from '../../../../interfaces/negocio/soportes/isoportes.interface';
+import { environment } from '../../../../../environments/environment';
 
 interface ClienteSugerencia {
   cedula: string;
   nombre_completo: string;
 }
+
+// Amplía Isoportes con los campos que devuelve el JOIN (para evitar errores en la plantilla)
+type SoporteView = Isoportes & {
+  reg_sop_registrado_por_nombre?: string;
+  reg_sop_registrado_por_usuario?: string;
+  reg_sop_noc_acepta_nombre?: string;
+  reg_sop_noc_acepta_usuario?: string;
+};
 
 @Component({
   selector: 'app-datosclientes',
@@ -32,6 +44,7 @@ interface ClienteSugerencia {
 export class DatosclientesComponent {
   private clienteService = inject(ClientesService);
   private imagesService = inject(ImagesService);
+  private soportesService = inject(SoportesService);
 
   // ===== Buscador (server-side, mínimo 2 letras) =====
   queryCtrl = new FormControl<string>('', { nonNullable: true });
@@ -53,6 +66,9 @@ export class DatosclientesComponent {
 
   // Imágenes de visitas (lista de visitas con su mapa de imágenes)
   imagenesVisitas: IVisConImagenes[] = [];
+
+  // Soportes resueltos (muestra nombres gracias al JOIN)
+  soportesResueltos: SoporteView[] = [];
 
   isReady = false;
 
@@ -159,19 +175,33 @@ export class DatosclientesComponent {
           this.servicioSeleccionado?.orden_instalacion ?? ''
         ).trim();
 
-        // Instalación (nuevo backend)
         this.cargarImagenesInstalacion(ordIns);
-
-        // Visitas por ORD_INS (nuevo backend)
         this.cargarImagenesVisitas(ordIns);
+        await this.cargarSoportesResueltos(ordIns);
       } else {
-        this.clienteSeleccionado = null;
-        this.servicioSeleccionado = null;
-        this.imagenesInstalacion = {};
-        this.imagenesVisitas = [];
+        this.clearClienteRelacionado();
       }
-    } catch (error) {
-      console.error('❌ Error al cargar detalle del cliente:', error);
+    } catch {
+      // silencioso
+    }
+  }
+
+  // === Soportes resueltos por ORD_INS ===
+  private async cargarSoportesResueltos(
+    ordIns: string | number
+  ): Promise<void> {
+    const ord = Number(ordIns);
+    if (!Number.isFinite(ord)) {
+      this.soportesResueltos = [];
+      return;
+    }
+    try {
+      const data = await this.soportesService.getAllResueltosSopByOrdIns(ord);
+      this.soportesResueltos = Array.isArray(data)
+        ? (data as SoporteView[])
+        : [];
+    } catch {
+      this.soportesResueltos = [];
     }
   }
 
@@ -187,18 +217,11 @@ export class DatosclientesComponent {
     const id = String(ordIns ?? '').trim();
     if (!id) return;
 
-    console.debug('[INST] fetch ordIns ->', id);
-
     this.imagesService.list('instalaciones', id).subscribe({
       next: (items) => {
         this.imagenesInstalacion = this.adaptInstToLegacyMap(items);
-        console.debug(
-          '[INST] mapped keys ->',
-          Object.keys(this.imagenesInstalacion)
-        );
       },
-      error: (err) => {
-        console.error('❌ Error cargando imágenes (instalación):', err);
+      error: () => {
         this.imagenesInstalacion = {};
       },
     });
@@ -213,11 +236,6 @@ export class DatosclientesComponent {
         return resolve();
       }
 
-      console.debug(
-        '[VIS][Datosclientes] GET:',
-        `${environment.API_URL}/images/visitas/by-ord/${ord}`
-      );
-
       this.imagesService.listVisitasByOrdIns(ord).subscribe({
         next: (visitas) => {
           const arr = Array.isArray(visitas)
@@ -225,27 +243,13 @@ export class DatosclientesComponent {
             : visitas
             ? [visitas]
             : [];
-          // Normaliza a { img_1..N: {url,ruta} } como InfoSop
           this.imagenesVisitas = (arr as any[]).map((v) => ({
             ...v,
             imagenes: this._adaptVisitaImgsToLegacyMap(v?.imagenes),
           }));
-
-          console.debug(
-            '[VIS][Datosclientes] visitas ->',
-            this.imagenesVisitas
-          );
-          console.debug(
-            '[VIS][Datosclientes] keys por visita ->',
-            this.imagenesVisitas.map((v: any) => ({
-              id: v.id,
-              keys: Object.keys(v?.imagenes || {}),
-            }))
-          );
           resolve();
         },
-        error: (err) => {
-          console.error('❌ Error cargando imágenes de visitas:', err);
+        error: () => {
           this.imagenesVisitas = [];
           resolve();
         },
@@ -285,7 +289,6 @@ export class DatosclientesComponent {
   ): Record<string, { url: string; ruta: string }> {
     const out: Record<string, { url: string; ruta: string }> = {};
 
-    // Si ya viene como mapa {clave: {url|ruta}} lo limpiamos y devolvemos
     if (imgs && !Array.isArray(imgs)) {
       for (const [k, v] of Object.entries(imgs)) {
         const url = (v as any)?.url || (v as any)?.ruta || '';
@@ -295,7 +298,6 @@ export class DatosclientesComponent {
       return out;
     }
 
-    // Si viene como array de items, convertir a claves legacy (img_1..img_4)
     const arr = Array.isArray(imgs) ? (imgs as ImageItem[]) : [];
     for (const it of arr) {
       const tag = (it.tag || 'img').trim();
@@ -327,6 +329,9 @@ export class DatosclientesComponent {
     if (ordIns) {
       this.cargarImagenesInstalacion(ordIns);
       this.cargarImagenesVisitas(ordIns);
+      void this.cargarSoportesResueltos(ordIns);
+    } else {
+      this.soportesResueltos = [];
     }
   }
 
@@ -338,6 +343,7 @@ export class DatosclientesComponent {
     this.servicioSeleccionado = null;
     this.imagenesInstalacion = {};
     this.imagenesVisitas = [];
+    this.soportesResueltos = [];
     this.imagenSeleccionada = null;
   }
 

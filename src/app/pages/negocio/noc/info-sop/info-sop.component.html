@@ -373,6 +373,104 @@
       </div>
     </div>
     }
+
+    <!-- info-sop.component.html -->
+    <section class="card shadow-sm mb-3">
+      <div class="card-header d-flex align-items-center gap-2">
+        <h6 class="mb-0">Soportes resueltos</h6>
+        <button
+          class="btn btn-sm btn-outline-secondary ms-auto"
+          (click)="recargar()"
+          [disabled]="loadingSoportes"
+        >
+          <i class="bi bi-arrow-clockwise"></i> Recargar
+        </button>
+      </div>
+
+      <div class="card-body p-2">
+        <ng-container
+          *ngIf="
+            !loadingSoportes && soportesResueltos.length;
+            else estadoSoportes
+          "
+        >
+          <div class="list-group">
+            <div
+              class="list-group-item py-2"
+              *ngFor="let s of soportesResueltos"
+            >
+              <div class="d-flex w-100 justify-content-between">
+                <strong>
+                  <span>
+                    @switch (s?.reg_sop_opc) { @case (1) {
+                    <span>Sin servicio de Internet</span>
+                    } @case (2) {
+                    <span> Internet Intermitente</span>
+                    } @case (3) {
+                    <span> Cambio de contraseña</span>
+                    } @case (4) {
+                    <span> Manipulacion de equipos</span>
+                    } @case (5) {
+                    <span> Sin Definir</span>
+                    } }
+                  </span></strong
+                >
+
+                <small>{{ s.reg_sop_fecha | date : "short" }}</small>
+              </div>
+
+              <div class="text-muted">
+                Tel:
+                <a [href]="'tel:' + s.reg_sop_tel">{{ s.reg_sop_tel }}</a> ·
+                Estado:
+                <span class="badge text-bg-success">{{
+                  s.reg_sop_estado
+                }}</span>
+              </div>
+
+              <div *ngIf="s.reg_sop_coment_cliente" class="mt-1">
+                <em>Comentantario Cliente:</em> {{ s.reg_sop_coment_cliente }}
+              </div>
+
+              <details class="mt-2">
+                <summary class="cursor-pointer">Ver solución</summary>
+                <pre class="mb-0 wrap-pre">{{ s.reg_sop_sol_det }}</pre>
+              </details>
+
+              <div class="small text-muted mt-1">
+                Aceptado:
+                {{
+                  s.reg_sop_fecha_acepta
+                    ? (s.reg_sop_fecha_acepta | date : "short")
+                    : "—"
+                }}
+                · NOC: {{ s.reg_sop_aceptado_por_nombre || "—" }}
+              </div>
+            </div>
+          </div>
+        </ng-container>
+
+        <ng-template #estadoSoportes>
+          <div *ngIf="loadingSoportes" class="text-center py-3">
+            <div class="spinner-border spinner-border-sm" role="status"></div>
+            <span class="ms-2">Cargando soportes...</span>
+          </div>
+
+          <div
+            *ngIf="
+              !loadingSoportes && !soportesResueltos.length && !errorSoportes
+            "
+            class="text-center text-muted py-3"
+          >
+            No hay soportes resueltos para esta orden.
+          </div>
+
+          <div *ngIf="errorSoportes" class="alert alert-danger py-2">
+            {{ errorSoportes }}
+          </div>
+        </ng-template>
+      </div>
+    </section>
   </section>
 </div>
 }

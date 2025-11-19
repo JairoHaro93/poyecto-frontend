@@ -2,7 +2,7 @@ import { inject, Injectable } from '@angular/core';
 import { environment } from '../../../environments/environment';
 import { HttpClient } from '@angular/common/http';
 import { Isoportes } from '../../interfaces/negocio/soportes/isoportes.interface';
-import { firstValueFrom, lastValueFrom } from 'rxjs';
+import { firstValueFrom, lastValueFrom, map, tap } from 'rxjs';
 
 @Injectable({
   providedIn: 'root',
@@ -41,6 +41,17 @@ export class SoportesService {
       this.httpClient.get<Isoportes>(`${this.baseUrl}/${id_sop}`, {
         withCredentials: true,
       })
+    );
+  }
+
+  getAllResueltosSopByOrdIns(ord_ins: number): Promise<Isoportes[]> {
+    const url = `${this.baseUrl}/resueltos/${ord_ins}`;
+    return firstValueFrom(
+      this.httpClient
+        .get<Isoportes[] | { data: Isoportes[] }>(url, {
+          withCredentials: true,
+        })
+        .pipe(map((res) => (Array.isArray(res) ? res : res?.data ?? [])))
     );
   }
 
