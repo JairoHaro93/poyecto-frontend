@@ -403,13 +403,9 @@
       </div>
 
       @if (s.reg_sop_coment_cliente) {
-      <div class="mb-1">
-        <em>Comentario Cliente:</em> {{ s.reg_sop_coment_cliente }}
-      </div>
-      } @if (s.reg_sop_sol_det) {
-      <pre class="mb-0" style="white-space: pre-wrap">
-Solución :{{ s.reg_sop_sol_det }}</pre
-      >
+      <div class="mb-1">Comentario Cliente: {{ s.reg_sop_coment_cliente }}</div>
+      } Solución : @if (s.reg_sop_sol_det) {
+      {{ s.reg_sop_sol_det }}
       }
     </div>
     } } @else {
@@ -423,7 +419,14 @@ Solución :{{ s.reg_sop_sol_det }}</pre
     visita.id) {
     <div class="mb-4 border rounded shadow-sm p-2">
       <div class="mb-2">
-        <strong>Tipo:</strong> {{ visita.vis_tipo }} | <strong>Estado:</strong>
+        <strong class="me-1">Tipo:</strong>
+        <span
+          class="badge px-2 py-1"
+          [ngClass]="getVisitaBadgeClass(visita.vis_tipo)"
+        >
+          {{ visita.vis_tipo || "—" }}
+        </span>
+        <span class="mx-1">|</span> <strong>Estado:</strong>
         {{ visita.vis_estado }} <br />
         <!-- <strong>Comentario cliente:</strong>
         {{ visita.vis_coment_cliente || "—" }}<br /> -->

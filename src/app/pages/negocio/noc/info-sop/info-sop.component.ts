@@ -496,4 +496,29 @@ export class InfoSopComponent implements OnInit, OnDestroy {
       });
     }
   }
+
+  // Mapea el tipo de visita a una clase de fondo
+  getVisitaBadgeClass(tipo: string | null | undefined): string {
+    const norm = (tipo ?? '')
+      .toString()
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '') // quita acentos
+      .trim();
+
+    switch (norm) {
+      case 'visita':
+        return 'bg-visita';
+      case 'los':
+        return 'bg-los';
+      case 'retiro':
+        return 'bg-retiro';
+      case 'traslado ext':
+        return 'bg-traslado-ext';
+      case 'migracion':
+        return 'bg-migracion';
+      default:
+        return 'bg-secondary text-white'; // fallback Bootstrap
+    }
+  }
 }
