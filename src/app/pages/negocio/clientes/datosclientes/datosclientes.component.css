@@ -150,3 +150,38 @@ img.img-fluid.w-100.rounded {
     opacity: 1;
   }
 }
+
+/* === Tabs (Instalación / Soportes / Visitas) — Rojo empresarial === */
+.btn-group[aria-label="Secciones"] .btn {
+  flex: 1 1 0; /* mismo ancho para los tres */
+  transition: background-color 0.2s ease, color 0.2s ease,
+    border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.btn-group[aria-label="Secciones"] .btn-outline-primary {
+  color: #ce2929;
+  border-color: #ce2929;
+  background-color: #fff;
+}
+
+/* Hover y focus */
+.btn-group[aria-label="Secciones"] .btn-outline-primary:hover,
+.btn-group[aria-label="Secciones"] .btn-outline-primary:focus {
+  color: #fff;
+  background-color: #ce2929;
+  border-color: #ce2929;
+}
+
+/* Activo / seleccionado (usas [class.active]) */
+.btn-group[aria-label="Secciones"] .btn-outline-primary.active,
+.btn-group[aria-label="Secciones"] .btn-outline-primary:active {
+  color: #fff;
+  background-color: #ce2929;
+  border-color: #ce2929;
+}
+
+/* Anillo de enfoque accesible en activo */
+.btn-group[aria-label="Secciones"] .btn-outline-primary.active:focus,
+.btn-group[aria-label="Secciones"] .btn-outline-primary:focus-visible {
+  box-shadow: 0 0 0 0.2rem rgba(206, 41, 41, 0.25);
+}

@@ -11,18 +11,21 @@
   }
 }
 
-
 /* ====== Aparición suave de la vista ====== */
 .fade-in {
   opacity: 0;
-  animation: fadeIn .30s ease-out forwards;
+  animation: fadeIn 0.3s ease-out forwards;
 }
-@keyframes fadeIn { to { opacity: 1; } }
+@keyframes fadeIn {
+  to {
+    opacity: 1;
+  }
+}
 
 /* ====== Variables y easing unificados ====== */
-:root{
+:root {
   --modal-dur: 220ms;
-  --modal-ease: cubic-bezier(.2,.7,.2,1);
+  --modal-ease: cubic-bezier(0.2, 0.7, 0.2, 1);
   --backdrop-op: 0.35;
 }
 
@@ -31,14 +34,15 @@
   opacity: 0;
   transition: opacity var(--modal-dur) var(--modal-ease);
 }
-.modal.show { opacity: 1; }
+.modal.show {
+  opacity: 1;
+}
 
 .modal.fade .modal-dialog {
   transform: translate3d(0, -12px, 0);
   opacity: 0;
-  transition:
-    transform var(--modal-dur) var(--modal-ease),
-    opacity   var(--modal-dur) var(--modal-ease);
+  transition: transform var(--modal-dur) var(--modal-ease),
+    opacity var(--modal-dur) var(--modal-ease);
   will-change: transform, opacity;
 }
 .modal.show .modal-dialog {
@@ -51,15 +55,16 @@
   opacity: 0;
   transition: opacity var(--modal-dur) var(--modal-ease);
 }
-.modal-backdrop.show { opacity: var(--backdrop-op); }
+.modal-backdrop.show {
+  opacity: var(--backdrop-op);
+}
 
 /* ====== Modal de imagen: zoom-in sutil ====== */
 #modalImagenAmpliada.modal.fade .modal-dialog {
-  transform: scale(.985);
+  transform: scale(0.985);
   opacity: 0;
-  transition:
-    transform var(--modal-dur) var(--modal-ease),
-    opacity   var(--modal-dur) var(--modal-ease);
+  transition: transform var(--modal-dur) var(--modal-ease),
+    opacity var(--modal-dur) var(--modal-ease);
 }
 #modalImagenAmpliada.modal.show .modal-dialog {
   transform: scale(1);
@@ -89,6 +94,46 @@ img.img-fluid.w-100.rounded {
     animation: none !important;
     transition: none !important;
   }
-  .modal.fade { opacity: 1; }
-  .modal.fade .modal-dialog { transform: none; opacity: 1; }
+  .modal.fade {
+    opacity: 1;
+  }
+  .modal.fade .modal-dialog {
+    transform: none;
+    opacity: 1;
+  }
+}
+
+/* === Tabs (Instalación / Soportes / Visitas) — Rojo empresarial === */
+.btn-group[aria-label="Secciones"] .btn {
+  flex: 1 1 0; /* mismo ancho para los tres */
+  transition: background-color 0.2s ease, color 0.2s ease,
+    border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.btn-group[aria-label="Secciones"] .btn-outline-primary {
+  color: #ce2929;
+  border-color: #ce2929;
+  background-color: #fff;
+}
+
+/* Hover y focus */
+.btn-group[aria-label="Secciones"] .btn-outline-primary:hover,
+.btn-group[aria-label="Secciones"] .btn-outline-primary:focus {
+  color: #fff;
+  background-color: #ce2929;
+  border-color: #ce2929;
+}
+
+/* Activo / seleccionado (usas [class.active]) */
+.btn-group[aria-label="Secciones"] .btn-outline-primary.active,
+.btn-group[aria-label="Secciones"] .btn-outline-primary:active {
+  color: #fff;
+  background-color: #ce2929;
+  border-color: #ce2929;
+}
+
+/* Anillo de enfoque accesible en activo */
+.btn-group[aria-label="Secciones"] .btn-outline-primary.active:focus,
+.btn-group[aria-label="Secciones"] .btn-outline-primary:focus-visible {
+  box-shadow: 0 0 0 0.2rem rgba(206, 41, 41, 0.25);
 }

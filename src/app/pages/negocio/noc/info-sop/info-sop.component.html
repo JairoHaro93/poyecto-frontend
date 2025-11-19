@@ -304,16 +304,44 @@
       </div>
     </div>
 
-    <!-- DIV INSTALACION-->
-    <div>
-      <h1 class="titulo-seccion">Instalación</h1>
+    <!-- BARRA HORIZONTAL DE TABS -->
+    <div class="container mt-3">
+      <div class="btn-group w-100" role="group" aria-label="Secciones">
+        <button
+          type="button"
+          class="btn btn-outline-primary"
+          [class.active]="activeTab === 'instalacion'"
+          (click)="setTab('instalacion')"
+        >
+          Instalación
+        </button>
+        <button
+          type="button"
+          class="btn btn-outline-primary"
+          [class.active]="activeTab === 'soportes'"
+          (click)="setTab('soportes')"
+        >
+          Soportes
+        </button>
+        <button
+          type="button"
+          class="btn btn-outline-primary"
+          [class.active]="activeTab === 'visitas'"
+          (click)="setTab('visitas')"
+        >
+          Visitas
+        </button>
+      </div>
     </div>
+
+    <!-- INSTALACIÓN -->
+    @if (activeTab === 'instalacion') {
 
     <div class="imagenes-grid row">
       @for (campo of ['fachada', 'router', 'ont', 'potencia', 'speedtest',
       'cable_1', 'cable_2', 'equipo_1', 'equipo_2', 'equipo_3']; track campo) {
-      @if ( imagenesInstalacion[campo] && imagenesInstalacion[campo].ruta !==
-      'null' && imagenesInstalacion[campo].url !== 'undefined/imagenes/null' ) {
+      @if (imagenesInstalacion[campo] && imagenesInstalacion[campo].ruta !==
+      'null' && imagenesInstalacion[campo].url !== 'undefined/imagenes/null') {
       <div class="col-6 col-md-3 col-lg-2">
         <div class="card shadow-sm border rounded">
           <div class="card-body p-2 text-center">
@@ -331,22 +359,78 @@
       } }
     </div>
 
-    <!-- DIV VISITAS -->
-    <div class="mt-4">
-      <h1 class="titulo-seccion">Visitas</h1>
-    </div>
+    }
 
-    @for (visita of imagenesVisitas; track visita.id) {
+    <!-- SOPORTES -->
+    @if (activeTab === 'soportes') { @if (soportesResueltos?.length) { @for (s
+    of soportesResueltos; track s.id) {
+    <div class="mb-4 border rounded shadow-sm p-2">
+      <div class="d-flex flex-wrap gap-2 align-items-center mb-2">
+        <span class="badge bg-secondary">
+          @switch (s?.reg_sop_opc) { @case (1) {
+          <span>Sin servicio de Internet</span>
+          } @case (2) {
+          <span> Internet Intermitente</span>
+          } @case (3) {
+          <span> Cambio de contraseña</span>
+          } @case (4) {
+          <span> Manipulacion de equipos</span>
+          } @case (5) {
+          <span> Sin Definir</span>
+          } }</span
+        >
+
+        <span class="badge bg-success">{{ s.reg_sop_estado }}</span>
+        <span class="ms-auto small text-muted">
+          {{
+            s.reg_sop_fecha_acepta || s.reg_sop_fecha
+              | date : "dd/MM/yyyy HH:mm"
+          }}
+        </span>
+      </div>
+
+      <div class="small mb-2">
+        <strong>Tel:</strong>
+        {{ s.reg_sop_tel || "—" }}
+        &nbsp;·&nbsp;
+        <strong>Registrado por:</strong>
+        {{
+          s.reg_sop_registrado_por_nombre || s.reg_sop_registrado_por_id || "—"
+        }}
+        &nbsp;·&nbsp;
+        <strong>Responsable NOC:</strong>
+        {{ s.reg_sop_aceptado_por_nombre || s.reg_sop_noc_id_acepta || "—" }}
+      </div>
+
+      @if (s.reg_sop_coment_cliente) {
+      <div class="mb-1">
+        <em>Comentario Cliente:</em> {{ s.reg_sop_coment_cliente }}
+      </div>
+      } @if (s.reg_sop_sol_det) {
+      <pre class="mb-0" style="white-space: pre-wrap">{{
+        s.reg_sop_sol_det
+      }}</pre>
+      }
+    </div>
+    } } @else {
+    <div class="text-muted text-center py-2">
+      Sin soportes resueltos para esta orden.
+    </div>
+    } }
+
+    <!-- VISITAS -->
+    @if (activeTab === 'visitas') { @for (visita of imagenesVisitas; track
+    visita.id) {
     <div class="mb-4 border rounded shadow-sm p-2">
       <div class="mb-2">
-        <!-- <strong>ID Visita:</strong> {{ visita.id }} <br /> -->
-
         <strong>Tipo:</strong> {{ visita.vis_tipo }} | <strong>Estado:</strong>
         {{ visita.vis_estado }} <br />
-        <strong>Comentario cliente:</strong> {{ visita.vis_coment_cliente
-        }}<br />
-        <strong>Diagnóstico:</strong> {{ visita.vis_diagnostico }} <br />
-        <strong>Detalle Solución:</strong> {{ visita.vis_solucion }} <br />
+        <strong>Comentario cliente:</strong>
+        {{ visita.vis_coment_cliente || "—" }}<br />
+        <strong>Diagnóstico:</strong> {{ visita.vis_diagnostico || "—" }}
+        <br />
+        <strong>Detalle Solución:</strong> {{ visita.vis_solucion || "—" }}
+        <br />
         <strong>Fecha resolución del problema:</strong>
         {{ visita.fecha_actualizacion | date : "dd/MM/yyyy HH:mm" }}
       </div>
@@ -372,105 +456,7 @@
         } }
       </div>
     </div>
-    }
-
-    <!-- info-sop.component.html -->
-    <section class="card shadow-sm mb-3">
-      <div class="card-header d-flex align-items-center gap-2">
-        <h6 class="mb-0">Soportes resueltos</h6>
-        <button
-          class="btn btn-sm btn-outline-secondary ms-auto"
-          (click)="recargar()"
-          [disabled]="loadingSoportes"
-        >
-          <i class="bi bi-arrow-clockwise"></i> Recargar
-        </button>
-      </div>
-
-      <div class="card-body p-2">
-        <ng-container
-          *ngIf="
-            !loadingSoportes && soportesResueltos.length;
-            else estadoSoportes
-          "
-        >
-          <div class="list-group">
-            <div
-              class="list-group-item py-2"
-              *ngFor="let s of soportesResueltos"
-            >
-              <div class="d-flex w-100 justify-content-between">
-                <strong>
-                  <span>
-                    @switch (s?.reg_sop_opc) { @case (1) {
-                    <span>Sin servicio de Internet</span>
-                    } @case (2) {
-                    <span> Internet Intermitente</span>
-                    } @case (3) {
-                    <span> Cambio de contraseña</span>
-                    } @case (4) {
-                    <span> Manipulacion de equipos</span>
-                    } @case (5) {
-                    <span> Sin Definir</span>
-                    } }
-                  </span></strong
-                >
-
-                <small>{{ s.reg_sop_fecha | date : "short" }}</small>
-              </div>
-
-              <div class="text-muted">
-                Tel:
-                <a [href]="'tel:' + s.reg_sop_tel">{{ s.reg_sop_tel }}</a> ·
-                Estado:
-                <span class="badge text-bg-success">{{
-                  s.reg_sop_estado
-                }}</span>
-              </div>
-
-              <div *ngIf="s.reg_sop_coment_cliente" class="mt-1">
-                <em>Comentantario Cliente:</em> {{ s.reg_sop_coment_cliente }}
-              </div>
-
-              <details class="mt-2">
-                <summary class="cursor-pointer">Ver solución</summary>
-                <pre class="mb-0 wrap-pre">{{ s.reg_sop_sol_det }}</pre>
-              </details>
-
-              <div class="small text-muted mt-1">
-                Aceptado:
-                {{
-                  s.reg_sop_fecha_acepta
-                    ? (s.reg_sop_fecha_acepta | date : "short")
-                    : "—"
-                }}
-                · NOC: {{ s.reg_sop_aceptado_por_nombre || "—" }}
-              </div>
-            </div>
-          </div>
-        </ng-container>
-
-        <ng-template #estadoSoportes>
-          <div *ngIf="loadingSoportes" class="text-center py-3">
-            <div class="spinner-border spinner-border-sm" role="status"></div>
-            <span class="ms-2">Cargando soportes...</span>
-          </div>
-
-          <div
-            *ngIf="
-              !loadingSoportes && !soportesResueltos.length && !errorSoportes
-            "
-            class="text-center text-muted py-3"
-          >
-            No hay soportes resueltos para esta orden.
-          </div>
-
-          <div *ngIf="errorSoportes" class="alert alert-danger py-2">
-            {{ errorSoportes }}
-          </div>
-        </ng-template>
-      </div>
-    </section>
+    } }
   </section>
 </div>
 }

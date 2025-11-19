@@ -182,10 +182,38 @@
         </tbody>
       </table>
 
-      <!-- DIV INSTALACION-->
-      <div>
-        <h1 class="titulo-seccion">Instalación</h1>
+      <!-- BARRA HORIZONTAL DE TABS -->
+      <div class="container mt-3">
+        <div class="btn-group w-100" role="group" aria-label="Secciones">
+          <button
+            type="button"
+            class="btn btn-outline-primary"
+            [class.active]="activeTab === 'instalacion'"
+            (click)="setTab('instalacion')"
+          >
+            Instalación
+          </button>
+          <button
+            type="button"
+            class="btn btn-outline-primary"
+            [class.active]="activeTab === 'soportes'"
+            (click)="setTab('soportes')"
+          >
+            Soportes
+          </button>
+          <button
+            type="button"
+            class="btn btn-outline-primary"
+            [class.active]="activeTab === 'visitas'"
+            (click)="setTab('visitas')"
+          >
+            Visitas
+          </button>
+        </div>
       </div>
+
+      <!-- INSTALACIÓN -->
+      @if (activeTab === 'instalacion') {
 
       <div class="imagenes-grid row">
         @for (campo of ['fachada', 'router', 'ont', 'potencia', 'speedtest',
@@ -210,18 +238,27 @@
         } }
       </div>
 
-      <!-- DIV SOPORTES RESUELTOS -->
-      <div class="mt-4">
-        <h1 class="titulo-seccion">Soportes resueltos</h1>
-      </div>
+      }
 
-      @if (soportesResueltos?.length) { @for (s of soportesResueltos; track
-      s.id) {
+      <!-- SOPORTES -->
+      @if (activeTab === 'soportes') { @if (soportesResueltos?.length) { @for (s
+      of soportesResueltos; track s.id) {
       <div class="mb-4 border rounded shadow-sm p-2">
         <div class="d-flex flex-wrap gap-2 align-items-center mb-2">
-          <span class="badge bg-secondary">{{
-            s.reg_sop_opc || "SOPORTE"
-          }}</span>
+          <span class="badge bg-secondary">
+            @switch (s?.reg_sop_opc) { @case (1) {
+            <span>Sin servicio de Internet</span>
+            } @case (2) {
+            <span> Internet Intermitente</span>
+            } @case (3) {
+            <span> Cambio de contraseña</span>
+            } @case (4) {
+            <span> Manipulacion de equipos</span>
+            } @case (5) {
+            <span> Sin Definir</span>
+            } }</span
+          >
+
           <span class="badge bg-success">{{ s.reg_sop_estado }}</span>
           <span class="ms-auto small text-muted">
             {{
@@ -238,47 +275,49 @@
           <strong>Registrado por:</strong>
           {{
             s.reg_sop_registrado_por_nombre ||
+              s.reg_sop_registrado_por_usuario ||
               s.reg_sop_registrado_por_id ||
               "—"
           }}
           &nbsp;·&nbsp;
-          <strong>Aceptado NOC:</strong>
-          {{ s.reg_sop_aceptado_por_nombre || "—" }}
+          <strong>Responsable NOC:</strong>
+          {{
+            s.reg_sop_noc_acepta_nombre ||
+              s.reg_sop_noc_acepta_usuario ||
+              s.reg_sop_noc_id_acepta ||
+              "—"
+          }}
         </div>
 
         @if (s.reg_sop_coment_cliente) {
         <div class="mb-1">
-          <em> Comentario Cliente:</em> {{ s.reg_sop_coment_cliente }}
+          <em>Comentario Cliente:</em> {{ s.reg_sop_coment_cliente }}
         </div>
         } @if (s.reg_sop_sol_det) {
-        <details class="mt-1">
-          <summary class="cursor-pointer">Ver solución</summary>
-          <pre class="mb-0" style="white-space: pre-wrap">{{
-            s.reg_sop_sol_det
-          }}</pre>
-        </details>
+        <pre class="mb-0" style="white-space: pre-wrap">{{
+          s.reg_sop_sol_det
+        }}</pre>
         }
       </div>
       } } @else {
       <div class="text-muted text-center py-2">
         Sin soportes resueltos para esta orden.
       </div>
-      }
+      } }
 
-      <!-- DIV VISITAS -->
-      <div class="mt-4">
-        <h1 class="titulo-seccion">Visitas</h1>
-      </div>
-
-      @for (visita of imagenesVisitas; track visita.id) {
+      <!-- VISITAS -->
+      @if (activeTab === 'visitas') { @for (visita of imagenesVisitas; track
+      visita.id) {
       <div class="mb-4 border rounded shadow-sm p-2">
         <div class="mb-2">
           <strong>Tipo:</strong> {{ visita.vis_tipo }} |
           <strong>Estado:</strong> {{ visita.vis_estado }} <br />
-          <strong>Comentario cliente:</strong> {{ visita.vis_coment_cliente
-          }}<br />
-          <strong>Diagnóstico:</strong> {{ visita.vis_diagnostico }} <br />
-          <strong>Detalle Solución:</strong> {{ visita.vis_solucion }} <br />
+          <strong>Comentario cliente:</strong>
+          {{ visita.vis_coment_cliente || "—" }}<br />
+          <strong>Diagnóstico:</strong> {{ visita.vis_diagnostico || "—" }}
+          <br />
+          <strong>Detalle Solución:</strong> {{ visita.vis_solucion || "—" }}
+          <br />
           <strong>Fecha resolución del problema:</strong>
           {{ visita.fecha_actualizacion | date : "dd/MM/yyyy HH:mm" }}
         </div>
@@ -304,7 +343,7 @@
           } }
         </div>
       </div>
-      }
+      } }
     </section>
   </main>
 </div>

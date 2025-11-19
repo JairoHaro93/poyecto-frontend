@@ -26,7 +26,8 @@ interface ClienteSugerencia {
   nombre_completo: string;
 }
 
-// Amplía Isoportes con los campos que devuelve el JOIN (para evitar errores en la plantilla)
+type TabKey = 'instalacion' | 'soportes' | 'visitas';
+
 type SoporteView = Isoportes & {
   reg_sop_registrado_por_nombre?: string;
   reg_sop_registrado_por_usuario?: string;
@@ -46,29 +47,36 @@ export class DatosclientesComponent {
   private imagesService = inject(ImagesService);
   private soportesService = inject(SoportesService);
 
-  // ===== Buscador (server-side, mínimo 2 letras) =====
+  activeTab: TabKey = 'instalacion';
+  setTab(tab: TabKey) {
+    this.activeTab = tab;
+  }
+
+  // Buscador
   queryCtrl = new FormControl<string>('', { nonNullable: true });
   sugerencias: ClienteSugerencia[] = [];
   showSugerencias = false;
   highlightedIndex = -1;
 
-  // Campos del formulario
+  // Campos
   busqueda: string = '';
   busquedaCedula: string = '';
 
-  // Datos completos del cliente y sus servicios
+  // Datos
   clienteSeleccionado: any = null;
   servicioSeleccionado: any = null;
   imagenSeleccionada: string | null = null;
 
-  // Imágenes de instalación (legacy map)
-  imagenesInstalacion: { [key: string]: { ruta: string; url: string } } = {};
-
-  // Imágenes de visitas (lista de visitas con su mapa de imágenes)
+  // Imágenes
+  imagenesInstalacion: Record<string, { ruta: string; url: string }> = {};
   imagenesVisitas: IVisConImagenes[] = [];
 
-  // Soportes resueltos (muestra nombres gracias al JOIN)
+  // Soportes resueltos
   soportesResueltos: SoporteView[] = [];
+
+  // Mostrar/Ocultar secciones (por defecto ocultas para evitar saturación)
+  showSoportes = false;
+  showVisitas = false;
 
   isReady = false;
 
@@ -100,7 +108,6 @@ export class DatosclientesComponent {
     this.isReady = true;
   }
 
-  // === Selección / navegación de sugerencias ===
   async seleccionarSugerencia(c: ClienteSugerencia) {
     this.queryCtrl.setValue(c.nombre_completo, { emitEvent: false });
     this.busqueda = c.nombre_completo;
@@ -113,7 +120,6 @@ export class DatosclientesComponent {
 
   onNombreKeydown(event: KeyboardEvent) {
     if (!this.showSugerencias || this.sugerencias.length === 0) return;
-
     switch (event.key) {
       case 'ArrowDown':
         this.highlightedIndex =
@@ -143,21 +149,18 @@ export class DatosclientesComponent {
   onNombreBlur() {
     setTimeout(() => (this.showSugerencias = false), 150);
   }
-
   onNombreFocus() {
     const v = (this.queryCtrl.value ?? '').trim();
     if (v.length >= 2 && this.sugerencias.length > 0)
       this.showSugerencias = true;
   }
 
-  // === Búsqueda directa por cédula ===
   async buscarClientePorCedula() {
     const cedulaBuscada = this.busquedaCedula.trim();
     if (!cedulaBuscada) return;
     await this.cargarDetalleClientePorCedula();
   }
 
-  // === Detalle del cliente ===
   async cargarDetalleClientePorCedula() {
     const cedula = this.busquedaCedula.trim();
     if (!cedula) return;
@@ -178,6 +181,8 @@ export class DatosclientesComponent {
         this.cargarImagenesInstalacion(ordIns);
         this.cargarImagenesVisitas(ordIns);
         await this.cargarSoportesResueltos(ordIns);
+
+        // Mantiene el estado de showSoportes/showVisitas (no se resetea)
       } else {
         this.clearClienteRelacionado();
       }
@@ -186,7 +191,6 @@ export class DatosclientesComponent {
     }
   }
 
-  // === Soportes resueltos por ORD_INS ===
   private async cargarSoportesResueltos(
     ordIns: string | number
   ): Promise<void> {
@@ -205,29 +209,23 @@ export class DatosclientesComponent {
     }
   }
 
-  // === Modal imagen ===
   abrirImagenModal(url: string) {
     this.imagenSeleccionada = url;
     const modal = new Modal(document.getElementById('modalImagenAmpliada')!);
     modal.show();
   }
 
-  // === Instalación -> nuevo backend (module='instalaciones') ===
   private cargarImagenesInstalacion(ordIns: string | number): void {
     const id = String(ordIns ?? '').trim();
     if (!id) return;
 
     this.imagesService.list('instalaciones', id).subscribe({
-      next: (items) => {
-        this.imagenesInstalacion = this.adaptInstToLegacyMap(items);
-      },
-      error: () => {
-        this.imagenesInstalacion = {};
-      },
+      next: (items) =>
+        (this.imagenesInstalacion = this.adaptInstToLegacyMap(items)),
+      error: () => (this.imagenesInstalacion = {}),
     });
   }
 
-  // === Visitas por ORD_INS -> nuevo backend (module='visitas') ===
   private async cargarImagenesVisitas(ord_Ins: string | number): Promise<void> {
     return new Promise<void>((resolve) => {
       const ord = String(ord_Ins ?? '').trim();
@@ -257,8 +255,6 @@ export class DatosclientesComponent {
     });
   }
 
-  // Convierte ImageItem[] => { [clave]: { url, ruta } }
-  // clave = tag o tag_position si trae position > 0
   private adaptInstToLegacyMap(
     items: ImageItem[]
   ): Record<string, { url: string; ruta: string }> {
@@ -269,7 +265,6 @@ export class DatosclientesComponent {
         typeof it.position === 'number' && it.position > 0
           ? `${base}_${it.position}`
           : base;
-
       const rel = (it as any).ruta_relativa as string | undefined;
       const url =
         it.url ??
@@ -277,18 +272,15 @@ export class DatosclientesComponent {
           ? `${environment.API_URL.replace(/\/api$/, '')}/imagenes/${rel}`
           : '');
       if (!url) continue;
-
       map[key] = { url, ruta: url };
     }
     return map;
   }
 
-  // Igual que en InfoSop: normaliza { img_1..img_4 } desde mapa/array
   private _adaptVisitaImgsToLegacyMap(
     imgs: Record<string, any> | ImageItem[] | undefined
   ): Record<string, { url: string; ruta: string }> {
     const out: Record<string, { url: string; ruta: string }> = {};
-
     if (imgs && !Array.isArray(imgs)) {
       for (const [k, v] of Object.entries(imgs)) {
         const url = (v as any)?.url || (v as any)?.ruta || '';
@@ -297,19 +289,16 @@ export class DatosclientesComponent {
       }
       return out;
     }
-
     const arr = Array.isArray(imgs) ? (imgs as ImageItem[]) : [];
     for (const it of arr) {
       const tag = (it.tag || 'img').trim();
       const pos = typeof it.position === 'number' ? it.position : 0;
-
       const key =
         tag === 'img' && pos > 0
           ? `img_${pos}`
           : pos > 0
           ? `${tag}_${pos}`
           : tag;
-
       const url =
         (it as any).url ||
         (it as any).ruta_absoluta ||
@@ -318,7 +307,6 @@ export class DatosclientesComponent {
       if (!url) continue;
       out[key] = { url, ruta: url };
     }
-
     return out;
   }
 
@@ -330,12 +318,23 @@ export class DatosclientesComponent {
       this.cargarImagenesInstalacion(ordIns);
       this.cargarImagenesVisitas(ordIns);
       void this.cargarSoportesResueltos(ordIns);
+      // Mantiene showSoportes/showVisitas como estén
     } else {
+      this.imagenesInstalacion = {};
+      this.imagenesVisitas = [];
       this.soportesResueltos = [];
     }
   }
 
-  // === Utilidades ===
+  // Mostrar / Ocultar secciones
+  toggleSoportesList() {
+    this.showSoportes = !this.showSoportes;
+  }
+  toggleVisitasList() {
+    this.showVisitas = !this.showVisitas;
+  }
+
+  // Utils
   private clearClienteRelacionado() {
     this.busqueda = '';
     this.busquedaCedula = '';

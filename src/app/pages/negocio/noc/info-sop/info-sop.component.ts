@@ -21,6 +21,8 @@ import { SoketService } from '../../../../services/socket_io/soket.service';
 import Swal from 'sweetalert2';
 import { environment } from '../../../../../environments/environment';
 
+type TabKey = 'instalacion' | 'soportes' | 'visitas';
+
 @Component({
   selector: 'app-info-sop',
   standalone: true,
@@ -29,6 +31,11 @@ import { environment } from '../../../../../environments/environment';
   styleUrls: ['./info-sop.component.css'],
 })
 export class InfoSopComponent implements OnInit, OnDestroy {
+  activeTab: TabKey = 'instalacion';
+  setTab(tab: TabKey) {
+    this.activeTab = tab;
+  }
+
   // ====== Inputs / estado ======
   @Input() ordIns!: number | string; // viene del detalle actual (opcional si hay ruta)
 
@@ -44,6 +51,17 @@ export class InfoSopComponent implements OnInit, OnDestroy {
   // Ruta
   id_sop: number | null = null;
   ord_Ins: string = '';
+
+  // Mostrar/Ocultar secciones (arrancan ocultas para no saturar)
+  showSoportes = false;
+  showVisitas = false;
+
+  toggleSoportesList() {
+    this.showSoportes = !this.showSoportes;
+  }
+  toggleVisitasList() {
+    this.showVisitas = !this.showVisitas;
+  }
 
   // Datos/servicios
   datosUsuario: any;
