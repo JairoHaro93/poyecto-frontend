@@ -1,0 +1,132 @@
+/* Contenedor principal */
+.turnos-container {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 0.75rem;
+}
+
+/* Título principal */
+.turnos-container h4 {
+  font-weight: 600;
+  letter-spacing: 0.03em;
+}
+
+/* Cards suaves dentro del componente */
+.turnos-container .card {
+  border-radius: 0.75rem;
+  border: 1px solid #e5e7eb;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.06);
+}
+
+.turnos-container .card-body {
+  padding: 0.85rem 1rem;
+}
+
+/* Selector múltiple de usuarios */
+.usuarios-select {
+  width: 100%;
+  min-height: 220px;
+  max-height: 320px;
+  border-radius: 0.5rem;
+}
+
+/* Info resumen a la derecha (textos pequeños) */
+.turnos-container .card .small.text-muted {
+  font-size: 0.78rem;
+}
+
+/* Botón principal de "Generar turnos" */
+.turnos-container .btn-success.btn-sm {
+  min-width: 140px;
+}
+
+/* Ajustes pequeños para inputs de fecha/hora en pantallas pequeñas */
+@media (max-width: 768px) {
+  .turnos-container {
+    padding: 0.5rem;
+  }
+
+  .turnos-container .card-body {
+    padding: 0.75rem;
+  }
+}
+
+/* ===============================
+   ZONA TABLA TIPO CALENDARIO
+   (Turnos programados)
+   =============================== */
+
+/* Contenedor scrollable horizontal */
+.horarios-table-wrapper {
+  overflow-x: auto;
+}
+
+.horarios-table-scroll {
+  min-width: 100%;
+}
+
+/* Tabla un poco más grande pero compacta */
+.horarios-table {
+  font-size: 0.82rem; /* antes 0.75rem */
+}
+
+/* Columna de usuario */
+.col-usuario {
+  min-width: 170px;
+  max-width: 200px;
+  white-space: nowrap;
+}
+
+/* Columnas de día */
+.col-dia {
+  min-width: 80px; /* un poco más ancho para que respire el contenido */
+  padding-left: 3px;
+  padding-right: 3px;
+}
+
+/* Celdas de estado / turno */
+.celda-estado {
+  vertical-align: middle;
+  padding: 3px;
+}
+
+/* Contenido dentro de la celda cuando hay turno (horario + botones) */
+.celda-turno-contenido {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px; /* un pelín más de espacio */
+}
+
+/* Texto del horario debajo */
+.horario-text {
+  margin-top: 1px;
+  font-size: 0.74rem; /* un poco más grande que antes */
+  white-space: nowrap;
+}
+
+/* Columna / celda que marca el día de hoy */
+.col-dia-hoy {
+  background-color: #e8f8e5;
+  border-top: 2px solid #16a34a;
+  border-bottom: 2px solid #16a34a;
+}
+
+/* Aseguramos que la línea verde se vea completa (incluye la última fila) */
+.horarios-table thead th.col-dia-hoy,
+.horarios-table tbody td.col-dia-hoy {
+  border-top: 2px solid #16a34a;
+  border-bottom: 2px solid #16a34a;
+}
+
+/* Botones mini para editar / eliminar dentro de la celda */
+.btn-xs {
+  padding: 0.18rem 0.4rem; /* antes más chiquito */
+  font-size: 0.72rem;
+  line-height: 1.1;
+}
+
+/* Grupo de botones dentro de la celda */
+.btn-group.btn-group-sm {
+  gap: 2px;
+}

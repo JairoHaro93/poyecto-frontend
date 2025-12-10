@@ -1,0 +1,114 @@
+/* Contenedor general */
+.horarios-container {
+  padding: 0.25rem;
+}
+
+/* Tabla scrollable horizontal */
+.horarios-table-wrapper {
+  overflow-x: auto;
+}
+
+.horarios-table-scroll {
+  min-width: 100%;
+}
+
+/* Tabla más compacta */
+.horarios-table {
+  font-size: 0.75rem; /* más pequeño que el default */
+}
+
+/* Columna de usuario más angosta */
+.col-usuario {
+  min-width: 170px;
+  max-width: 200px;
+  white-space: nowrap;
+}
+
+/* Columnas de día más delgadas */
+.col-dia {
+  min-width: 80px; /* antes teníamos 120px o similar */
+  padding-left: 2px;
+  padding-right: 2px;
+}
+
+/* Celdas de estado */
+.celda-estado {
+  vertical-align: middle;
+  padding: 2px;
+}
+
+/* Texto debajo del estado (horario) */
+.horario-text {
+  margin-top: 1px;
+  font-size: 0.68rem;
+  white-space: nowrap;
+}
+
+/* ==============================
+   DESTACAR DÍA DE HOY
+   ============================== */
+/* Columna del día de hoy (header y celdas) */
+.col-dia-hoy {
+  background-color: #e7f8e7;
+  border-top: 2px solid #28a745 !important;
+}
+
+/* 👇 Borde inferior solo en la última fila de esa columna */
+.horarios-table tbody tr:last-child td.col-dia-hoy {
+  border-bottom: 2px solid #28a745 !important;
+}
+
+/* ==============================
+   ESTADOS DE ASISTENCIA (PILLS)
+   ============================== */
+
+.celda-estado > div[class^="estado-"],
+.celda-estado > div[class*=" estado-"] {
+  display: inline-block;
+  padding: 1px 4px; /* más delgado */
+  border-radius: 999px;
+  font-size: 0.65rem; /* más pequeño */
+  font-weight: 600;
+}
+
+/* Sin turno asignado */
+.estado-sin-turno {
+  background-color: #f0f0f0;
+  color: #666;
+}
+
+/* Programado sin marca */
+.estado-programado {
+  background-color: #e3f2fd;
+  color: #0d47a1;
+}
+
+/* OK */
+.estado-ok {
+  background-color: #d4edda;
+  color: #155724;
+}
+
+/* ATRASO */
+.estado-atraso {
+  background-color: #fff3cd;
+  color: #856404;
+}
+
+/* FALTA */
+.estado-falta {
+  background-color: #f8d7da;
+  color: #721c24;
+}
+
+/* INCOMPLETO */
+.estado-incompleto {
+  background-color: #fbe9e7;
+  color: #bf360c;
+}
+
+/* SOLO ENTRADA / SOLO SALIDA */
+.estado-parcial {
+  background-color: #ede7f6;
+  color: #4527a0;
+}

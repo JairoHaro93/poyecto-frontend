@@ -1,18 +1,117 @@
-.flex {
-  display: flex;
-  flex-direction: column;
-}
+/* src/app/pages/.../horarios/horarios.component.css */
 
-aside {
-  width: 250px;
-}
-section {
+.horarios-container {
+  font-size: 0.9rem;
   width: 100%;
-  height: 100%;
+  max-width: 100%;
+  overflow-x: hidden; /* evita que se salga del contenedor y se meta bajo el sidebar */
 }
 
-@media (min-width: 800px) {
-  .flex {
-    flex-direction: row;
+/* Wrapper general de la tabla */
+.horarios-table-wrapper {
+  overflow: hidden;
+}
+
+/* Zona scrollable de la tabla */
+.horarios-table-scroll {
+  max-height: 60vh;
+  overflow-y: auto;
+  overflow-x: auto; /* 👈 importante: scroll horizontal si se pasa de ancho */
+}
+
+/* Encabezados pegados arriba */
+.horarios-table thead th {
+  position: sticky;
+  top: 0;
+  background: #f8f9fa;
+  z-index: 2;
+}
+
+/* Columna de usuario más compacta y con salto de línea */
+.col-usuario {
+  min-width: 160px; /* antes 220px */
+  max-width: 200px;
+  white-space: normal; /* antes nowrap: ahora permite romper línea */
+  word-wrap: break-word;
+}
+
+/* Columnas de día más angostas */
+.col-dia {
+  min-width: 90px; /* antes 110px */
+}
+
+/* Celda del estado */
+.celda-estado {
+  padding: 0.25rem;
+}
+
+.celda-estado > div {
+  margin-bottom: 0.1rem;
+}
+
+/* Estados visuales */
+
+.estado-sin-turno,
+.estado-programado,
+.estado-ok,
+.estado-atraso,
+.estado-falta,
+.estado-incompleto,
+.estado-parcial {
+  display: inline-block;
+  padding: 2px 6px;
+  border-radius: 999px;
+  font-size: 0.7rem;
+}
+
+.estado-sin-turno {
+  background-color: #e9ecef;
+  color: #6c757d;
+}
+
+.estado-programado {
+  background-color: #cff4fc;
+  color: #055160;
+}
+
+.estado-ok {
+  background-color: #d1e7dd;
+  color: #0f5132;
+}
+
+.estado-atraso {
+  background-color: #fff3cd;
+  color: #664d03;
+}
+
+.estado-falta {
+  background-color: #f8d7da;
+  color: #842029;
+}
+
+.estado-incompleto,
+.estado-parcial {
+  background-color: #e2e3ff;
+  color: #343a40;
+}
+
+.horario-text {
+  font-size: 0.7rem;
+  color: #6c757d;
+}
+
+/* 🔹 Ajustes para pantallas pequeñas: reducir un poco más */
+@media (max-width: 992px) {
+  .col-usuario {
+    min-width: 140px;
+    max-width: 180px;
+  }
+
+  .col-dia {
+    min-width: 80px;
+  }
+
+  .horarios-container {
+    font-size: 0.8rem;
   }
 }

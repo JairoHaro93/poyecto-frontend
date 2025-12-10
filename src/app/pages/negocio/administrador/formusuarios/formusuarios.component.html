@@ -4,13 +4,13 @@
 <div class="skeleton-block"></div>
 } @else {
 <div class="fade-in">
-  <!-- ======= TU CONTENIDO ORIGINAL (SIN CAMBIOS) ======= -->
   <main>
     <section class="container mt-3">
       <div class="shadow p-5">
         <h2>{{ tipo }} Usuario</h2>
+
         <form [formGroup]="usuarioForm" (ngSubmit)="getDataForm()">
-          <!-- VALIDADOR NOMBRE -->
+          <!-- NOMBRES -->
           <div class="my-3">
             <label class="form-label" for="nombre">Nombres</label>
             <input
@@ -22,15 +22,16 @@
               style="text-transform: uppercase"
               (input)="convertToUppercase('nombre')"
             />
-            @if(checkControl('nombre','required')){
+            @if (checkControl('nombre','required')) {
             <p class="error">El campo es requerido</p>
-            } @if( checkControl('nombre','minlength')){
-            <p class="error">minimo 3 caracteres requerido</p>
+            } @if (checkControl('nombre','minlength')) {
+            <p class="error">Mínimo 3 caracteres requeridos</p>
             }
           </div>
-          <!-- VALIDADOR APELLIDOS -->
+
+          <!-- APELLIDOS -->
           <div class="my-3">
-            <label class="form-label" for="apellidos">Apellidos</label>
+            <label class="form-label" for="apellido">Apellidos</label>
             <input
               class="form-control"
               type="text"
@@ -40,15 +41,16 @@
               style="text-transform: uppercase"
               (input)="convertToUppercase('apellido')"
             />
-            @if(checkControl('apellido','required')){
+            @if (checkControl('apellido','required')) {
             <p class="error">El campo es requerido</p>
-            } @if( checkControl('apellido','minlength')){
-            <p class="error">minimo 3 caracteres requerido</p>
+            } @if (checkControl('apellido','minlength')) {
+            <p class="error">Mínimo 3 caracteres requeridos</p>
             }
           </div>
-          <!-- VALIDADOR CI -->
+
+          <!-- CÉDULA -->
           <div class="my-3">
-            <label class="form-label" for="telefono">Ci:</label>
+            <label class="form-label" for="ci">Ci</label>
             <input
               class="form-control"
               type="text"
@@ -56,17 +58,18 @@
               formControlName="ci"
               placeholder="INGRESE LA CÉDULA"
             />
-            @if(checkControl('ci','required')){
+            @if (checkControl('ci','required')) {
             <p class="error">El campo es requerido</p>
-            } @if( checkControl('ci','civalidator')){
+            } @if (checkControl('ci','civalidator')) {
             <p class="error">
-              {{usuarioForm.get('ci')?.errors?.['civalidator']}}
+              {{ usuarioForm.get('ci')?.errors?.['civalidator'] }}
             </p>
             }
           </div>
-          <!-- VALIDADOR USUARIO -->
+
+          <!-- USUARIO -->
           <div class="my-3">
-            <label class="form-label" for="email">Usuario:</label>
+            <label class="form-label" for="usuario">Usuario</label>
             <input
               class="form-control"
               type="text"
@@ -74,15 +77,16 @@
               formControlName="usuario"
               placeholder="INGRESE EL USUARIO"
             />
-            @if(checkControl('usuario','required')){
+            @if (checkControl('usuario','required')) {
             <p class="error">El campo es requerido</p>
-            } @if( checkControl('usuario','minlength')){
-            <p class="error">minimo 3 caracteres requerido</p>
+            } @if (checkControl('usuario','minlength')) {
+            <p class="error">Mínimo 3 caracteres requeridos</p>
             }
           </div>
-          <!-- VALIDADOR PASSWORD -->
+
+          <!-- PASSWORD -->
           <div class="my-3">
-            <label class="form-label" for="salario">Password</label>
+            <label class="form-label" for="password">Password</label>
             <input
               class="form-control"
               type="password"
@@ -90,45 +94,48 @@
               formControlName="password"
               placeholder="INGRESE EL PASSWORD"
             />
-            @if(checkControl('password','required')){
+            @if (checkControl('password','required')) {
             <p class="error">El campo es requerido</p>
-            } @if( checkControl('password','minlength')){
-            <p class="error">minimo 6 caracteres requerido</p>
+            } @if (checkControl('password','minlength')) {
+            <p class="error">Mínimo 6 caracteres requeridos</p>
             }
           </div>
 
+          <!-- FECHA NACIMIENTO -->
           <div class="my-3">
-            <label class="form-label" for="fecha_nac"
-              >Fecha de nacimiento</label
-            >
+            <label class="form-label" for="fecha_nac">
+              Fecha de nacimiento
+            </label>
             <input
               class="form-control"
               type="date"
               id="fecha_nac"
               formControlName="fecha_nac"
-              placeholder="Ingese el fecha nacimiento"
+              placeholder="Ingrese fecha de nacimiento"
             />
-            @if(checkControl('fecha_nac','required')){
+            @if (checkControl('fecha_nac','required')) {
             <p class="error">El campo es requerido</p>
             }
           </div>
 
+          <!-- FECHA CONTRATACIÓN -->
           <div class="my-3">
-            <label class="form-label" for="fecha_cont"
-              >Fecha de contratacion</label
-            >
+            <label class="form-label" for="fecha_cont">
+              Fecha de contratación
+            </label>
             <input
               class="form-control"
               type="date"
               id="fecha_cont"
               formControlName="fecha_cont"
-              placeholder="Ingese fecha contratacion"
+              placeholder="Ingrese fecha de contratación"
             />
-            @if(checkControl('fecha_cont','required')){
+            @if (checkControl('fecha_cont','required')) {
             <p class="error">El campo es requerido</p>
             }
           </div>
 
+          <!-- GÉNERO -->
           <div class="my-3">
             <label class="form-label">Género</label>
             <div class="d-flex justify-content-around">
@@ -154,27 +161,66 @@
               </label>
             </div>
           </div>
-          <!----------------------- TABLA FUNCIONES ------------------------------>
-          <table class="table border border-1">
+
+          <!-- SUCURSAL -->
+          <div class="my-3">
+            <label class="form-label" for="sucursal_id">Sucursal</label>
+            <select
+              class="form-select"
+              id="sucursal_id"
+              formControlName="sucursal_id"
+            >
+              <option [ngValue]="null" disabled>
+                -- Seleccione sucursal --
+              </option>
+              @for (s of sucursales; track s.id) {
+              <option [ngValue]="s.id">{{ s.nombre }} ({{ s.codigo }})</option>
+              }
+            </select>
+            @if (checkControl('sucursal_id','required')) {
+            <p class="error">La sucursal es requerida</p>
+            }
+          </div>
+
+          <!-- DEPARTAMENTO -->
+          <div class="my-3">
+            <label class="form-label" for="departamento_id">Departamento</label>
+            <select
+              class="form-select"
+              id="departamento_id"
+              formControlName="departamento_id"
+            >
+              <option [ngValue]="null" disabled>
+                -- Seleccione departamento --
+              </option>
+              @for (d of departamentos; track d.id) {
+              <option [ngValue]="d.id">{{ d.nombre }} ({{ d.codigo }})</option>
+              }
+            </select>
+            @if (checkControl('departamento_id','required')) {
+            <p class="error">El departamento es requerido</p>
+            }
+          </div>
+
+          <!-- TABLA FUNCIONES / ROLES -->
+          <table class="table border border-1 mt-4">
             <thead>
               <tr>
-                <!-- Encabezados basados en los roles -->
-                @for (rol of ['Administrador', 'Bodega', 'Noc', 'Clientes',
-                'Técnico','Recuperacion Cartera']; track $index) {
+                @for (rol of
+                ['Administrador','Bodega','Noc','Clientes','Técnico','Recuperacion
+                Cartera']; track $index) {
                 <th>{{ rol }}</th>
                 }
               </tr>
             </thead>
             <tbody>
               <tr>
-                <!-- Iteración de roles -->
-                @for (rol of ['Administrador', 'Bodega', 'Noc', 'Clientes',
-                'Técnico','Recuperacion Cartera']; track $index) {
+                @for (rol of
+                ['Administrador','Bodega','Noc','Clientes','Técnico','Recuperacion
+                Cartera']; track $index) {
                 <td>
-                  <!-- Iteración de funcionalidades -->
-                  @for (funcion of arrfunciones; track $index) {
-                  <!-- Mostrar funcionalidades que comiencen con la inicial del rol -->
-                  @if (funcion.nombre.startsWith(rol[0])) {
+                  @for (funcion of arrfunciones; track $index) { @if
+                  (funcion.nombre.startsWith(rol[0])) {
                   <p>
                     {{ funcion.nombre.slice(1) }}
                     <input
@@ -190,9 +236,8 @@
             </tbody>
           </table>
 
-          <!-- BUTONS ///////////////////////// -->
-
-          <div class="d-flex justify-content-around">
+          <!-- BOTONES -->
+          <div class="d-flex justify-content-around mt-4">
             <input
               type="submit"
               [value]="tipo"
@@ -201,8 +246,8 @@
             />
             <input
               type="button"
-              value="Cancelar "
-              class="btn btn-danger"
+              value="Cancelar"
+              class="btn btn-secondary"
               [routerLink]="['/home', 'administrador', 'usuarios']"
             />
           </div>

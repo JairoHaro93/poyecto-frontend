@@ -63,9 +63,18 @@ export class SoketService {
   }
 
   emit(event: string, data?: any): void {
-    if (this.socket?.connected) {
-      this.socket.emit(event, data);
+    if (!this.socket) {
+      console.warn(
+        '⚠️ emit(): socket no inicializado para evento',
+        event,
+        data
+      );
+      return;
     }
+
+    // ❗ Importante: no comprobamos this.socket.connected.
+    // Socket.IO guarda en cola los eventos hasta que conecta.
+    this.socket.emit(event, data);
   }
 
   on(event: string, callback: (...args: any[]) => void): void {

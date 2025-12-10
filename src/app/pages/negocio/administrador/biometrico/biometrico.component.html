@@ -1,0 +1,294 @@
+<div class="timbres-container">
+  <h4 class="mb-3">Timbres biométricos</h4>
+
+  @if (cargandoTimbres) {
+  <div class="text-muted small mb-2">Cargando timbres registrados...</div>
+  }
+
+  <table class="table table-sm align-middle table-hover">
+    <thead class="table-light">
+      <tr>
+        <th>Lector</th>
+        <th>Estado</th>
+        <th>Modo</th>
+        <th>Último ping</th>
+        <th>Sucursal</th>
+        <th>Tipo</th>
+        <th style="width: 1%">Acciones</th>
+      </tr>
+    </thead>
+
+    <tbody>
+      @for (t of timbres; track t.lector_codigo) {
+      <tr>
+        <td>
+          <div class="fw-semibold">
+            {{ t.nombre || t.lector_codigo }}
+          </div>
+
+          @if (t.nombre) {
+          <div class="small text-muted">
+            {{ t.lector_codigo }}
+          </div>
+          }
+        </td>
+
+        <td>
+          <span class="dot" [ngClass]="t.online ? 'online' : 'offline'"></span>
+          <span>{{ t.online ? "Conectado" : "Desconectado" }}</span>
+        </td>
+
+        <td>
+          <span
+            class="badge"
+            [ngClass]="
+              t.modo_actual === 'ENROLAMIENTO'
+                ? 'bg-warning text-dark'
+                : 'bg-secondary'
+            "
+          >
+            {{ t.modo_actual }}
+          </span>
+        </td>
+
+        <td>{{ getUltimoPing(t) }}</td>
+
+        <td>{{ t.sucursal || "—" }}</td>
+        <td>{{ t.tipo || "—" }}</td>
+
+        <td class="text-end">
+          <div class="btn-group btn-group-sm">
+            <button
+              type="button"
+              class="btn btn-outline-success"
+              (click)="onClickVerUsuariosTimbre(t)"
+            >
+              Usuarios
+            </button>
+
+            <button
+              type="button"
+              class="btn"
+              [ngClass]="
+                t.modo_actual === 'ENROLAMIENTO'
+                  ? 'btn-outline-danger'
+                  : 'btn-outline-primary'
+              "
+              [disabled]="!t.online"
+              (click)="onClickEnrolar(t)"
+            >
+              {{
+                t.modo_actual === "ENROLAMIENTO"
+                  ? "Salir de enrolamiento"
+                  : "Enrolar"
+              }}
+            </button>
+          </div>
+        </td>
+      </tr>
+      } @if (timbres.length === 0 && !cargandoTimbres) {
+      <tr>
+        <td colspan="7" class="text-center text-muted py-3">
+          No hay timbres registrados aún.
+        </td>
+      </tr>
+      }
+    </tbody>
+  </table>
+
+  <!-- OVERLAY: SELECTOR DE USUARIO PARA ENROLAMIENTO -->
+  @if (selectorVisible && timbreSeleccionado) {
+  <div class="selector-overlay">
+    <div class="selector-card">
+      <!-- Header modal -->
+      <div class="d-flex justify-content-between align-items-start mb-3">
+        <div>
+          <h5 class="mb-1">Enrolar usuario</h5>
+          <div class="small text-muted">
+            {{ timbreSeleccionado.nombre || timbreSeleccionado.lector_codigo }}
+            • Sucursal: {{ timbreSeleccionado.sucursal || "Sin sucursal" }}
+          </div>
+          <div class="small">
+            <span
+              class="dot me-1"
+              [ngClass]="timbreSeleccionado.online ? 'online' : 'offline'"
+            ></span>
+            <span class="me-2">
+              {{ timbreSeleccionado.online ? "Conectado" : "Desconectado" }}
+            </span>
+            <span class="badge bg-light text-dark">
+              Modo: {{ timbreSeleccionado.modo_actual }}
+            </span>
+          </div>
+        </div>
+
+        <button
+          type="button"
+          class="btn-close"
+          aria-label="Cerrar"
+          [disabled]="timbreSeleccionado.enrolando"
+          (click)="cerrarSelector()"
+        ></button>
+      </div>
+
+      <!-- Cuerpo modal -->
+      @if (timbreSeleccionado.enrolando) {
+      <div class="alert alert-info py-2 mb-3">
+        <strong>Enrolando huellas...</strong>
+        <div class="small">
+          Pida al usuario que coloque su dedo dos veces en el lector.
+        </div>
+      </div>
+      } @else { @if (cargandoUsuarios) {
+      <div class="text-muted small mb-2">Cargando usuarios...</div>
+      }
+
+      <div class="p-2 mb-3 rounded border bg-light small">
+        <div class="fw-semibold mb-1">Instrucciones</div>
+        <ol class="mb-0 ps-3">
+          <li>Seleccione el usuario que se va a enrolar.</li>
+          <li>Presione <strong>Iniciar enrolamiento</strong>.</li>
+          <li>El usuario deberá colocar su dedo dos veces.</li>
+        </ol>
+      </div>
+
+      <div class="mb-2">
+        <label class="form-label mb-1">Seleccione usuario:</label>
+        <select
+          class="form-select form-select-sm"
+          [(ngModel)]="usuarioSeleccionadoId"
+        >
+          <option [ngValue]="null" disabled>-- Seleccione --</option>
+
+          @for (u of usuarios; track u.id) {
+          <option [ngValue]="u.id">
+            {{ u.nombre_completo }} (ID: {{ u.id }})
+          </option>
+          }
+        </select>
+      </div>
+      }
+
+      <!-- Footer modal -->
+      <div class="d-flex justify-content-end gap-2 mt-3 pt-2 border-top">
+        <button
+          type="button"
+          class="btn btn-sm btn-outline-secondary"
+          [disabled]="timbreSeleccionado.enrolando"
+          (click)="cerrarSelector()"
+        >
+          Cancelar
+        </button>
+
+        @if (!timbreSeleccionado.enrolando) {
+        <button
+          type="button"
+          class="btn btn-sm btn-primary"
+          [disabled]="!usuarioSeleccionadoId"
+          (click)="confirmarEnrolamiento()"
+        >
+          Iniciar enrolamiento
+        </button>
+        }
+      </div>
+    </div>
+  </div>
+  }
+
+  <!-- OVERLAY: GESTIÓN DE USUARIOS CON HUELLA EN EL TIMBRE -->
+  @if (huellasVisible && timbreHuellasSeleccionado) {
+  <div class="selector-overlay">
+    <div class="selector-card">
+      <!-- Header modal -->
+      <div class="d-flex justify-content-between align-items-start mb-3">
+        <div>
+          <h5 class="mb-1">Usuarios con huella</h5>
+          <div class="small text-muted">
+            {{
+              timbreHuellasSeleccionado.nombre ||
+                timbreHuellasSeleccionado.lector_codigo
+            }}
+            • Sucursal:
+            {{ timbreHuellasSeleccionado.sucursal || "Sin sucursal" }}
+          </div>
+          <div class="small">
+            Lector: {{ timbreHuellasSeleccionado.lector_codigo }}
+          </div>
+        </div>
+
+        <button
+          type="button"
+          class="btn-close"
+          aria-label="Cerrar"
+          (click)="cerrarHuellas()"
+        ></button>
+      </div>
+
+      <!-- Cuerpo modal -->
+      @if (cargandoHuellas) {
+      <div class="text-muted small mb-2">
+        Cargando usuarios con huella en este timbre...
+      </div>
+      } @else { @if (usuariosEnTimbre.length === 0) {
+      <div class="alert alert-info py-2">
+        No hay usuarios con huellas activas en este timbre.
+      </div>
+      } @else {
+
+      <div
+        class="mb-2"
+        style="max-height: 340px; overflow-y: auto; border-radius: 0.25rem"
+      >
+        <table class="table table-sm align-middle mb-0">
+          <thead class="table-light sticky-top">
+            <tr>
+              <th>Usuario</th>
+              <th>Login</th>
+              <th>Cédula</th>
+              <th>Huellas</th>
+              <th style="width: 1%">Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (u of usuariosEnTimbre; track u.usuario_id) {
+            <tr>
+              <td>{{ u.nombre_completo }}</td>
+              <td>{{ u.usuario_usuario }}</td>
+              <td>{{ u.usuario_cedula || "—" }}</td>
+              <td>
+                @for (h of u.huellas; track h.huella_id) {
+                <span class="badge bg-secondary me-1 mb-1 d-inline-block">
+                  ID {{ h.finger_id }} (slot {{ h.slot }})
+                </span>
+                }
+              </td>
+              <td class="text-end">
+                <button
+                  type="button"
+                  class="btn btn-sm btn-outline-danger"
+                  (click)="onClickEliminarUsuarioDeTimbre(u)"
+                >
+                  Eliminar
+                </button>
+              </td>
+            </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+      } }
+
+      <!-- Footer modal -->
+      <div class="d-flex justify-content-end mt-3 pt-2 border-top">
+        <button
+          type="button"
+          class="btn btn-sm btn-outline-secondary"
+          (click)="cerrarHuellas()"
+        >
+          Cerrar
+        </button>
+      </div>
+    </div>
+  </div>
+  }
+</div>

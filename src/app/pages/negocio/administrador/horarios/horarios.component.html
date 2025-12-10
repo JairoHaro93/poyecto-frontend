@@ -1,0 +1,232 @@
+<!-- src/app/pages/.../horarios/horarios.component.html -->
+<section class="container mt-3">
+  <div class="horarios-container">
+    <h4 class="mb-3">Horarios y asistencia</h4>
+
+    <!-- BARRA SUPERIOR: SUCURSAL + DEPARTAMENTO -->
+    <div
+      class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-2 small text-muted"
+    >
+      <div class="mb-1 mb-md-0">
+        Sucursal:
+        <strong>{{ filtroSucursal || "Sin sucursal" }}</strong>
+      </div>
+
+      <div>
+        Departamento: @if (!esJefeSucursal) {
+        <strong>
+          {{ jefeActual?.departamento_nombre || "Sin departamento asignado" }}
+          @if (jefeActual?.departamento_codigo) { ({{
+            jefeActual?.departamento_codigo
+          }}) }
+        </strong>
+        } @else {
+        <select
+          class="form-select form-select-sm d-inline-block w-auto ms-1"
+          [(ngModel)]="departamentoSeleccionadoId"
+          (ngModelChange)="onCambioDepartamento()"
+        >
+          <option [ngValue]="null">-- Seleccione departamento --</option>
+          @for (d of departamentosSucursal; track d.id) {
+          <option [ngValue]="d.id">{{ d.nombre }} ({{ d.codigo }})</option>
+          }
+        </select>
+        }
+      </div>
+    </div>
+
+    <!-- FILA CON DOS CARDS: IZQ (TRABAJADORES) / DER (FECHAS VISUALES) -->
+    <div class="row g-3 mb-3">
+      <!-- CARD IZQUIERDO: TRABAJADORES -->
+      <div class="col-md-4">
+        <div class="card h-100">
+          <div class="card-body">
+            <h6 class="mb-2">Trabajadores del equipo</h6>
+            <div class="mb-2">
+              <label class="form-label mb-1">Filtrar por nombre</label>
+              <input
+                type="text"
+                class="form-control form-control-sm"
+                placeholder="Buscar trabajador..."
+                [(ngModel)]="filtroTextoUsuario"
+              />
+            </div>
+            <div class="small text-muted">
+              Total en equipo:
+              <strong>{{ usuariosEquipo.length }}</strong> · Mostrando:
+              <strong>{{ usuariosFiltrados.length }}</strong>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- CARD DERECHO: RANGO DE FECHAS VISUAL (MÁX. 6 DÍAS) -->
+      <div class="col-md-8">
+        <div class="card h-100">
+          <div class="card-body">
+            <h6 class="mb-2">Rango de fechas (vista)</h6>
+            <div class="row g-3 align-items-end">
+              <div class="col-md-4 col-6">
+                <label class="form-label">Desde</label>
+                <input
+                  type="date"
+                  class="form-control form-control-sm"
+                  [(ngModel)]="fechaDesde"
+                  (ngModelChange)="onCambioFechaDesde($event)"
+                />
+              </div>
+              <div class="col-md-4 col-6">
+                <label class="form-label">Hasta</label>
+                <input
+                  type="date"
+                  class="form-control form-control-sm"
+                  [(ngModel)]="fechaHasta"
+                  (ngModelChange)="onCambioFechaHasta($event)"
+                />
+              </div>
+
+              <div class="col-md-4 mt-2 mt-md-0 text-md-end">
+                <div class="small text-muted">
+                  Mostrando
+                  <strong>{{ diasTotales }}</strong> día{{
+                    diasTotales === 1 ? "" : "s"
+                  }}
+                </div>
+                <div class="small text-muted">(máx. 6 días en el rango)</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- NUEVO BLOQUE: REPORTE DE ASISTENCIA (EXCEL) -->
+    <div class="card mb-3">
+      <div class="card-body">
+        <h6 class="mb-2">Reporte de asistencia (Excel)</h6>
+
+        <div class="row g-3 align-items-end">
+          <!-- Selección de colaborador -->
+          <div class="col-md-4">
+            <label class="form-label">Colaborador</label>
+            <select
+              class="form-select form-select-sm"
+              [(ngModel)]="reporteUsuarioId"
+            >
+              <option [ngValue]="null">-- Seleccione trabajador --</option>
+              @for (u of usuariosEquipo; track u.id) {
+              <option [ngValue]="u.id">{{ u.nombre_completo }}</option>
+              }
+            </select>
+          </div>
+
+          <!-- Rango de fechas del reporte -->
+          <div class="col-md-3 col-6">
+            <label class="form-label">Desde (reporte)</label>
+            <input
+              type="date"
+              class="form-control form-control-sm"
+              [(ngModel)]="reporteFechaDesde"
+              (ngModelChange)="onCambioFechaDesdeReporte($event)"
+            />
+          </div>
+          <div class="col-md-3 col-6">
+            <label class="form-label">Hasta (reporte)</label>
+            <input
+              type="date"
+              class="form-control form-control-sm"
+              [(ngModel)]="reporteFechaHasta"
+              (ngModelChange)="onCambioFechaHastaReporte($event)"
+            />
+          </div>
+
+          <!-- Info rango + botón -->
+          <div class="col-md-2 mt-2 mt-md-0 text-md-end">
+            <div class="small text-muted mb-1">
+              Rango reporte:
+              <strong>{{ reporteDiasTotales }}</strong> día{{
+                reporteDiasTotales === 1 ? "" : "s"
+              }}
+            </div>
+            <div class="small text-muted">(máx. 31 días)</div>
+
+            <button
+              type="button"
+              class="btn btn-sm btn-success mt-2"
+              [disabled]="!puedeGenerarReporte() || generandoReporte"
+              (click)="onGenerarReporte()"
+            >
+              {{ generandoReporte ? "Generando..." : "Generar Excel" }}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- BLOQUE MATRIZ HORARIOS -->
+    <div class="card">
+      <div class="card-body horarios-table-wrapper">
+        @if (cargandoUsuarios || cargandoTurnos) {
+        <div class="text-center my-3">
+          <div class="spinner-border spinner-border-sm"></div>
+          <div class="small text-muted mt-2">Cargando información...</div>
+        </div>
+        } @else if (!usuariosFiltrados.length || !diasVentana.length) {
+        <div class="text-center my-3 small text-muted">
+          No hay datos para mostrar. Verifique el departamento y el rango de
+          fechas.
+        </div>
+        } @else {
+        <div class="table-responsive horarios-table-scroll">
+          <table class="table table-sm align-middle horarios-table">
+            <thead>
+              <tr>
+                <th class="col-usuario">Trabajador</th>
+                @for (dia of diasVentana; track dia.fecha) {
+                <th
+                  class="text-center col-dia"
+                  [ngClass]="{ 'col-dia-hoy': esHoy(dia.fecha) }"
+                >
+                  <div>{{ dia.etiqueta }}</div>
+                  <!-- Fecha larga solo en pantallas grandes -->
+                  <div class="small text-muted d-none d-xl-block">
+                    {{ dia.fecha }}
+                  </div>
+                </th>
+                }
+              </tr>
+            </thead>
+
+            <tbody>
+              @for (u of usuariosFiltrados; track u.id) {
+              <tr>
+                <!-- Columna usuario -->
+                <td class="col-usuario">
+                  <strong>{{ u.nombre_completo }}</strong>
+                </td>
+
+                <!-- Columnas por día -->
+                @for (dia of diasVentana; track dia.fecha) {
+                <td
+                  class="text-center celda-estado"
+                  [ngClass]="{ 'col-dia-hoy': esHoy(dia.fecha) }"
+                >
+                  @let turno = getTurno(u.id, dia.fecha);
+                  <div [ngClass]="estadoClass(turno)">
+                    {{ estadoLabel(turno) }}
+                  </div>
+                  <div class="small horario-text">
+                    {{ rangoHorario(turno) }}
+                  </div>
+                </td>
+                }
+              </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+        }
+      </div>
+    </div>
+  </div>
+</section>

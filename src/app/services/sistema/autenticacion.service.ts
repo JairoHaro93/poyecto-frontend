@@ -104,4 +104,28 @@ export class AutenticacionService {
     this.usuario = user;
     return user;
   }
+
+  get sucursalActualId(): number | null {
+    return this.usuario?.sucursal_id ?? null;
+  }
+
+  get sucursalActualNombre(): string | null {
+    return this.usuario?.sucursal_nombre ?? null;
+  }
+
+  get departamentoActualId(): number | null {
+    return this.usuario?.departamento_id ?? null;
+  }
+
+  get departamentoActualNombre(): string | null {
+    return this.usuario?.departamento_nombre ?? null;
+  }
+
+  get roles(): string[] {
+    return this.usuario?.rol ?? [];
+  }
+
+  hasRol(nombreRol: string): boolean {
+    return (this.usuario?.rol ?? []).includes(nombreRol);
+  }
 }

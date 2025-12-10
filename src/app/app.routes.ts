@@ -32,6 +32,9 @@ import { TrasladoExtComponent } from './pages/negocio/noc/traslado-ext/traslado-
 import { RetiroComponent } from './pages/negocio/noc/retiro/retiro.component';
 import { MigracionComponent } from './pages/negocio/noc/migracion/migracion.component';
 import { InfraestructuraComponent } from './pages/negocio/noc/infraestructura/infraestructura.component';
+import { BiometricoComponent } from './pages/negocio/administrador/biometrico/biometrico.component';
+import { TurnosComponent } from './pages/negocio/administrador/turnos/turnos.component';
+import { HorariosComponent } from './pages/negocio/administrador/horarios/horarios.component';
 
 export const routes: Routes = [
   { path: '', pathMatch: 'full', redirectTo: 'login' },
@@ -71,6 +74,21 @@ export const routes: Routes = [
             path: 'actualizarusuario/:id',
             component: FormusuariosComponent,
             canActivate: [permisosGuard('AUsuarios')],
+          },
+          {
+            path: 'biometrico',
+            component: BiometricoComponent,
+            canActivate: [permisosGuard('AUsuarios')],
+          },
+          {
+            path: 'turnos',
+            component: TurnosComponent,
+            canActivate: [permisosGuard('ATurnos')],
+          },
+          {
+            path: 'horarios',
+            component: HorariosComponent,
+            canActivate: [permisosGuard('AHorarios')],
           },
         ],
       },

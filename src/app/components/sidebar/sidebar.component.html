@@ -47,6 +47,20 @@
           >
             Información Clientes
           </li>
+          } @if (arrAdmin.includes("ATurnos")) {
+          <li
+            (click)="onClickMenu()"
+            [routerLink]="['/home/administrador/turnos']"
+          >
+            Turnos
+          </li>
+          } @if (arrAdmin.includes("AHorarios")) {
+          <li
+            (click)="onClickMenu()"
+            [routerLink]="['/home/administrador/horarios']"
+          >
+            Horarios
+          </li>
           }
         </ul>
       </div>

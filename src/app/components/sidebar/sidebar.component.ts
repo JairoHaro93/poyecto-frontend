@@ -3,9 +3,8 @@ import { Router, RouterLink } from '@angular/router';
 import { AutenticacionService } from '../../services/sistema/autenticacion.service';
 import { DataSharingService } from '../../services/data-sharing.service';
 import { SoportesService } from '../../services/negocio_latacunga/soportes.service';
-import { SoketService } from '../../services/socket_io/soket.service'; // ✅ Usa tu servicio
+import { SoketService } from '../../services/socket_io/soket.service';
 import { Iusuarios } from '../../interfaces/sistema/iusuarios.interface';
-import { toDate } from 'date-fns';
 import { AgendaService } from '../../services/negocio_latacunga/agenda.service';
 import { Iagenda } from '../../interfaces/negocio/agenda/iagenda.interface';
 
@@ -25,8 +24,9 @@ export class SidebarComponent implements OnInit, OnDestroy {
   authService = inject(AutenticacionService);
   soporteService = inject(SoportesService);
   agendaService = inject(AgendaService);
-  soketService = inject(SoketService); // ✅ Inyección correcta del servicio
+  soketService = inject(SoketService);
   dataSharingService = inject(DataSharingService);
+
   data: Iusuarios = {
     id: 0,
     usuario: '',
@@ -34,10 +34,17 @@ export class SidebarComponent implements OnInit, OnDestroy {
     apellido: '',
     ci: '',
     password: '',
-    fecha_cont: new Date(), // ✅ valor de tipo Date válido
-    fecha_nac: new Date(), // ✅ valor de tipo Date válido
-    genero: '',
+    fecha_cont: new Date(),
+    fecha_nac: new Date(),
+    genero: 'M',
     rol: [],
+
+    sucursal_id: null,
+    sucursal_codigo: null,
+    sucursal_nombre: null,
+    departamento_id: null,
+    departamento_codigo: null,
+    departamento_nombre: null,
   };
 
   soportesPendientesCount = 0;
@@ -46,6 +53,7 @@ export class SidebarComponent implements OnInit, OnDestroy {
   preAgendaPendientesCount = 0;
 
   preAgendaList: Iagenda[] = [];
+
   arrAdmin: string[] = [];
   arrBodega: string[] = [];
   arrNoc: string[] = [];
@@ -64,80 +72,71 @@ export class SidebarComponent implements OnInit, OnDestroy {
     });
 
     try {
-      const datosUsuario = await this.authService.getUsuarioAutenticado();
+      // Si ya está en memoria, no vuelve a pegarle a /me
+      const datosUsuario =
+        this.authService.usuarioEnMemoria ||
+        (await this.authService.hydrateSessionOnce());
 
+      if (!datosUsuario) {
+        // si no hay sesión válida rediriges si quieres
+        // this.router.navigateByUrl('/login');
+        return;
+      }
       this.data = datosUsuario;
 
-      this.arrAdmin = this.data.rol.filter((rol: string) =>
-        rol.startsWith('A')
-      );
-      this.arrBodega = this.data.rol.filter((rol: string) =>
-        rol.startsWith('B')
-      );
-      this.arrNoc = this.data.rol.filter((rol: string) => rol.startsWith('N'));
+      // 👇 Log de roles en consola
+      console.log('👤 Usuario autenticado:', this.data.usuario);
+      console.log('🎭 Roles asignados:', this.data.rol);
+      console.log('Sucursal / Departamento:', {
+        sucursal_id: this.data.sucursal_id,
+        sucursal_codigo: this.data.sucursal_codigo,
+        sucursal_nombre: this.data.sucursal_nombre,
+        departamento_id: this.data.departamento_id,
+        departamento_codigo: this.data.departamento_codigo,
+        departamento_nombre: this.data.departamento_nombre,
+      });
 
-      this.arrTecnico = this.data.rol.filter((rol: string) =>
-        rol.startsWith('T')
-      );
-      this.arrClientes = this.data.rol.filter((rol: string) =>
-        rol.startsWith('C')
-      );
-      this.arrRecuperacion = this.data.rol.filter((rol: string) =>
-        rol.startsWith('R')
-      );
-
-      // Solo si es NOC conectamos eventos del socket
+      this.arrAdmin = this.data.rol.filter((rol) => rol.startsWith('A'));
+      this.arrBodega = this.data.rol.filter((rol) => rol.startsWith('B'));
+      this.arrNoc = this.data.rol.filter((rol) => rol.startsWith('N'));
+      this.arrTecnico = this.data.rol.filter((rol) => rol.startsWith('T'));
+      this.arrClientes = this.data.rol.filter((rol) => rol.startsWith('C'));
+      this.arrRecuperacion = this.data.rol.filter((rol) => rol.startsWith('R'));
 
       this.soketService.on('soporteCreadoNOC', async () => {
-        console.log(
-          '📢 Evento recibido EN SIDEBAR solo por NOC: soporteCreadoNOC'
-        );
+        console.log('📢 soporteCreadoNOC en SIDEBAR');
         const soportesPrevios = this.soportesPendientesCount;
         await this.obtenerSoportesPendientes();
-        // await this.cargarPreAgenda();
         if (this.soportesPendientesCount > soportesPrevios) {
           this.reproducirSonido();
         }
       });
 
       this.soketService.on('soporteActualizadoNOC', async () => {
-        console.log(
-          '📢 Evento recibido EN SIDEBAR solo por NOC: soporteActualizadoNOC'
-        );
+        console.log('📢 soporteActualizadoNOC en SIDEBAR');
         const soportesPrevios = this.soportesPendientesCount;
         await this.obtenerSoportesPendientes();
-        //   await this.cargarPreAgenda();
         if (this.soportesPendientesCount > soportesPrevios) {
           this.reproducirSonido();
         }
       });
 
       this.soketService.on('trabajoPreagendadoNOC', async () => {
-        console.log('📥 trabajoPreagendadoNOC recibido EN SIDEBAR');
+        console.log('📥 trabajoPreagendadoNOC en SIDEBAR');
         const preAgendaPrevio = this.preAgendaPendientesCount;
-        console.log(
-          'LA PREAGENDA ANTES DEL IF EN SIDEBAR ES' + preAgendaPrevio
-        );
         await this.cargarPreAgenda();
-        console.log(
-          'LA PREAGENDA despues DEL IF EN SIDEBAR ES' + preAgendaPrevio
-        );
         if (this.preAgendaPendientesCount > preAgendaPrevio) {
           this.reproducirSonido();
         }
       });
     } catch (error) {
       console.error('❌ No se pudo obtener datos del usuario', error);
-      // Redirigir o manejar error de sesión
     }
   }
 
   async cargarPreAgenda() {
     this.preAgendaList = await this.agendaService.getPreAgenda();
     this.preAgendaPendientesCount = this.preAgendaList.length;
-    console.log(
-      'la preagenda es en SIDEBAR es ' + this.preAgendaPendientesCount
-    );
   }
 
   async obtenerSoportesPendientes() {
@@ -146,9 +145,6 @@ export class SidebarComponent implements OnInit, OnDestroy {
       const soportesRevisados = await this.soporteService.getAllSopRevisados();
       this.soportesRevisadosCount = soportesRevisados.length;
       this.soportesPendientesCount = soportesPendientes.length;
-      console.log(
-        'El numero de soporte en SIDEBAR es ' + this.soportesPendientesCount
-      );
     } catch (error) {
       console.error('❌ Error al obtener soportes pendientes:', error);
     }
@@ -162,11 +158,8 @@ export class SidebarComponent implements OnInit, OnDestroy {
   }
 
   async onClickLogout() {
-    this.soketService.disconnect(); // 🔴 primero desconectamos socket
-
+    this.soketService.disconnect();
     await this.authService.logout(this.data.id!);
-    window.close(); // o this.router.navigateByUrl('/login')
-
     this.router.navigateByUrl('/login');
   }
 
@@ -175,11 +168,9 @@ export class SidebarComponent implements OnInit, OnDestroy {
   }
 
   async ngOnDestroy() {
-    //this.soketService.disconnect(); // ✅ desconectar también al destruir
-    //  localStorage.removeItem('token_proyecto');
-    await this.authService.logout(this.data.id!);
-
-    //this.router.navigateByUrl('/login');
+    // si quieres seguir cerrando sesión al destruir el sidebar, puedes dejar esto
+    // pero normalmente con el botón de "Cerrar sesión" es suficiente.
+    // await this.authService.logout(this.data.id!);
   }
 
   toggleCollapse(targetId: string) {

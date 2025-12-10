@@ -1,5 +1,5 @@
 // usuarios.services.ts
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { environment } from '../../../environments/environment';
 import { firstValueFrom, lastValueFrom } from 'rxjs';
@@ -59,6 +59,24 @@ export class UsuariosService {
     return firstValueFrom(
       this.httpClient.delete<Iusuarios>(`${this.baseUrl}/${id}`, {
         withCredentials: true,
+      })
+    );
+  }
+
+  /** 🔹 NUEVO: lista filtrada para módulo de turnos */
+  // usuarios.services.ts
+  // src/app/services/sistema/usuarios.service.ts
+  getParaTurnos(departamentoId?: number): Promise<Iusuarios[]> {
+    // Construimos params solo si hay departamentoId
+    const params: any = {};
+    if (departamentoId != null) {
+      params.departamento_id = departamentoId;
+    }
+
+    return firstValueFrom(
+      this.httpClient.get<Iusuarios[]>(`${this.baseUrl}/para-turnos`, {
+        withCredentials: true,
+        params,
       })
     );
   }
