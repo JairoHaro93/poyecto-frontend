@@ -50,22 +50,31 @@ export class AutenticacionService {
   /** 🔎 intenta rehidratar usuario UNA sola vez si no existe en memoria (igual, pero leyendo header) */
   async hydrateSessionOnce(): Promise<Iusuarios | null> {
     if (this.usuario) return this.usuario;
-    try {
+
+    const intentar = async () => {
       const resp = await firstValueFrom(
         this.httpClient.get<Iusuarios>(`${this.baseUrl}/me`, {
           withCredentials: true,
-          observe: 'response', // 👈 para leer headers
+          observe: 'response',
         })
       );
-      // agenda auto-logout si el backend envía X-Session-Expires
       const exp = resp.headers.get('X-Session-Expires');
       if (exp) this.scheduleAutoLogout(exp);
-
       this.usuario = resp.body as Iusuarios;
       return this.usuario;
+    };
+
+    try {
+      return await intentar();
     } catch {
-      this.usuario = null;
-      return null;
+      // reintento rápido (mitiga carrera justo después del login)
+      try {
+        await new Promise((r) => setTimeout(r, 200));
+        return await intentar();
+      } catch {
+        this.usuario = null;
+        return null;
+      }
     }
   }
 

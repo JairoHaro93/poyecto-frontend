@@ -62,73 +62,36 @@ export class SidebarComponent implements OnInit, OnDestroy {
   arrRecuperacion: string[] = [];
 
   async ngOnInit() {
-    this.obtenerSoportesPendientes();
-    this.cargarPreAgenda();
-    this.soketService.connectSocket();
-
-    this.dataSharingService.currentData.subscribe((data) => {
-      this.soportesPendientesCount = data.pendientes;
-      this.soportesNocCount = data.noc;
-    });
-
     try {
-      // Si ya está en memoria, no vuelve a pegarle a /me
       const datosUsuario =
         this.authService.usuarioEnMemoria ||
         (await this.authService.hydrateSessionOnce());
 
-      if (!datosUsuario) {
-        // si no hay sesión válida rediriges si quieres
-        // this.router.navigateByUrl('/login');
-        return;
-      }
+      if (!datosUsuario) return;
+
       this.data = datosUsuario;
 
-      // 👇 Log de roles en consola
+      // normaliza roles (evita espacios raros)
+      const roles = (this.data.rol ?? []).map((r) => r.trim());
+      this.arrAdmin = roles.filter((r) => r.startsWith('A'));
+      this.arrBodega = roles.filter((r) => r.startsWith('B'));
+      this.arrNoc = roles.filter((r) => r.startsWith('N'));
+      this.arrTecnico = roles.filter((r) => r.startsWith('T'));
+      this.arrClientes = roles.filter((r) => r.startsWith('C'));
+      this.arrRecuperacion = roles.filter((r) => r.startsWith('R'));
+
       console.log('👤 Usuario autenticado:', this.data.usuario);
-      console.log('🎭 Roles asignados:', this.data.rol);
-      console.log('Sucursal / Departamento:', {
-        sucursal_id: this.data.sucursal_id,
-        sucursal_codigo: this.data.sucursal_codigo,
-        sucursal_nombre: this.data.sucursal_nombre,
-        departamento_id: this.data.departamento_id,
-        departamento_codigo: this.data.departamento_codigo,
-        departamento_nombre: this.data.departamento_nombre,
-      });
+      //console.log('🎭 Roles asignados:', this.data.rol);
 
-      this.arrAdmin = this.data.rol.filter((rol) => rol.startsWith('A'));
-      this.arrBodega = this.data.rol.filter((rol) => rol.startsWith('B'));
-      this.arrNoc = this.data.rol.filter((rol) => rol.startsWith('N'));
-      this.arrTecnico = this.data.rol.filter((rol) => rol.startsWith('T'));
-      this.arrClientes = this.data.rol.filter((rol) => rol.startsWith('C'));
-      this.arrRecuperacion = this.data.rol.filter((rol) => rol.startsWith('R'));
+      // ya con sesión ok, ahora sí el resto
+      this.obtenerSoportesPendientes();
+      this.cargarPreAgenda();
 
-      this.soketService.on('soporteCreadoNOC', async () => {
-        console.log('📢 soporteCreadoNOC en SIDEBAR');
-        const soportesPrevios = this.soportesPendientesCount;
-        await this.obtenerSoportesPendientes();
-        if (this.soportesPendientesCount > soportesPrevios) {
-          this.reproducirSonido();
-        }
-      });
-
-      this.soketService.on('soporteActualizadoNOC', async () => {
-        console.log('📢 soporteActualizadoNOC en SIDEBAR');
-        const soportesPrevios = this.soportesPendientesCount;
-        await this.obtenerSoportesPendientes();
-        if (this.soportesPendientesCount > soportesPrevios) {
-          this.reproducirSonido();
-        }
-      });
-
-      this.soketService.on('trabajoPreagendadoNOC', async () => {
-        console.log('📥 trabajoPreagendadoNOC en SIDEBAR');
-        const preAgendaPrevio = this.preAgendaPendientesCount;
-        await this.cargarPreAgenda();
-        if (this.preAgendaPendientesCount > preAgendaPrevio) {
-          this.reproducirSonido();
-        }
-      });
+      try {
+        this.soketService.connectSocket();
+      } catch (e) {
+        console.error('❌ Error connectSocket en sidebar:', e);
+      }
     } catch (error) {
       console.error('❌ No se pudo obtener datos del usuario', error);
     }

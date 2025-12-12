@@ -33,7 +33,7 @@ export class LoginComponent {
       // Redirigir (elige una de las dos opciones)
 
       // Opción 1: redirigir en la misma pestaña
-      this.router.navigateByUrl('/home');
+      await this.router.navigateByUrl('/home');
 
       // Opción 2: abrir en nueva pestaña
       //  const features =
