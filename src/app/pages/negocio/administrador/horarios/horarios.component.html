@@ -1,4 +1,3 @@
-<!-- src/app/pages/.../horarios/horarios.component.html -->
 <section class="container mt-3">
   <div class="horarios-container">
     <h4 class="mb-3">Horarios y asistencia</h4>
@@ -100,7 +99,7 @@
       </div>
     </div>
 
-    <!-- NUEVO BLOQUE: REPORTE DE ASISTENCIA (EXCEL) -->
+    <!-- BLOQUE: REPORTE DE ASISTENCIA (EXCEL) -->
     <div class="card mb-3">
       <div class="card-body">
         <h6 class="mb-2">Reporte de asistencia (Excel)</h6>
@@ -115,7 +114,9 @@
             >
               <option [ngValue]="null">-- Seleccione trabajador --</option>
               @for (u of usuariosEquipo; track u.id) {
-              <option [ngValue]="u.id">{{ u.nombre_completo }}</option>
+              <option [ngValue]="u.id">
+                {{ u.nombre_completo }}
+              </option>
               }
             </select>
           </div>
@@ -210,13 +211,26 @@
                 <td
                   class="text-center celda-estado"
                   [ngClass]="{ 'col-dia-hoy': esHoy(dia.fecha) }"
+                  (click)="onClickCelda(u, dia.fecha)"
                 >
                   @let turno = getTurno(u.id, dia.fecha);
+
+                  <!-- Pill de estado -->
                   <div [ngClass]="estadoClass(turno)">
                     {{ estadoLabel(turno) }}
                   </div>
+
+                  <!-- Horario programado -->
                   <div class="small horario-text">
                     {{ rangoHorario(turno) }}
+                  </div>
+
+                  <!-- Resumen de asistencia real -->
+                  <div
+                    class="small asistencia-text"
+                    *ngIf="turno?.hora_entrada_real || turno?.hora_salida_real"
+                  >
+                    {{ asistenciaResumen(turno) }}
                   </div>
                 </td>
                 }
@@ -228,5 +242,79 @@
         }
       </div>
     </div>
+
+    <!-- MODAL DETALLE DE TURNO -->
+    <div class="modal-backdrop fade show" *ngIf="detalleVisible"></div>
+
+    <div class="modal fade show d-block" tabindex="-1" *ngIf="detalleVisible">
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+          <div class="modal-header py-2">
+            <h6 class="modal-title mb-0">Detalle de asistencia</h6>
+            <button
+              type="button"
+              class="btn-close"
+              aria-label="Close"
+              (click)="cerrarDetalleTurno()"
+            ></button>
+          </div>
+
+          <div class="modal-body small">
+            <p class="mb-1">
+              <strong>Trabajador:</strong>
+              {{ detalleUsuario?.nombre_completo || "Sin trabajador" }}
+            </p>
+            <p class="mb-2">
+              <strong>Fecha:</strong>
+              {{ fechaLarga(detalleFecha) }}
+            </p>
+
+            <hr />
+
+            <p class="mb-1" *ngIf="detalleTurno">
+              <strong>Estado:</strong>
+              <span [ngClass]="estadoClass(detalleTurno)">
+                {{ estadoLabel(detalleTurno) }}
+              </span>
+            </p>
+
+            <p class="mb-1">
+              <strong>Horario programado:</strong>
+              {{ rangoHorario(detalleTurno) || "--:-- - --:--" }}
+            </p>
+
+            <p class="mb-1" *ngIf="asistenciaResumen(detalleTurno)">
+              <strong>Asistencia real:</strong>
+              {{ asistenciaResumen(detalleTurno) }}
+            </p>
+
+            <p class="mb-1">
+              <strong>Min. trabajados:</strong>
+              {{ detalleTurno?.min_trabajados ?? 0 }}
+              ({{ minutosAHoras(detalleTurno?.min_trabajados ?? 0) }})
+            </p>
+            <p class="mb-1">
+              <strong>Min. atraso:</strong>
+              {{ detalleTurno?.min_atraso ?? 0 }}
+            </p>
+            <p class="mb-0">
+              <strong>Min. extra:</strong>
+              {{ detalleTurno?.min_extra ?? 0 }}
+            </p>
+          </div>
+
+          <div class="modal-footer py-2">
+            <button
+              type="button"
+              class="btn btn-sm btn-secondary"
+              (click)="cerrarDetalleTurno()"
+            >
+              Cerrar
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- FIN MODAL DETALLE -->
   </div>
 </section>

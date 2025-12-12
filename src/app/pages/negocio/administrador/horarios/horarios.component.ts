@@ -77,6 +77,14 @@ export class HorariosComponent implements OnInit {
   filtroTextoUsuario = '';
 
   // ==========================
+  //   MODAL DETALLE TURNO
+  // ==========================
+  detalleVisible = false;
+  detalleUsuario?: UsuarioResumen;
+  detalleFecha?: string;
+  detalleTurno?: ITurnoDiario;
+
+  // ==========================
   //   REPORETE ASISTENCIA
   // ==========================
 
@@ -369,53 +377,6 @@ export class HorariosComponent implements OnInit {
     return null;
   }
 
-  async onGenerarReporte(): Promise<void> {
-    if (!this.puedeGenerarReporte()) return;
-
-    const departamentoId = this.getDepartamentoIdParaReporte();
-
-    this.generandoReporte = true;
-    try {
-      const resp = await this.reporteAsistenciaService.descargarReporteExcel({
-        fecha_desde: this.reporteFechaDesde!,
-        fecha_hasta: this.reporteFechaHasta!,
-        usuario_id: this.reporteUsuarioId!,
-        departamento_id: departamentoId,
-      });
-
-      const blob = resp.body;
-      if (!blob) {
-        throw new Error('Respuesta vacía del servidor');
-      }
-
-      // Leer el filename desde Content-Disposition
-      const disposition =
-        resp.headers.get('Content-Disposition') ||
-        resp.headers.get('content-disposition') ||
-        '';
-      let fileName = 'reporte.xlsx';
-
-      const match = /filename="?(.*?)"?$/i.exec(disposition);
-      if (match && match[1]) {
-        fileName = match[1];
-      }
-
-      const blobUrl = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = blobUrl;
-      a.download = fileName; // 👈 ahora usamos el que generó el backend
-
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      window.URL.revokeObjectURL(blobUrl);
-    } catch (error: any) {
-      console.error('❌ Error descargando reporte:', error);
-      alert(error?.error?.message || 'Error al generar / descargar el reporte');
-    } finally {
-      this.generandoReporte = false;
-    }
-  }
   // ==========================
   //   DEPARTAMENTOS (JEFE SUC)
   // ==========================
@@ -435,15 +396,6 @@ export class HorariosComponent implements OnInit {
       console.error('❌ Error cargando departamentos de sucursal:', error);
       this.departamentosSucursal = [];
     }
-  }
-
-  async onCambioDepartamento(): Promise<void> {
-    console.log(
-      '[HORARIOS] Cambio de departamento seleccionado:',
-      this.departamentoSeleccionadoId
-    );
-    await this.cargarUsuariosEquipo();
-    await this.buscarTurnos();
   }
 
   // ==========================
@@ -485,11 +437,6 @@ export class HorariosComponent implements OnInit {
         .sort((a, b) => a.nombre_completo.localeCompare(b.nombre_completo));
 
       console.log('[HORARIOS] UsuariosEquipo (resumen):', this.usuariosEquipo);
-
-      // Si aún no hay colaborador seleccionado para el reporte, colocamos el primero
-      if (!this.reporteUsuarioId && this.usuariosEquipo.length > 0) {
-        this.reporteUsuarioId = this.usuariosEquipo[0].id;
-      }
     } catch (error) {
       console.error('❌ Error cargando usuarios equipo:', error);
       this.usuariosEquipo = [];
@@ -580,26 +527,25 @@ export class HorariosComponent implements OnInit {
   //   HELPERS DE ESTADO
   // ==========================
 
+  /** Devuelve la clase CSS según el estado de asistencia */
   estadoClass(turno?: ITurnoDiario): string {
     if (!turno) return 'estado-sin-turno';
 
     const estado = (turno.estado_asistencia || '').toUpperCase();
 
     switch (estado) {
-      case 'OK':
-        return 'estado-ok';
+      case 'COMPLETO':
+        return 'estado-completo';
       case 'ATRASO':
         return 'estado-atraso';
       case 'FALTA':
         return 'estado-falta';
       case 'INCOMPLETO':
         return 'estado-incompleto';
-      case 'SOLO_ENTRADA':
-      case 'SOLO_SALIDA':
-        return 'estado-parcial';
       case 'SIN_MARCA':
-      default:
         return 'estado-programado';
+      default:
+        return 'estado-desconocido';
     }
   }
 
@@ -608,34 +554,184 @@ export class HorariosComponent implements OnInit {
 
     const estado = (turno.estado_asistencia || '').toUpperCase();
     switch (estado) {
-      case 'OK':
-        return 'OK';
+      case 'COMPLETO':
+        return 'COMPLETO';
       case 'ATRASO':
         return 'ATRASO';
       case 'FALTA':
         return 'FALTA';
       case 'INCOMPLETO':
         return 'INCOMPLETO';
-      case 'SOLO_ENTRADA':
-        return 'SOLO ENTRADA';
-      case 'SOLO_SALIDA':
-        return 'SOLO SALIDA';
       case 'SIN_MARCA':
-      default:
         return 'PROGRAMADO';
+      default:
+        return 'SIN ESTADO';
     }
   }
 
-  rangoHorario(turno?: ITurnoDiario): string {
-    if (!turno) return '';
-    const ent = turno.hora_entrada_prog?.slice(0, 5) || '--:--';
-    const sal = turno.hora_salida_prog?.slice(0, 5) || '--:--';
-    return `${ent} - ${sal}`;
+  onClickCelda(usuario: UsuarioResumen, fecha: string): void {
+    const turno = this.getTurno(usuario.id, fecha);
+
+    // Si quieres que solo abra cuando hay turno, descomenta:
+    // if (!turno) return;
+
+    this.detalleUsuario = usuario;
+    this.detalleFecha = fecha;
+    this.detalleTurno = turno;
+    this.detalleVisible = true;
+  }
+
+  cerrarDetalleTurno(): void {
+    this.detalleVisible = false;
+    this.detalleUsuario = undefined;
+    this.detalleFecha = undefined;
+    this.detalleTurno = undefined;
   }
 
   esHoy(fecha: string): boolean {
     const hoy = new Date();
     const hoyStr = this.formatFecha(hoy); // ya existe formatFecha
     return fecha === hoyStr;
+  }
+
+  /** Formatea una hora a 'HH:MM' si se reconoce, si no, devuelve null */
+  private formatHora(valor: any): string | null {
+    if (valor === null || valor === undefined) return null;
+
+    // Si viene como Date
+    if (valor instanceof Date) {
+      return valor.toTimeString().slice(0, 5); // 'HH:MM'
+    }
+
+    const s = String(valor).trim();
+
+    // Intentar parsear como fecha/hora ISO
+    const d = new Date(s);
+    if (!Number.isNaN(d.getTime())) {
+      return d.toTimeString().slice(0, 5); // 'HH:MM'
+    }
+
+    // Si viene como HH:MM o HH:MM:SS
+    const m = /^(\d{1,2}):(\d{2})(?::\d{2})?$/.exec(s);
+    if (m) {
+      return `${m[1].padStart(2, '0')}:${m[2]}`;
+    }
+
+    // Si viene como "08.0", "56.0", etc., lo ignoramos
+    if (/^\d+(\.\d+)?$/.test(s)) {
+      return null;
+    }
+
+    return null;
+  }
+
+  /** Horario programado “HH:MM - HH:MM” */
+  rangoHorario(turno?: ITurnoDiario): string {
+    if (!turno) return '';
+    const ent = this.formatHora(turno.hora_entrada_prog);
+    const sal = this.formatHora(turno.hora_salida_prog);
+    return `${ent || '--:--'} - ${sal || '--:--'}`;
+  }
+
+  /** Resumen de asistencia real: "E 17:37 / S 19:16" */
+  asistenciaResumen(turno?: ITurnoDiario): string {
+    if (!turno) return '';
+
+    const ent = this.formatHora((turno as any).hora_entrada_real);
+    const sal = this.formatHora((turno as any).hora_salida_real);
+
+    if (!ent && !sal) return '';
+    return `E ${ent || '--:--'} / S ${sal || '--:--'}`;
+  }
+
+  /** Minutos → texto amigable "1 h 40 min" */
+  minutosAHoras(min: number | null | undefined): string {
+    if (!min || min <= 0) return '0 min';
+    const h = Math.floor(min / 60);
+    const m = min % 60;
+    if (h > 0 && m > 0) return `${h} h ${m} min`;
+    if (h > 0) return `${h} h`;
+    return `${m} min`;
+  }
+
+  /** Fecha larga "Jueves 12/12/2025" */
+  fechaLarga(fechaStr: string | null | undefined): string {
+    if (!fechaStr) return '';
+    const d = new Date(fechaStr + 'T00:00:00');
+    if (Number.isNaN(d.getTime())) return fechaStr;
+    return d.toLocaleDateString('es-EC', {
+      weekday: 'long',
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+    });
+  }
+
+  async onGenerarReporte(): Promise<void> {
+    if (!this.puedeGenerarReporte()) return;
+
+    const departamentoId = this.getDepartamentoIdParaReporte();
+
+    this.generandoReporte = true;
+    try {
+      const resp = await this.reporteAsistenciaService.descargarReporteExcel({
+        fecha_desde: this.reporteFechaDesde!,
+        fecha_hasta: this.reporteFechaHasta!,
+        usuario_id: this.reporteUsuarioId!,
+        departamento_id: departamentoId,
+      });
+
+      const blob = resp.body;
+      if (!blob) {
+        throw new Error('Respuesta vacía del servidor');
+      }
+
+      const disposition =
+        resp.headers.get('Content-Disposition') ||
+        resp.headers.get('content-disposition') ||
+        '';
+      let fileName = 'reporte.xlsx';
+
+      const match = /filename="?(.*?)"?$/i.exec(disposition);
+      if (match && match[1]) {
+        fileName = match[1];
+      }
+
+      const blobUrl = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = blobUrl;
+      a.download = fileName;
+
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(blobUrl);
+
+      // 👇 Solo limpiamos el colaborador, el rango queda igual
+      this.reporteUsuarioId = null;
+      // this.reporteDiasTotales = 0;  ❌ quítalo
+    } catch (error: any) {
+      console.error('❌ Error descargando reporte:', error);
+      alert(error?.error?.message || 'Error al generar / descargar el reporte');
+    } finally {
+      this.generandoReporte = false;
+    }
+  }
+
+  async onCambioDepartamento(): Promise<void> {
+    console.log(
+      '[HORARIOS] Cambio de departamento seleccionado:',
+      this.departamentoSeleccionadoId
+    );
+
+    // 🔹 Al cambiar de departamento, limpiamos el colaborador del reporte
+    this.reporteUsuarioId = null;
+    // this.reporteDiasTotales = 0; ❌ quítalo (el rango sigue siendo el mismo)
+
+    await this.cargarUsuariosEquipo();
+    await this.buscarTurnos();
+
+    // Opcional, por claridad: recalcular por si acaso
+    this.recalcularDiasReporte();
   }
 }
