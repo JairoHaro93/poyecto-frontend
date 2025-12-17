@@ -216,8 +216,22 @@
                   @let turno = getTurno(u.id, dia.fecha);
 
                   <!-- Pill de estado -->
-                  <div [ngClass]="estadoClass(turno)">
-                    {{ estadoLabel(turno) }}
+
+                  @let estado = estadoUI(turno, dia.fecha);
+
+                  <div [ngClass]="estadoClassUI(turno, dia.fecha)">
+                    {{ estado }}
+
+                    @if (horaAcumuladaVisible(turno)) {
+                    <div class="small mt-1">
+                      <span
+                        class="badge badge-ha"
+                        [ngClass]="horaAcumuladaBadgeClass(turno)"
+                      >
+                        {{ horaAcumuladaLabel(turno) }}
+                      </span>
+                    </div>
+                    }
                   </div>
 
                   <!-- Horario programado -->
@@ -271,12 +285,24 @@
 
             <hr />
 
-            <p class="mb-1" *ngIf="detalleTurno">
+            <div class="mb-2" *ngIf="detalleTurno">
               <strong>Estado:</strong>
-              <span [ngClass]="estadoClass(detalleTurno)">
-                {{ estadoLabel(detalleTurno) }}
+              <span [ngClass]="estadoClassUI(detalleTurno, detalleFecha!)">
+                {{ estadoUI(detalleTurno, detalleFecha!) }}
               </span>
-            </p>
+
+              @if (horaAcumuladaVisible(detalleTurno)) {
+              <div class="mt-2">
+                <strong>Horas Acumuladas:</strong>
+                <span
+                  class="badge badge-ha ms-1"
+                  [ngClass]="horaAcumuladaBadgeClass(detalleTurno)"
+                >
+                  {{ horaAcumuladaLabel(detalleTurno) }}
+                </span>
+              </div>
+              }
+            </div>
 
             <p class="mb-1">
               <strong>Horario programado:</strong>
@@ -288,22 +314,52 @@
               {{ asistenciaResumen(detalleTurno) }}
             </p>
 
-            <p class="mb-1">
+            <!-- <p class="mb-1">
               <strong>Min. trabajados:</strong>
               {{ detalleTurno?.min_trabajados ?? 0 }}
               ({{ minutosAHoras(detalleTurno?.min_trabajados ?? 0) }})
+            </p> -->
+
+            @let obs = (detalleTurno?.observacion || '').trim(); @if (obs) {
+            <p class="mb-1">
+              <strong>Observación:</strong>
+              <span class="text-muted d-block obs-preline">{{ obs }}</span>
             </p>
+            } @else {
+            <p class="mb-1 text-muted"><strong>Observación:</strong> —</p>
+            }
+
             <p class="mb-1">
               <strong>Min. atraso:</strong>
               {{ detalleTurno?.min_atraso ?? 0 }}
             </p>
-            <p class="mb-0">
+            <!-- <p class="mb-0">
               <strong>Min. extra:</strong>
               {{ detalleTurno?.min_extra ?? 0 }}
-            </p>
+            </p> -->
           </div>
 
           <div class="modal-footer py-2">
+            @if (puedeGestionarHoraAcumulada(detalleTurno)) {
+            <button
+              type="button"
+              class="btn btn-sm btn-success"
+              [disabled]="procesandoHoraAcumulada"
+              (click)="onAprobarHoraAcumulada()"
+            >
+              Aprobar
+            </button>
+
+            <button
+              type="button"
+              class="btn btn-sm btn-danger"
+              [disabled]="procesandoHoraAcumulada"
+              (click)="onRechazarHoraAcumulada()"
+            >
+              Rechazar
+            </button>
+            }
+
             <button
               type="button"
               class="btn btn-sm btn-secondary"

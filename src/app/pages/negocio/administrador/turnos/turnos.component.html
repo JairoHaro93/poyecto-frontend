@@ -56,7 +56,8 @@
                 >
                   @for (u of usuariosFiltrados; track u.id) {
                   <option [ngValue]="u.id">
-                    {{ u.nombre_completo }} (ID: {{ u.id }})
+                    {{ u.nombre_completo }}
+                    {{ saldoHHMM(u.saldo_minutos) }}
                   </option>
                   }
                 </select>
@@ -260,12 +261,19 @@
                 }
               </tr>
             </thead>
+
             <tbody>
               @for (u of usuariosFiltrados; track u.id) {
               <tr>
                 <!-- Columna usuario -->
                 <td class="col-usuario">
                   <strong>{{ u.nombre_completo }}</strong>
+                  <div class="small text-muted">
+                    Saldo: {{ saldoHHMM(u.saldo_minutos) }}
+                    @if (tieneSaldoParaDevolucion(u.id)) {
+                    <span class="badge bg-success ms-1">≥ 08:00</span>
+                    }
+                  </div>
                 </td>
 
                 <!-- Columnas por día -->
@@ -279,11 +287,18 @@
                     <div class="small fw-semibold horario-text">
                       {{ rangoHorario(turno) }}
                     </div>
+
+                    <div class="small text-muted mt-1">
+                      {{ tipoDiaLabel(turno) }}
+                    </div>
+
                     <div class="btn-group btn-group-sm mt-1" role="group">
                       <button
                         type="button"
                         class="btn btn-outline-secondary btn-xs"
-                        [disabled]="!puedeEditarTurno(turno)"
+                        [disabled]="
+                          !puedeEditarTurno(turno) || savingTurno[turno.id]
+                        "
                         (click)="onEditarTurno(turno)"
                       >
                         ✎
@@ -291,10 +306,26 @@
                       <button
                         type="button"
                         class="btn btn-outline-danger btn-xs"
-                        [disabled]="!puedeEliminarTurno(turno)"
+                        [disabled]="
+                          !puedeEliminarTurno(turno) || savingTurno[turno.id]
+                        "
                         (click)="onEliminarTurno(turno)"
                       >
                         🗑
+                      </button>
+
+                      <!-- ✅ DEVOLUCIÓN -->
+                      <button
+                        type="button"
+                        class="btn btn-outline-primary btn-xs"
+                        title="Asignar DEVOLUCIÓN (descuenta 8h)"
+                        [disabled]="
+                          !puedeAsignarDevolucion(turno, u.id) ||
+                          savingTurno[turno.id]
+                        "
+                        (click)="onAsignarDevolucion(turno, u.id)"
+                      >
+                        ↺
                       </button>
                     </div>
                   </div>

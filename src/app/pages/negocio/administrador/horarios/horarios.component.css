@@ -204,3 +204,130 @@
 .modal.d-block {
   z-index: 1050;
 }
+
+.badge-he {
+  display: inline-block;
+  padding: 0.35rem 0.5rem;
+  border-radius: 999px;
+  font-weight: 700;
+  border: 1px solid transparent;
+}
+
+.badge-he-sol {
+  background: rgba(255, 193, 7, 0.2);
+  border-color: rgba(255, 193, 7, 0.6);
+  color: #b78103;
+}
+
+.badge-he-ok {
+  background: rgba(25, 135, 84, 0.18);
+  border-color: rgba(25, 135, 84, 0.55);
+  color: #146c43;
+}
+
+.badge-he-rech {
+  background: rgba(220, 53, 69, 0.18);
+  border-color: rgba(220, 53, 69, 0.55);
+  color: #b02a37;
+}
+
+/* Pills */
+.celda-estado > div[class^="estado-"],
+.celda-estado > div[class*=" estado-"] {
+  display: inline-block;
+  padding: 0.1rem 0.4rem;
+  border-radius: 999px;
+  font-size: 0.7rem;
+  font-weight: 700;
+}
+
+/* SIN TURNO */
+.estado-sin-turno {
+  background: #f5f5f5;
+  color: #888;
+}
+
+/* PROGRAMADO (futuro / por defecto) */
+.estado-programado {
+  background: #e3f2fd;
+  color: #0d47a1;
+}
+
+/* HOY EN CURSO */
+.estado-en-curso {
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+
+/* HOY SIN MARCA */
+.estado-sin-marca {
+  background: #fff3cd;
+  color: #856404;
+}
+
+/* PASADO */
+.estado-completo {
+  background: #d1e7dd;
+  color: #0f5132;
+}
+.estado-atraso {
+  background: #fff3cd;
+  color: #664d03;
+}
+.estado-incompleto {
+  background: #ffe5d0;
+  color: #8a3b12;
+}
+.estado-falta {
+  background: #f8d7da;
+  color: #842029;
+}
+.estado-parcial {
+  background: #ede7f6;
+  color: #4527a0;
+}
+
+.estado-desconocido {
+  background: #d1d5db;
+  color: #111827;
+}
+
+.estado-devolucion {
+  background: #133d7c;
+  color: #99a1b3;
+}
+.estado-vacaciones {
+  background: #9cda0d;
+  color: #111827;
+}
+.estado-permiso {
+  background: #cc1379;
+  color: #111827;
+}
+
+/* Badge Horas Acumuladas */
+.badge-ha {
+  display: inline-block;
+  padding: 0.35rem 0.5rem;
+  border-radius: 999px;
+  font-weight: 700;
+  border: 1px solid transparent;
+}
+
+.badge-ha-sol {
+  background: rgba(255, 193, 7, 0.2);
+  border-color: rgba(255, 193, 7, 0.6);
+  color: #b78103;
+}
+
+.badge-ha-ok {
+  background: rgba(25, 135, 84, 0.18);
+  border-color: rgba(25, 135, 84, 0.55);
+  color: #146c43;
+}
+
+.badge-ha-rech {
+  background: rgba(220, 53, 69, 0.18);
+  border-color: rgba(220, 53, 69, 0.55);
+  color: #b02a37;
+}
