@@ -1,4 +1,3 @@
-// src/app/pages/…/horarios/horarios.component.ts
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -16,6 +15,8 @@ import { Iusuarios } from '../../../../interfaces/sistema/iusuarios.interface';
 import { IDepartamento } from '../../../../interfaces/sistema/idepartamento.interface';
 
 import { SwalStd } from '../../../../utils/swal.std';
+
+type VistaModo = 'SEMANA' | 'DIA';
 
 // ===== Interfaces UI =====
 interface UsuarioResumen {
@@ -36,16 +37,9 @@ interface DiaColumna {
 })
 export class HorariosComponent implements OnInit {
   // ==========================
-  //   FILTROS / CONTEXTO
+  //   CONTEXTO
   // ==========================
   filtroSucursal: string | null = null;
-
-  // ✅ Semana completa (Lun-Dom)
-  semanaISO: string | null = null; // YYYY-Www (input type="week")
-  semanaInicio: string | null = null; // YYYY-MM-DD (lunes)
-  semanaFin: string | null = null; // YYYY-MM-DD (domingo)
-  diasVentana: DiaColumna[] = [];
-
   jefeActual?: Iusuarios;
 
   departamentosSucursal: IDepartamento[] = [];
@@ -53,12 +47,31 @@ export class HorariosComponent implements OnInit {
 
   usuariosEquipo: UsuarioResumen[] = [];
   cargandoUsuarios = false;
+  filtroTextoUsuario = '';
 
+  // ==========================
+  //   VISTA MATRIZ (SEMANA / DÍA)
+  // ==========================
+  vistaModo: VistaModo = 'SEMANA';
+
+  // semana (lun-dom)
+  semanaRef: string | null = null; // fecha ancla
+  semanaInicio: string | null = null; // lunes
+  semanaFin: string | null = null; // domingo
+
+  // día específico
+  vistaDia: string | null = null; // YYYY-MM-DD
+
+  // rango efectivo de consulta
+  fechaDesde: string | null = null;
+  fechaHasta: string | null = null;
+
+  diasVentana: DiaColumna[] = [];
+
+  // turnos
   turnos: ITurnoDiario[] = [];
   turnosPorUsuario = new Map<number, Map<string, ITurnoDiario>>();
   cargandoTurnos = false;
-
-  filtroTextoUsuario = '';
 
   // ==========================
   //   MODAL DETALLE
@@ -107,10 +120,6 @@ export class HorariosComponent implements OnInit {
     );
   }
 
-  get diasTotales(): number {
-    return this.diasVentana.length; // siempre 7
-  }
-
   // ==========================
   //   INIT
   // ==========================
@@ -129,8 +138,13 @@ export class HorariosComponent implements OnInit {
         await this.cargarDepartamentosSucursal(this.jefeActual.sucursal_id);
       }
 
-      // ✅ Semana actual (Lun-Dom)
-      this.setSemanaActual();
+      const hoy = new Date();
+      const hoyStr = this.formatFecha(hoy);
+
+      // ✅ defaults
+      this.vistaModo = 'SEMANA';
+      this.vistaDia = hoyStr;
+      this.setVistaSemanaFromDateSync(hoy);
 
       // ✅ Reporte: mes actual
       this.reporteMes = this.formatMes(new Date());
@@ -146,7 +160,7 @@ export class HorariosComponent implements OnInit {
   }
 
   // ==========================
-  //   FECHAS (SEMANA LUN-DOM)
+  //   FECHAS / HELPERS
   // ==========================
   private formatFecha(d: Date): string {
     const y = d.getFullYear();
@@ -155,7 +169,7 @@ export class HorariosComponent implements OnInit {
     return `${y}-${m}-${dia}`;
   }
 
-  private parseFecha(str: string | null): Date | null {
+  private parseFecha(str: string | null | undefined): Date | null {
     if (!str) return null;
     const d = new Date(str + 'T00:00:00');
     return isNaN(d.getTime()) ? null : d;
@@ -167,24 +181,21 @@ export class HorariosComponent implements OnInit {
     return `${y}-${m}`;
   }
 
-  /**
-   * Devuelve el lunes de la semana (si es domingo, retrocede 6 días)
-   */
   private getMonday(date: Date): Date {
     const d = new Date(date);
-    const day = d.getDay(); // 0 dom, 1 lun, ..., 6 sáb
-    const diff = day === 0 ? -6 : 1 - day;
-    d.setDate(d.getDate() + diff);
     d.setHours(0, 0, 0, 0);
+    const day = d.getDay(); // 0 dom ... 6 sáb
+    const diff = day === 0 ? -6 : 1 - day; // lunes inicio
+    d.setDate(d.getDate() + diff);
     return d;
   }
 
-  private buildDiasSemana(monday: Date): DiaColumna[] {
+  private buildDiasRango(desde: Date, hasta: Date): DiaColumna[] {
     const nombresDia = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
     const out: DiaColumna[] = [];
-    const tmp = new Date(monday);
 
-    for (let i = 0; i < 7; i++) {
+    const tmp = new Date(desde);
+    while (tmp.getTime() <= hasta.getTime()) {
       const fechaStr = this.formatFecha(tmp);
       const etiqueta = `${nombresDia[tmp.getDay()]} ${String(
         tmp.getDate()
@@ -195,92 +206,109 @@ export class HorariosComponent implements OnInit {
     return out;
   }
 
-  /**
-   * Convierte un Date a string ISO week: YYYY-Www
-   */
-  private toISOWeekString(date: Date): string {
-    const d = new Date(date);
-    d.setHours(0, 0, 0, 0);
+  // ==========================
+  //   VISTA SEMANA (LUN-DOM)
+  // ==========================
+  private setVistaSemanaFromDateSync(ref: Date): void {
+    const lunes = this.getMonday(ref);
+    const domingo = new Date(lunes);
+    domingo.setDate(lunes.getDate() + 6);
 
-    // ISO: jueves determina el año
-    const day = (d.getDay() + 6) % 7; // lun=0..dom=6
-    d.setDate(d.getDate() - day + 3); // mover a jueves
+    this.semanaInicio = this.formatFecha(lunes);
+    this.semanaFin = this.formatFecha(domingo);
+    this.semanaRef = this.formatFecha(ref);
 
-    const firstThursday = new Date(d.getFullYear(), 0, 4);
-    const firstDay = (firstThursday.getDay() + 6) % 7;
-    firstThursday.setDate(firstThursday.getDate() - firstDay + 3);
+    this.fechaDesde = this.semanaInicio;
+    this.fechaHasta = this.semanaFin;
 
-    const week =
-      1 + Math.round((d.getTime() - firstThursday.getTime()) / 604800000);
-    const year = d.getFullYear();
-    return `${year}-W${String(week).padStart(2, '0')}`;
+    this.diasVentana = this.buildDiasRango(lunes, domingo);
   }
 
-  /**
-   * ISO week (YYYY-Www) -> lunes de esa semana
-   */
-  private isoWeekToMonday(iso: string | null): Date | null {
-    if (!iso) return null;
-    const m = /^(\d{4})-W(\d{2})$/.exec(iso);
-    if (!m) return null;
-
-    const year = Number(m[1]);
-    const week = Number(m[2]);
-    if (!year || !week) return null;
-
-    // ISO week 1 = semana que contiene el 4 de enero
-    const jan4 = new Date(year, 0, 4);
-    const week1Monday = this.getMonday(jan4);
-
-    const monday = new Date(week1Monday);
-    monday.setDate(week1Monday.getDate() + (week - 1) * 7);
-    monday.setHours(0, 0, 0, 0);
-    return monday;
-  }
-
-  private setSemanaFromDate(base: Date): void {
-    const monday = this.getMonday(base);
-    const sunday = new Date(monday);
-    sunday.setDate(monday.getDate() + 6);
-
-    this.semanaInicio = this.formatFecha(monday);
-    this.semanaFin = this.formatFecha(sunday);
-
-    this.diasVentana = this.buildDiasSemana(monday);
-    this.semanaISO = this.toISOWeekString(monday);
-  }
-
-  private setSemanaActual(): void {
-    this.setSemanaFromDate(new Date());
-  }
-
-  async onCambioSemanaISO(value: string | null): Promise<void> {
-    this.semanaISO = value;
-    const monday = this.isoWeekToMonday(value);
-    if (!monday) return;
-
-    this.setSemanaFromDate(monday);
+  async onCambioSemanaRef(value: string | null): Promise<void> {
+    const d = this.parseFecha(value);
+    if (!d) return;
+    this.setVistaSemanaFromDateSync(d);
     await this.buscarTurnos();
   }
 
   async semanaAnterior(): Promise<void> {
-    const base = this.parseFecha(this.semanaInicio);
-    if (!base) return;
+    const base = this.parseFecha(this.semanaInicio) || new Date();
     base.setDate(base.getDate() - 7);
-    this.setSemanaFromDate(base);
+    this.setVistaSemanaFromDateSync(base);
     await this.buscarTurnos();
   }
 
   async semanaSiguiente(): Promise<void> {
-    const base = this.parseFecha(this.semanaInicio);
-    if (!base) return;
+    const base = this.parseFecha(this.semanaInicio) || new Date();
     base.setDate(base.getDate() + 7);
-    this.setSemanaFromDate(base);
+    this.setVistaSemanaFromDateSync(base);
     await this.buscarTurnos();
   }
 
   async semanaActual(): Promise<void> {
-    this.setSemanaActual();
+    this.setVistaSemanaFromDateSync(new Date());
+    await this.buscarTurnos();
+  }
+
+  // ==========================
+  //   VISTA DÍA
+  // ==========================
+  private setVistaDiaFromDateSync(ref: Date): void {
+    const d = new Date(ref);
+    d.setHours(0, 0, 0, 0);
+    const s = this.formatFecha(d);
+
+    this.vistaDia = s;
+    this.fechaDesde = s;
+    this.fechaHasta = s;
+
+    this.diasVentana = this.buildDiasRango(d, d);
+  }
+
+  async onCambioVistaDia(value: string | null): Promise<void> {
+    const d = this.parseFecha(value);
+    if (!d) return;
+    this.setVistaDiaFromDateSync(d);
+    await this.buscarTurnos();
+  }
+
+  async diaAnterior(): Promise<void> {
+    const d = this.parseFecha(this.vistaDia) || new Date();
+    d.setDate(d.getDate() - 1);
+    this.setVistaDiaFromDateSync(d);
+    await this.buscarTurnos();
+  }
+
+  async diaSiguiente(): Promise<void> {
+    const d = this.parseFecha(this.vistaDia) || new Date();
+    d.setDate(d.getDate() + 1);
+    this.setVistaDiaFromDateSync(d);
+    await this.buscarTurnos();
+  }
+
+  async diaHoy(): Promise<void> {
+    this.setVistaDiaFromDateSync(new Date());
+    await this.buscarTurnos();
+  }
+
+  // ==========================
+  //   CAMBIO MODO (SEMANA/DÍA)
+  // ==========================
+  async onCambioVistaModo(): Promise<void> {
+    const hoy = new Date();
+    const base =
+      this.vistaModo === 'SEMANA'
+        ? this.parseFecha(this.semanaRef) ||
+          this.parseFecha(this.vistaDia) ||
+          hoy
+        : this.parseFecha(this.vistaDia) || hoy;
+
+    if (this.vistaModo === 'SEMANA') {
+      this.setVistaSemanaFromDateSync(base);
+    } else {
+      this.setVistaDiaFromDateSync(base);
+    }
+
     await this.buscarTurnos();
   }
 
@@ -348,10 +376,10 @@ export class HorariosComponent implements OnInit {
   }
 
   // ==========================
-  //   TURNOS (consulta por semana Lun-Dom)
+  //   TURNOS (consulta por rango efectivo)
   // ==========================
   private async buscarTurnos(): Promise<void> {
-    if (!this.filtroSucursal || !this.semanaInicio || !this.semanaFin) {
+    if (!this.filtroSucursal || !this.fechaDesde || !this.fechaHasta) {
       this.turnos = [];
       this.turnosPorUsuario.clear();
       return;
@@ -367,8 +395,8 @@ export class HorariosComponent implements OnInit {
     try {
       const turnos = await this.turnosService.listarTurnos({
         sucursal: this.filtroSucursal,
-        fecha_desde: this.semanaInicio, // lunes
-        fecha_hasta: this.semanaFin, // domingo
+        fecha_desde: this.fechaDesde,
+        fecha_hasta: this.fechaHasta,
       });
 
       const idsEquipo = new Set(this.usuariosEquipo.map((u) => u.id));
@@ -407,16 +435,16 @@ export class HorariosComponent implements OnInit {
   }
 
   // ==========================
-  //   UI
+  //   UI / ESTADOS
   // ==========================
+  esHoy(fecha: string): boolean {
+    return fecha === this.formatFecha(new Date());
+  }
+
   private startOfDay(d: Date): Date {
     const x = new Date(d);
     x.setHours(0, 0, 0, 0);
     return x;
-  }
-
-  esHoy(fecha: string): boolean {
-    return fecha === this.formatFecha(new Date());
   }
 
   esDiaPasado(fecha: string): boolean {
@@ -431,10 +459,30 @@ export class HorariosComponent implements OnInit {
     return this.startOfDay(d).getTime() > this.startOfDay(new Date()).getTime();
   }
 
+  // ====== tipo_dia helpers ======
+  private getTipoDia(turno?: ITurnoDiario): string {
+    const td = String((turno as any)?.tipo_dia || 'NORMAL')
+      .toUpperCase()
+      .trim();
+    return td || 'NORMAL';
+  }
+
+  tipoDiaLabel(turno?: ITurnoDiario): string {
+    const td = this.getTipoDia(turno);
+    if (td === 'DEVOLUCION') return 'DEVOLUCIÓN';
+    if (td === 'VACACIONES') return 'VACACIONES';
+    if (td === 'PERMISO') return 'PERMISO';
+    return 'NORMAL';
+  }
+
+  esDiaNoLaboral(turno?: ITurnoDiario): boolean {
+    const td = this.getTipoDia(turno);
+    return td !== 'NORMAL';
+  }
+
   estadoUI(turno?: ITurnoDiario, fecha?: string): string {
     if (!turno) return 'SIN TURNO';
 
-    // ✅ PRIORIDAD: tipo_dia (DEVOLUCIÓN/VACACIONES/PERMISO)
     if (this.esDiaNoLaboral(turno)) {
       return this.tipoDiaLabel(turno);
     }
@@ -532,11 +580,10 @@ export class HorariosComponent implements OnInit {
   }
 
   // ==========================
-  //   FORMATOS
+  //   FORMATOS (horas)
   // ==========================
   private formatHora(valor: any): string | null {
     if (valor === null || valor === undefined) return null;
-
     if (valor instanceof Date) return valor.toTimeString().slice(0, 5);
 
     const s = String(valor).trim();
@@ -545,7 +592,6 @@ export class HorariosComponent implements OnInit {
 
     const m = /^(\d{1,2}):(\d{2})(?::\d{2})?$/.exec(s);
     if (m) return `${m[1].padStart(2, '0')}:${m[2]}`;
-
     return null;
   }
 
@@ -634,7 +680,6 @@ export class HorariosComponent implements OnInit {
       this.downloadBlob(blob, fileName);
 
       this.reporteUsuarioId = null;
-      //await SwalStd.success('Reporte descargado correctamente');
     } catch (e: any) {
       await SwalStd.error(
         SwalStd.getErrorMessage(e),
@@ -661,7 +706,6 @@ export class HorariosComponent implements OnInit {
     const st = String((turno as any).estado_hora_acumulada || 'NO')
       .toUpperCase()
       .trim();
-
     if (st === 'NO' || st === '') return '';
 
     const h = (turno as any).num_horas_acumuladas;
@@ -713,8 +757,8 @@ export class HorariosComponent implements OnInit {
         this.detalleTurno.id,
         'APROBADO'
       );
-
       await this.buscarTurnos();
+
       this.detalleTurno =
         this.getTurno(
           Number(this.detalleTurno.usuario_id),
@@ -749,8 +793,8 @@ export class HorariosComponent implements OnInit {
         this.detalleTurno.id,
         'RECHAZADO'
       );
-
       await this.buscarTurnos();
+
       this.detalleTurno =
         this.getTurno(
           Number(this.detalleTurno.usuario_id),
@@ -763,25 +807,5 @@ export class HorariosComponent implements OnInit {
     } finally {
       this.procesandoHoraAcumulada = false;
     }
-  }
-
-  private getTipoDia(turno?: ITurnoDiario): string {
-    const td = String((turno as any)?.tipo_dia || 'NORMAL')
-      .toUpperCase()
-      .trim();
-    return td || 'NORMAL';
-  }
-
-  tipoDiaLabel(turno?: ITurnoDiario): string {
-    const td = this.getTipoDia(turno);
-    if (td === 'DEVOLUCION') return 'DEVOLUCIÓN';
-    if (td === 'VACACIONES') return 'VACACIONES';
-    if (td === 'PERMISO') return 'PERMISO';
-    return 'NORMAL';
-  }
-
-  esDiaNoLaboral(turno?: ITurnoDiario): boolean {
-    const td = this.getTipoDia(turno);
-    return td !== 'NORMAL';
   }
 }

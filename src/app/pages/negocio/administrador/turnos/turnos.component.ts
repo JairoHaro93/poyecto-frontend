@@ -17,18 +17,17 @@ import { IDepartamento } from '../../../../interfaces/sistema/idepartamento.inte
 import { SwalStd } from '../../../../utils/swal.std';
 
 type TipoDia = 'NORMAL' | 'DEVOLUCION' | 'VACACIONES' | 'PERMISO';
+type GenerarModo = 'SEMANA' | 'DIA';
 
 interface UsuarioResumen {
   id: number;
   nombre_completo: string;
-
-  // ✅ saldo del kardex (minutos). Si backend no lo envía, queda 0.
-  saldo_minutos: number;
+  saldo_minutos: number; // si backend no envía, queda 0
 }
 
 interface DiaColumna {
   fecha: string; // 'YYYY-MM-DD'
-  etiqueta: string; // 'Jue 12'
+  etiqueta: string; // 'Lun 12'
 }
 
 @Component({
@@ -40,30 +39,44 @@ interface DiaColumna {
 })
 export class TurnosComponent implements OnInit {
   // ==========================
-  //   FILTROS / CONTEXTO
+  //   CONTEXTO / FILTROS
   // ==========================
   sucursales: string[] = ['LATACUNGA', 'COTOPAXI', 'QUITO', 'AMBATO', 'OTRA'];
 
   filtroSucursal: string | null = null;
-  fechaDesde: string | null = null; // 'YYYY-MM-DD'
+
+  // Vista SEMANAL (siempre se muestra Lun-Dom)
+  semanaRef: string | null = null; // fecha "ancla" para saltar de semana
+  semanaInicio: string | null = null; // lunes
+  semanaFin: string | null = null; // domingo
+
+  // rango efectivo de consulta (siempre la semana actual)
+  fechaDesde: string | null = null;
   fechaHasta: string | null = null;
 
   diasTotales = 0;
   diasHabiles = 0;
-
   diasVentana: DiaColumna[] = [];
 
+  // ==========================
+  //   USUARIOS
+  // ==========================
   usuarios: UsuarioResumen[] = [];
   usuariosSeleccionadosIds: number[] = [];
   cargandoUsuarios = false;
   filtroTextoUsuario = '';
 
+  // ==========================
+  //   CONFIG GENERACIÓN
+  // ==========================
   horaEntradaProg = '08:00';
   horaSalidaProg = '17:00';
-
   excluirFinesSemana = true;
-
   generandoTurnos = false;
+
+  // ✅ modo extra: generar SOLO un día específico (por defecto HOY)
+  generarModo: GenerarModo = 'SEMANA';
+  generarDia: string | null = null;
 
   jefeActual?: Iusuarios;
 
@@ -95,8 +108,23 @@ export class TurnosComponent implements OnInit {
     return !!this.jefeActual?.sucursal_id && !this.jefeActual?.departamento_id;
   }
 
-  get diasAplican(): number {
+  // para info del panel (semana)
+  get diasAplicanSemana(): number {
     return this.excluirFinesSemana ? this.diasHabiles : this.diasTotales;
+  }
+
+  // ✅ para habilitar el botón Generar, depende del modo (SEMANA vs DIA)
+  get diasAplicanGeneracion(): number {
+    if (this.generarModo === 'DIA') {
+      const d = this.parseFecha(this.generarDia);
+      if (!d) return 0;
+      if (this.excluirFinesSemana) {
+        const dow = d.getDay();
+        if (dow === 0 || dow === 6) return 0; // domingo o sábado
+      }
+      return 1;
+    }
+    return this.diasAplicanSemana;
   }
 
   get usuariosFiltrados(): UsuarioResumen[] {
@@ -125,10 +153,15 @@ export class TurnosComponent implements OnInit {
         await this.cargarDepartamentosSucursal(this.jefeActual.sucursal_id);
       }
 
-      this.setRangoPorDefecto();
+      // ✅ Semana actual (Lun-Dom) como vista por defecto
+      this.setSemanaActualSync();
+
+      // ✅ Generación por defecto: Semana completa + día = hoy (para modo DIA si cambian)
+      const hoyStr = this.formatFecha(new Date());
+      this.generarModo = 'SEMANA';
+      this.generarDia = hoyStr;
 
       await this.cargarUsuarios();
-
       await this.buscarTurnos();
     } catch (e: any) {
       await SwalStd.error(SwalStd.getErrorMessage(e), 'Error cargando turnos');
@@ -136,24 +169,8 @@ export class TurnosComponent implements OnInit {
   }
 
   // ==========================
-  //   FECHAS / RANGO
+  //   FECHAS / SEMANA (LUN-DOM)
   // ==========================
-  private setRangoPorDefecto(): void {
-    const hoy = new Date();
-
-    const dDesde = new Date(hoy);
-    dDesde.setDate(hoy.getDate() - 2);
-
-    const dHasta = new Date(hoy);
-    dHasta.setDate(hoy.getDate() + 3);
-
-    this.fechaDesde = this.formatFecha(dDesde);
-    this.fechaHasta = this.formatFecha(dHasta);
-
-    this.recalcularDiasRango();
-    this.recalcularDiasVentana();
-  }
-
   private formatFecha(d: Date): string {
     const y = d.getFullYear();
     const m = String(d.getMonth() + 1).padStart(2, '0');
@@ -161,10 +178,67 @@ export class TurnosComponent implements OnInit {
     return `${y}-${m}-${dia}`;
   }
 
-  private parseFecha(str: string | null): Date | null {
+  private parseFecha(str: string | null | undefined): Date | null {
     if (!str) return null;
     const d = new Date(str + 'T00:00:00');
     return isNaN(d.getTime()) ? null : d;
+  }
+
+  private getMonday(d: Date): Date {
+    const x = new Date(d);
+    x.setHours(0, 0, 0, 0);
+    const day = x.getDay(); // 0=Dom ... 6=Sáb
+    const diff = day === 0 ? -6 : 1 - day; // lunes como inicio
+    x.setDate(x.getDate() + diff);
+    return x;
+  }
+
+  private setSemanaFromDateSync(ref: Date): void {
+    const lunes = this.getMonday(ref);
+    const domingo = new Date(lunes);
+    domingo.setDate(lunes.getDate() + 6);
+
+    this.semanaInicio = this.formatFecha(lunes);
+    this.semanaFin = this.formatFecha(domingo);
+
+    this.semanaRef = this.formatFecha(ref);
+
+    // rango efectivo para consultas y matriz
+    this.fechaDesde = this.semanaInicio;
+    this.fechaHasta = this.semanaFin;
+
+    this.recalcularDiasRango();
+    this.recalcularDiasVentana();
+  }
+
+  private setSemanaActualSync(): void {
+    this.setSemanaFromDateSync(new Date());
+  }
+
+  async onCambioSemanaRef(value: string | null): Promise<void> {
+    const d = this.parseFecha(value);
+    if (!d) return;
+    this.setSemanaFromDateSync(d);
+    await this.buscarTurnos();
+  }
+
+  async semanaAnterior(): Promise<void> {
+    const base = this.parseFecha(this.semanaInicio) || new Date();
+    base.setDate(base.getDate() - 7);
+    this.setSemanaFromDateSync(base);
+    await this.buscarTurnos();
+  }
+
+  async semanaSiguiente(): Promise<void> {
+    const base = this.parseFecha(this.semanaInicio) || new Date();
+    base.setDate(base.getDate() + 7);
+    this.setSemanaFromDateSync(base);
+    await this.buscarTurnos();
+  }
+
+  async semanaActual(): Promise<void> {
+    this.setSemanaActualSync();
+    await this.buscarTurnos();
   }
 
   private recalcularDiasRango(): void {
@@ -206,70 +280,13 @@ export class TurnosComponent implements OnInit {
     }
   }
 
-  private async enforceMaxRangoDias(origen: 'desde' | 'hasta'): Promise<void> {
-    const d1 = this.parseFecha(this.fechaDesde);
-    const d2 = this.parseFecha(this.fechaHasta);
-
-    if (!d1 || !d2) {
-      this.recalcularDiasRango();
-      this.recalcularDiasVentana();
-      await this.buscarTurnos();
-      return;
-    }
-
-    let start = d1;
-    let end = d2;
-
-    if (end < start) {
-      if (origen === 'desde') {
-        this.fechaHasta = this.formatFecha(start);
-        end = start;
-      } else {
-        this.fechaDesde = this.formatFecha(end);
-        start = end;
-      }
-    }
-
-    const dias = Math.floor((end.getTime() - start.getTime()) / 86400000) + 1;
-
-    if (dias > 6) {
-      if (origen === 'desde') {
-        const nuevaHasta = new Date(start);
-        nuevaHasta.setDate(start.getDate() + 5);
-        this.fechaHasta = this.formatFecha(nuevaHasta);
-      } else {
-        const nuevaDesde = new Date(end);
-        nuevaDesde.setDate(end.getDate() - 5);
-        this.fechaDesde = this.formatFecha(nuevaDesde);
-      }
-
-      await SwalStd.warn(
-        'El rango máximo es 6 días. Se ajustó automáticamente.'
-      );
-    }
-
-    this.recalcularDiasRango();
-    this.recalcularDiasVentana();
-    await this.buscarTurnos();
-  }
-
-  async onCambioFechaDesde(value: string | null): Promise<void> {
-    this.fechaDesde = value;
-    await this.enforceMaxRangoDias('desde');
-  }
-
-  async onCambioFechaHasta(value: string | null): Promise<void> {
-    this.fechaHasta = value;
-    await this.enforceMaxRangoDias('hasta');
-  }
-
   esHoy(fecha: string): boolean {
     const hoyStr = this.formatFecha(new Date());
     return fecha === hoyStr;
   }
 
   // ==========================
-  //   DEPARTAMENTOS SUCURSAL
+  //   DEPARTAMENTOS
   // ==========================
   private async cargarDepartamentosSucursal(sucursalId: number): Promise<void> {
     try {
@@ -288,7 +305,6 @@ export class TurnosComponent implements OnInit {
 
   async onCambioDepartamento(): Promise<void> {
     await this.cargarUsuarios();
-    console.log('usuarios:', this.usuarios);
     await this.buscarTurnos();
   }
 
@@ -308,8 +324,6 @@ export class TurnosComponent implements OnInit {
         departamentoIdFiltro
       );
 
-      // ✅ Si backend ya envía saldo_minutos, aquí se mostrará.
-      //    Si no lo envía, queda 0 sin romper nada.
       this.usuarios = (lista || [])
         .map((u: any) => ({
           id: Number(u.id),
@@ -406,7 +420,6 @@ export class TurnosComponent implements OnInit {
     return this.puedeEditarTurno(turno);
   }
 
-  // ✅ DEVOLUCIÓN: saldo >= 480, turno NORMAL, y puede editar (no pasado, sin marcas)
   puedeAsignarDevolucion(
     turno: (ITurnoDiario & { tipo_dia?: TipoDia }) | undefined,
     usuarioId: number
@@ -434,20 +447,38 @@ export class TurnosComponent implements OnInit {
   }
 
   async onGenerarTurnos(): Promise<void> {
-    if (
-      !this.filtroSucursal ||
-      !this.fechaDesde ||
-      !this.fechaHasta ||
-      this.usuariosSeleccionadosIds.length === 0
-    ) {
-      await SwalStd.warn('Selecciona rango y al menos 1 colaborador.');
+    if (!this.filtroSucursal || this.usuariosSeleccionadosIds.length === 0) {
+      await SwalStd.warn('Selecciona al menos 1 colaborador.');
+      return;
+    }
+
+    // ✅ rango según modo
+    const hoyStr = this.formatFecha(new Date());
+    if (!this.generarDia) this.generarDia = hoyStr;
+
+    const rangoDesde =
+      this.generarModo === 'DIA' ? this.generarDia : this.fechaDesde;
+    const rangoHasta =
+      this.generarModo === 'DIA' ? this.generarDia : this.fechaHasta;
+
+    if (!rangoDesde || !rangoHasta) {
+      await SwalStd.warn('No hay rango válido para generar turnos.');
+      return;
+    }
+
+    if (this.diasAplicanGeneracion === 0) {
+      await SwalStd.warn(
+        this.generarModo === 'DIA'
+          ? 'El día seleccionado no aplica (fin de semana) con la opción actual.'
+          : 'El rango seleccionado no aplica.'
+      );
       return;
     }
 
     const payload: GenerarTurnosPayload = {
       usuario_ids: this.usuariosSeleccionadosIds,
-      fecha_desde: this.fechaDesde,
-      fecha_hasta: this.fechaHasta,
+      fecha_desde: rangoDesde,
+      fecha_hasta: rangoHasta,
       sucursal: this.filtroSucursal,
       hora_entrada_prog: this.horaEntradaProg,
       hora_salida_prog: this.horaSalidaProg,
@@ -459,8 +490,15 @@ export class TurnosComponent implements OnInit {
     this.generandoTurnos = true;
     try {
       await this.turnosService.generarTurnos(payload);
+
+      // ✅ refresca la SEMANA visible (siempre)
       await this.buscarTurnos();
-      await SwalStd.success('Turnos generados correctamente');
+
+      await SwalStd.success(
+        this.generarModo === 'DIA'
+          ? 'Turno generado para el día seleccionado'
+          : 'Turnos generados para la semana'
+      );
     } catch (e: any) {
       await SwalStd.error(SwalStd.getErrorMessage(e), 'Error generando turnos');
     } finally {
@@ -469,21 +507,26 @@ export class TurnosComponent implements OnInit {
   }
 
   limpiarFormulario(): void {
-    this.setRangoPorDefecto();
+    // vuelve a semana actual
+    this.setSemanaActualSync();
 
+    // defaults
     this.horaEntradaProg = '08:00';
     this.horaSalidaProg = '17:00';
-
     this.excluirFinesSemana = true;
 
     this.filtroTextoUsuario = '';
     this.usuariosSeleccionadosIds = [];
 
+    // generación
+    this.generarModo = 'SEMANA';
+    this.generarDia = this.formatFecha(new Date());
+
     this.buscarTurnos();
   }
 
   // ==========================
-  //   EDITAR / ELIMINAR (sin recargar = menos “parpadeo”)
+  //   EDITAR / ELIMINAR
   // ==========================
   async onEditarTurno(turno: ITurnoDiario): Promise<void> {
     if (!this.puedeEditarTurno(turno)) return;
@@ -507,7 +550,7 @@ export class TurnosComponent implements OnInit {
         hora_salida_prog: `${res.salida}:00`,
       });
 
-      // ✅ update local (sin buscarTurnos)
+      // ✅ update local
       turno.hora_entrada_prog = `${res.entrada}:00`;
       turno.hora_salida_prog = `${res.salida}:00`;
 
@@ -528,7 +571,7 @@ export class TurnosComponent implements OnInit {
     await this.withSaving(turno.id, async () => {
       await this.turnosService.eliminarTurno(turno.id);
 
-      // ✅ remove local (sin buscarTurnos)
+      // ✅ remove local
       const uid = Number(turno.usuario_id);
       const fechaKey = (turno.fecha || '').slice(0, 10);
       this.turnosPorUsuario.get(uid)?.delete(fechaKey);
@@ -539,7 +582,7 @@ export class TurnosComponent implements OnInit {
   }
 
   // ==========================
-  //   DEVOLUCIÓN (Turnos)
+  //   DEVOLUCIÓN
   // ==========================
   async onAsignarDevolucion(
     turno: ITurnoDiario & { tipo_dia?: TipoDia },
@@ -555,11 +598,8 @@ export class TurnosComponent implements OnInit {
     if (!ok) return;
 
     await this.withSaving(turno.id, async () => {
-      // ✅ Endpoint: PUT /api/turnos/devolucion/:id
-      // Agrega el método en TurnosService (abajo te dejo el snippet).
       await (this.turnosService as any).asignarDevolucion(turno.id);
 
-      // ✅ update local (sin recargar)
       turno.tipo_dia = 'DEVOLUCION';
       this.sumarSaldoMinutos(usuarioId, -480);
 

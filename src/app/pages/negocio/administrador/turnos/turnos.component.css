@@ -130,3 +130,8 @@
 .btn-group.btn-group-sm {
   gap: 2px;
 }
+
+/* turnos.component.css */
+.horarios-table-wrapper .form-control-sm {
+  height: 31px;
+}

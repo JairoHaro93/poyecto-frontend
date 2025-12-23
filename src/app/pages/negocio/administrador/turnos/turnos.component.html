@@ -39,9 +39,9 @@
                   [(ngModel)]="filtroTextoUsuario"
                 />
               </div>
-              <div class="col-12 small text-muted text-md-end">
-                Colaboradores en tu departamento: {{ usuarios.length }} ·
-                Mostrando: {{ usuariosFiltrados.length }} · Seleccionados:
+              <div class="col-12 small text-muted text-md-start">
+                Colaboradores en tu departamento: {{ usuarios.length }} · ·
+                Seleccionados:
                 {{ usuariosSeleccionadosIds.length }}
               </div>
             </div>
@@ -68,11 +68,9 @@
                   type="button"
                   class="btn btn-success btn-sm"
                   [disabled]="
-                    !fechaDesde ||
-                    !fechaHasta ||
                     !filtroSucursal ||
                     usuariosSeleccionadosIds.length === 0 ||
-                    diasAplican === 0 ||
+                    diasAplicanGeneracion === 0 ||
                     generandoTurnos
                   "
                   (click)="onGenerarTurnos()"
@@ -148,38 +146,37 @@
           </div>
 
           <div class="card-body">
-            <h6 class="mb-2">Rango y horario programado</h6>
-
             <!-- Fila: fechas + limpiar -->
+            <!-- SEMANA (LUN-DOM) + LIMPIAR -->
+            <div class="row g-3 align-items-end"></div>
+
+            <!-- MODO DE GENERACIÓN: SEMANA COMPLETA o DÍA ESPECÍFICO -->
             <div class="row g-3 align-items-end">
               <div class="col-md-4 col-6">
-                <label class="form-label">Desde</label>
-                <input
-                  type="date"
-                  class="form-control form-control-sm"
-                  [(ngModel)]="fechaDesde"
-                  (ngModelChange)="onCambioFechaDesde($event)"
-                />
-              </div>
-
-              <div class="col-md-4 col-6">
-                <label class="form-label">Hasta</label>
-                <input
-                  type="date"
-                  class="form-control form-control-sm"
-                  [(ngModel)]="fechaHasta"
-                  (ngModelChange)="onCambioFechaHasta($event)"
-                />
-              </div>
-
-              <div class="col-md-4 text-md-end mt-2 mt-md-0">
-                <button
-                  type="button"
-                  class="btn btn-sm btn-outline-secondary"
-                  (click)="limpiarFormulario()"
+                <label class="form-label">Aplicar turnos a</label>
+                <select
+                  class="form-select form-select-sm"
+                  [(ngModel)]="generarModo"
                 >
-                  Limpiar
-                </button>
+                  <option [ngValue]="'SEMANA'">Semana completa</option>
+                  <option [ngValue]="'DIA'">Día específico</option>
+                </select>
+              </div>
+
+              @if (generarModo === 'DIA') {
+              <div class="col-md-4 col-6">
+                <label class="form-label">Día</label>
+                <input
+                  type="date"
+                  class="form-control form-control-sm"
+                  [(ngModel)]="generarDia"
+                />
+              </div>
+              }
+
+              <div class="col-md-4 text-md-end small text-muted">
+                @if (generarModo === 'DIA') { Se generará solo para el día
+                seleccionado. } @else { Se generará para toda la semana. }
               </div>
             </div>
 
@@ -230,117 +227,157 @@
     </div>
 
     <!-- BLOQUE: MATRIZ DE TURNOS GENERADOS (tipo Horarios, pero organizativo) -->
-    <div class="card">
-      <div class="card-body horarios-table-wrapper">
-        <h6 class="mb-2">Resumen de turnos programados</h6>
-
-        @if (cargandoUsuarios || cargandoTurnos) {
-        <div class="text-center my-3">
-          <div class="spinner-border spinner-border-sm"></div>
-          <div class="small text-muted mt-2">Cargando información...</div>
+    <div
+      class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-2 mb-2"
+    >
+      <!-- PAGINACIÓN SEMANAL -->
+      <div class="d-flex flex-column flex-sm-row align-items-sm-center gap-2">
+        <div class="btn-group btn-group-sm">
+          <button
+            type="button"
+            class="btn btn-outline-secondary"
+            (click)="semanaAnterior()"
+            [disabled]="cargandoTurnos"
+          >
+            ◀
+          </button>
+          <button
+            type="button"
+            class="btn btn-outline-secondary"
+            (click)="semanaActual()"
+            [disabled]="cargandoTurnos"
+          >
+            Semana actual
+          </button>
+          <button
+            type="button"
+            class="btn btn-outline-secondary"
+            (click)="semanaSiguiente()"
+            [disabled]="cargandoTurnos"
+          >
+            ▶
+          </button>
         </div>
-        } @else if (!usuariosFiltrados.length || !diasVentana.length) {
-        <div class="text-center my-3 small text-muted">
-          No hay datos para mostrar. Verifique el departamento, el rango de
-          fechas o genere turnos primero.
-        </div>
-        } @else {
-        <div class="table-responsive horarios-table-scroll">
-          <table class="table table-sm align-middle horarios-table">
-            <thead>
-              <tr>
-                <th class="col-usuario">Trabajador</th>
-                @for (dia of diasVentana; track dia.fecha) {
-                <th
-                  class="text-center col-dia"
-                  [ngClass]="{ 'col-dia-hoy': esHoy(dia.fecha) }"
-                >
-                  <div>{{ dia.etiqueta }}</div>
-                  <div class="small text-muted">{{ dia.fecha }}</div>
-                </th>
-                }
-              </tr>
-            </thead>
+      </div>
 
-            <tbody>
-              @for (u of usuariosFiltrados; track u.id) {
-              <tr>
-                <!-- Columna usuario -->
-                <td class="col-usuario">
-                  <strong>{{ u.nombre_completo }}</strong>
-                  <div class="small text-muted">
-                    Saldo: {{ saldoHHMM(u.saldo_minutos) }}
-                    @if (tieneSaldoParaDevolucion(u.id)) {
-                    <span class="badge bg-success ms-1">≥ 08:00</span>
-                    }
-                  </div>
-                </td>
-
-                <!-- Columnas por día -->
-                @for (dia of diasVentana; track dia.fecha) {
-                <td
-                  class="text-center celda-estado"
-                  [ngClass]="{ 'col-dia-hoy': esHoy(dia.fecha) }"
-                >
-                  @let turno = getTurno(u.id, dia.fecha); @if (turno) {
-                  <div class="celda-turno-contenido">
-                    <div class="small fw-semibold horario-text">
-                      {{ rangoHorario(turno) }}
-                    </div>
-
-                    <div class="small text-muted mt-1">
-                      {{ tipoDiaLabel(turno) }}
-                    </div>
-
-                    <div class="btn-group btn-group-sm mt-1" role="group">
-                      <button
-                        type="button"
-                        class="btn btn-outline-secondary btn-xs"
-                        [disabled]="
-                          !puedeEditarTurno(turno) || savingTurno[turno.id]
-                        "
-                        (click)="onEditarTurno(turno)"
-                      >
-                        ✎
-                      </button>
-                      <button
-                        type="button"
-                        class="btn btn-outline-danger btn-xs"
-                        [disabled]="
-                          !puedeEliminarTurno(turno) || savingTurno[turno.id]
-                        "
-                        (click)="onEliminarTurno(turno)"
-                      >
-                        🗑
-                      </button>
-
-                      <!-- ✅ DEVOLUCIÓN -->
-                      <button
-                        type="button"
-                        class="btn btn-outline-primary btn-xs"
-                        title="Asignar DEVOLUCIÓN (descuenta 8h)"
-                        [disabled]="
-                          !puedeAsignarDevolucion(turno, u.id) ||
-                          savingTurno[turno.id]
-                        "
-                        (click)="onAsignarDevolucion(turno, u.id)"
-                      >
-                        ↺
-                      </button>
-                    </div>
-                  </div>
-                  } @else {
-                  <div class="small text-muted">Sin turno</div>
-                  }
-                </td>
-                }
-              </tr>
-              }
-            </tbody>
-          </table>
-        </div>
-        }
+      <!-- ir a fecha (opcional, recomendado) -->
+      <div class="d-flex align-items-center gap-2">
+        <input
+          type="date"
+          class="form-control form-control-sm"
+          style="max-width: 170px"
+          [(ngModel)]="semanaRef"
+          (ngModelChange)="onCambioSemanaRef($event)"
+          [disabled]="cargandoTurnos"
+        />
       </div>
     </div>
+
+    @if (cargandoUsuarios || cargandoTurnos) {
+    <div class="text-center my-3">
+      <div class="spinner-border spinner-border-sm"></div>
+      <div class="small text-muted mt-2">Cargando información...</div>
+    </div>
+    } @else if (!usuariosFiltrados.length || !diasVentana.length) {
+    <div class="text-center my-3 small text-muted">
+      No hay datos para mostrar. Verifique el departamento, el rango de fechas o
+      genere turnos primero.
+    </div>
+    } @else {
+    <div class="table-responsive horarios-table-scroll">
+      <table class="table table-sm align-middle horarios-table">
+        <thead>
+          <tr>
+            <th class="col-usuario">Trabajador</th>
+            @for (dia of diasVentana; track dia.fecha) {
+            <th
+              class="text-center col-dia"
+              [ngClass]="{ 'col-dia-hoy': esHoy(dia.fecha) }"
+            >
+              <div>{{ dia.etiqueta }}</div>
+              <div class="small text-muted">{{ dia.fecha }}</div>
+            </th>
+            }
+          </tr>
+        </thead>
+
+        <tbody>
+          @for (u of usuariosFiltrados; track u.id) {
+          <tr>
+            <!-- Columna usuario -->
+            <td class="col-usuario">
+              <strong>{{ u.nombre_completo }}</strong>
+              <div class="small text-muted">
+                Saldo: {{ saldoHHMM(u.saldo_minutos) }}
+                @if (tieneSaldoParaDevolucion(u.id)) {
+                <span class="badge bg-success ms-1">≥ 08:00</span>
+                }
+              </div>
+            </td>
+
+            <!-- Columnas por día -->
+            @for (dia of diasVentana; track dia.fecha) {
+            <td
+              class="text-center celda-estado"
+              [ngClass]="{ 'col-dia-hoy': esHoy(dia.fecha) }"
+            >
+              @let turno = getTurno(u.id, dia.fecha); @if (turno) {
+              <div class="celda-turno-contenido">
+                <div class="small fw-semibold horario-text">
+                  {{ rangoHorario(turno) }}
+                </div>
+
+                <div class="small text-muted mt-1">
+                  {{ tipoDiaLabel(turno) }}
+                </div>
+
+                <div class="btn-group btn-group-sm mt-1" role="group">
+                  <button
+                    type="button"
+                    class="btn btn-outline-secondary btn-xs"
+                    [disabled]="
+                      !puedeEditarTurno(turno) || savingTurno[turno.id]
+                    "
+                    (click)="onEditarTurno(turno)"
+                  >
+                    ✎
+                  </button>
+                  <button
+                    type="button"
+                    class="btn btn-outline-danger btn-xs"
+                    [disabled]="
+                      !puedeEliminarTurno(turno) || savingTurno[turno.id]
+                    "
+                    (click)="onEliminarTurno(turno)"
+                  >
+                    🗑
+                  </button>
+
+                  <!-- ✅ DEVOLUCIÓN -->
+                  <button
+                    type="button"
+                    class="btn btn-outline-primary btn-xs"
+                    title="Asignar DEVOLUCIÓN (descuenta 8h)"
+                    [disabled]="
+                      !puedeAsignarDevolucion(turno, u.id) ||
+                      savingTurno[turno.id]
+                    "
+                    (click)="onAsignarDevolucion(turno, u.id)"
+                  >
+                    ↺
+                  </button>
+                </div>
+              </div>
+              } @else {
+              <div class="small text-muted">Sin turno</div>
+              }
+            </td>
+            }
+          </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+    }
   </div>
 </section>
