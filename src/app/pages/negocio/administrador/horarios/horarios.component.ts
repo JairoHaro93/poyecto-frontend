@@ -623,7 +623,7 @@ export class HorariosComponent implements OnInit {
 
       this.reporteUsuarioId = null;
 
-      await SwalStd.success('Reporte descargado correctamente');
+      //await SwalStd.success('Reporte descargado correctamente');
     } catch (e: any) {
       await SwalStd.error(
         SwalStd.getErrorMessage(e),
