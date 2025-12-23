@@ -24,7 +24,7 @@ interface UsuarioResumen {
 }
 interface DiaColumna {
   fecha: string; // YYYY-MM-DD
-  etiqueta: string; // 'Jue 12'
+  etiqueta: string; // 'Lun 18'
 }
 
 @Component({
@@ -40,15 +40,10 @@ export class HorariosComponent implements OnInit {
   // ==========================
   filtroSucursal: string | null = null;
 
-  fechaDesde: string | null = null; // vista
-  fechaHasta: string | null = null;
-
-  private formatMes(d: Date): string {
-    const y = d.getFullYear();
-    const m = String(d.getMonth() + 1).padStart(2, '0');
-    return `${y}-${m}`;
-  }
-
+  // ✅ Semana completa (Lun-Dom)
+  semanaISO: string | null = null; // YYYY-Www (input type="week")
+  semanaInicio: string | null = null; // YYYY-MM-DD (lunes)
+  semanaFin: string | null = null; // YYYY-MM-DD (domingo)
   diasVentana: DiaColumna[] = [];
 
   jefeActual?: Iusuarios;
@@ -74,7 +69,7 @@ export class HorariosComponent implements OnInit {
   detalleTurno?: ITurnoDiario;
 
   // ==========================
-  //   REPORTE EXCEL
+  //   REPORTE EXCEL (POR MES)
   // ==========================
   reporteUsuarioId: number | null = null;
   reporteMes: string | null = null; // YYYY-MM
@@ -92,33 +87,6 @@ export class HorariosComponent implements OnInit {
     private turnosService: TurnosService,
     private reporteAsistenciaService: ReporteAsistenciaService
   ) {}
-
-  private getFileNameFromHeaders(headers: any): string | null {
-    const disposition =
-      headers.get('Content-Disposition') ||
-      headers.get('content-disposition') ||
-      '';
-
-    // Soporta filename="x.xlsx" y filename*=UTF-8''x.xlsx
-    const matchStar = /filename\*\s*=\s*UTF-8''([^;]+)/i.exec(disposition);
-    if (matchStar?.[1]) return decodeURIComponent(matchStar[1].trim());
-
-    const match = /filename="?([^"]+)"?/i.exec(disposition);
-    if (match?.[1]) return match[1].trim();
-
-    return null;
-  }
-
-  private downloadBlob(blob: Blob, fileName: string): void {
-    const blobUrl = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = blobUrl;
-    a.download = fileName;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    window.URL.revokeObjectURL(blobUrl);
-  }
 
   // ==========================
   //   GETTERS
@@ -140,7 +108,7 @@ export class HorariosComponent implements OnInit {
   }
 
   get diasTotales(): number {
-    return this.diasVentana.length;
+    return this.diasVentana.length; // siempre 7
   }
 
   // ==========================
@@ -161,7 +129,10 @@ export class HorariosComponent implements OnInit {
         await this.cargarDepartamentosSucursal(this.jefeActual.sucursal_id);
       }
 
-      this.setRangoPorDefecto();
+      // ✅ Semana actual (Lun-Dom)
+      this.setSemanaActual();
+
+      // ✅ Reporte: mes actual
       this.reporteMes = this.formatMes(new Date());
 
       await this.cargarUsuariosEquipo();
@@ -175,7 +146,7 @@ export class HorariosComponent implements OnInit {
   }
 
   // ==========================
-  //   FECHAS / RANGO VISTA (MÁX 6)
+  //   FECHAS (SEMANA LUN-DOM)
   // ==========================
   private formatFecha(d: Date): string {
     const y = d.getFullYear();
@@ -190,105 +161,127 @@ export class HorariosComponent implements OnInit {
     return isNaN(d.getTime()) ? null : d;
   }
 
-  private setRangoPorDefecto(): void {
-    const hoy = new Date();
-    const dDesde = new Date(hoy);
-    dDesde.setDate(hoy.getDate() - 2);
-    const dHasta = new Date(hoy);
-    dHasta.setDate(hoy.getDate() + 3);
-
-    this.fechaDesde = this.formatFecha(dDesde);
-    this.fechaHasta = this.formatFecha(dHasta);
-    this.recalcularDiasVentana();
+  private formatMes(d: Date): string {
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    return `${y}-${m}`;
   }
 
-  private recalcularDiasVentana(): void {
-    this.diasVentana = [];
+  /**
+   * Devuelve el lunes de la semana (si es domingo, retrocede 6 días)
+   */
+  private getMonday(date: Date): Date {
+    const d = new Date(date);
+    const day = d.getDay(); // 0 dom, 1 lun, ..., 6 sáb
+    const diff = day === 0 ? -6 : 1 - day;
+    d.setDate(d.getDate() + diff);
+    d.setHours(0, 0, 0, 0);
+    return d;
+  }
 
-    const d1 = this.parseFecha(this.fechaDesde);
-    const d2 = this.parseFecha(this.fechaHasta);
-    if (!d1 || !d2 || d1 > d2) return;
-
+  private buildDiasSemana(monday: Date): DiaColumna[] {
     const nombresDia = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
+    const out: DiaColumna[] = [];
+    const tmp = new Date(monday);
 
-    let tmp = new Date(d1);
-    while (tmp.getTime() <= d2.getTime()) {
+    for (let i = 0; i < 7; i++) {
       const fechaStr = this.formatFecha(tmp);
       const etiqueta = `${nombresDia[tmp.getDay()]} ${String(
         tmp.getDate()
       ).padStart(2, '0')}`;
-
-      this.diasVentana.push({ fecha: fechaStr, etiqueta });
+      out.push({ fecha: fechaStr, etiqueta });
       tmp.setDate(tmp.getDate() + 1);
     }
+    return out;
   }
 
-  private async enforceMaxRangoDias(origen: 'desde' | 'hasta'): Promise<void> {
-    const d1 = this.parseFecha(this.fechaDesde);
-    const d2 = this.parseFecha(this.fechaHasta);
+  /**
+   * Convierte un Date a string ISO week: YYYY-Www
+   */
+  private toISOWeekString(date: Date): string {
+    const d = new Date(date);
+    d.setHours(0, 0, 0, 0);
 
-    if (!d1 || !d2) {
-      this.recalcularDiasVentana();
-      await this.buscarTurnos();
-      return;
-    }
+    // ISO: jueves determina el año
+    const day = (d.getDay() + 6) % 7; // lun=0..dom=6
+    d.setDate(d.getDate() - day + 3); // mover a jueves
 
-    let start = d1;
-    let end = d2;
+    const firstThursday = new Date(d.getFullYear(), 0, 4);
+    const firstDay = (firstThursday.getDay() + 6) % 7;
+    firstThursday.setDate(firstThursday.getDate() - firstDay + 3);
 
-    if (end < start) {
-      if (origen === 'desde') {
-        this.fechaHasta = this.formatFecha(start);
-        end = start;
-      } else {
-        this.fechaDesde = this.formatFecha(end);
-        start = end;
-      }
-    }
+    const week =
+      1 + Math.round((d.getTime() - firstThursday.getTime()) / 604800000);
+    const year = d.getFullYear();
+    return `${year}-W${String(week).padStart(2, '0')}`;
+  }
 
-    const dias = Math.floor((end.getTime() - start.getTime()) / 86400000) + 1;
+  /**
+   * ISO week (YYYY-Www) -> lunes de esa semana
+   */
+  private isoWeekToMonday(iso: string | null): Date | null {
+    if (!iso) return null;
+    const m = /^(\d{4})-W(\d{2})$/.exec(iso);
+    if (!m) return null;
 
-    if (dias > 6) {
-      if (origen === 'desde') {
-        const nuevaHasta = new Date(start);
-        nuevaHasta.setDate(start.getDate() + 5);
-        this.fechaHasta = this.formatFecha(nuevaHasta);
-      } else {
-        const nuevaDesde = new Date(end);
-        nuevaDesde.setDate(end.getDate() - 5);
-        this.fechaDesde = this.formatFecha(nuevaDesde);
-      }
+    const year = Number(m[1]);
+    const week = Number(m[2]);
+    if (!year || !week) return null;
 
-      await SwalStd.warn(
-        'El rango máximo de la vista es 6 días. Se ajustó automáticamente.'
-      );
-    }
+    // ISO week 1 = semana que contiene el 4 de enero
+    const jan4 = new Date(year, 0, 4);
+    const week1Monday = this.getMonday(jan4);
 
-    this.recalcularDiasVentana();
+    const monday = new Date(week1Monday);
+    monday.setDate(week1Monday.getDate() + (week - 1) * 7);
+    monday.setHours(0, 0, 0, 0);
+    return monday;
+  }
+
+  private setSemanaFromDate(base: Date): void {
+    const monday = this.getMonday(base);
+    const sunday = new Date(monday);
+    sunday.setDate(monday.getDate() + 6);
+
+    this.semanaInicio = this.formatFecha(monday);
+    this.semanaFin = this.formatFecha(sunday);
+
+    this.diasVentana = this.buildDiasSemana(monday);
+    this.semanaISO = this.toISOWeekString(monday);
+  }
+
+  private setSemanaActual(): void {
+    this.setSemanaFromDate(new Date());
+  }
+
+  async onCambioSemanaISO(value: string | null): Promise<void> {
+    this.semanaISO = value;
+    const monday = this.isoWeekToMonday(value);
+    if (!monday) return;
+
+    this.setSemanaFromDate(monday);
     await this.buscarTurnos();
   }
 
-  async onCambioFechaDesde(value: string | null): Promise<void> {
-    this.fechaDesde = value;
-    await this.enforceMaxRangoDias('desde');
+  async semanaAnterior(): Promise<void> {
+    const base = this.parseFecha(this.semanaInicio);
+    if (!base) return;
+    base.setDate(base.getDate() - 7);
+    this.setSemanaFromDate(base);
+    await this.buscarTurnos();
   }
 
-  async onCambioFechaHasta(value: string | null): Promise<void> {
-    this.fechaHasta = value;
-    await this.enforceMaxRangoDias('hasta');
+  async semanaSiguiente(): Promise<void> {
+    const base = this.parseFecha(this.semanaInicio);
+    if (!base) return;
+    base.setDate(base.getDate() + 7);
+    this.setSemanaFromDate(base);
+    await this.buscarTurnos();
   }
 
-  puedeGenerarReporte(): boolean {
-    const mesOk = !!this.reporteMes && /^\d{4}-\d{2}$/.test(this.reporteMes);
-    return !!this.reporteUsuarioId && mesOk;
-  }
-
-  private getDepartamentoIdParaReporte(): number | null {
-    if (this.esJefeSucursal) return this.departamentoSeleccionadoId ?? null;
-    if (this.esJefeDepartamento && this.jefeActual?.departamento_id) {
-      return Number(this.jefeActual.departamento_id);
-    }
-    return null;
+  async semanaActual(): Promise<void> {
+    this.setSemanaActual();
+    await this.buscarTurnos();
   }
 
   // ==========================
@@ -355,10 +348,10 @@ export class HorariosComponent implements OnInit {
   }
 
   // ==========================
-  //   TURNOS
+  //   TURNOS (consulta por semana Lun-Dom)
   // ==========================
   private async buscarTurnos(): Promise<void> {
-    if (!this.filtroSucursal || !this.fechaDesde || !this.fechaHasta) {
+    if (!this.filtroSucursal || !this.semanaInicio || !this.semanaFin) {
       this.turnos = [];
       this.turnosPorUsuario.clear();
       return;
@@ -374,8 +367,8 @@ export class HorariosComponent implements OnInit {
     try {
       const turnos = await this.turnosService.listarTurnos({
         sucursal: this.filtroSucursal,
-        fecha_desde: this.fechaDesde,
-        fecha_hasta: this.fechaHasta,
+        fecha_desde: this.semanaInicio, // lunes
+        fecha_hasta: this.semanaFin, // domingo
       });
 
       const idsEquipo = new Set(this.usuariosEquipo.map((u) => u.id));
@@ -414,7 +407,7 @@ export class HorariosComponent implements OnInit {
   }
 
   // ==========================
-  //   UI (IGUAL APP)
+  //   UI
   // ==========================
   private startOfDay(d: Date): Date {
     const x = new Date(d);
@@ -443,7 +436,7 @@ export class HorariosComponent implements OnInit {
 
     // ✅ PRIORIDAD: tipo_dia (DEVOLUCIÓN/VACACIONES/PERMISO)
     if (this.esDiaNoLaboral(turno)) {
-      return this.tipoDiaLabel(turno); // nunca será FALTA
+      return this.tipoDiaLabel(turno);
     }
 
     if (!fecha)
@@ -462,8 +455,6 @@ export class HorariosComponent implements OnInit {
 
     const tieneEntrada = !!entReal;
     const tieneSalida = !!salReal;
-
-    // ... (de aquí para abajo tu lógica actual tal cual)
 
     if (isToday) {
       if (tieneEntrada && !tieneSalida) return 'EN CURSO';
@@ -555,7 +546,6 @@ export class HorariosComponent implements OnInit {
     const m = /^(\d{1,2}):(\d{2})(?::\d{2})?$/.exec(s);
     if (m) return `${m[1].padStart(2, '0')}:${m[2]}`;
 
-    if (/^\d+(\.\d+)?$/.test(s)) return null;
     return null;
   }
 
@@ -574,15 +564,6 @@ export class HorariosComponent implements OnInit {
     return `E ${ent || '--:--'} / S ${sal || '--:--'}`;
   }
 
-  minutosAHoras(min: number | null | undefined): string {
-    if (!min || min <= 0) return '0 min';
-    const h = Math.floor(min / 60);
-    const m = min % 60;
-    if (h > 0 && m > 0) return `${h} h ${m} min`;
-    if (h > 0) return `${h} h`;
-    return `${m} min`;
-  }
-
   fechaLarga(fechaStr: string | null | undefined): string {
     if (!fechaStr) return '';
     const d = new Date(fechaStr + 'T00:00:00');
@@ -596,8 +577,39 @@ export class HorariosComponent implements OnInit {
   }
 
   // ==========================
-  //   REPORTE EXCEL
+  //   REPORTE EXCEL (MES)
   // ==========================
+  puedeGenerarReporte(): boolean {
+    const mesOk = !!this.reporteMes && /^\d{4}-\d{2}$/.test(this.reporteMes);
+    return !!this.reporteUsuarioId && mesOk;
+  }
+
+  private getFileNameFromHeaders(headers: any): string | null {
+    const disposition =
+      headers.get('Content-Disposition') ||
+      headers.get('content-disposition') ||
+      '';
+
+    const matchStar = /filename\*\s*=\s*UTF-8''([^;]+)/i.exec(disposition);
+    if (matchStar?.[1]) return decodeURIComponent(matchStar[1].trim());
+
+    const match = /filename="?([^"]+)"?/i.exec(disposition);
+    if (match?.[1]) return match[1].trim();
+
+    return null;
+  }
+
+  private downloadBlob(blob: Blob, fileName: string): void {
+    const blobUrl = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = blobUrl;
+    a.download = fileName;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    window.URL.revokeObjectURL(blobUrl);
+  }
+
   async onGenerarReporte(): Promise<void> {
     if (!this.puedeGenerarReporte()) {
       await SwalStd.warn('Selecciona colaborador y un mes válido (YYYY-MM).');
@@ -622,7 +634,6 @@ export class HorariosComponent implements OnInit {
       this.downloadBlob(blob, fileName);
 
       this.reporteUsuarioId = null;
-
       //await SwalStd.success('Reporte descargado correctamente');
     } catch (e: any) {
       await SwalStd.error(
