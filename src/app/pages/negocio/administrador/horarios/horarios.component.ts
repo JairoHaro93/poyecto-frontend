@@ -43,6 +43,12 @@ export class HorariosComponent implements OnInit {
   fechaDesde: string | null = null; // vista
   fechaHasta: string | null = null;
 
+  private formatMes(d: Date): string {
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    return `${y}-${m}`;
+  }
+
   diasVentana: DiaColumna[] = [];
 
   jefeActual?: Iusuarios;
@@ -71,9 +77,7 @@ export class HorariosComponent implements OnInit {
   //   REPORTE EXCEL
   // ==========================
   reporteUsuarioId: number | null = null;
-  reporteFechaDesde: string | null = null;
-  reporteFechaHasta: string | null = null;
-  reporteDiasTotales = 0;
+  reporteMes: string | null = null; // YYYY-MM
   generandoReporte = false;
 
   // ==========================
@@ -88,6 +92,33 @@ export class HorariosComponent implements OnInit {
     private turnosService: TurnosService,
     private reporteAsistenciaService: ReporteAsistenciaService
   ) {}
+
+  private getFileNameFromHeaders(headers: any): string | null {
+    const disposition =
+      headers.get('Content-Disposition') ||
+      headers.get('content-disposition') ||
+      '';
+
+    // Soporta filename="x.xlsx" y filename*=UTF-8''x.xlsx
+    const matchStar = /filename\*\s*=\s*UTF-8''([^;]+)/i.exec(disposition);
+    if (matchStar?.[1]) return decodeURIComponent(matchStar[1].trim());
+
+    const match = /filename="?([^"]+)"?/i.exec(disposition);
+    if (match?.[1]) return match[1].trim();
+
+    return null;
+  }
+
+  private downloadBlob(blob: Blob, fileName: string): void {
+    const blobUrl = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = blobUrl;
+    a.download = fileName;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    window.URL.revokeObjectURL(blobUrl);
+  }
 
   // ==========================
   //   GETTERS
@@ -131,10 +162,7 @@ export class HorariosComponent implements OnInit {
       }
 
       this.setRangoPorDefecto();
-
-      this.reporteFechaDesde = this.fechaDesde;
-      this.reporteFechaHasta = this.fechaHasta;
-      this.recalcularDiasReporte();
+      this.reporteMes = this.formatMes(new Date());
 
       await this.cargarUsuariosEquipo();
       await this.buscarTurnos();
@@ -250,84 +278,9 @@ export class HorariosComponent implements OnInit {
     await this.enforceMaxRangoDias('hasta');
   }
 
-  // ==========================
-  //   RANGO REPORTE (MÁX 31)
-  // ==========================
-  private recalcularDiasReporte(): void {
-    const d1 = this.parseFecha(this.reporteFechaDesde);
-    const d2 = this.parseFecha(this.reporteFechaHasta);
-
-    if (!d1 || !d2 || d1 > d2) {
-      this.reporteDiasTotales = 0;
-      return;
-    }
-    this.reporteDiasTotales =
-      Math.floor((d2.getTime() - d1.getTime()) / 86400000) + 1;
-  }
-
-  private async enforceMaxRangoReporte(
-    origen: 'desde' | 'hasta'
-  ): Promise<void> {
-    const d1 = this.parseFecha(this.reporteFechaDesde);
-    const d2 = this.parseFecha(this.reporteFechaHasta);
-
-    if (!d1 || !d2) {
-      this.recalcularDiasReporte();
-      return;
-    }
-
-    let start = d1;
-    let end = d2;
-
-    if (end < start) {
-      if (origen === 'desde') {
-        this.reporteFechaHasta = this.formatFecha(start);
-        end = start;
-      } else {
-        this.reporteFechaDesde = this.formatFecha(end);
-        start = end;
-      }
-    }
-
-    const dias = Math.floor((end.getTime() - start.getTime()) / 86400000) + 1;
-
-    if (dias > 31) {
-      if (origen === 'desde') {
-        const nuevaHasta = new Date(start);
-        nuevaHasta.setDate(start.getDate() + 30);
-        this.reporteFechaHasta = this.formatFecha(nuevaHasta);
-      } else {
-        const nuevaDesde = new Date(end);
-        nuevaDesde.setDate(end.getDate() - 30);
-        this.reporteFechaDesde = this.formatFecha(nuevaDesde);
-      }
-
-      await SwalStd.warn(
-        'El rango máximo del reporte es 31 días. Se ajustó automáticamente.'
-      );
-    }
-
-    this.recalcularDiasReporte();
-  }
-
-  async onCambioFechaDesdeReporte(value: string | null): Promise<void> {
-    this.reporteFechaDesde = value;
-    await this.enforceMaxRangoReporte('desde');
-  }
-
-  async onCambioFechaHastaReporte(value: string | null): Promise<void> {
-    this.reporteFechaHasta = value;
-    await this.enforceMaxRangoReporte('hasta');
-  }
-
   puedeGenerarReporte(): boolean {
-    return (
-      !!this.reporteUsuarioId &&
-      !!this.reporteFechaDesde &&
-      !!this.reporteFechaHasta &&
-      this.reporteDiasTotales > 0 &&
-      this.reporteDiasTotales <= 31
-    );
+    const mesOk = !!this.reporteMes && /^\d{4}-\d{2}$/.test(this.reporteMes);
+    return !!this.reporteUsuarioId && mesOk;
   }
 
   private getDepartamentoIdParaReporte(): number | null {
@@ -399,7 +352,6 @@ export class HorariosComponent implements OnInit {
     this.reporteUsuarioId = null;
     await this.cargarUsuariosEquipo();
     await this.buscarTurnos();
-    this.recalcularDiasReporte();
   }
 
   // ==========================
@@ -648,42 +600,26 @@ export class HorariosComponent implements OnInit {
   // ==========================
   async onGenerarReporte(): Promise<void> {
     if (!this.puedeGenerarReporte()) {
-      await SwalStd.warn(
-        'Selecciona colaborador y un rango válido (máx. 31 días).'
-      );
+      await SwalStd.warn('Selecciona colaborador y un mes válido (YYYY-MM).');
       return;
     }
 
-    const departamentoId = this.getDepartamentoIdParaReporte();
-
     this.generandoReporte = true;
+
     try {
-      const resp = await this.reporteAsistenciaService.descargarReporteExcel({
-        fecha_desde: this.reporteFechaDesde!,
-        fecha_hasta: this.reporteFechaHasta!,
-        usuario_id: this.reporteUsuarioId!,
-        departamento_id: departamentoId,
-      });
+      const resp = await this.reporteAsistenciaService.descargarReporteExcelMes(
+        {
+          mes: this.reporteMes!,
+          usuario_id: this.reporteUsuarioId!,
+        }
+      );
 
       const blob = resp.body;
       if (!blob) throw new Error('Respuesta vacía del servidor');
 
-      const disposition =
-        resp.headers.get('Content-Disposition') ||
-        resp.headers.get('content-disposition') ||
-        '';
-      let fileName = 'reporte.xlsx';
-      const match = /filename="?(.*?)"?$/i.exec(disposition);
-      if (match && match[1]) fileName = match[1];
-
-      const blobUrl = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = blobUrl;
-      a.download = fileName;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      window.URL.revokeObjectURL(blobUrl);
+      const fileName =
+        this.getFileNameFromHeaders(resp.headers) || 'reporte.xlsx';
+      this.downloadBlob(blob, fileName);
 
       this.reporteUsuarioId = null;
 

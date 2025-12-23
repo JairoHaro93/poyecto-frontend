@@ -106,7 +106,7 @@
 
         <div class="row g-3 align-items-end">
           <!-- Selección de colaborador -->
-          <div class="col-md-4">
+          <div class="col-md-5">
             <label class="form-label">Colaborador</label>
             <select
               class="form-select form-select-sm"
@@ -121,39 +121,22 @@
             </select>
           </div>
 
-          <!-- Rango de fechas del reporte -->
+          <!-- Mes del reporte -->
           <div class="col-md-3 col-6">
-            <label class="form-label">Desde (reporte)</label>
+            <label class="form-label">Mes</label>
             <input
-              type="date"
+              type="month"
               class="form-control form-control-sm"
-              [(ngModel)]="reporteFechaDesde"
-              (ngModelChange)="onCambioFechaDesdeReporte($event)"
+              [(ngModel)]="reporteMes"
             />
-          </div>
-          <div class="col-md-3 col-6">
-            <label class="form-label">Hasta (reporte)</label>
-            <input
-              type="date"
-              class="form-control form-control-sm"
-              [(ngModel)]="reporteFechaHasta"
-              (ngModelChange)="onCambioFechaHastaReporte($event)"
-            />
+            <div class="small text-muted mt-1">Formato: YYYY-MM</div>
           </div>
 
-          <!-- Info rango + botón -->
-          <div class="col-md-2 mt-2 mt-md-0 text-md-end">
-            <div class="small text-muted mb-1">
-              Rango reporte:
-              <strong>{{ reporteDiasTotales }}</strong> día{{
-                reporteDiasTotales === 1 ? "" : "s"
-              }}
-            </div>
-            <div class="small text-muted">(máx. 31 días)</div>
-
+          <!-- Botón -->
+          <div class="col-md-4 mt-2 mt-md-0 text-md-end">
             <button
               type="button"
-              class="btn btn-sm btn-success mt-2"
+              class="btn btn-sm btn-success"
               [disabled]="!puedeGenerarReporte() || generandoReporte"
               (click)="onGenerarReporte()"
             >

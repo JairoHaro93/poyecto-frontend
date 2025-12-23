@@ -1,39 +1,25 @@
-// reporte-asistencia.service.ts
-import { inject, Injectable } from '@angular/core';
+import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
+import { lastValueFrom } from 'rxjs';
 import { environment } from '../../../environments/environment';
-import { firstValueFrom } from 'rxjs';
 
 @Injectable({ providedIn: 'root' })
 export class ReporteAsistenciaService {
-  private baseUrl: string = `${environment.API_URL}/asistencia`;
-  private httpClient = inject(HttpClient);
+  private baseUrl = `${environment.API_URL}/asistencia/reporte-excel`;
 
-  descargarReporteExcel(params: {
-    fecha_desde: string;
-    fecha_hasta: string;
-    usuario_id: number;
-    departamento_id?: number | null;
-  }): Promise<HttpResponse<Blob>> {
-    let httpParams = new HttpParams()
-      .set('fecha_desde', params.fecha_desde)
-      .set('fecha_hasta', params.fecha_hasta)
-      .set('usuario_id', String(params.usuario_id));
+  constructor(private http: HttpClient) {}
 
-    if (params.departamento_id != null) {
-      httpParams = httpParams.set(
-        'departamento_id',
-        String(params.departamento_id)
-      );
-    }
+  descargarReporteExcelMes(paramsIn: { mes: string; usuario_id: number }) {
+    const params = new HttpParams()
+      .set('mes', paramsIn.mes)
+      .set('usuario_id', String(paramsIn.usuario_id));
 
-    return firstValueFrom(
-      this.httpClient.get(`${this.baseUrl}/reporte-excel`, {
-        params: httpParams,
-        withCredentials: true,
-        observe: 'response', // 👈 queremos headers
-        responseType: 'blob', // 👈 queremos Blob
+    return lastValueFrom(
+      this.http.get(this.baseUrl, {
+        params,
+        observe: 'response',
+        responseType: 'blob',
       })
-    );
+    ) as Promise<HttpResponse<Blob>>;
   }
 }
