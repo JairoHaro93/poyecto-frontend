@@ -11,12 +11,16 @@ import {
 } from '../../../../services/negocio_latacunga/turnos.service';
 import { ReporteAsistenciaService } from '../../../../services/negocio_latacunga/reporte-asistencia.service';
 
+// ✅ NUEVO: servicio separado para justificaciones
+import { JustificacionesService } from '../../../../services/negocio_latacunga/justificaciones.service';
+
 import { Iusuarios } from '../../../../interfaces/sistema/iusuarios.interface';
 import { IDepartamento } from '../../../../interfaces/sistema/idepartamento.interface';
 
 import { SwalStd } from '../../../../utils/swal.std';
 
 type VistaModo = 'SEMANA' | 'DIA';
+type JustKey = 'atraso' | 'salida';
 
 // ===== Interfaces UI =====
 interface UsuarioResumen {
@@ -93,12 +97,21 @@ export class HorariosComponent implements OnInit {
   // ==========================
   procesandoHoraAcumulada = false;
 
+  // ==========================
+  //   JUSTIFICACIONES (APROBAR/RECHAZAR + MINUTOS)
+  // ==========================
+  procesandoJust: Record<JustKey, boolean> = { atraso: false, salida: false };
+
+  // 👇 Minutos a descontar (ingresados por el Jefe)
+  justMinutos: Record<JustKey, number | null> = { atraso: null, salida: null };
+
   constructor(
     private authService: AutenticacionService,
     private usuariosService: UsuariosService,
     private departamentosService: DepartamentosService,
     private turnosService: TurnosService,
-    private reporteAsistenciaService: ReporteAsistenciaService
+    private reporteAsistenciaService: ReporteAsistenciaService,
+    private justificacionesService: JustificacionesService // ✅ NUEVO
   ) {}
 
   // ==========================
@@ -141,12 +154,10 @@ export class HorariosComponent implements OnInit {
       const hoy = new Date();
       const hoyStr = this.formatFecha(hoy);
 
-      // ✅ defaults
       this.vistaModo = 'SEMANA';
       this.vistaDia = hoyStr;
       this.setVistaSemanaFromDateSync(hoy);
 
-      // ✅ Reporte: mes actual
       this.reporteMes = this.formatMes(new Date());
 
       await this.cargarUsuariosEquipo();
@@ -185,7 +196,7 @@ export class HorariosComponent implements OnInit {
     const d = new Date(date);
     d.setHours(0, 0, 0, 0);
     const day = d.getDay(); // 0 dom ... 6 sáb
-    const diff = day === 0 ? -6 : 1 - day; // lunes inicio
+    const diff = day === 0 ? -6 : 1 - day; // lunes
     d.setDate(d.getDate() + diff);
     return d;
   }
@@ -193,8 +204,8 @@ export class HorariosComponent implements OnInit {
   private buildDiasRango(desde: Date, hasta: Date): DiaColumna[] {
     const nombresDia = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
     const out: DiaColumna[] = [];
-
     const tmp = new Date(desde);
+
     while (tmp.getTime() <= hasta.getTime()) {
       const fechaStr = this.formatFecha(tmp);
       const etiqueta = `${nombresDia[tmp.getDay()]} ${String(
@@ -303,11 +314,8 @@ export class HorariosComponent implements OnInit {
           hoy
         : this.parseFecha(this.vistaDia) || hoy;
 
-    if (this.vistaModo === 'SEMANA') {
-      this.setVistaSemanaFromDateSync(base);
-    } else {
-      this.setVistaDiaFromDateSync(base);
-    }
+    if (this.vistaModo === 'SEMANA') this.setVistaSemanaFromDateSync(base);
+    else this.setVistaDiaFromDateSync(base);
 
     await this.buscarTurnos();
   }
@@ -376,7 +384,7 @@ export class HorariosComponent implements OnInit {
   }
 
   // ==========================
-  //   TURNOS (consulta por rango efectivo)
+  //   TURNOS (consulta por rango)
   // ==========================
   private async buscarTurnos(): Promise<void> {
     if (!this.filtroSucursal || !this.fechaDesde || !this.fechaHasta) {
@@ -419,9 +427,10 @@ export class HorariosComponent implements OnInit {
 
     for (const t of this.turnos) {
       const uid = Number(t.usuario_id);
-      const fechaRaw = (t as any).fecha as string | undefined;
+      const fechaRaw = t.fecha;
       if (!fechaRaw) continue;
-      const fechaClave = fechaRaw.slice(0, 10);
+
+      const fechaClave = String(fechaRaw).slice(0, 10);
 
       if (!this.turnosPorUsuario.has(uid)) {
         this.turnosPorUsuario.set(uid, new Map<string, ITurnoDiario>());
@@ -459,7 +468,6 @@ export class HorariosComponent implements OnInit {
     return this.startOfDay(d).getTime() > this.startOfDay(new Date()).getTime();
   }
 
-  // ====== tipo_dia helpers ======
   private getTipoDia(turno?: ITurnoDiario): string {
     const td = String((turno as any)?.tipo_dia || 'NORMAL')
       .toUpperCase()
@@ -483,9 +491,7 @@ export class HorariosComponent implements OnInit {
   estadoUI(turno?: ITurnoDiario, fecha?: string): string {
     if (!turno) return 'SIN TURNO';
 
-    if (this.esDiaNoLaboral(turno)) {
-      return this.tipoDiaLabel(turno);
-    }
+    if (this.esDiaNoLaboral(turno)) return this.tipoDiaLabel(turno);
 
     if (!fecha)
       return String(turno.estado_asistencia || 'PROGRAMADO').toUpperCase();
@@ -539,7 +545,6 @@ export class HorariosComponent implements OnInit {
         return 'estado-vacaciones';
       case 'PERMISO':
         return 'estado-permiso';
-
       case 'SIN TURNO':
         return 'estado-sin-turno';
       case 'PROGRAMADO':
@@ -564,12 +569,27 @@ export class HorariosComponent implements OnInit {
     }
   }
 
+  private syncMinutosDesdeTurno(turno?: ITurnoDiario): void {
+    this.justMinutos.atraso =
+      turno && (turno as any).just_atraso_minutos != null
+        ? Number((turno as any).just_atraso_minutos)
+        : null;
+
+    this.justMinutos.salida =
+      turno && (turno as any).just_salida_minutos != null
+        ? Number((turno as any).just_salida_minutos)
+        : null;
+  }
+
   onClickCelda(usuario: UsuarioResumen, fecha: string): void {
     const turno = this.getTurno(usuario.id, fecha);
+
     this.detalleUsuario = usuario;
     this.detalleFecha = fecha;
     this.detalleTurno = turno;
     this.detalleVisible = true;
+
+    this.syncMinutosDesdeTurno(turno);
   }
 
   cerrarDetalleTurno(): void {
@@ -577,6 +597,9 @@ export class HorariosComponent implements OnInit {
     this.detalleUsuario = undefined;
     this.detalleFecha = undefined;
     this.detalleTurno = undefined;
+
+    this.justMinutos.atraso = null;
+    this.justMinutos.salida = null;
   }
 
   // ==========================
@@ -681,6 +704,14 @@ export class HorariosComponent implements OnInit {
 
       this.reporteUsuarioId = null;
     } catch (e: any) {
+      if (e?.status === 409) {
+        const msg =
+          e?.error?.message ||
+          'No se puede generar el reporte porque existen solicitudes/justificaciones pendientes.';
+        await SwalStd.warn(msg, 'Pendientes por resolver');
+        return;
+      }
+
       await SwalStd.error(
         SwalStd.getErrorMessage(e),
         'Error generando reporte'
@@ -691,7 +722,7 @@ export class HorariosComponent implements OnInit {
   }
 
   // ==========================
-  //   HORAS ACUMULADAS
+  //   HORAS ACUMULADAS (UI)
   // ==========================
   horaAcumuladaVisible(turno?: ITurnoDiario): boolean {
     if (!turno) return false;
@@ -806,6 +837,157 @@ export class HorariosComponent implements OnInit {
       await SwalStd.error(SwalStd.getErrorMessage(e), 'Error rechazando');
     } finally {
       this.procesandoHoraAcumulada = false;
+    }
+  }
+
+  // ==========================
+  //   JUSTIFICACIONES (UI + ACCIONES)
+  // ==========================
+  private getJustEstado(key: JustKey, turno?: ITurnoDiario): string {
+    if (!turno) return 'NO';
+    const field =
+      key === 'atraso' ? 'just_atraso_estado' : 'just_salida_estado';
+    return String((turno as any)?.[field] || 'NO')
+      .toUpperCase()
+      .trim();
+  }
+
+  justVisible(key: JustKey, turno?: ITurnoDiario): boolean {
+    const st = this.getJustEstado(key, turno);
+    return st !== 'NO' && st !== '';
+  }
+
+  justLabel(key: JustKey, turno?: ITurnoDiario): string {
+    const st = this.getJustEstado(key, turno);
+    if (st === 'PENDIENTE') return 'PENDIENTE';
+    if (st === 'APROBADA') return 'APROBADA';
+    if (st === 'RECHAZADA') return 'RECHAZADA';
+    return st || 'NO';
+  }
+
+  justBadgeClass(key: JustKey, turno?: ITurnoDiario): any {
+    const st = this.getJustEstado(key, turno);
+    return {
+      'badge-just-sol': st === 'PENDIENTE',
+      'badge-just-ok': st === 'APROBADA',
+      'badge-just-rech': st === 'RECHAZADA',
+    };
+  }
+
+  justMotivo(key: JustKey, turno?: ITurnoDiario): string {
+    if (!turno) return '';
+    const field =
+      key === 'atraso' ? 'just_atraso_motivo' : 'just_salida_motivo';
+    return String((turno as any)?.[field] || '').trim();
+  }
+
+  puedeGestionarJust(key: JustKey, turno?: ITurnoDiario): boolean {
+    if (!turno) return false;
+    const esJefe = this.esJefeSucursal || this.esJefeDepartamento;
+    const st = this.getJustEstado(key, turno);
+    return esJefe && st === 'PENDIENTE';
+  }
+
+  private validarMinutosJust(key: JustKey): number | null {
+    const v = this.justMinutos[key];
+    if (v === null || v === undefined) return null;
+    const n = Number(v);
+    if (Number.isNaN(n) || n < 0) return null;
+    return Math.floor(n);
+  }
+
+  async onAprobarJust(key: JustKey): Promise<void> {
+    if (!this.detalleTurno || !this.puedeGestionarJust(key, this.detalleTurno))
+      return;
+
+    const minutos = this.validarMinutosJust(key);
+    if (minutos === null) {
+      await SwalStd.warn(
+        'Ingresa los minutos a descontar (número >= 0).',
+        'Minutos requeridos'
+      );
+      return;
+    }
+
+    const titulo =
+      key === 'atraso'
+        ? '¿Aprobar justificación de atraso?'
+        : '¿Aprobar justificación de salida temprana?';
+
+    const ok = await SwalStd.confirm({
+      title: titulo,
+      text: `Se registrarán ${minutos} minuto(s) como tiempo a descontar.`,
+      confirmText: 'Aprobar',
+    });
+    if (!ok) return;
+
+    this.procesandoJust[key] = true;
+    try {
+      // ✅ Ahora va por servicio separado
+      await this.justificacionesService.resolverJustificacion(
+        this.detalleTurno.id,
+        key,
+        'APROBADA',
+        minutos
+      );
+
+      await this.buscarTurnos();
+      this.detalleTurno =
+        this.getTurno(
+          Number(this.detalleTurno.usuario_id),
+          this.detalleFecha!
+        ) || this.detalleTurno;
+
+      // refresca minutos desde el nuevo turno
+      this.syncMinutosDesdeTurno(this.detalleTurno);
+
+      await SwalStd.success('Justificación aprobada');
+    } catch (e: any) {
+      await SwalStd.error(SwalStd.getErrorMessage(e), 'Error aprobando');
+    } finally {
+      this.procesandoJust[key] = false;
+    }
+  }
+
+  async onRechazarJust(key: JustKey): Promise<void> {
+    if (!this.detalleTurno || !this.puedeGestionarJust(key, this.detalleTurno))
+      return;
+
+    const titulo =
+      key === 'atraso'
+        ? '¿Rechazar justificación de atraso?'
+        : '¿Rechazar justificación de salida temprana?';
+
+    const ok = await SwalStd.confirm({
+      title: titulo,
+      text: 'Esta acción rechazará la solicitud.',
+      confirmText: 'Rechazar',
+    });
+    if (!ok) return;
+
+    this.procesandoJust[key] = true;
+    try {
+      await this.justificacionesService.resolverJustificacion(
+        this.detalleTurno.id,
+        key,
+        'RECHAZADA',
+        null
+      );
+
+      await this.buscarTurnos();
+      this.detalleTurno =
+        this.getTurno(
+          Number(this.detalleTurno.usuario_id),
+          this.detalleFecha!
+        ) || this.detalleTurno;
+
+      this.syncMinutosDesdeTurno(this.detalleTurno);
+
+      await SwalStd.success('Justificación rechazada');
+    } catch (e: any) {
+      await SwalStd.error(SwalStd.getErrorMessage(e), 'Error rechazando');
+    } finally {
+      this.procesandoJust[key] = false;
     }
   }
 }

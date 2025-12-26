@@ -24,6 +24,7 @@ export interface GenerarTurnosResponse {
   totalOmitidos: number;
 }
 
+// ✅ Turno que consume Horarios (puede incluir campos extra que vienen de backend)
 export interface ITurnoDiario {
   id: number;
   usuario_id: number;
@@ -39,12 +40,27 @@ export interface ITurnoDiario {
   min_atraso?: number;
   min_extra?: number;
 
-  observacion?: string;
   sucursal?: string;
 
-  // ✅ NUEVOS (horas acumuladas)
+  // ✅ "observacion" la dejaste para horas acumuladas (de momento)
+  observacion?: string;
+
+  // ✅ HORAS ACUMULADAS
   estado_hora_acumulada?: string; // NO | SOLICITUD | APROBADO | RECHAZADO
   num_horas_acumuladas?: number | null;
+  hora_acum_aprobado_por?: number | null;
+
+  // ✅ Campos de JUSTIFICACIONES (solo datos, sin endpoints aquí)
+  // (útiles para mostrar badges/estado en la matriz)
+  just_atraso_estado?: string; // NO | PENDIENTE | APROBADA | RECHAZADA
+  just_atraso_motivo?: string | null;
+  just_atraso_minutos?: number | null;
+  just_atraso_jefe_id?: number | null;
+
+  just_salida_estado?: string; // NO | PENDIENTE | APROBADA | RECHAZADA
+  just_salida_motivo?: string | null;
+  just_salida_minutos?: number | null;
+  just_salida_jefe_id?: number | null;
 }
 
 export interface TurnoDiario {
@@ -61,7 +77,7 @@ export interface TurnoDiario {
 
   estado_asistencia: string;
 
-  // Campos de JOIN de usuario:
+  // JOIN usuario
   usuario_nombre: string;
   usuario_usuario: string;
   usuario_cedula: string;
@@ -82,12 +98,15 @@ export class TurnosService {
   //  GENERAR TURNOS
   // ==========================
   generarTurnos(payload: GenerarTurnosPayload): Promise<GenerarTurnosResponse> {
-    const obs = this.http.post<GenerarTurnosResponse>(
-      `${this.baseUrl}/generar`,
-      payload,
-      { withCredentials: true }
+    return firstValueFrom(
+      this.http.post<GenerarTurnosResponse>(
+        `${this.baseUrl}/generar`,
+        payload,
+        {
+          withCredentials: true,
+        }
+      )
     );
-    return firstValueFrom(obs);
   }
 
   // ==========================
@@ -110,12 +129,12 @@ export class TurnosService {
     if (params.usuario_id)
       httpParams = httpParams.set('usuario_id', String(params.usuario_id));
 
-    const obs = this.http.get<GetTurnosResponse>(this.baseUrl, {
-      params: httpParams,
-      withCredentials: true,
-    });
-
-    return firstValueFrom(obs);
+    return firstValueFrom(
+      this.http.get<GetTurnosResponse>(this.baseUrl, {
+        params: httpParams,
+        withCredentials: true,
+      })
+    );
   }
 
   // ==========================
@@ -153,21 +172,20 @@ export class TurnosService {
     if (params.usuario_id)
       httpParams = httpParams.set('usuario_id', String(params.usuario_id));
 
-    const obs = this.http.get<{
-      ok: boolean;
-      turnos: ITurnoDiario[];
-      filtros?: any;
-    }>(this.baseUrl, { params: httpParams, withCredentials: true });
+    const resp = await firstValueFrom(
+      this.http.get<{ ok: boolean; turnos: ITurnoDiario[]; filtros?: any }>(
+        this.baseUrl,
+        { params: httpParams, withCredentials: true }
+      )
+    );
 
-    const resp = await firstValueFrom(obs);
     return resp.turnos || [];
   }
 
   // ==========================
-  //  APROBAR / RECHAZAR HORA EXTRA
-  //  Backend esperado: PUT /api/turnos/hora-extra/:turnoId
+  //  APROBAR / RECHAZAR HORAS ACUMULADAS
+  //  PUT /api/turnos/hora-acumulada/:turnoId
   // ==========================
-  // turnos.service.ts
   actualizarEstadoHoraAcumulada(
     turnoId: number,
     data:
@@ -175,19 +193,30 @@ export class TurnosService {
       | 'RECHAZADO'
       | {
           estado_hora_acumulada: 'APROBADO' | 'RECHAZADO';
-          aprobado_por?: number;
+          hora_acum_aprobado_por?: number;
         }
   ) {
     const body =
       typeof data === 'string' ? { estado_hora_acumulada: data } : data;
+
     return lastValueFrom(
-      this.http.put(`${this.baseUrl}/hora-acumulada/${turnoId}`, body)
+      this.http.put(`${this.baseUrl}/hora-acumulada/${turnoId}`, body, {
+        withCredentials: true,
+      })
     );
   }
 
-  async asignarDevolucion(turnoId: number): Promise<any> {
-    return await lastValueFrom(
-      this.http.put(`${this.baseUrl}/devolucion/${turnoId}`, {})
+  // ==========================
+  //  ASIGNAR DEVOLUCIÓN (cuando corresponda)
+  //  PUT /api/turnos/devolucion/:turnoId
+  // ==========================
+  asignarDevolucion(turnoId: number): Promise<any> {
+    return lastValueFrom(
+      this.http.put(
+        `${this.baseUrl}/devolucion/${turnoId}`,
+        {},
+        { withCredentials: true }
+      )
     );
   }
 }

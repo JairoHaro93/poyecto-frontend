@@ -331,3 +331,71 @@
   border-color: rgba(220, 53, 69, 0.55);
   color: #b02a37;
 }
+
+/* Badge Justificaciones */
+.badge-jus {
+  display: inline-block;
+  padding: 0.28rem 0.45rem;
+  border-radius: 999px;
+  font-weight: 700;
+  border: 1px solid transparent;
+  font-size: 0.65rem;
+}
+
+.badge-jus-sol {
+  background: rgba(255, 193, 7, 0.2);
+  border-color: rgba(255, 193, 7, 0.6);
+  color: #b78103;
+}
+
+.badge-jus-ok {
+  background: rgba(25, 135, 84, 0.18);
+  border-color: rgba(25, 135, 84, 0.55);
+  color: #146c43;
+}
+
+.badge-jus-rech {
+  background: rgba(220, 53, 69, 0.18);
+  border-color: rgba(220, 53, 69, 0.55);
+  color: #b02a37;
+}
+
+/* Bloques de solicitudes dentro del modal */
+.soli-block {
+  padding: 10px;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 10px;
+  background: rgba(0, 0, 0, 0.02);
+}
+
+/* Texto multilínea */
+.obs-preline {
+  white-space: pre-line;
+}
+
+/* Badge Justificaciones */
+.badge-just {
+  display: inline-block;
+  padding: 0.35rem 0.5rem;
+  border-radius: 999px;
+  font-weight: 700;
+  border: 1px solid transparent;
+}
+
+.badge-just-sol {
+  background: rgba(255, 193, 7, 0.2);
+  border-color: rgba(255, 193, 7, 0.6);
+  color: #b78103;
+}
+
+.badge-just-ok {
+  background: rgba(25, 135, 84, 0.18);
+  border-color: rgba(25, 135, 84, 0.55);
+  color: #146c43;
+}
+
+.badge-just-rech {
+  background: rgba(220, 53, 69, 0.18);
+  border-color: rgba(220, 53, 69, 0.55);
+  color: #b02a37;
+}
