@@ -482,7 +482,7 @@ export class TurnosComponent implements OnInit {
       sucursal: this.filtroSucursal,
       hora_entrada_prog: this.horaEntradaProg,
       hora_salida_prog: this.horaSalidaProg,
-      min_toler_atraso: 0,
+      min_toler_atraso: 1,
       min_toler_salida: 0,
       excluir_fines_semana: this.excluirFinesSemana,
     };
