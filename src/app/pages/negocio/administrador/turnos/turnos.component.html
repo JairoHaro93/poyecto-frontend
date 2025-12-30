@@ -309,9 +309,12 @@
               <strong>{{ u.nombre_completo }}</strong>
               <div class="small text-muted">
                 Saldo: {{ saldoHHMM(u.saldo_minutos) }}
-                @if (tieneSaldoParaDevolucion(u.id)) {
-                <span class="badge bg-success ms-1">≥ 08:00</span>
-                }
+                <span *ngIf="getDisponibleMinutos(u.id) > 0">
+                  · Disp: {{ saldoHHMM(getDisponibleMinutos(u.id)) }}
+                </span>
+                <span *ngIf="getDebeMinutos(u.id) > 0" class="text-danger">
+                  · Debe: {{ saldoHHMM(getDebeMinutos(u.id)) }}
+                </span>
               </div>
             </td>
 

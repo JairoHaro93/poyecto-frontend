@@ -432,7 +432,7 @@ export class TurnosComponent implements OnInit {
     if (!this.puedeEditarTurno(turno)) return false;
 
     const saldo = this.getSaldoMinutos(usuarioId);
-    return saldo >= 480;
+    return this.getDisponibleMinutos(usuarioId) >= 480;
   }
 
   // ==========================
@@ -620,14 +620,20 @@ export class TurnosComponent implements OnInit {
     const u = this.usuarios.find((x) => x.id === usuarioId);
     if (!u) return;
     u.saldo_minutos = Number(u.saldo_minutos ?? 0) + Number(delta ?? 0);
-    if (u.saldo_minutos < 0) u.saldo_minutos = 0;
   }
 
   saldoHHMM(minutos: number): string {
-    const m = Math.max(0, Number(minutos || 0));
+    const n = Number(minutos || 0);
+    const sign = n < 0 ? '-' : '';
+    const m = Math.abs(n);
+
     const hh = Math.floor(m / 60);
     const mm = m % 60;
-    return `${String(hh).padStart(2, '0')}:${String(mm).padStart(2, '0')}`;
+
+    return `${sign}${String(hh).padStart(2, '0')}:${String(mm).padStart(
+      2,
+      '0'
+    )}`;
   }
 
   tieneSaldoParaDevolucion(usuarioId: number): boolean {
@@ -652,5 +658,15 @@ export class TurnosComponent implements OnInit {
     const ent = turno.hora_entrada_prog?.slice(0, 5) || '--:--';
     const sal = turno.hora_salida_prog?.slice(0, 5) || '--:--';
     return `${ent} - ${sal}`;
+  }
+
+  getDisponibleMinutos(usuarioId: number): number {
+    const saldo = this.getSaldoMinutos(usuarioId);
+    return Math.max(0, saldo);
+  }
+
+  getDebeMinutos(usuarioId: number): number {
+    const saldo = this.getSaldoMinutos(usuarioId);
+    return Math.max(0, -saldo);
   }
 }
