@@ -14,7 +14,16 @@ import { AutenticacionService } from '../../../../services/sistema/autenticacion
 import { DepartamentosService } from '../../../../services/sistema/departamentos.service';
 import { IDepartamento } from '../../../../interfaces/sistema/idepartamento.interface';
 
+import {
+  VacacionesService,
+  VacConfig,
+  VacPreviewResponse,
+  VacAsignacion,
+  VacResumenUsuario,
+} from '../../../../services/negocio_latacunga/vacaciones.services';
+
 import { SwalStd } from '../../../../utils/swal.std';
+import { environment } from '../../../../../environments/environment';
 
 type TipoDia = 'NORMAL' | 'DEVOLUCION' | 'VACACIONES' | 'PERMISO';
 type GenerarModo = 'SEMANA' | 'DIA';
@@ -100,7 +109,9 @@ export class TurnosComponent implements OnInit {
     private usuariosService: UsuariosService,
     private turnosService: TurnosService,
     private authService: AutenticacionService,
-    private departamentosService: DepartamentosService
+    private departamentosService: DepartamentosService,
+
+    private vacacionesService: VacacionesService
   ) {}
 
   // ✅ es jefe de sucursal => tiene sucursal pero NO departamento
@@ -136,6 +147,24 @@ export class TurnosComponent implements OnInit {
   }
 
   // ==========================
+  //   VACACIONES (JEFE)
+  // ==========================
+  vacConfig?: VacConfig;
+
+  vacUsuarioId: number | null = null;
+  vacFechaDesde: string | null = null;
+  vacFechaHasta: string | null = null;
+  vacObservacion: string = '';
+
+  vacResumen?: VacResumenUsuario;
+  vacPreview?: VacPreviewResponse;
+
+  vacHistorial: VacAsignacion[] = [];
+  cargandoVac = false;
+  creandoVac = false;
+  anulandoVac: Record<number, boolean> = {};
+
+  // ==========================
   //   CICLO DE VIDA
   // ==========================
   async ngOnInit(): Promise<void> {
@@ -155,6 +184,13 @@ export class TurnosComponent implements OnInit {
 
       // ✅ Semana actual (Lun-Dom) como vista por defecto
       this.setSemanaActualSync();
+
+      // ✅ Config vacaciones (fecha_corte)
+      try {
+        this.vacConfig = await this.vacacionesService.getConfig();
+      } catch {
+        this.vacConfig = undefined;
+      }
 
       // ✅ Generación por defecto: Semana completa + día = hoy (para modo DIA si cambian)
       const hoyStr = this.formatFecha(new Date());
@@ -405,8 +441,14 @@ export class TurnosComponent implements OnInit {
   // ==========================
   //   REGLAS UI
   // ==========================
-  puedeEditarTurno(turno: ITurnoDiario | undefined): boolean {
+  puedeEditarTurno(
+    turno: (ITurnoDiario & { tipo_dia?: TipoDia }) | undefined
+  ): boolean {
     if (!turno) return false;
+
+    const tipoDia = (turno.tipo_dia ?? 'NORMAL') as TipoDia;
+    if (tipoDia !== 'NORMAL') return false; // 👈 clave (NO editar VACACIONES / PERMISO / DEVOLUCION)
+
     const hoyStr = this.formatFecha(new Date());
     const fechaTurno = (turno.fecha || '').slice(0, 10);
 
@@ -416,7 +458,9 @@ export class TurnosComponent implements OnInit {
     return true;
   }
 
-  puedeEliminarTurno(turno: ITurnoDiario | undefined): boolean {
+  puedeEliminarTurno(
+    turno: (ITurnoDiario & { tipo_dia?: TipoDia }) | undefined
+  ): boolean {
     return this.puedeEditarTurno(turno);
   }
 
@@ -668,5 +712,172 @@ export class TurnosComponent implements OnInit {
   getDebeMinutos(usuarioId: number): number {
     const saldo = this.getSaldoMinutos(usuarioId);
     return Math.max(0, -saldo);
+  }
+
+  async onSelectVacUsuario(usuarioId: number | null): Promise<void> {
+    this.vacUsuarioId = usuarioId;
+    this.vacResumen = undefined;
+    this.vacPreview = undefined;
+    this.vacHistorial = [];
+
+    if (!usuarioId) return;
+
+    this.cargandoVac = true;
+    try {
+      this.vacResumen = await this.vacacionesService.getResumenUsuario(
+        usuarioId
+      );
+      this.vacHistorial = await this.vacacionesService.listarAsignaciones({
+        usuario_id: usuarioId,
+        estado: 'TODAS',
+        limit: 50,
+        offset: 0,
+      });
+    } catch (e: any) {
+      await SwalStd.error(
+        SwalStd.getErrorMessage(e),
+        'Error cargando vacaciones'
+      );
+    } finally {
+      this.cargandoVac = false;
+    }
+  }
+
+  private validarRangoVac(): string | null {
+    if (!this.vacUsuarioId) return 'Seleccione un trabajador.';
+    if (!this.vacFechaDesde || !this.vacFechaHasta)
+      return 'Seleccione fecha desde y hasta.';
+    if (this.vacFechaDesde > this.vacFechaHasta)
+      return 'Rango inválido: desde > hasta.';
+
+    const corte = this.vacConfig?.fecha_corte;
+    if (corte && this.vacFechaDesde < corte) {
+      return `No permitido antes de la fecha de corte (${corte}).`;
+    }
+    return null;
+  }
+
+  async onPreviewVacaciones(): Promise<void> {
+    const err = this.validarRangoVac();
+    if (err) {
+      await SwalStd.warn(err);
+      return;
+    }
+
+    this.cargandoVac = true;
+    try {
+      this.vacPreview = await this.vacacionesService.preview({
+        usuario_id: this.vacUsuarioId!,
+        fecha_desde: this.vacFechaDesde!,
+        fecha_hasta: this.vacFechaHasta!,
+      });
+    } catch (e: any) {
+      this.vacPreview = undefined;
+      await SwalStd.error(
+        SwalStd.getErrorMessage(e),
+        'No se pudo previsualizar'
+      );
+    } finally {
+      this.cargandoVac = false;
+    }
+  }
+
+  async onCrearVacaciones(): Promise<void> {
+    const err = this.validarRangoVac();
+    if (err) {
+      await SwalStd.warn(err);
+      return;
+    }
+
+    const ok = await SwalStd.confirm({
+      title: 'Asignar VACACIONES',
+      text: `Se marcará el rango ${this.vacFechaDesde} a ${this.vacFechaHasta} como VACACIONES.`,
+      confirmText: 'Asignar',
+    });
+    if (!ok) return;
+
+    this.creandoVac = true;
+    try {
+      const resp = await this.vacacionesService.crear({
+        usuario_id: this.vacUsuarioId!,
+        fecha_desde: this.vacFechaDesde!,
+        fecha_hasta: this.vacFechaHasta!,
+        observacion: this.vacObservacion?.trim() || null,
+      });
+
+      // refresca semana visible para ver "VACACIONES" en la matriz
+      await this.buscarTurnos();
+
+      // refresca resumen + historial
+      await this.onSelectVacUsuario(this.vacUsuarioId);
+
+      await SwalStd.success('✅ Vacaciones asignadas (acta generada)');
+
+      // si viene file_id, ofrecemos abrirlo
+      const fileId = resp?.acta?.file_id;
+      if (fileId) {
+        const abrir = await SwalStd.confirm({
+          title: 'Descargar acta',
+          text: '¿Deseas abrir/descargar el PDF del acta ahora?',
+          confirmText: 'Abrir',
+          cancelText: 'Luego',
+        });
+        if (abrir) this.abrirDescargaFile(fileId);
+      }
+    } catch (e: any) {
+      await SwalStd.error(
+        SwalStd.getErrorMessage(e),
+        'Error creando vacaciones'
+      );
+    } finally {
+      this.creandoVac = false;
+    }
+  }
+
+  async onAnularVacacion(asig: VacAsignacion): Promise<void> {
+    const ok = await SwalStd.confirm({
+      title: 'Anular vacaciones',
+      text: `Se revertirá el rango ${asig.fecha_desde} a ${asig.fecha_hasta}.`,
+      confirmText: 'Anular',
+    });
+    if (!ok) return;
+
+    this.anulandoVac[asig.id] = true;
+    try {
+      await this.vacacionesService.anular(asig.id, 'Ajuste/edición');
+
+      await this.buscarTurnos();
+      await this.onSelectVacUsuario(this.vacUsuarioId);
+
+      await SwalStd.success('✅ Vacaciones anuladas');
+    } catch (e: any) {
+      await SwalStd.error(SwalStd.getErrorMessage(e), 'Error anulando');
+    } finally {
+      this.anulandoVac[asig.id] = false;
+    }
+  }
+
+  async onDescargarActaVacacion(asig: VacAsignacion): Promise<void> {
+    try {
+      // si ya viene file_id del listado, lo usamos
+      const fileId =
+        asig.acta_file_id ||
+        (await this.vacacionesService.getActa(asig.id)).file_id;
+      if (!fileId) {
+        await SwalStd.warn('Acta no encontrada.');
+        return;
+      }
+      this.abrirDescargaFile(fileId);
+    } catch (e: any) {
+      await SwalStd.error(
+        SwalStd.getErrorMessage(e),
+        'No se pudo obtener el acta'
+      );
+    }
+  }
+
+  // ✅ descarga simple en nueva pestaña (envía cookie SameSite=Lax en navegación top-level)
+  private abrirDescargaFile(fileId: number) {
+    window.open(`${environment.API_URL}/files/${fileId}/download`, '_blank');
   }
 }

@@ -226,6 +226,186 @@
       </div>
     </div>
 
+    <!-- ==========================
+     VACACIONES (JEFE)
+========================== -->
+    <div class="card mb-3">
+      <div class="card-body">
+        <div class="d-flex justify-content-between align-items-center">
+          <h6 class="mb-0">Vacaciones (asignación por jefe)</h6>
+          <small class="text-muted">
+            Fecha corte:
+            <strong>{{ vacConfig?.fecha_corte || "—" }}</strong>
+          </small>
+        </div>
+
+        <hr class="my-2" />
+
+        <div class="row g-3 align-items-end">
+          <div class="col-md-4">
+            <label class="form-label">Trabajador</label>
+            <select
+              class="form-select form-select-sm"
+              [ngModel]="vacUsuarioId"
+              (ngModelChange)="onSelectVacUsuario($event)"
+            >
+              <option [ngValue]="null">-- Seleccione --</option>
+              @for (u of usuariosFiltrados; track u.id) {
+              <option [ngValue]="u.id">{{ u.nombre_completo }}</option>
+              }
+            </select>
+          </div>
+
+          <div class="col-md-2 col-6">
+            <label class="form-label">Desde</label>
+            <input
+              type="date"
+              class="form-control form-control-sm"
+              [(ngModel)]="vacFechaDesde"
+            />
+          </div>
+
+          <div class="col-md-2 col-6">
+            <label class="form-label">Hasta</label>
+            <input
+              type="date"
+              class="form-control form-control-sm"
+              [(ngModel)]="vacFechaHasta"
+            />
+          </div>
+
+          <div class="col-md-4">
+            <label class="form-label">Observación</label>
+            <input
+              type="text"
+              class="form-control form-control-sm"
+              [(ngModel)]="vacObservacion"
+              placeholder="Opcional"
+            />
+          </div>
+        </div>
+
+        <div class="d-flex gap-2 justify-content-end mt-3">
+          <button
+            class="btn btn-outline-secondary btn-sm"
+            [disabled]="!vacUsuarioId || cargandoVac"
+            (click)="onPreviewVacaciones()"
+          >
+            Previsualizar
+          </button>
+
+          <button
+            class="btn btn-primary btn-sm"
+            [disabled]="!vacUsuarioId || creandoVac || cargandoVac"
+            (click)="onCrearVacaciones()"
+          >
+            <span
+              *ngIf="creandoVac"
+              class="spinner-border spinner-border-sm me-1"
+            ></span>
+            Asignar vacaciones
+          </button>
+        </div>
+
+        <!-- Resumen -->
+        @if (vacResumen) {
+        <div class="mt-3 small">
+          <div>
+            <strong>Saldo vacaciones (visible):</strong>
+            {{ vacResumen.saldo_visible | number : "1.2-2" }}
+            <span class="text-muted">
+              · Saldo real: {{ vacResumen.saldo_real | number : "1.2-2" }}</span
+            >
+            <span class="text-danger" *ngIf="vacResumen.deuda > 0">
+              · Deuda: {{ vacResumen.deuda | number : "1.2-2" }}</span
+            >
+          </div>
+        </div>
+        }
+
+        <!-- Preview -->
+        @if (vacPreview) {
+        <div class="alert alert-info mt-3 mb-0 small">
+          Días calendario: <strong>{{ vacPreview.dias_calendario }}</strong>
+          · Saldo visible después:
+          <strong>{{
+            vacPreview.saldo.saldo_visible_despues | number : "1.2-2"
+          }}</strong>
+          <span class="text-muted">
+            (real: {{ vacPreview.saldo.saldo_real_despues | number : "1.2-2" }})
+          </span>
+        </div>
+        }
+
+        <!-- Historial -->
+        <div class="mt-3">
+          <div class="d-flex justify-content-between align-items-center">
+            <strong class="small">Historial</strong>
+            @if (cargandoVac) { <small class="text-muted">Cargando...</small> }
+          </div>
+
+          @if (!vacHistorial?.length) {
+          <div class="small text-muted mt-2">Sin registros.</div>
+          } @else {
+          <div class="table-responsive mt-2">
+            <table class="table table-sm align-middle">
+              <thead>
+                <tr>
+                  <th>Rango</th>
+                  <th class="text-center">Días</th>
+                  <th>Estado</th>
+                  <th>Jefe</th>
+                  <th class="text-end">Acciones</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (a of vacHistorial; track a.id) {
+                <tr>
+                  <td>{{ a.fecha_desde }} → {{ a.fecha_hasta }}</td>
+                  <td class="text-center">{{ a.dias_calendario }}</td>
+                  <td>
+                    <span
+                      class="badge"
+                      [ngClass]="
+                        a.estado === 'ACTIVA'
+                          ? 'text-bg-success'
+                          : 'text-bg-secondary'
+                      "
+                    >
+                      {{ a.estado }}
+                    </span>
+                  </td>
+                  <td>{{ a.jefe_nombre || a.jefe_id }}</td>
+                  <td class="text-end">
+                    <button
+                      class="btn btn-outline-secondary btn-sm me-1"
+                      (click)="onDescargarActaVacacion(a)"
+                    >
+                      PDF
+                    </button>
+
+                    <button
+                      class="btn btn-outline-danger btn-sm"
+                      [disabled]="a.estado !== 'ACTIVA' || anulandoVac[a.id]"
+                      (click)="onAnularVacacion(a)"
+                    >
+                      <span
+                        *ngIf="anulandoVac[a.id]"
+                        class="spinner-border spinner-border-sm me-1"
+                      ></span>
+                      Anular
+                    </button>
+                  </td>
+                </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+          }
+        </div>
+      </div>
+    </div>
+
     <!-- BLOQUE: MATRIZ DE TURNOS GENERADOS (tipo Horarios, pero organizativo) -->
     <div
       class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-2 mb-2"
