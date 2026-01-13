@@ -15,12 +15,16 @@ export class JustificacionesService {
     turnoId: number,
     key: 'atraso' | 'salida',
     estado: 'APROBADA' | 'RECHAZADA',
-    minutos: number | null
+    minutos?: number | null
   ): Promise<any> {
     const body: any = { estado };
-    if (minutos !== null && minutos !== undefined) body.minutos = minutos;
 
-    // ✅ /api/justificacion/turnos/:id/justificaciones/:key/resolver
+    // ✅ solo enviamos minutos si realmente es > 0
+    const m = minutos == null ? null : Number(minutos);
+    if (m != null && Number.isFinite(m) && m > 0) {
+      body.minutos = Math.floor(m);
+    }
+
     return firstValueFrom(
       this.http.put(
         `${this.baseUrl}/${turnoId}/justificaciones/${key}/resolver`,

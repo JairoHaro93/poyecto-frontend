@@ -888,25 +888,50 @@ export class HorariosComponent implements OnInit {
     return esJefe && st === 'PENDIENTE';
   }
 
-  private validarMinutosJust(key: JustKey): number | null {
-    const v = this.justMinutos[key];
-    if (v === null || v === undefined) return null;
+  private validarMinutosJustOptional(key: JustKey): {
+    ok: boolean;
+    value: number | null;
+  } {
+    const v: any = this.justMinutos[key];
+
+    // ✅ vacío => se permite aprobar sin minutos
+    if (v === null || v === undefined || v === '')
+      return { ok: true, value: null };
+
     const n = Number(v);
-    if (Number.isNaN(n) || n < 0) return null;
-    return Math.floor(n);
+    if (!Number.isFinite(n) || n < 0) return { ok: false, value: null };
+
+    const m = Math.floor(n);
+
+    // opcional: si ponen 0, lo tratamos como "sin descuento"
+    if (m <= 0) return { ok: true, value: null };
+
+    return { ok: true, value: m };
   }
 
   async onAprobarJust(key: JustKey): Promise<void> {
-    if (!this.detalleTurno || !this.puedeGestionarJust(key, this.detalleTurno))
+    if (
+      !this.detalleTurno ||
+      !this.puedeGestionarJust(key, this.detalleTurno)
+    ) {
       return;
+    }
 
-    const minutos = this.validarMinutosJust(key);
-    if (minutos === null) {
-      await SwalStd.warn(
-        'Ingresa los minutos a descontar (número >= 0).',
-        'Minutos requeridos'
-      );
-      return;
+    // ✅ Minutos opcionales:
+    // - vacío/null/"" => APRUEBA sin minutos (no descuento)
+    // - número >= 0   => si es 0 lo tratamos como "sin descuento"
+    const raw: any = this.justMinutos[key];
+
+    let minutos: number | null = null;
+
+    if (raw !== null && raw !== undefined && raw !== '') {
+      const n = Number(raw);
+      if (!Number.isFinite(n) || n < 0) {
+        await SwalStd.warn('Minutos inválidos (debe ser número >= 0).');
+        return;
+      }
+      const m = Math.floor(n);
+      minutos = m <= 0 ? null : m; // 0 => sin descuento
     }
 
     const titulo =
@@ -916,22 +941,27 @@ export class HorariosComponent implements OnInit {
 
     const ok = await SwalStd.confirm({
       title: titulo,
-      text: `Se registrarán ${minutos} minuto(s) como tiempo a descontar.`,
+      text:
+        minutos != null
+          ? `Se registrarán ${minutos} minuto(s) como tiempo a descontar.`
+          : 'Se aprobará sin minutos (no afectará saldo).',
       confirmText: 'Aprobar',
     });
     if (!ok) return;
 
     this.procesandoJust[key] = true;
+
     try {
       // ✅ Ahora va por servicio separado
       await this.justificacionesService.resolverJustificacion(
         this.detalleTurno.id,
         key,
         'APROBADA',
-        minutos
+        minutos // 👈 null permitido
       );
 
       await this.buscarTurnos();
+
       this.detalleTurno =
         this.getTurno(
           Number(this.detalleTurno.usuario_id),

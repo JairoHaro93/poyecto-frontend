@@ -333,15 +333,18 @@
                     *ngIf="puedeGestionarJust('atraso', detalleTurno)"
                     class="mt-2"
                   >
-                    <label class="form-label mb-1">Minutos a descontar</label>
+                    <label class="form-label mb-1"
+                      >Minutos a descontar (opcional)</label
+                    >
                     <input
                       type="number"
                       class="form-control form-control-sm"
                       min="0"
                       step="1"
-                      placeholder="Ej: 15"
+                      placeholder="Dejar vacío para solo aprobar"
                       [(ngModel)]="justMinutos.atraso"
                     />
+
                     <div class="form-text">
                       Este valor se usará luego para descontar en
                       horas/movimientos.
@@ -403,15 +406,18 @@
                     *ngIf="puedeGestionarJust('salida', detalleTurno)"
                     class="mt-2"
                   >
-                    <label class="form-label mb-1">Minutos a descontar</label>
+                    <label class="form-label mb-1"
+                      >Minutos a descontar (opcional)</label
+                    >
                     <input
                       type="number"
                       class="form-control form-control-sm"
                       min="0"
                       step="1"
-                      placeholder="Ej: 30"
+                      placeholder="Dejar vacío para solo aprobar"
                       [(ngModel)]="justMinutos.salida"
                     />
+
                     <div class="form-text">
                       Este valor se usará luego para descontar en
                       horas/movimientos.
