@@ -235,7 +235,9 @@
           <h6 class="mb-0">Vacaciones (asignación por jefe)</h6>
           <small class="text-muted">
             Fecha corte:
-            <strong>{{ vacConfig?.fecha_corte || "—" }}</strong>
+       
+            <strong>{{ fechaUI(vacConfig?.fecha_corte) }}</strong>
+
           </small>
         </div>
 
@@ -361,7 +363,8 @@
               <tbody>
                 @for (a of vacHistorial; track a.id) {
                 <tr>
-                  <td>{{ a.fecha_desde }} → {{ a.fecha_hasta }}</td>
+              <td>{{ rangoUI(a.fecha_desde, a.fecha_hasta) }}</td>
+
                   <td class="text-center">{{ a.dias_calendario }}</td>
                   <td>
                     <span
@@ -475,7 +478,8 @@
               [ngClass]="{ 'col-dia-hoy': esHoy(dia.fecha) }"
             >
               <div>{{ dia.etiqueta }}</div>
-              <div class="small text-muted">{{ dia.fecha }}</div>
+           <div class="small text-muted">{{ fechaUI(dia.fecha) }}</div>
+
             </th>
             }
           </tr>

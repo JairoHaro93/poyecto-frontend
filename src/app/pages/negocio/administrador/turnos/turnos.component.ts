@@ -322,6 +322,43 @@ export class TurnosComponent implements OnInit {
   }
 
   // ==========================
+  //   FECHA UI (evita mostrar T...Z y evita líos de zona)
+  // ==========================
+  private ymdFromAny(value: any): string {
+    if (!value) return '';
+
+    // Si viene string:
+    if (typeof value === 'string') {
+      // "2026-01-19T05:00:00.000Z" => "2026-01-19"
+      if (value.includes('T')) return value.slice(0, 10);
+
+      // ya es "YYYY-MM-DD"
+      if (/^\d{4}-\d{2}-\d{2}$/.test(value)) return value;
+
+      // último intento (por si viene raro)
+      const d = new Date(value);
+      if (!isNaN(d.getTime())) return this.formatFecha(d);
+      return '';
+    }
+
+    // Si viene Date u otro:
+    const d = value instanceof Date ? value : new Date(value);
+    if (isNaN(d.getTime())) return '';
+    return this.formatFecha(d);
+  }
+
+  fechaUI(value: any): string {
+    const ymd = this.ymdFromAny(value);
+    if (!ymd) return '—';
+    const [y, m, d] = ymd.split('-');
+    return `${d}/${m}/${y}`;
+  }
+
+  rangoUI(desde: any, hasta: any): string {
+    return `${this.fechaUI(desde)} → ${this.fechaUI(hasta)}`;
+  }
+
+  // ==========================
   //   DEPARTAMENTOS
   // ==========================
   private async cargarDepartamentosSucursal(sucursalId: number): Promise<void> {
