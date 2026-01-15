@@ -917,4 +917,18 @@ export class TurnosComponent implements OnInit {
   private abrirDescargaFile(fileId: number) {
     window.open(`${environment.API_URL}/files/${fileId}/download`, '_blank');
   }
+
+  // ✅ true si la asignación ya terminó (fecha_hasta < hoy)
+  puedeAnularVacacion(asig: VacAsignacion): boolean {
+    if (!asig) return false;
+
+    const hoy = this.formatFecha(new Date());
+    const hasta = (asig.fecha_hasta || '').toString().slice(0, 10);
+
+    // si no hay fecha válida, por seguridad no anules
+    if (!hasta || hasta.length !== 10) return false;
+
+    // Solo se puede anular si está ACTIVA y el rango NO terminó aún
+    return asig.estado === 'ACTIVA' && hasta >= hoy;
+  }
 }
