@@ -1,0 +1,120 @@
+/* C:\PROYECTO\Frontend\src\app\pages\negocio\administrador\horasextra\horasextra.component.css */
+
+/* =========================
+   Pendientes (tabla)
+   ========================= */
+.obs {
+  max-width: 360px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* =========================
+   Aprobadas (estilo tipo “celdas” / Excel)
+   ========================= */
+
+/* tabla compacta y limpia */
+.table {
+  background: #fff;
+}
+
+/* bordes más “Excel” */
+.table thead th {
+  border-bottom: 2px solid #dee2e6;
+  vertical-align: middle;
+}
+
+/* líneas de cuadrícula */
+.table tbody td,
+.table tfoot td {
+  border-top: 1px solid #e9ecef;
+  vertical-align: top;
+}
+
+/* separador fuerte entre grupos (cada persona) */
+.he-group-sep td {
+  border-top: 2px solid #cfd4da !important;
+}
+
+/* fila con el nombre (primera fila del grupo) un poco más marcada */
+.he-name {
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.2px;
+}
+
+/* resumen debajo del nombre */
+.he-resumen {
+  margin-top: 3px;
+  font-size: 12px;
+  color: #6c757d;
+}
+
+/* que el detalle (observación) respete saltos de línea si existen */
+.he-detalle {
+  white-space: pre-line;
+}
+
+/* columna fecha centrada estilo “badge” suave */
+.he-fecha {
+  font-weight: 600;
+  text-transform: lowercase;
+  background: #f8f9fa;
+  border: 1px solid #e9ecef;
+  padding: 3px 8px;
+  border-radius: 8px;
+  display: inline-block;
+  min-width: 70px;
+  text-align: center;
+}
+
+/* footer total más visible */
+tfoot td {
+  border-top: 2px solid #dee2e6 !important;
+  background: #f8f9fa;
+}
+
+/* responsive: reduce padding en móvil */
+@media (max-width: 576px) {
+  .table tbody td,
+  .table thead th,
+  .table tfoot td {
+    padding: 0.45rem;
+  }
+
+  .he-fecha {
+    min-width: 62px;
+    padding: 2px 6px;
+  }
+}
+/* columnas numéricas centradas */
+.table .text-center {
+  white-space: nowrap;
+}
+
+/* fila separadora con resumen */
+.he-sep-summary td {
+  border-top: 4px solid #adb5bd !important; /* separación fuerte */
+  background: #f8f9fa;
+  padding: 8px 10px !important;
+}
+
+/* contenido del resumen */
+.he-sep-content {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: #495057;
+}
+
+/* etiquetas un poco más marcadas */
+.he-sep-label {
+  font-weight: 600;
+}
+
+/* empuja la segunda parte hacia la derecha */
+.he-sep-spacer {
+  flex: 1;
+}

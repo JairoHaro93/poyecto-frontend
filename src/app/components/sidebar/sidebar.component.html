@@ -1,11 +1,11 @@
 <!-- https://www.youtube.com/watch?v=nvh51c4UfmM -->
 
 <div (click)="onClickMenu()" class="menu">
-  @if(!isMenu){
-  <i class="fa-solid fa-bars"></i>
-
-  } @if(isMenu){
-  <i class="fa-solid fa-xmark"></i>
+  @if (!isMenu) {
+    <i class="fa-solid fa-bars"></i>
+  }
+  @if (isMenu) {
+    <i class="fa-solid fa-xmark"></i>
   }
 </div>
 
@@ -23,260 +23,299 @@
 
     <div class="accordion" id="accordionSidebar">
       <!-- BOTON ADMINISTRADOR -->
-      @if (arrAdmin.length>0) {
-      <button
-        class="button-primary btn-toggle rounded my-2"
-        (click)="toggleCollapse('home-collapse')"
-      >
-        <i class="fa-solid fa-gear"></i> Administrador
-      </button>
+      @if (arrAdmin.length > 0) {
+        <button
+          class="button-primary btn-toggle rounded my-2"
+          (click)="toggleCollapse('home-collapse')"
+        >
+          <i class="fa-solid fa-gear"></i> Administrador
+        </button>
       }
       <div class="accordion-collapse collapse" id="home-collapse">
         <ul class="btn-toggle-nav list-unstyled fw-normal pb-1 small gap-5">
           @if (arrAdmin.includes("AUsuarios")) {
-          <li
-            (click)="onClickMenu()"
-            [routerLink]="['/home/administrador/usuarios']"
-          >
-            Usuarios
-          </li>
-          } @if (arrAdmin.includes("AInformación Clientes")) {
-          <li
-            (click)="onClickMenu()"
-            [routerLink]="['/home/administrador/data-clientes']"
-          >
-            Información Clientes
-          </li>
-          } @if (arrAdmin.includes("ATurnos")) {
-          <li
-            (click)="onClickMenu()"
-            [routerLink]="['/home/administrador/turnos']"
-          >
-            Turnos
-          </li>
-          } @if (arrAdmin.includes("AHorarios")) {
-          <li
-            (click)="onClickMenu()"
-            [routerLink]="['/home/administrador/horarios']"
-          >
-            Horarios
-          </li>
+            <li
+              (click)="onClickMenu()"
+              [routerLink]="['/home/administrador/usuarios']"
+            >
+              Usuarios
+            </li>
+          }
+          @if (arrAdmin.includes("AInformación Clientes")) {
+            <li
+              (click)="onClickMenu()"
+              [routerLink]="['/home/administrador/data-clientes']"
+            >
+              Información Clientes
+            </li>
+          }
+          @if (arrAdmin.includes("ATurnos")) {
+            <li
+              (click)="onClickMenu()"
+              [routerLink]="['/home/administrador/turnos']"
+            >
+              Turnos
+            </li>
+          }
+          @if (arrAdmin.includes("AHorarios")) {
+            <li
+              (click)="onClickMenu()"
+              [routerLink]="['/home/administrador/horarios']"
+            >
+              Horarios
+            </li>
+          }
+          @if (arrAdmin.includes("AHoras Extra")) {
+            <li
+              (click)="onClickMenu()"
+              [routerLink]="['/home/administrador/horasextra']"
+            >
+              Horas Extra
+            </li>
           }
         </ul>
       </div>
 
       <!-- BOTON BODEGA -->
-      @if (arrBodega.length>0) {
-      <button
-        class="button-primary btn-toggle rounded my-2"
-        (click)="toggleCollapse('bodega-collapse')"
-      >
-        <i class="fa-solid fa-box-open"></i> Bodega
-      </button>
+      @if (arrBodega.length > 0) {
+        <button
+          class="button-primary btn-toggle rounded my-2"
+          (click)="toggleCollapse('bodega-collapse')"
+        >
+          <i class="fa-solid fa-box-open"></i> Bodega
+        </button>
       }
       <div class="accordion-collapse collapse" id="bodega-collapse">
         <ul class="btn-toggle-nav list-unstyled fw-normal pb-1 small">
           @if (arrBodega.includes("BInventario")) {
-          <li
-            (click)="onClickMenu()"
-            [routerLink]="['/home/bodega/inventario']"
-          >
-            Inventario
-          </li>
-          } @if (arrBodega.includes("BIngresar Equipos")) {
-          <li
-            (click)="onClickMenu()"
-            [routerLink]="['/home/bodega/ingresar-equipos']"
-          >
-            Ingresar Equipos
-          </li>
-          } @if (arrBodega.includes("BDespachar Equipos")) {
-          <li
-            (click)="onClickMenu()"
-            [routerLink]="['/home/bodega/despachar-equipos']"
-          >
-            Despachar Equipos
-          </li>
-          } @if (arrBodega.includes("BAsignar Equipos")) {
-          <li
-            (click)="onClickMenu()"
-            [routerLink]="['/home/bodega/asignar-equipos']"
-          >
-            Asignar Equipos
-          </li>
-          } @if (arrBodega.includes("BMorosos")) {
-          <li (click)="onClickMenu()" [routerLink]="['/home/bodega/morosos']">
-            Morosos
-          </li>
+            <li
+              (click)="onClickMenu()"
+              [routerLink]="['/home/bodega/inventario']"
+            >
+              Inventario
+            </li>
+          }
+          @if (arrBodega.includes("BIngresar Equipos")) {
+            <li
+              (click)="onClickMenu()"
+              [routerLink]="['/home/bodega/ingresar-equipos']"
+            >
+              Ingresar Equipos
+            </li>
+          }
+          @if (arrBodega.includes("BDespachar Equipos")) {
+            <li
+              (click)="onClickMenu()"
+              [routerLink]="['/home/bodega/despachar-equipos']"
+            >
+              Despachar Equipos
+            </li>
+          }
+          @if (arrBodega.includes("BAsignar Equipos")) {
+            <li
+              (click)="onClickMenu()"
+              [routerLink]="['/home/bodega/asignar-equipos']"
+            >
+              Asignar Equipos
+            </li>
+          }
+          @if (arrBodega.includes("BMorosos")) {
+            <li (click)="onClickMenu()" [routerLink]="['/home/bodega/morosos']">
+              Morosos
+            </li>
           }
         </ul>
       </div>
 
       <!-- BOTON CLIENTES -->
-      @if (arrClientes.length>0) {
-      <button
-        class="button-primary btn-toggle rounded my-2"
-        (click)="toggleCollapse('clientes-collapse')"
-      >
-        <i class="fa-solid fa-users"></i> Clientes
-      </button>
+      @if (arrClientes.length > 0) {
+        <button
+          class="button-primary btn-toggle rounded my-2"
+          (click)="toggleCollapse('clientes-collapse')"
+        >
+          <i class="fa-solid fa-users"></i> Clientes
+        </button>
       }
       <div class="accordion-collapse collapse" id="clientes-collapse">
         <ul class="btn-toggle-nav list-unstyled fw-normal pb-1 small">
           @if (arrClientes.includes("CDatos de Clientes")) {
-          <li (click)="onClickMenu()" [routerLink]="['/home/clientes/datos']">
-            Datos clientes
-          </li>
+            <li (click)="onClickMenu()" [routerLink]="['/home/clientes/datos']">
+              Datos clientes
+            </li>
           }
         </ul>
       </div>
 
       <!-- BOTÓN NOC (posición estable del label) -->
       @if (arrNoc.length > 0) {
-      <button
-        class="button-primary btn-toggle rounded my-2 position-relative w-100 py-2"
-        (click)="toggleCollapse('noc-collapse')"
-      >
-        <!-- Riel izquierdo: pre-agenda -->
-        <div
-          class="position-absolute top-50 start-0 translate-middle-y ps-2 d-flex gap-2"
+        <button
+          class="button-primary btn-toggle rounded my-2 position-relative w-100 py-2"
+          (click)="toggleCollapse('noc-collapse')"
         >
-          @if (preAgendaPendientesCount > 0) {
-          <span class="badge-circle-age">{{ preAgendaPendientesCount }}</span>
-          }
-        </div>
+          <!-- Riel izquierdo: pre-agenda -->
+          <div
+            class="position-absolute top-50 start-0 translate-middle-y ps-2 d-flex gap-2"
+          >
+            @if (preAgendaPendientesCount > 0) {
+              <span class="badge-circle-age">{{
+                preAgendaPendientesCount
+              }}</span>
+            }
+          </div>
 
-        <!-- Label centrado SIEMPRE -->
-        <div
-          class="position-absolute top-50 start-50 translate-middle d-inline-flex align-items-center gap-2 noc-center"
-        >
-          <i class="fa-solid fa-circle-nodes"></i>
-          <span>Noc</span>
-        </div>
+          <!-- Label centrado SIEMPRE -->
+          <div
+            class="position-absolute top-50 start-50 translate-middle d-inline-flex align-items-center gap-2 noc-center"
+          >
+            <i class="fa-solid fa-circle-nodes"></i>
+            <span>Noc</span>
+          </div>
 
-        <!-- Riel derecho: soportes -->
-        <div
-          class="position-absolute top-50 end-0 translate-middle-y pe-2 d-flex gap-2"
-        >
-          @if (soportesPendientesCount > 0) {
-          <span class="badge-circle-sop">{{ soportesPendientesCount }}</span>
-          } @if (soportesRevisadosCount > 0) {
-          <span class="badge-circle-sop">{{ soportesRevisadosCount }}</span>
-          }
-        </div>
-      </button>
+          <!-- Riel derecho: soportes -->
+          <div
+            class="position-absolute top-50 end-0 translate-middle-y pe-2 d-flex gap-2"
+          >
+            @if (soportesPendientesCount > 0) {
+              <span class="badge-circle-sop">{{
+                soportesPendientesCount
+              }}</span>
+            }
+            @if (soportesRevisadosCount > 0) {
+              <span class="badge-circle-sop">{{ soportesRevisadosCount }}</span>
+            }
+          </div>
+        </button>
       }
 
       <div class="accordion-collapse collapse" id="noc-collapse">
         <ul class="btn-toggle-nav list-unstyled fw-normal pb-1 small">
           @if (arrNoc.includes("NAgenda")) {
-          <li (click)="onClickMenu()" [routerLink]="['/home/noc/agenda']">
-            Agenda @if(preAgendaPendientesCount>0){
-            <span class="badge-circle-age">
-              {{ preAgendaPendientesCount }}
-            </span>
-            }
-          </li>
-          } @if (arrNoc.includes("NSoporte Tecnico")) {
-          <li
-            (click)="onClickMenu()"
-            [routerLink]="['/home/noc/soporte-tecnico']"
-          >
-            @if(soportesPendientesCount>0){
-            <span class="badge-circle-sop">
-              {{ soportesPendientesCount }}
-            </span>
-            } Soporte Tecnico @if(soportesRevisadosCount>0){
-            <span class="badge-circle-sop">
-              {{ soportesRevisadosCount }}
-            </span>
-            }
-          </li>
-          } @if (arrNoc.includes("NInforme Diario")) {
-          <li
-            (click)="onClickMenu()"
-            [routerLink]="['/home/noc/informediario']"
-          >
-            Informe diario
-          </li>
-          } @if (arrNoc.includes("NMapeo Cajas")) {
-          <li (click)="onClickMenu()" [routerLink]="['/home/noc/mapeo-cajas']">
-            Mapeo cajas
-          </li>
-          } @if (arrNoc.includes("NNueva Instalacion")) {
-          <li
-            (click)="onClickMenu()"
-            [routerLink]="['/home/noc/nueva-instalacion']"
-          >
-            Nueva Instalación
-          </li>
-          }@if (arrNoc.includes("NTraslado Externo")) {
-          <li (click)="onClickMenu()" [routerLink]="['/home/noc/traslado-ext']">
-            Traslado Externo
-          </li>
-          } @if (arrNoc.includes("NMigracion")) {
-          <li (click)="onClickMenu()" [routerLink]="['/home/noc/migracion']">
-            Migracion
-          </li>
-          } @if (arrNoc.includes("NRetiro")) {
-          <li (click)="onClickMenu()" [routerLink]="['/home/noc/retiro']">
-            Retiro
-          </li>
-          } @if (arrNoc.includes("NInfraestructura")) {
-          <li
-            (click)="onClickMenu()"
-            [routerLink]="['/home/noc/infraestructura']"
-          >
-            Infraestructura
-          </li>
+            <li (click)="onClickMenu()" [routerLink]="['/home/noc/agenda']">
+              Agenda
+              @if (preAgendaPendientesCount > 0) {
+                <span class="badge-circle-age">
+                  {{ preAgendaPendientesCount }}
+                </span>
+              }
+            </li>
+          }
+          @if (arrNoc.includes("NSoporte Tecnico")) {
+            <li
+              (click)="onClickMenu()"
+              [routerLink]="['/home/noc/soporte-tecnico']"
+            >
+              @if (soportesPendientesCount > 0) {
+                <span class="badge-circle-sop">
+                  {{ soportesPendientesCount }}
+                </span>
+              }
+              Soporte Tecnico
+              @if (soportesRevisadosCount > 0) {
+                <span class="badge-circle-sop">
+                  {{ soportesRevisadosCount }}
+                </span>
+              }
+            </li>
+          }
+          @if (arrNoc.includes("NInforme Diario")) {
+            <li
+              (click)="onClickMenu()"
+              [routerLink]="['/home/noc/informediario']"
+            >
+              Informe diario
+            </li>
+          }
+          @if (arrNoc.includes("NMapeo Cajas")) {
+            <li
+              (click)="onClickMenu()"
+              [routerLink]="['/home/noc/mapeo-cajas']"
+            >
+              Mapeo cajas
+            </li>
+          }
+          @if (arrNoc.includes("NNueva Instalacion")) {
+            <li
+              (click)="onClickMenu()"
+              [routerLink]="['/home/noc/nueva-instalacion']"
+            >
+              Nueva Instalación
+            </li>
+          }
+          @if (arrNoc.includes("NTraslado Externo")) {
+            <li
+              (click)="onClickMenu()"
+              [routerLink]="['/home/noc/traslado-ext']"
+            >
+              Traslado Externo
+            </li>
+          }
+          @if (arrNoc.includes("NMigracion")) {
+            <li (click)="onClickMenu()" [routerLink]="['/home/noc/migracion']">
+              Migracion
+            </li>
+          }
+          @if (arrNoc.includes("NRetiro")) {
+            <li (click)="onClickMenu()" [routerLink]="['/home/noc/retiro']">
+              Retiro
+            </li>
+          }
+          @if (arrNoc.includes("NInfraestructura")) {
+            <li
+              (click)="onClickMenu()"
+              [routerLink]="['/home/noc/infraestructura']"
+            >
+              Infraestructura
+            </li>
           }
         </ul>
       </div>
 
       <!-- BOTON RECUPERACION -->
-      @if (arrRecuperacion.length>0) {
-      <button
-        class="button-primary btn-toggle rounded my-2"
-        (click)="toggleCollapse('recuperacion-collapse')"
-      >
-        <i class="fa-solid fa-rotate-left"></i> Recuperacion
-      </button>
+      @if (arrRecuperacion.length > 0) {
+        <button
+          class="button-primary btn-toggle rounded my-2"
+          (click)="toggleCollapse('recuperacion-collapse')"
+        >
+          <i class="fa-solid fa-rotate-left"></i> Recuperacion
+        </button>
       }
       <div class="accordion-collapse collapse" id="recuperacion-collapse">
         <ul class="btn-toggle-nav list-unstyled fw-normal pb-1 small">
           @if (arrRecuperacion.includes("RMorosos")) {
-          <li
-            (click)="onClickMenu()"
-            [routerLink]="['/home/recuperacion/morosos']"
-          >
-            Morosos
-          </li>
-          } @if (arrRecuperacion.includes("RMapa Morosos")) {
-          <li
-            (click)="onClickMenu()"
-            [routerLink]="['/home/recuperacion/mapa-morosos']"
-          >
-            Mapa Morosos
-          </li>
-          } @if (arrRecuperacion.includes("RGestion")) {
-          <li
-            (click)="onClickMenu()"
-            [routerLink]="['/home/recuperacion/gestion-morosos']"
-          >
-            Gestion
-          </li>
+            <li
+              (click)="onClickMenu()"
+              [routerLink]="['/home/recuperacion/morosos']"
+            >
+              Morosos
+            </li>
+          }
+          @if (arrRecuperacion.includes("RMapa Morosos")) {
+            <li
+              (click)="onClickMenu()"
+              [routerLink]="['/home/recuperacion/mapa-morosos']"
+            >
+              Mapa Morosos
+            </li>
+          }
+          @if (arrRecuperacion.includes("RGestion")) {
+            <li
+              (click)="onClickMenu()"
+              [routerLink]="['/home/recuperacion/gestion-morosos']"
+            >
+              Gestion
+            </li>
           }
         </ul>
       </div>
 
       <!-- BOTON TECNICO -->
-      @if (arrTecnico.length>0) {
-      <button
-        class="button-primary btn-toggle rounded my-2"
-        (click)="toggleCollapse('tecnico-collapse')"
-      >
-        <i class="fa-solid fa-screwdriver-wrench"></i> Tecnico
-      </button>
+      @if (arrTecnico.length > 0) {
+        <button
+          class="button-primary btn-toggle rounded my-2"
+          (click)="toggleCollapse('tecnico-collapse')"
+        >
+          <i class="fa-solid fa-screwdriver-wrench"></i> Tecnico
+        </button>
       }
       <div class="accordion-collapse collapse" id="tecnico-collapse">
         <ul class="btn-toggle-nav list-unstyled fw-normal pb-1 small">
@@ -290,12 +329,12 @@
           } -->
 
           @if (arrTecnico.includes("TRegistro Soporte")) {
-          <li
-            (click)="onClickMenu()"
-            [routerLink]="['/home/tecnico/registrosop']"
-          >
-            Registro Soporte
-          </li>
+            <li
+              (click)="onClickMenu()"
+              [routerLink]="['/home/tecnico/registrosop']"
+            >
+              Registro Soporte
+            </li>
           }
         </ul>
       </div>

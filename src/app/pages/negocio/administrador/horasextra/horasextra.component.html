@@ -1,0 +1,249 @@
+<div class="container mt-3">
+  <div class="card">
+    <div class="card-body">
+      <div
+        class="d-flex align-items-center justify-content-between flex-wrap gap-2"
+      >
+        <div>
+          <h5 class="mb-0">Horas Extra</h5>
+        </div>
+      </div>
+
+      <!-- Tabs -->
+      <ul class="nav nav-tabs mt-3">
+        <li class="nav-item">
+          <button
+            class="nav-link"
+            [class.active]="tab === 'PENDIENTES'"
+            (click)="setTab('PENDIENTES')"
+            type="button"
+          >
+            Pendientes
+          </button>
+        </li>
+
+        <li class="nav-item">
+          <button
+            class="nav-link"
+            [class.active]="tab === 'APROBADAS'"
+            (click)="setTab('APROBADAS')"
+            type="button"
+          >
+            Aprobadas
+          </button>
+        </li>
+      </ul>
+
+      <!-- =========================
+           PENDIENTES
+           ========================= -->
+      <div *ngIf="tab === 'PENDIENTES'" class="pt-3">
+        <div class="d-flex gap-2 align-items-end flex-wrap">
+          <div>
+            <label class="form-label mb-1">Mes</label>
+            <input
+              class="form-control"
+              type="month"
+              [(ngModel)]="mesPendientes"
+              (change)="onMesPendientesChange()"
+            />
+          </div>
+
+          <button
+            class="btn btn-primary"
+            (click)="cargarPendientes()"
+            [disabled]="cargandoPendientes"
+          >
+            {{ cargandoPendientes ? "Cargando..." : "Recargar" }}
+          </button>
+        </div>
+
+        <hr />
+
+        <div *ngIf="cargandoPendientes" class="text-center py-4">
+          <div class="spinner-border" role="status"></div>
+          <div class="mt-2">Cargando pendientes...</div>
+        </div>
+
+        <div
+          *ngIf="!cargandoPendientes && pendientes.length === 0"
+          class="alert alert-light mb-0"
+        >
+          No hay solicitudes pendientes en este mes (o no te corresponden).
+        </div>
+
+        <div
+          *ngIf="!cargandoPendientes && pendientes.length > 0"
+          class="table-responsive"
+        >
+          <table class="table table-sm align-middle">
+            <thead>
+              <tr>
+                <th>Fecha</th>
+                <th>Colaborador</th>
+                <th>Rango</th>
+
+                <th class="text-center">Horas</th>
+
+                <th>Obs.</th>
+
+                <th class="text-end">Acciones</th>
+              </tr>
+            </thead>
+
+            <tbody>
+              <tr *ngFor="let p of pendientes">
+                <td>{{ fechaUI(p.fecha) }}</td>
+                <td>
+                  <div class="fw-semibold">{{ p.usuario_nombre }}</div>
+                </td>
+                <td>{{ hhmm(p.hora_inicio) }} - {{ hhmm(p.hora_fin) }}</td>
+
+                <td class="text-center">{{ mmToHHMM(p.minutos) }}</td>
+
+                <td class="obs">{{ p.observacion || "—" }}</td>
+
+                <td class="text-end">
+                  <button
+                    class="btn btn-success btn-sm me-2"
+                    (click)="aprobar(p)"
+                    [disabled]="saving[p.id]"
+                  >
+                    Aprobar
+                  </button>
+
+                  <button
+                    class="btn btn-outline-danger btn-sm"
+                    (click)="rechazar(p)"
+                    [disabled]="saving[p.id]"
+                  >
+                    Rechazar
+                  </button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- =========================
+           APROBADAS (MOVIMIENTOS)
+           Formato tipo tu Excel:
+           NOMBRE | FECHA | DETALLE
+           Resumen en última fila del grupo
+           ========================= -->
+      <div *ngIf="tab === 'APROBADAS'" class="pt-3">
+        <div class="d-flex gap-2 align-items-end flex-wrap">
+          <div>
+            <label class="form-label mb-1">Mes</label>
+            <input
+              class="form-control"
+              type="month"
+              [(ngModel)]="mesAprobadas"
+              (change)="onMesAprobadasChange()"
+            />
+          </div>
+
+          <button
+            class="btn btn-primary"
+            (click)="cargarAprobadas()"
+            [disabled]="cargandoAprobadas"
+          >
+            {{ cargandoAprobadas ? "Cargando..." : "Recargar" }}
+          </button>
+
+          <div class="ms-auto text-end">
+            <div class="fw-semibold">
+              Total mes: {{ mmToHHMM(totalAprobadasMin) }}
+            </div>
+          </div>
+        </div>
+
+        <hr />
+
+        <div *ngIf="cargandoAprobadas" class="text-center py-4">
+          <div class="spinner-border" role="status"></div>
+          <div class="mt-2">Cargando aprobadas...</div>
+        </div>
+
+        <div
+          *ngIf="!cargandoAprobadas && aprobadasGroups.length === 0"
+          class="alert alert-light mb-0"
+        >
+          No hay horas extra aprobadas en este mes.
+        </div>
+
+        <div
+          *ngIf="!cargandoAprobadas && aprobadasGroups.length > 0"
+          class="table-responsive"
+        >
+          <table class="table table-sm align-middle">
+            <thead>
+              <tr>
+                <th style="width: 48%">NOMBRE</th>
+                <th style="width: 14%">FECHA</th>
+                <th style="width: 12%" class="text-center">HORAS</th>
+                <th>DETALLE</th>
+              </tr>
+            </thead>
+
+            <tbody>
+              <ng-container *ngFor="let g of aprobadasGroups">
+                <!-- filas de movimientos -->
+                <ng-container
+                  *ngFor="let it of g.items; let i = index; let last = last"
+                >
+                  <tr>
+                    <!-- NOMBRE -->
+                    <td>
+                      <!-- primera fila del grupo: nombre -->
+                      <ng-container *ngIf="i === 0">
+                        <div class="fw-semibold text-uppercase">
+                          {{ g.usuario_nombre }}
+                        </div>
+                      </ng-container>
+                    </td>
+
+                    <!-- FECHA -->
+                    <td class="text-center">
+                      {{ fechaUI(it.fecha) }}
+                    </td>
+                    <td class="text-center">
+                      {{ mmToHHMM(it.minutos) }}
+                    </td>
+                    <!-- DETALLE -->
+                    <td>
+                      {{ it.observacion || "—" }}
+                    </td>
+                  </tr>
+                </ng-container>
+                <tr class="he-sep-summary">
+                  <td colspan="4">
+                    <div class="he-sep-content">
+                      <span class="he-sep-label">Solicitudes:</span>
+                      {{ g.cantidad }}
+                      <span class="he-sep-spacer"></span>
+                      <span class="he-sep-label">Aprobadas en el mes</span>
+                      {{ mmToHHMM(g.total_minutos) }}
+                    </div>
+                  </td>
+                </tr>
+              </ng-container>
+            </tbody>
+
+            <tfoot>
+              <tr>
+                <td class="fw-semibold">TOTAL MES</td>
+                <td></td>
+                <td></td>
+                <td class="fw-semibold text-end">
+                  {{ mmToHHMM(totalAprobadasMin) }}
+                </td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
