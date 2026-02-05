@@ -97,6 +97,18 @@ export class HorariosComponent implements OnInit {
   // ==========================
   procesandoHoraAcumulada = false;
 
+  private fmtMinToHHMM(min: any): string {
+    const n = Number(min ?? 0);
+    if (!Number.isFinite(n) || n === 0) return '';
+
+    const sign = n < 0 ? '-' : ''; // 👈 por si algún día lo usas para saldos negativos
+    const abs = Math.abs(Math.trunc(n));
+    const h = Math.floor(abs / 60);
+    const m = abs % 60;
+
+    return `${sign}${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+  }
+
   // ==========================
   //   JUSTIFICACIONES (APROBAR/RECHAZAR + MINUTOS)
   // ==========================
@@ -111,7 +123,7 @@ export class HorariosComponent implements OnInit {
     private departamentosService: DepartamentosService,
     private turnosService: TurnosService,
     private reporteAsistenciaService: ReporteAsistenciaService,
-    private justificacionesService: JustificacionesService // ✅ NUEVO
+    private justificacionesService: JustificacionesService, // ✅ NUEVO
   ) {}
 
   // ==========================
@@ -129,7 +141,7 @@ export class HorariosComponent implements OnInit {
     const texto = this.filtroTextoUsuario.trim().toLowerCase();
     if (!texto) return this.usuariosEquipo;
     return this.usuariosEquipo.filter((u) =>
-      u.nombre_completo.toLowerCase().includes(texto)
+      u.nombre_completo.toLowerCase().includes(texto),
     );
   }
 
@@ -165,7 +177,7 @@ export class HorariosComponent implements OnInit {
     } catch (e: any) {
       await SwalStd.error(
         SwalStd.getErrorMessage(e),
-        'Error cargando horarios'
+        'Error cargando horarios',
       );
     }
   }
@@ -209,7 +221,7 @@ export class HorariosComponent implements OnInit {
     while (tmp.getTime() <= hasta.getTime()) {
       const fechaStr = this.formatFecha(tmp);
       const etiqueta = `${nombresDia[tmp.getDay()]} ${String(
-        tmp.getDate()
+        tmp.getDate(),
       ).padStart(2, '0')}`;
       out.push({ fecha: fechaStr, etiqueta });
       tmp.setDate(tmp.getDate() + 1);
@@ -327,13 +339,13 @@ export class HorariosComponent implements OnInit {
     try {
       const todos = await this.departamentosService.getAll();
       this.departamentosSucursal = (todos || []).filter(
-        (d) => d.sucursal_id === sucursalId
+        (d) => d.sucursal_id === sucursalId,
       );
     } catch (e: any) {
       this.departamentosSucursal = [];
       await SwalStd.error(
         SwalStd.getErrorMessage(e),
-        'Error cargando departamentos'
+        'Error cargando departamentos',
       );
     }
   }
@@ -356,9 +368,8 @@ export class HorariosComponent implements OnInit {
         departamentoIdFiltro = this.departamentoSeleccionadoId;
       }
 
-      const lista = await this.usuariosService.getParaTurnos(
-        departamentoIdFiltro
-      );
+      const lista =
+        await this.usuariosService.getParaTurnos(departamentoIdFiltro);
 
       this.usuariosEquipo = (lista || [])
         .map((u: Iusuarios) => ({
@@ -370,7 +381,7 @@ export class HorariosComponent implements OnInit {
       this.usuariosEquipo = [];
       await SwalStd.error(
         SwalStd.getErrorMessage(e),
-        'Error cargando usuarios'
+        'Error cargando usuarios',
       );
     } finally {
       this.cargandoUsuarios = false;
@@ -409,7 +420,7 @@ export class HorariosComponent implements OnInit {
 
       const idsEquipo = new Set(this.usuariosEquipo.map((u) => u.id));
       this.turnos = (turnos || []).filter((t) =>
-        idsEquipo.has(Number(t.usuario_id))
+        idsEquipo.has(Number(t.usuario_id)),
       );
 
       this.buildTurnosIndex();
@@ -692,7 +703,7 @@ export class HorariosComponent implements OnInit {
         {
           mes: this.reporteMes!,
           usuario_id: this.reporteUsuarioId!,
-        }
+        },
       );
 
       const blob = resp.body;
@@ -714,7 +725,7 @@ export class HorariosComponent implements OnInit {
 
       await SwalStd.error(
         SwalStd.getErrorMessage(e),
-        'Error generando reporte'
+        'Error generando reporte',
       );
     } finally {
       this.generandoReporte = false;
@@ -734,18 +745,22 @@ export class HorariosComponent implements OnInit {
 
   horaAcumuladaLabel(turno?: ITurnoDiario): string {
     if (!turno) return '';
+
     const st = String((turno as any).estado_hora_acumulada || 'NO')
       .toUpperCase()
       .trim();
+
     if (st === 'NO' || st === '') return '';
 
-    const h = (turno as any).num_horas_acumuladas;
-    const hTxt = h ? ` · ${h}h` : '';
+    const min = (turno as any).num_minutos_acumulados; // ✅ minutos
+    const hhmm = this.fmtMinToHHMM(min);
+    const extra = hhmm ? ` · ${hhmm}` : '';
 
-    if (st === 'SOLICITUD') return `SOLICITUD${hTxt}`;
-    if (st === 'APROBADO') return `APROBADO${hTxt}`;
-    if (st === 'RECHAZADO') return `RECHAZADO${hTxt}`;
-    return `${st}${hTxt}`;
+    if (st === 'SOLICITUD') return `SOLICITUD${extra}`;
+    if (st === 'APROBADO') return `APROBADO${extra}`;
+    if (st === 'RECHAZADO') return `RECHAZADO${extra}`;
+
+    return `${st}${extra}`;
   }
 
   horaAcumuladaBadgeClass(turno?: ITurnoDiario): any {
@@ -786,14 +801,14 @@ export class HorariosComponent implements OnInit {
     try {
       await this.turnosService.actualizarEstadoHoraAcumulada(
         this.detalleTurno.id,
-        'APROBADO'
+        'APROBADO',
       );
       await this.buscarTurnos();
 
       this.detalleTurno =
         this.getTurno(
           Number(this.detalleTurno.usuario_id),
-          this.detalleFecha!
+          this.detalleFecha!,
         ) || this.detalleTurno;
 
       await SwalStd.success('Horas acumuladas aprobadas');
@@ -822,14 +837,14 @@ export class HorariosComponent implements OnInit {
     try {
       await this.turnosService.actualizarEstadoHoraAcumulada(
         this.detalleTurno.id,
-        'RECHAZADO'
+        'RECHAZADO',
       );
       await this.buscarTurnos();
 
       this.detalleTurno =
         this.getTurno(
           Number(this.detalleTurno.usuario_id),
-          this.detalleFecha!
+          this.detalleFecha!,
         ) || this.detalleTurno;
 
       await SwalStd.success('Horas acumuladas rechazadas');
@@ -957,7 +972,7 @@ export class HorariosComponent implements OnInit {
         this.detalleTurno.id,
         key,
         'APROBADA',
-        minutos // 👈 null permitido
+        minutos, // 👈 null permitido
       );
 
       await this.buscarTurnos();
@@ -965,7 +980,7 @@ export class HorariosComponent implements OnInit {
       this.detalleTurno =
         this.getTurno(
           Number(this.detalleTurno.usuario_id),
-          this.detalleFecha!
+          this.detalleFecha!,
         ) || this.detalleTurno;
 
       // refresca minutos desde el nuevo turno
@@ -1001,14 +1016,14 @@ export class HorariosComponent implements OnInit {
         this.detalleTurno.id,
         key,
         'RECHAZADA',
-        null
+        null,
       );
 
       await this.buscarTurnos();
       this.detalleTurno =
         this.getTurno(
           Number(this.detalleTurno.usuario_id),
-          this.detalleFecha!
+          this.detalleFecha!,
         ) || this.detalleTurno;
 
       this.syncMinutosDesdeTurno(this.detalleTurno);

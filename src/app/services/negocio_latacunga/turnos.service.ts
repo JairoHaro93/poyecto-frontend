@@ -47,7 +47,7 @@ export interface ITurnoDiario {
 
   // ✅ HORAS ACUMULADAS
   estado_hora_acumulada?: string; // NO | SOLICITUD | APROBADO | RECHAZADO
-  num_horas_acumuladas?: number | null;
+  num_minutos_acumulados?: number | null;
   hora_acum_aprobado_por?: number | null;
 
   // ✅ Campos de JUSTIFICACIONES (solo datos, sin endpoints aquí)
@@ -104,8 +104,8 @@ export class TurnosService {
         payload,
         {
           withCredentials: true,
-        }
-      )
+        },
+      ),
     );
   }
 
@@ -133,7 +133,7 @@ export class TurnosService {
       this.http.get<GetTurnosResponse>(this.baseUrl, {
         params: httpParams,
         withCredentials: true,
-      })
+      }),
     );
   }
 
@@ -142,13 +142,13 @@ export class TurnosService {
   // ==========================
   actualizarTurno(id: number, data: Partial<TurnoDiario>): Promise<any> {
     return firstValueFrom(
-      this.http.put(`${this.baseUrl}/${id}`, data, { withCredentials: true })
+      this.http.put(`${this.baseUrl}/${id}`, data, { withCredentials: true }),
     );
   }
 
   eliminarTurno(id: number): Promise<any> {
     return firstValueFrom(
-      this.http.delete(`${this.baseUrl}/${id}`, { withCredentials: true })
+      this.http.delete(`${this.baseUrl}/${id}`, { withCredentials: true }),
     );
   }
 
@@ -175,8 +175,8 @@ export class TurnosService {
     const resp = await firstValueFrom(
       this.http.get<{ ok: boolean; turnos: ITurnoDiario[]; filtros?: any }>(
         this.baseUrl,
-        { params: httpParams, withCredentials: true }
-      )
+        { params: httpParams, withCredentials: true },
+      ),
     );
 
     return resp.turnos || [];
@@ -194,7 +194,7 @@ export class TurnosService {
       | {
           estado_hora_acumulada: 'APROBADO' | 'RECHAZADO';
           hora_acum_aprobado_por?: number;
-        }
+        },
   ) {
     const body =
       typeof data === 'string' ? { estado_hora_acumulada: data } : data;
@@ -202,7 +202,7 @@ export class TurnosService {
     return lastValueFrom(
       this.http.put(`${this.baseUrl}/hora-acumulada/${turnoId}`, body, {
         withCredentials: true,
-      })
+      }),
     );
   }
 
@@ -215,8 +215,8 @@ export class TurnosService {
       this.http.put(
         `${this.baseUrl}/devolucion/${turnoId}`,
         {},
-        { withCredentials: true }
-      )
+        { withCredentials: true },
+      ),
     );
   }
 }
