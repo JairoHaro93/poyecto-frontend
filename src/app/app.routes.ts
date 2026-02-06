@@ -192,7 +192,11 @@ export const routes: Routes = [
             component: InfraestructuraComponent,
             canActivate: [permisosGuard('NInfraestructura')],
           },
-          { path: 'agenda', component: AgendaComponent },
+          {
+            path: 'agenda',
+            component: AgendaComponent,
+            canActivate: [permisosGuard('NAgenda')],
+          },
         ],
       },
 

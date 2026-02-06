@@ -78,7 +78,7 @@ export class RegistrosoporteComponent {
       reg_sop_tel: new FormControl<string>('', [
         Validators.required,
         Validators.pattern(
-          /^\s*\+?\s*(?:\d\s*){10,}(?:\s*(?:[;,\/]|\s{2,})\s*\+?\s*(?:\d\s*){10,})*\s*$/
+          /^\s*\+?\s*(?:\d\s*){10,}(?:\s*(?:[;,\/]|\s{2,})\s*\+?\s*(?:\d\s*){10,})*\s*$/,
         ),
       ]),
       reg_sop_opc: new FormControl<string | null>(null, [Validators.required]),
@@ -106,9 +106,9 @@ export class RegistrosoporteComponent {
               return of([] as ClienteSugerencia[]);
             }
             return from(this.clienteService.buscarClientesActivos(v, 10)).pipe(
-              catchError(() => of([] as ClienteSugerencia[]))
+              catchError(() => of([] as ClienteSugerencia[])),
             );
-          })
+          }),
         )
         .subscribe((list) => {
           this.nombresFiltrados = list;
@@ -122,7 +122,7 @@ export class RegistrosoporteComponent {
       });
     } catch (error) {
       console.error('❌ Error al iniciar RegistrosoporteComponent:', error);
-      this.router.navigateByUrl('/login');
+      //this.router.navigateByUrl('/login');
     } finally {
       this.isReady = true; // ⬅️ muestra el contenido
     }
@@ -149,8 +149,8 @@ export class RegistrosoporteComponent {
       new Set(
         this.soportesPendientes
           .map((s) => (s?.ord_ins ?? '').toString().trim())
-          .filter((v) => v !== '')
-      )
+          .filter((v) => v !== ''),
+      ),
     );
 
     if (ords.length === 0) return;
@@ -159,7 +159,7 @@ export class RegistrosoporteComponent {
     let batch;
     try {
       batch = await firstValueFrom(
-        this.clienteService.getClientesByOrdInsBatch(ords)
+        this.clienteService.getClientesByOrdInsBatch(ords),
       );
     } catch (e) {
       console.error('❌ Error batch clientes:', e);
@@ -209,7 +209,7 @@ export class RegistrosoporteComponent {
         Swal.fire(
           'Error guardando soporte',
           error?.message || 'Error',
-          'error'
+          'error',
         );
       }
     } else {
@@ -290,9 +290,8 @@ export class RegistrosoporteComponent {
     if (!cedula) return;
 
     try {
-      const detalle = await this.clienteService.getInfoClientesArrayActivos(
-        cedula
-      );
+      const detalle =
+        await this.clienteService.getInfoClientesArrayActivos(cedula);
       if (detalle?.servicios?.length > 0) {
         this.clienteSeleccionado = detalle;
         this.servicioSeleccionado = detalle.servicios[0];

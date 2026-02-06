@@ -48,14 +48,14 @@ export class SoporteTecnicoComponent {
 
       this.socketService.on('soporteCreadoNOC', async () => {
         console.log(
-          '📢 Evento recibido EN SOPORTE TECNICO solo por NOC: soporteCreadoNOC'
+          '📢 Evento recibido EN SOPORTE TECNICO solo por NOC: soporteCreadoNOC',
         );
         await this.cargarDatos(noc_id);
       });
 
       this.socketService.on('soporteActualizadoNOC', async () => {
         console.log(
-          '📢 Evento recibido EN SOPORTE TECNICO solo por NOC: soporteActualizadoNOC'
+          '📢 Evento recibido EN SOPORTE TECNICO solo por NOC: soporteActualizadoNOC',
         );
         await this.cargarDatos(noc_id);
       });
@@ -66,7 +66,7 @@ export class SoporteTecnicoComponent {
       });
     } catch (error) {
       console.error('❌ Error al iniciar soporte técnico:', error);
-      this.router.navigateByUrl('/login');
+      // this.router.navigateByUrl('/login');
     }
   }
   async cargarDatos(noc_id: number) {
@@ -93,7 +93,7 @@ export class SoporteTecnicoComponent {
       // 2) Enriquecimiento batch (si hay algo que enriquecer)
       if (uniqueOrdIns.length > 0) {
         const clientes = await firstValueFrom(
-          this.clienteService.getClientesByOrdInsBatch(uniqueOrdIns)
+          this.clienteService.getClientesByOrdInsBatch(uniqueOrdIns),
         );
 
         const mapCliente = new Map<string | number, any>();
@@ -149,7 +149,7 @@ export class SoporteTecnicoComponent {
 
     const dias = Math.floor(diferencia / (1000 * 60 * 60 * 24));
     const horas = Math.floor(
-      (diferencia % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)
+      (diferencia % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60),
     );
     const minutos = Math.floor((diferencia % (1000 * 60 * 60)) / (1000 * 60));
 
@@ -165,7 +165,7 @@ export class SoporteTecnicoComponent {
 
       this.dataSharingService.updateData(
         this.soportesPendientes.length,
-        this.soportesNoc.length
+        this.soportesNoc.length,
       );
 
       this.socketService.emit('soporteActualizado');
