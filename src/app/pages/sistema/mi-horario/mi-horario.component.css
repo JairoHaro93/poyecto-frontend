@@ -1,0 +1,235 @@
+.date-input {
+  width: 160px;
+}
+
+.summary {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.sum-item {
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  background: rgba(0, 0, 0, 0.02);
+  border-radius: 14px;
+  padding: 10px 12px;
+  min-width: 180px;
+}
+.sum-label {
+  font-size: 12px;
+  color: rgba(0, 0, 0, 0.55);
+}
+.sum-val {
+  font-size: 14px;
+  font-weight: 800;
+  margin-top: 2px;
+}
+
+.day-card {
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 14px;
+  padding: 12px;
+  background: #fff;
+  margin-bottom: 10px;
+}
+.day-row {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+}
+.day-title {
+  font-weight: 800;
+  letter-spacing: 0.2px;
+}
+.marked {
+  margin-top: 4px;
+  font-weight: 700;
+}
+.obs {
+  margin-top: 4px;
+  color: rgba(0, 0, 0, 0.75);
+}
+
+.trail {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  min-width: 160px;
+  gap: 6px;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 4px 10px;
+  font-size: 12px;
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  line-height: 1;
+  user-select: none;
+}
+
+.chip-ok {
+  background: rgba(25, 135, 84, 0.1);
+  border-color: rgba(25, 135, 84, 0.25);
+}
+.chip-warn {
+  background: rgba(255, 193, 7, 0.12);
+  border-color: rgba(255, 193, 7, 0.3);
+}
+.chip-bad {
+  background: rgba(220, 53, 69, 0.1);
+  border-color: rgba(220, 53, 69, 0.25);
+}
+.chip-info {
+  background: rgba(13, 110, 253, 0.1);
+  border-color: rgba(13, 110, 253, 0.25);
+}
+.chip-muted {
+  background: rgba(108, 117, 125, 0.1);
+  border-color: rgba(108, 117, 125, 0.25);
+}
+
+.btn-edit {
+  border: 1px solid rgba(0, 0, 0, 0.15);
+  background: rgba(0, 0, 0, 0.03);
+  border-radius: 10px;
+  padding: 6px 10px;
+  font-weight: 800;
+  line-height: 1;
+}
+.btn-edit:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* =========================
+   MODAL
+========================= */
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  z-index: 1050;
+}
+
+.modal-shell {
+  position: fixed;
+  inset: 0;
+  z-index: 1060;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 14px;
+}
+
+.modal-card {
+  width: 100%;
+  max-width: 540px;
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
+  overflow: hidden;
+}
+
+.modal-head {
+  padding: 12px 14px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+.modal-title {
+  font-weight: 900;
+  letter-spacing: 0.2px;
+}
+.modal-x {
+  border: 1px solid rgba(0, 0, 0, 0.15);
+  background: rgba(0, 0, 0, 0.03);
+  border-radius: 10px;
+  width: 36px;
+  height: 32px;
+  font-size: 18px;
+  line-height: 1;
+}
+
+.modal-body {
+  padding: 14px;
+}
+
+.section-title {
+  font-weight: 900;
+  margin-bottom: 8px;
+}
+
+.ta {
+  width: 100%;
+  border: 1px solid rgba(0, 0, 0, 0.15);
+  border-radius: 12px;
+  padding: 10px;
+  resize: vertical;
+  outline: none;
+  text-transform: uppercase;
+}
+.ta:disabled {
+  background: rgba(0, 0, 0, 0.03);
+}
+
+.stepper {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 10px;
+  gap: 10px;
+}
+.step-btn {
+  border: 1px solid rgba(0, 0, 0, 0.15);
+  background: rgba(0, 0, 0, 0.03);
+  border-radius: 12px;
+  width: 46px;
+  height: 40px;
+  font-size: 18px;
+  font-weight: 900;
+}
+.step-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.step-val {
+  font-size: 18px;
+  font-weight: 900;
+  min-width: 90px;
+  text-align: center;
+}
+
+.step-help {
+  margin-top: 4px;
+  font-size: 12px;
+  color: rgba(0, 0, 0, 0.55);
+}
+
+.info {
+  margin-top: 10px;
+  color: rgba(0, 0, 0, 0.65);
+  font-size: 12px;
+}
+
+.small-note {
+  margin-top: 6px;
+  color: rgba(0, 0, 0, 0.55);
+  font-size: 12px;
+}
+
+.sep {
+  margin: 14px 0;
+  border: 0;
+  border-top: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.modal-actions {
+  padding: 12px 14px;
+  border-top: 1px solid rgba(0, 0, 0, 0.08);
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}

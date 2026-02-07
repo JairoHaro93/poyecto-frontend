@@ -69,9 +69,52 @@ a:hover {
   width: 100%;
   border: none;
   border-radius: 7px;
-  transition: background-color 0.5s ease, box-shadow 0.5s ease;
+  transition:
+    background-color 0.5s ease,
+    box-shadow 0.5s ease;
 }
 
 .button-primary:hover {
   box-shadow: 4px 4px 5px rgba(0, 0.3, 0, 0.3); /* Sombra cuando el cursor está sobre el botón */
+}
+
+/* ===========================
+   LAYOUT: SIDEBAR + CONTENIDO
+   =========================== */
+
+.flex {
+  display: flex;
+  min-height: 100vh;
+}
+
+/* ✅ En desktop reservamos espacio para el sidebar (porque es fixed) */
+@media (min-width: 1001px) {
+  .flex > aside {
+    width: 230px;
+    flex: 0 0 230px;
+  }
+
+  .flex > section {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+}
+
+/* ✅ En móvil NO reservamos espacio => el sidebar se encima */
+@media (max-width: 1000px) {
+  .flex > aside {
+    width: 0;
+    flex: 0 0 0;
+  }
+
+  .flex > section {
+    width: 100%;
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+}
+
+/* ✅ recomendado: quita margen por defecto del navegador */
+body {
+  margin: 0;
 }

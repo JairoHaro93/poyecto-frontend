@@ -1,7 +1,7 @@
 :root {
   --color-barra-lateral: rgb(255, 255, 255);
   --color-texto: rgb(0, 0, 0);
-  --color-texto-menu: rgb(134: 136: 144);
+  --color-texto-menu: rgb(134, 136, 144);
   --color-boton: rgb(0, 0, 0);
   --color-boton-texto: rgb(255, 255, 255);
 }
@@ -14,114 +14,103 @@
 
 .sidebar {
   position: fixed;
+  top: 0;
+  left: 0;
+
   display: flex;
   flex-direction: column;
   justify-content: space-between;
+
   width: 230px;
-  height: 100%;
+  height: 100vh;
+
   padding: 0px 10px;
   background-color: var(--color-barra-lateral);
+
   transition: left 0.5s ease;
+
+  /* ✅ por delante del contenido */
+  z-index: 9998;
 }
 
-/* En pantallas pequeñas */
-@media (max-width: 1000px) {
-  .sidebar {
-    position: absolute;
-    left: -250px; /* 🔒 Oculto por defecto */
-    height: auto;
-    overflow-y: auto;
-  }
-
-  .mostrar-sidebar {
-    left: 0; /* ✅ Mostrar si clase activa */
-  }
-
-  .menu {
-    display: flex;
-  }
-}
-
-.logo {
-  max-width: 40vw;
-  height: 40px;
-  cursor: pointer;
-}
-
-.div2 {
-  /* display: grid;*/
-  overflow-y: auto;
-}
-
-/*lista de opciones*/
-
-.buton-bottom {
-  margin-top: auto; /* Empuja el botón al fondo */
-  bottom: 0px; /* Asegura que el botón se quede pegado al fondo */
-  width: 100%; /* Ajusta el ancho para alinearlo con otros elementos */
-}
-
-/* MENU*/
-
+/* MENU (hamburguesa) */
 .menu {
   color: #ce2929;
   width: 50px;
   height: 50px;
+
   position: fixed;
+  right: 15px;
+  top: 10px;
+
   font-size: 30px;
   justify-content: center;
   align-items: center;
   cursor: pointer;
-  right: 15px;
-  top: 10px;
+
   display: none;
+
+  /* ✅ SIEMPRE por delante del sidebar y del contenido */
+  z-index: 9999;
 }
 
-/*    movil  */
+/* Responsive */
 @media (max-width: 1000px) {
   .sidebar {
-    position: absolute;
-    left: -250px;
-    height: auto;
+    left: -250px; /* oculto */
     overflow-y: auto;
   }
+
   .mostrar-sidebar {
-    left: 0;
+    left: 0; /* visible */
   }
+
   .menu {
-    display: flex;
+    display: flex; /* ✅ aparece en móvil */
   }
 }
 
-/* lista de opciones*/
-ul {
-  list-style-type: none;
-  justify-content: center;
-
-  li {
-    margin-left: 10px;
-    width: 80%;
-    background-color: #cc2929;
-    border-radius: 10px;
-    padding: 2px;
-    text-align: center;
-    margin-top: 10px;
-    cursor: pointer;
-    color: white;
-  }
-}
 .logo {
   margin: 10px 10px;
-
   max-width: 40vw;
   height: 40px;
   cursor: pointer;
 }
-/*    movil  */
+
 @media (max-width: 600px) {
   .logo {
     max-width: 60vw;
   }
+}
+
+.div2 {
+  overflow-y: auto;
+}
+
+.buton-bottom {
+  margin-top: auto;
+  bottom: 0px;
+  width: 100%;
+}
+
+/* ✅ CSS válido (sin anidado tipo SCSS) */
+ul {
+  list-style-type: none;
+  justify-content: center;
+  padding-left: 0;
+  margin-bottom: 0;
+}
+
+ul li {
+  margin-left: 10px;
+  width: 80%;
+  background-color: #cc2929;
+  border-radius: 10px;
+  padding: 2px;
+  text-align: center;
+  margin-top: 10px;
+  cursor: pointer;
+  color: white;
 }
 
 .texto-amarillo {
@@ -158,4 +147,26 @@ ul {
   line-height: 20px;
   text-align: center;
   margin-left: 8px;
+}
+
+.sidebar {
+  z-index: 9998;
+}
+.menu {
+  z-index: 9999;
+}
+
+@media (max-width: 1000px) {
+  .sidebar {
+    position: fixed;
+    top: 0;
+    left: -250px;
+    height: 100vh;
+  }
+  .mostrar-sidebar {
+    left: 0;
+  }
+  .menu {
+    display: flex;
+  }
 }

@@ -37,6 +37,7 @@ import { TurnosComponent } from './pages/negocio/administrador/turnos/turnos.com
 import { HorariosComponent } from './pages/negocio/administrador/horarios/horarios.component';
 import { HorasExtrasService } from './services/negocio_latacunga/horas-extras.service';
 import { HorasextraComponent } from './pages/negocio/administrador/horasextra/horasextra.component';
+import { MiHorarioComponent } from './pages/sistema/mi-horario/mi-horario.component';
 
 export const routes: Routes = [
   { path: '', pathMatch: 'full', redirectTo: 'login' },
@@ -96,6 +97,11 @@ export const routes: Routes = [
             path: 'horasextra',
             component: HorasextraComponent,
             canActivate: [permisosGuard('AHoras Extra')],
+          },
+          {
+            path: 'mi-horario',
+            component: MiHorarioComponent,
+            canActivate: [permisosGuard('AMi Horario')],
           },
         ],
       },

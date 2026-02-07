@@ -1,6 +1,7 @@
-<!-- https://www.youtube.com/watch?v=nvh51c4UfmM -->
+<!-- sidebar.component.html -->
 
-<div (click)="onClickMenu()" class="menu">
+<!-- BOTÓN HAMBURGUESA (solo visible en móvil por CSS) -->
+<div (click)="onClickMenu()" class="menu" aria-label="Abrir/cerrar menú">
   @if (!isMenu) {
     <i class="fa-solid fa-bars"></i>
   }
@@ -9,6 +10,12 @@
   }
 </div>
 
+<!-- BACKDROP (cierra tocando fuera) -->
+@if (isMenu) {
+  <div class="backdrop" (click)="onClickMenu()"></div>
+}
+
+<!-- SIDEBAR -->
 <div [class.mostrar-sidebar]="isMenu" class="sidebar">
   <img
     [routerLink]="['/home']"
@@ -16,6 +23,7 @@
     src="./img/logoredecom.png"
     alt="logo"
   />
+
   <div class="border-bottom border-3 pb-2"></div>
 
   <div class="div2">
@@ -27,12 +35,21 @@
         <button
           class="button-primary btn-toggle rounded my-2"
           (click)="toggleCollapse('home-collapse')"
+          type="button"
         >
           <i class="fa-solid fa-gear"></i> Administrador
         </button>
       }
       <div class="accordion-collapse collapse" id="home-collapse">
         <ul class="btn-toggle-nav list-unstyled fw-normal pb-1 small gap-5">
+          @if (arrAdmin.includes("AMi Horario")) {
+            <li
+              (click)="onClickMenu()"
+              [routerLink]="['/home/administrador/mi-horario']"
+            >
+              Mi Horario
+            </li>
+          }
           @if (arrAdmin.includes("AUsuarios")) {
             <li
               (click)="onClickMenu()"
@@ -81,6 +98,7 @@
         <button
           class="button-primary btn-toggle rounded my-2"
           (click)="toggleCollapse('bodega-collapse')"
+          type="button"
         >
           <i class="fa-solid fa-box-open"></i> Bodega
         </button>
@@ -132,6 +150,7 @@
         <button
           class="button-primary btn-toggle rounded my-2"
           (click)="toggleCollapse('clientes-collapse')"
+          type="button"
         >
           <i class="fa-solid fa-users"></i> Clientes
         </button>
@@ -146,11 +165,12 @@
         </ul>
       </div>
 
-      <!-- BOTÓN NOC (posición estable del label) -->
+      <!-- BOTÓN NOC -->
       @if (arrNoc.length > 0) {
         <button
           class="button-primary btn-toggle rounded my-2 position-relative w-100 py-2"
           (click)="toggleCollapse('noc-collapse')"
+          type="button"
         >
           <!-- Riel izquierdo: pre-agenda -->
           <div
@@ -163,7 +183,7 @@
             }
           </div>
 
-          <!-- Label centrado SIEMPRE -->
+          <!-- Label centrado -->
           <div
             class="position-absolute top-50 start-50 translate-middle d-inline-flex align-items-center gap-2 noc-center"
           >
@@ -193,9 +213,9 @@
             <li (click)="onClickMenu()" [routerLink]="['/home/noc/agenda']">
               Agenda
               @if (preAgendaPendientesCount > 0) {
-                <span class="badge-circle-age">
-                  {{ preAgendaPendientesCount }}
-                </span>
+                <span class="badge-circle-age">{{
+                  preAgendaPendientesCount
+                }}</span>
               }
             </li>
           }
@@ -205,15 +225,15 @@
               [routerLink]="['/home/noc/soporte-tecnico']"
             >
               @if (soportesPendientesCount > 0) {
-                <span class="badge-circle-sop">
-                  {{ soportesPendientesCount }}
-                </span>
+                <span class="badge-circle-sop">{{
+                  soportesPendientesCount
+                }}</span>
               }
               Soporte Tecnico
               @if (soportesRevisadosCount > 0) {
-                <span class="badge-circle-sop">
-                  {{ soportesRevisadosCount }}
-                </span>
+                <span class="badge-circle-sop">{{
+                  soportesRevisadosCount
+                }}</span>
               }
             </li>
           }
@@ -275,6 +295,7 @@
         <button
           class="button-primary btn-toggle rounded my-2"
           (click)="toggleCollapse('recuperacion-collapse')"
+          type="button"
         >
           <i class="fa-solid fa-rotate-left"></i> Recuperacion
         </button>
@@ -313,21 +334,13 @@
         <button
           class="button-primary btn-toggle rounded my-2"
           (click)="toggleCollapse('tecnico-collapse')"
+          type="button"
         >
           <i class="fa-solid fa-screwdriver-wrench"></i> Tecnico
         </button>
       }
       <div class="accordion-collapse collapse" id="tecnico-collapse">
         <ul class="btn-toggle-nav list-unstyled fw-normal pb-1 small">
-          <!-- @if (arrTecnico.includes("TMi Agenda")) {
-          <li
-            (click)="onClickMenu()"
-            [routerLink]="['/home/tecnico/mi-agenda-tec']"
-          >
-            Mi Agenda
-          </li>
-          } -->
-
           @if (arrTecnico.includes("TRegistro Soporte")) {
             <li
               (click)="onClickMenu()"
@@ -341,7 +354,7 @@
     </div>
   </div>
 
-  <!-- CERRA SESION -->
+  <!-- CERRAR SESIÓN -->
   <div class="buton-bottom">
     <hr />
     <button (click)="onClickLogout()" class="button-primary usuario my-2">

@@ -1,0 +1,281 @@
+<div class="container mt-3">
+  <div class="card">
+    <div class="card-body">
+      <!-- HEADER -->
+      <div
+        class="d-flex align-items-center justify-content-between flex-wrap gap-2"
+      >
+        <div>
+          <h5 class="mb-0">Mi Horario</h5>
+          <div class="text-muted small" *ngIf="desde && hasta">
+            Semana: {{ fechaUI(desde) }} – {{ fechaUI(hasta) }}
+          </div>
+        </div>
+
+        <div class="d-flex align-items-center gap-2 flex-wrap">
+          <button
+            class="btn btn-outline-secondary btn-sm"
+            (click)="prevWeek()"
+            [disabled]="cargando"
+          >
+            ‹
+          </button>
+
+          <input
+            type="date"
+            class="form-control form-control-sm date-input"
+            [(ngModel)]="selectedYmd"
+            (change)="onPickDate()"
+            [disabled]="cargando"
+          />
+
+          <button
+            class="btn btn-outline-secondary btn-sm"
+            (click)="nextWeek()"
+            [disabled]="cargando"
+          >
+            ›
+          </button>
+
+          <button
+            class="btn btn-outline-primary btn-sm"
+            (click)="refresh()"
+            [disabled]="cargando"
+          >
+            {{ cargando ? "Cargando…" : "Recargar" }}
+          </button>
+        </div>
+      </div>
+
+      <!-- RESUMEN (como Flutter) -->
+      <div class="summary mt-3">
+        <div class="sum-item">
+          <div class="sum-label">Horas Acumuladas</div>
+          <div class="sum-val">{{ totalHorasAcumuladasHHMM }}</div>
+        </div>
+
+        <div class="sum-item">
+          <div class="sum-label">Vacaciones</div>
+          <div class="sum-val">{{ vacacionesDisponiblesTxt }} días</div>
+        </div>
+      </div>
+
+      <div class="mt-3" *ngIf="cargando">
+        <div class="progress" style="height: 6px">
+          <div
+            class="progress-bar progress-bar-striped progress-bar-animated"
+            style="width: 100%"
+          ></div>
+        </div>
+      </div>
+
+      <!-- LISTA SEMANA -->
+      <div class="mt-3">
+        <div class="day-card" *ngFor="let d of dias; trackBy: trackByFecha">
+          <div class="day-row">
+            <div class="flex-grow-1">
+              <div class="day-title">
+                {{ diaNombre(d.fecha) }}
+                <span class="text-muted">• {{ fechaCorta(d.fecha) }}</span>
+              </div>
+
+              <div class="small text-muted">
+                <ng-container *ngIf="d.tiene_turno; else sinTurno">
+                  Prog: {{ hhmm(d.hora_entrada_prog) }} -
+                  {{ hhmm(d.hora_salida_prog) }}
+                  <span *ngIf="d.sucursal">• {{ d.sucursal }}</span>
+                </ng-container>
+                <ng-template #sinTurno>Sin turno</ng-template>
+              </div>
+              <div class="marked">
+                Marcado:
+                {{ d.hora_entrada_real | date: "HH:mm" }}
+                -
+                {{ d.hora_salida_real | date: "HH:mm" }}
+              </div>
+
+              <div class="obs" *ngIf="(d.observacion || '').trim().length">
+                Obs: {{ d.observacion }}
+              </div>
+            </div>
+
+            <!-- TRAILING -->
+            <div class="trail">
+              <span class="chip" [ngClass]="chipClassEstado(d)">{{
+                estadoUILabel(d)
+              }}</span>
+
+              <span
+                class="chip mt-1"
+                *ngIf="horaAcumuladaVisible(d)"
+                [ngClass]="chipClassHA(d)"
+              >
+                {{ horaAcumuladaLabel(d) }}
+              </span>
+
+              <span
+                class="chip mt-1"
+                *ngIf="(d.just_atraso_estado || 'NO') !== 'NO'"
+                [ngClass]="chipClassJust(d.just_atraso_estado)"
+              >
+                ATRASO
+                {{ shortEstado((d.just_atraso_estado || "").toUpperCase()) }}
+              </span>
+
+              <span
+                class="chip mt-1"
+                *ngIf="(d.just_salida_estado || 'NO') !== 'NO'"
+                [ngClass]="chipClassJust(d.just_salida_estado)"
+              >
+                INCOMPLETO
+                {{ shortEstado((d.just_salida_estado || "").toUpperCase()) }}
+              </span>
+
+              <button
+                class="btn-edit"
+                type="button"
+                title="Editar día"
+                (click)="abrirModalEditar(d)"
+                [disabled]="!puedeEditar(d) || cargando"
+              >
+                ✎
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div
+          class="alert alert-light border"
+          *ngIf="!cargando && dias.length === 0"
+        >
+          Sin datos para esta semana.
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- =========================
+     MODAL (tipo Flutter)
+========================= -->
+<div class="modal-backdrop" *ngIf="modalOpen" (click)="cerrarModal()"></div>
+
+<div class="modal-shell" *ngIf="modalOpen">
+  <div class="modal-card" (click)="$event.stopPropagation()">
+    <div class="modal-head">
+      <div class="modal-title">
+        {{ diaEdit?.fecha ? diaTitulo(diaEdit!.fecha) : "EDITAR DÍA" }}
+      </div>
+      <button class="modal-x" type="button" (click)="cerrarModal()">×</button>
+    </div>
+
+    <div class="modal-body">
+      <!-- OBS + HA -->
+      <div class="section-title">Motivo Horas Acumuladas</div>
+
+      <textarea
+        class="ta"
+        rows="3"
+        [(ngModel)]="form.obs"
+        [disabled]="!puedeObsHA"
+        (ngModelChange)="form.obs = ($event || '').toUpperCase()"
+        [placeholder]="
+          puedeObsHA
+            ? 'DESCRIBE UN MOTIVO PARA SOLICITAR HORAS ACUMULADAS...'
+            : 'NO DISPONIBLE (SOLO HOY / DÍA NORMAL / NO APROBADO)'
+        "
+      ></textarea>
+
+      <div class="stepper">
+        <button
+          class="step-btn"
+          type="button"
+          (click)="haDec()"
+          [disabled]="!puedeObsHA || form.haMin === 0"
+        >
+          −
+        </button>
+        <div class="step-val">{{ mmToHHMM(form.haMin) }}</div>
+        <button
+          class="step-btn"
+          type="button"
+          (click)="haInc()"
+          [disabled]="!puedeObsHA || form.haMin >= 900"
+        >
+          +
+        </button>
+      </div>
+
+      <div class="step-help">
+        {{ form.haMin === 0 ? "SIN SOLICITUD" : "PASOS DE 30 MIN • MÁX 15:00" }}
+      </div>
+
+      <div
+        class="info"
+        *ngIf="diaEdit && isTodayYmd(diaEdit.fecha) && !puedeObsHA"
+      >
+        ⚠️ NO SE PUEDE MODIFICAR: YA ESTÁ APROBADO O NO ES DÍA NORMAL.
+      </div>
+
+      <hr class="sep" />
+
+      <!-- JUST ATRASO -->
+      <div class="section-title">Motivo atraso</div>
+      <textarea
+        class="ta"
+        rows="2"
+        [(ngModel)]="form.motAtraso"
+        [disabled]="!puedeJustA"
+        (ngModelChange)="form.motAtraso = ($event || '').toUpperCase()"
+        [placeholder]="
+          puedeJustA
+            ? 'DESCRIBE EL MOTIVO DEL ATRASO...'
+            : 'NO DISPONIBLE (PENDIENTE/APROBADA O NO APLICA)'
+        "
+      ></textarea>
+
+      <div class="small-note" *ngIf="!puedeJustA">
+        Solo se permite si está en NO o RECHAZADA (y HOY).
+      </div>
+
+      <hr class="sep" />
+
+      <!-- JUST SALIDA -->
+      <div class="section-title">Motivo turno incompleto</div>
+      <textarea
+        class="ta"
+        rows="2"
+        [(ngModel)]="form.motSalida"
+        [disabled]="!puedeJustS"
+        (ngModelChange)="form.motSalida = ($event || '').toUpperCase()"
+        [placeholder]="
+          puedeJustS
+            ? 'DESCRIBE EL MOTIVO DEL TURNO INCOMPLETO...'
+            : 'NO DISPONIBLE (PENDIENTE/APROBADA O NO APLICA)'
+        "
+      ></textarea>
+
+      <div class="small-note" *ngIf="!puedeJustS">
+        Solo se permite si está en NO o RECHAZADA (y HOY).
+      </div>
+    </div>
+
+    <div class="modal-actions">
+      <button
+        class="btn btn-outline-secondary"
+        type="button"
+        (click)="cerrarModal()"
+      >
+        Cancelar
+      </button>
+      <button
+        class="btn btn-primary"
+        type="button"
+        (click)="guardarModal()"
+        [disabled]="cargando"
+      >
+        Guardar
+      </button>
+    </div>
+  </div>
+</div>
