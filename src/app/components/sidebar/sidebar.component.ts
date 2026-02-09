@@ -80,7 +80,7 @@ export class SidebarComponent implements OnInit, OnDestroy {
       this.arrClientes = roles.filter((r) => r.startsWith('C'));
       this.arrRecuperacion = roles.filter((r) => r.startsWith('R'));
 
-      console.log('👤 Usuario autenticado:', this.data.usuario);
+      //  console.log('👤 Usuario autenticado:', this.data.usuario);
       //console.log('🎭 Roles asignados:', this.data.rol);
 
       // ya con sesión ok, ahora sí el resto

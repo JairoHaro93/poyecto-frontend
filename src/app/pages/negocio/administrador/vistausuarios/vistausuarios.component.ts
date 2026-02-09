@@ -24,7 +24,7 @@ export class VistausuariosComponent {
   async ngOnInit() {
     this.activatedRoute.params.subscribe(async (params: any) => {
       let id = params.id;
-      console.log(id);
+      // console.log(id);
 
       this.employee = await this.employeeService.getbyId(id);
 

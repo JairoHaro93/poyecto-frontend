@@ -160,16 +160,16 @@ export class InfraestructuraComponent {
         results.forEach((r, idx) => {
           const campo = idx === 0 && img_ref1 ? 'img_ref1' : 'img_ref2';
           if (r.status === 'fulfilled') {
-            console.log(`✅ ${campo} subida correctamente`, r.value);
+            // console.log(`✅ ${campo} subida correctamente`, r.value);
           } else {
             console.error(`❌ Error subiendo ${campo}`, r.reason);
           }
         });
       } else {
-        console.log('ℹ️ No se adjuntaron imágenes, solo se creó el registro.');
+        //console.log('ℹ️ No se adjuntaron imágenes, solo se creó el registro.');
       }
 
-      console.log('✅ Infraestructura creada. ID:', infraId);
+      //  console.log('✅ Infraestructura creada. ID:', infraId);
 
       await this.router.navigateByUrl(`/home/noc/agenda`);
 

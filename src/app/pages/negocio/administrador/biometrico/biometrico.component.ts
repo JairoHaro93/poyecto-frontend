@@ -73,7 +73,7 @@ export class BiometricoComponent implements OnInit, OnDestroy {
     private socketService: SoketService,
     private usuariosService: UsuariosService,
     private timbresService: TimbresService,
-    private huellasService: HuellasService // 👈 nuevo
+    private huellasService: HuellasService, // 👈 nuevo
   ) {}
 
   async ngOnInit(): Promise<void> {
@@ -87,10 +87,10 @@ export class BiometricoComponent implements OnInit, OnDestroy {
     const onTimbreEstado = (estado: TimbreEstado) => {
       if (!estado || !estado.lector_codigo) return;
 
-      console.log('📡 timbre_estado recibido en front:', estado);
+      // console.log('📡 timbre_estado recibido en front:', estado);
 
       const idx = this.timbres.findIndex(
-        (t) => t.lector_codigo === estado.lector_codigo
+        (t) => t.lector_codigo === estado.lector_codigo,
       );
 
       if (idx === -1) {
@@ -119,11 +119,11 @@ export class BiometricoComponent implements OnInit, OnDestroy {
       const lc = payload?.lector_codigo;
       if (!lc) return;
 
-      console.log('✅ Enrolamiento completado para timbre', lc);
+      //  console.log('✅ Enrolamiento completado para timbre', lc);
 
       // quitar flag enrolando
       this.timbres = this.timbres.map((t) =>
-        t.lector_codigo === lc ? { ...t, enrolando: false } : t
+        t.lector_codigo === lc ? { ...t, enrolando: false } : t,
       );
 
       // si el modal está abierto para este timbre, lo cerramos
@@ -141,7 +141,7 @@ export class BiometricoComponent implements OnInit, OnDestroy {
     this.socketService.on('timbre_estado', onTimbreEstado);
     this.socketService.on(
       'timbre_enrolamiento_completo',
-      onEnrolamientoCompleto
+      onEnrolamientoCompleto,
     );
 
     this.unsubscribers.push(
@@ -149,8 +149,8 @@ export class BiometricoComponent implements OnInit, OnDestroy {
       () =>
         this.socketService.off(
           'timbre_enrolamiento_completo',
-          onEnrolamientoCompleto
-        )
+          onEnrolamientoCompleto,
+        ),
     );
   }
 
@@ -233,7 +233,7 @@ export class BiometricoComponent implements OnInit, OnDestroy {
 
     // 1) Marcar en el array principal
     this.timbres = this.timbres.map((t) =>
-      t.lector_codigo === lc ? { ...t, enrolando: true } : t
+      t.lector_codigo === lc ? { ...t, enrolando: true } : t,
     );
 
     // 2) Marcar también en el timbre seleccionado (para que el @if lo vea)
@@ -311,7 +311,7 @@ export class BiometricoComponent implements OnInit, OnDestroy {
     try {
       const resp: HuellasPorTimbreResponse =
         await this.huellasService.getHuellasActivasPorTimbre(
-          timbre.lector_codigo
+          timbre.lector_codigo,
         );
 
       const mapa = new Map<number, UsuarioEnTimbre>();
@@ -335,7 +335,7 @@ export class BiometricoComponent implements OnInit, OnDestroy {
       }
 
       this.usuariosEnTimbre = Array.from(mapa.values()).sort((a, b) =>
-        a.nombre_completo.localeCompare(b.nombre_completo)
+        a.nombre_completo.localeCompare(b.nombre_completo),
       );
     } catch (error) {
       console.error('❌ Error cargando huellas del timbre:', error);
@@ -358,7 +358,7 @@ export class BiometricoComponent implements OnInit, OnDestroy {
 
     const confirmar = window.confirm(
       `¿Eliminar al usuario ${u.nombre_completo} (ID: ${u.usuario_id}) ` +
-        `del timbre ${lector}? Esto eliminará todas sus huellas en este timbre.`
+        `del timbre ${lector}? Esto eliminará todas sus huellas en este timbre.`,
     );
 
     if (!confirmar) return;
@@ -368,7 +368,7 @@ export class BiometricoComponent implements OnInit, OnDestroy {
 
       // Quitamos al usuario de la lista localmente
       this.usuariosEnTimbre = this.usuariosEnTimbre.filter(
-        (x) => x.usuario_id !== u.usuario_id
+        (x) => x.usuario_id !== u.usuario_id,
       );
     } catch (error) {
       console.error('❌ Error eliminando usuario del timbre:', error);

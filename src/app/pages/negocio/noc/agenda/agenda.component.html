@@ -1,299 +1,319 @@
 <!-- Estado de carga -->
 @if (isReady) {
-<!-- CONTENIDO REAL -->
-<main class="fade-in">
-  <main class="mt-3">
-    <!-- TABLA HORARIO -->
-    <!-- TABLA HORARIO -->
-    <div class="row m-2">
-      <div
-        class="d-flex justify-content-between align-items-center flex-wrap sticky-top bg-white"
-        style="z-index: 1030"
-      >
-        <!--  NOMBRE Y CALENDARIO-->
+  <!-- CONTENIDO REAL -->
+  <main class="fade-in">
+    <main class="mt-3">
+      <div class="row m-2">
+        <!-- ====== CABECERA STICKY COMPLETA (TOPBAR + PANEL + HEADER TABLA) ====== -->
         <div
-          class="d-flex align-items-start gap-2 mb-2 mb-lg-0 flex-column flex-lg-row w-100"
+          class="agenda-sticky sticky-top bg-white"
+          [class.panel-open]="showAsignarPanel"
+          style="z-index: 1030"
         >
-          <p class="badge-circle bg-danger text-white">
-            {{ pendientes }}
-          </p>
-          <p class="text-muted small mb-0">
-            <strong>{{ nombreDelDia }}</strong>
-          </p>
-          <input
-            id="fechaAgenda"
-            type="date"
-            class="form-control form-control-sm w-auto"
-            [(ngModel)]="fechaSeleccionada"
-            (change)="alCambiarFecha()"
-          />
-          @if(preAgendaPendientesCount>0){
-          <div class="flex-grow-1">
-            <table class="table table-bordered table-striped small w-100">
-              <thead class="table-primary text-center">
-                <tr>
-                  <th>Tipo</th>
+          <!-- TOPBAR: badge + día + fecha -->
+          <div
+            class="agenda-topbar d-flex justify-content-between align-items-center flex-wrap"
+          >
+            <div
+              class="d-flex align-items-start gap-2 mb-2 mb-lg-0 flex-column flex-lg-row w-100"
+            >
+              <p class="badge-circle bg-danger text-white">
+                {{ pendientes }}
+              </p>
 
-                  <th>Cliente</th>
-                  <th>Observaciones</th>
-                  <th class="col-horario">Coordenadas</th>
-                  <th>Acción</th>
+              <p class="text-muted small mb-0">
+                <strong>{{ nombreDelDia }}</strong>
+              </p>
+
+              <input
+                id="fechaAgenda"
+                type="date"
+                class="form-control form-control-sm w-auto"
+                [(ngModel)]="fechaSeleccionada"
+                (change)="alCambiarFecha()"
+              />
+            </div>
+          </div>
+
+          <!-- ====== PANEL ASIGNACIÓN (tipo "Crear caja") ====== -->
+          <!-- OJO: Lo dejamos SIEMPRE en DOM para que la animación slide funcione. -->
+          <div class="asignar-panel-wrap" [class.open]="showAsignarPanel">
+            <div class="card shadow-sm border-0 w-100 asignar-panel">
+              <div class="card-body py-2 px-2">
+                <!-- ====== FILA SUPERIOR: INFO + ACCIONES ====== -->
+                <div class="asignar-top">
+                  <div class="asignar-info small">
+                    <div class="asignar-title">
+                      <strong>Tipo:</strong> {{ trabajoSeleccionado?.age_tipo }}
+                    </div>
+
+                    <div
+                      class="asignar-sub"
+                      *ngIf="trabajoSeleccionado?.nombre_completo"
+                    >
+                      <strong>Cliente:</strong>
+                      {{ trabajoSeleccionado?.nombre_completo }}
+                    </div>
+                  </div>
+
+                  <div class="asignar-actions">
+                    <button
+                      class="btn btn-success btn-sm"
+                      type="button"
+                      (click)="guardarAsignacionTrabajo()"
+                    >
+                      Guardar
+                    </button>
+
+                    <button
+                      type="button"
+                      class="btn-close"
+                      aria-label="Cerrar"
+                      title="Cerrar"
+                      (click)="cerrarAsignarPanel()"
+                    ></button>
+                  </div>
+                </div>
+
+                <!-- ====== CAMPOS ====== -->
+                <div class="row g-1 align-items-end mt-1">
+                  <!-- Técnico -->
+                  <div class="col-12 col-md-3">
+                    <label class="form-label small mb-1">Técnico</label>
+                    <select
+                      class="form-select form-select-sm"
+                      [(ngModel)]="idTecnico"
+                      [disabled]="!edicionHabilitada"
+                    >
+                      <option [value]="0" disabled>Seleccione técnico</option>
+                      <option
+                        *ngFor="let tecnico of tecnicosList"
+                        [value]="tecnico.id"
+                      >
+                        {{ tecnico.nombre }}
+                      </option>
+                    </select>
+                  </div>
+
+                  <!-- Vehículo -->
+                  <div class="col-12 col-md-2">
+                    <label class="form-label small mb-1">Vehículo</label>
+                    <select
+                      class="form-select form-select-sm"
+                      [(ngModel)]="vehiculoSeleccionado"
+                      [disabled]="!edicionHabilitada"
+                    >
+                      <option
+                        *ngFor="let vehiculo of vehiculos"
+                        [value]="vehiculo.codigo"
+                      >
+                        {{ vehiculo.nombre }}
+                      </option>
+                    </select>
+                  </div>
+
+                  <!-- Fecha -->
+                  <div class="col-12 col-md-2">
+                    <label class="form-label small mb-1">Fecha</label>
+                    <input
+                      type="date"
+                      class="form-control form-control-sm"
+                      [(ngModel)]="fechaTrabajoSeleccionada"
+                      [disabled]="!edicionHabilitada"
+                    />
+                  </div>
+
+                  <!-- Hora inicio -->
+                  <div class="col-12 col-md-2">
+                    <label class="form-label small mb-1">Hora inicio</label>
+                    <select
+                      class="form-select form-select-sm"
+                      [(ngModel)]="horaInicio"
+                      (change)="actualizarHorasFinDisponibles()"
+                      [disabled]="!edicionHabilitada"
+                    >
+                      <option [value]="''" disabled>
+                        Seleccione hora inicio
+                      </option>
+                      <option
+                        *ngFor="let hora of horarios"
+                        [value]="hora.split(' - ')[0]"
+                      >
+                        {{ hora.split(" - ")[0] }}
+                      </option>
+                    </select>
+                  </div>
+
+                  <!-- Hora fin -->
+                  <div class="col-12 col-md-2">
+                    <label class="form-label small mb-1">Hora fin</label>
+                    <select
+                      class="form-select form-select-sm"
+                      [(ngModel)]="horaFin"
+                      [disabled]="!edicionHabilitada || !horaInicio"
+                    >
+                      <option [value]="''" disabled>Seleccione hora Fin</option>
+                      <option
+                        *ngFor="let fin of horariosDisponiblesFin"
+                        [value]="fin"
+                      >
+                        {{ fin }}
+                      </option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- ====== PREAGENDA (solo si NO está abierto el panel) ====== -->
+          @if (preAgendaPendientesCount > 0 && !showAsignarPanel) {
+            <div class="flex-grow-1">
+              <table class="table table-bordered table-striped small w-100">
+                <thead class="table-primary text-center">
+                  <tr>
+                    <th>Tipo</th>
+                    <th>Cliente</th>
+                    <th>Observaciones</th>
+                    <th class="col-horario">Coordenadas</th>
+                    <th>Acción</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let item of preAgendaList">
+                    <td>{{ item.age_tipo }}</td>
+                    <td>{{ item.nombre_completo }}</td>
+                    <td>{{ item.age_diagnostico }}</td>
+                    <td class="col-horario">
+                      <a
+                        [href]="
+                          'https://www.google.com/maps/search/' +
+                          item.age_coordenadas
+                        "
+                        class="text-danger"
+                        target="_blank"
+                      >
+                        {{ item.age_coordenadas }}
+                      </a>
+                    </td>
+                    <td class="text-center">
+                      <button
+                        class="btn btn-sm btn-primary"
+                        (click)="asignarDesdePreagenda(item)"
+                      >
+                        Asignar
+                      </button>
+                    </td>
+                  </tr>
+
+                  <tr *ngIf="preAgendaList.length === 0">
+                    <td colspan="5" class="text-center text-muted">
+                      No hay trabajos pendientes
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          }
+
+          <!-- ====== HEADER DE LA TABLA (SIEMPRE VISIBLE, abajo del panel) ====== -->
+          <div class="agenda-head">
+            <table
+              class="table-bordered table-sm text-center align-middle small agenda-table"
+            >
+              <thead class="table-light">
+                <tr>
+                  <th class="col-horario">Horario</th>
+                  <th *ngFor="let veh of vehiculos">{{ veh.nombre }}</th>
                 </tr>
               </thead>
-              <tbody>
-                <tr *ngFor="let item of preAgendaList">
-                  <td>{{ item.age_tipo }}</td>
+            </table>
+          </div>
+        </div>
 
-                  <td>{{ item.nombre_completo }}</td>
-                  <td>{{ item.age_diagnostico }}</td>
-                  <td class="col-horario">
-                    <a
-                      [href]="
-                        'https://www.google.com/maps/search/' +
-                        item.age_coordenadas
+        <!-- ====== TABLA BODY ====== -->
+        <div>
+          <div *ngIf="renderAgenda && horarios.length">
+            <table
+              class="table table-bordered table-sm text-center align-middle small agenda-table"
+            >
+              <tbody>
+                <tr *ngFor="let hora of horarios">
+                  <td class="text-nowrap col-horario">{{ hora }}</td>
+
+                  <ng-container *ngFor="let vehiculo of vehiculos">
+                    <ng-container
+                      *ngIf="
+                        renderAgenda[hora] &&
+                        renderAgenda[hora][vehiculo.codigo] as celda
                       "
-                      class="text-danger"
-                      target="_blank"
                     >
-                      {{ item.age_coordenadas }}
-                    </a>
-                  </td>
-                  <td class="text-center">
-                    <button
-                      class="btn btn-sm btn-primary"
-                      (click)="asignarDesdePreagenda(item)"
-                    >
-                      Asignar
-                    </button>
-                  </td>
-                </tr>
-                <tr *ngIf="preAgendaList.length === 0">
-                  <td colspan="5" class="text-center text-muted">
-                    No hay trabajos pendientes
-                  </td>
+                      <td
+                        [attr.rowspan]="celda.rowspan"
+                        [hidden]="!celda.mostrar"
+                        [ngClass]="getEstadoClass(celda.trabajo?.age_tipo)"
+                        class="celda-agenda position-relative"
+                      >
+                        <div *ngIf="celda.trabajo">
+                          <div
+                            class="celda-contenido d-flex flex-column h-100 justify-content-between"
+                          >
+                            <!-- Botón EDITAR -->
+                            @if (
+                              !esFechaPasada(celda.trabajo.age_fecha) &&
+                              celda.trabajo.age_estado !== "CONCLUIDO"
+                            ) {
+                              <button
+                                class="btn btn-editar-badge position-absolute"
+                                (click)="
+                                  iniciarEdicionDesdeTabla(
+                                    hora,
+                                    vehiculo.codigo
+                                  )
+                                "
+                              >
+                                <i class="fas fa-pencil-alt"></i>
+                              </button>
+                            }
+
+                            <!-- Botón VISTA -->
+                            <button
+                              class="btn btn-vista-badge position-absolute"
+                              (click)="abrirVistaDetalle(hora, vehiculo.codigo)"
+                            >
+                              <i class="fas fa-eye"></i>
+                            </button>
+                          </div>
+
+                          <!-- Contenido Principal -->
+                          <div class="contenido-celda px-4 text-center">
+                            <i class="bi bi-person-fill"></i>
+                            {{ celda.trabajo.nombre_completo }}<br />
+                            <small>
+                              👷
+                              {{
+                                getNombreTecnicoPorId(celda.trabajo.age_tecnico)
+                              }}
+                              @if (celda.trabajo.age_estado === "CONCLUIDO") {
+                                ✅
+                              }
+                            </small>
+                          </div>
+                        </div>
+                      </td>
+                    </ng-container>
+                  </ng-container>
                 </tr>
               </tbody>
             </table>
           </div>
-          }
-        </div>
-
-        <table
-          class="table-bordered table-sm text-center align-middle small agenda-table"
-        >
-          <!-- HEADER DE LA TABLA-->
-          <thead class="table-light sticky-top" style="z-index: 1020">
-            <tr>
-              <th class="col-horario">Horario</th>
-              <th *ngFor="let veh of vehiculos">{{ veh.nombre }}</th>
-            </tr>
-          </thead>
-        </table>
-      </div>
-      <div>
-        <div *ngIf="renderAgenda && horarios.length">
-          <table
-            class="table table-bordered table-sm text-center align-middle small agenda-table"
-          >
-            <!-- BODY DE LA TABLA -->
-            <tbody>
-              <tr *ngFor="let hora of horarios">
-                <td class="text-nowrap col-horario">{{ hora }}</td>
-
-                <ng-container *ngFor="let vehiculo of vehiculos">
-                  <ng-container
-                    *ngIf="
-                      renderAgenda[hora] &&
-                      renderAgenda[hora][vehiculo.codigo] as celda
-                    "
-                  >
-                    <td
-                      [attr.rowspan]="celda.rowspan"
-                      [hidden]="!celda.mostrar"
-                      [ngClass]="getEstadoClass(celda.trabajo?.age_tipo)"
-                      class="celda-agenda position-relative"
-                    >
-                      <div *ngIf="celda.trabajo">
-                        <div
-                          class="celda-contenido d-flex flex-column h-100 justify-content-between"
-                        >
-                          <!-- Botón EDITAR -->
-                          @if (!esFechaPasada(celda.trabajo.age_fecha) &&
-                          celda.trabajo.age_estado !== 'CONCLUIDO') {
-                          <button
-                            class="btn btn-editar-badge position-absolute"
-                            (click)="
-                              iniciarEdicionDesdeTabla(hora, vehiculo.codigo)
-                            "
-                          >
-                            <i class="fas fa-pencil-alt"></i>
-                          </button>
-                          }
-
-                          <!-- Botón VISTA -->
-                          <button
-                            class="btn btn-vista-badge position-absolute"
-                            (click)="abrirVistaDetalle(hora, vehiculo.codigo)"
-                          >
-                            <i class="fas fa-eye"></i>
-                          </button>
-                        </div>
-
-                        <!-- Contenido Principal -->
-                        <div class="contenido-celda px-4 text-center">
-                          <i class="bi bi-person-fill"></i>
-                          {{ celda.trabajo.nombre_completo }}<br />
-                          <small>
-                            👷
-                            {{
-                              getNombreTecnicoPorId(celda.trabajo.age_tecnico)
-                            }}
-
-                            @if (celda.trabajo.age_estado === 'CONCLUIDO') { ✅
-                            }
-                          </small>
-                        </div>
-                      </div>
-                    </td>
-                  </ng-container>
-                </ng-container>
-              </tr>
-            </tbody>
-          </table>
         </div>
       </div>
-    </div>
+    </main>
   </main>
-</main>
 }
 
-<!-- Modal Asignación -->
-<div
-  class="modal fade"
-  id="asignarModal"
-  tabindex="-1"
-  aria-labelledby="asignarModalLabel"
-  aria-hidden="true"
->
-  <div class="modal-dialog modal-dialog-centered modal-sm modal-right">
-    <!-- ← modal-right aquí -->
-
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title">Editar Trabajo</h5>
-        <button
-          type="button"
-          class="btn-close"
-          data-bs-dismiss="modal"
-          aria-label="Cerrar"
-        ></button>
-      </div>
-
-      <div class="modal-body small">
-        <p><strong>Tipo:</strong> {{ trabajoSeleccionado?.age_tipo }}</p>
-
-        <!-- Técnico -->
-        <div class="mb-3">
-          <label for="tecnico">Técnico</label>
-          <select
-            id="tecnico"
-            class="form-select form-select-sm"
-            [(ngModel)]="idTecnico"
-            [disabled]="!edicionHabilitada"
-          >
-            <option [value]="0" disabled>Seleccione técnico</option>
-            <option *ngFor="let tecnico of tecnicosList" [value]="tecnico.id">
-              {{ tecnico.nombre }}
-            </option>
-          </select>
-        </div>
-
-        <!-- Vehículo -->
-        <div class="mb-3">
-          <label for="vehiculo">Vehículo</label>
-          <select
-            id="vehiculo"
-            class="form-select form-select-sm"
-            [(ngModel)]="vehiculoSeleccionado"
-            [disabled]="!edicionHabilitada"
-          >
-            <option
-              *ngFor="let vehiculo of vehiculos"
-              [value]="vehiculo.codigo"
-            >
-              {{ vehiculo.nombre }}
-            </option>
-          </select>
-        </div>
-
-        <!-- Fecha -->
-        <div class="mb-3">
-          <label for="fecha">Fecha</label>
-          <input
-            id="fecha"
-            type="date"
-            class="form-control form-control-sm"
-            [(ngModel)]="fechaTrabajoSeleccionada"
-            [disabled]="!edicionHabilitada"
-          />
-        </div>
-
-        <!-- Hora inicio -->
-        <div class="mb-3">
-          <label for="horaInicio">Hora inicio</label>
-          <select
-            id="horaInicio"
-            class="form-select form-select-sm"
-            [(ngModel)]="horaInicio"
-            (change)="actualizarHorasFinDisponibles()"
-            [disabled]="!edicionHabilitada"
-          >
-            <option [value]="''" disabled selected>
-              Seleccione hora inicio
-            </option>
-            <option
-              *ngFor="let hora of horarios"
-              [value]="hora.split(' - ')[0]"
-            >
-              {{ hora.split(" - ")[0] }}
-            </option>
-          </select>
-        </div>
-
-        <!-- Hora fin -->
-        <div class="mb-3">
-          <label for="horaFin">Hora fin</label>
-          <select
-            id="horaFin"
-            class="form-select form-select-sm"
-            [(ngModel)]="horaFin"
-            [disabled]="!edicionHabilitada || !horaInicio"
-          >
-            <option [value]="''" disabled>Seleccione hora Fin</option>
-
-            <option *ngFor="let fin of horariosDisponiblesFin" [value]="fin">
-              {{ fin }}
-            </option>
-          </select>
-        </div>
-      </div>
-
-      <div class="modal-footer">
-        <button class="btn btn-secondary btn-sm" data-bs-dismiss="modal">
-          Cancelar
-        </button>
-        <button
-          class="btn btn-success btn-sm"
-          (click)="guardarAsignacionTrabajo()"
-        >
-          Guardar
-        </button>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- Modal Detalle Soporte -->
+<!-- ================= MODAL DETALLE SOPORTE ================= -->
 <div
   class="modal fade"
   id="modalVistaSoporte"
@@ -305,14 +325,35 @@
     <div class="modal-content">
       <div class="modal-header bg-danger py-2">
         <h5 class="modal-title text-white">
-          Detalle de @switch (trabajoVista?.age_tipo) { @case ('LOS') {
-          <span>LOS</span> } @case ('RETIRO') { <span>Retiro</span> } @case
-          ('TRASLADO EXT') { <span>Traslado Externo</span> } @case ('VISITA') {
-          <span>Visita</span> } @case ('MIGRACION') { <span>Migración</span> }
-          @case ('TRABAJO') { <span>Trabajo</span> } @case ('INSTALACION') {
-          <span>Instalación</span> } @case ('INFRAESTRUCTURA') {
-          <span>Infraestructura</span> } }
+          Detalle de
+          @switch (trabajoVista?.age_tipo) {
+            @case ("LOS") {
+              <span>LOS</span>
+            }
+            @case ("RETIRO") {
+              <span>Retiro</span>
+            }
+            @case ("TRASLADO EXT") {
+              <span>Traslado Externo</span>
+            }
+            @case ("VISITA") {
+              <span>Visita</span>
+            }
+            @case ("MIGRACION") {
+              <span>Migración</span>
+            }
+            @case ("TRABAJO") {
+              <span>Trabajo</span>
+            }
+            @case ("INSTALACION") {
+              <span>Instalación</span>
+            }
+            @case ("INFRAESTRUCTURA") {
+              <span>Infraestructura</span>
+            }
+          }
         </h5>
+
         <button
           type="button"
           class="btn-close btn-close-white"
@@ -320,31 +361,31 @@
           aria-label="Cerrar"
         ></button>
       </div>
+
       <div class="modal-body small">
         <div>
           <div class="row">
             <!-- INFORMACION -->
-
             <div class="col-12 col-md-4 Informacion">
               <p>
                 <strong>📛 Cliente :</strong> <br />
                 {{ trabajoVista?.nombre_completo }}
               </p>
 
-              @if(trabajoVista?.age_tipo != "INFRAESTRUCTURA"){
-              <p>
-                <strong>IP:</strong><br />
-                <ng-container *ngIf="trabajoVista?.clienteIP as ip">
-                  <a
-                    [href]="formatIpUrl(ip)"
-                    class="text-danger"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    {{ ip }}
-                  </a>
-                </ng-container>
-              </p>
+              @if (trabajoVista?.age_tipo != "INFRAESTRUCTURA") {
+                <p>
+                  <strong>IP:</strong><br />
+                  <ng-container *ngIf="trabajoVista?.clienteIP as ip">
+                    <a
+                      [href]="formatIpUrl(ip)"
+                      class="text-danger"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      {{ ip }}
+                    </a>
+                  </ng-container>
+                </p>
               }
 
               <p>
@@ -352,16 +393,18 @@
                 {{ getNombreTecnicoPorId(trabajoVista?.age_tecnico) }}
               </p>
 
-              @if(trabajoVista?.age_tipo != "INFRAESTRUCTURA"){
-              <p>
-                <strong>📞 Teléfono:</strong> <br />
-                {{ trabajoVista?.age_telefono }}
-              </p>
+              @if (trabajoVista?.age_tipo != "INFRAESTRUCTURA") {
+                <p>
+                  <strong>📞 Teléfono:</strong> <br />
+                  {{ trabajoVista?.age_telefono }}
+                </p>
               }
+
               <p>
                 <strong>👁️‍🗨️ Diagnóstico NOC:</strong> <br />
                 {{ trabajoVista?.age_diagnostico }}
               </p>
+
               <p>
                 <strong>📍 Coordenadas:</strong> <br />
                 <a
@@ -378,103 +421,130 @@
             </div>
 
             <!-- SOLUCION -->
-
-            @if (trabajoVista?.age_estado === 'CONCLUIDO') {
-            <div class="col-12 col-md-8 Solucion">
-              <p>
-                <strong>Solución:</strong>
-                {{
-                  solucionVista?.length ? solucionVista[0]?.age_solucion : ""
-                }}
-              </p>
-              <hr />
-              <div class="row">
-                @for (campo of ['img_1', 'img_2', 'img_3', 'img_4']; track
-                campo) { @if (imagenesVisita[campo] &&
-                imagenesVisita[campo].ruta !== 'null') {
-                <div class="col-6 col-md-4 col-lg-3">
-                  <div class="card border p-2 text-center">
-                    <div class="fw-bold text-capitalize">{{ campo }}</div>
-                    <img
-                      [src]="imagenesVisita[campo].url"
-                      alt="{{ campo }}"
-                      class="img-thumbnail"
-                      style="cursor: pointer; max-height: 150px"
-                      (click)="abrirImagenModal(imagenesVisita[campo].url)"
-                    />
-                  </div>
+            @if (trabajoVista?.age_estado === "CONCLUIDO") {
+              <div class="col-12 col-md-8 Solucion">
+                <p>
+                  <strong>Solución:</strong>
+                  {{
+                    solucionVista?.length ? solucionVista[0]?.age_solucion : ""
+                  }}
+                </p>
+                <hr />
+                <div class="row">
+                  @for (
+                    campo of ["img_1", "img_2", "img_3", "img_4"];
+                    track campo
+                  ) {
+                    @if (
+                      imagenesVisita[campo] &&
+                      imagenesVisita[campo].ruta !== "null"
+                    ) {
+                      <div class="col-6 col-md-4 col-lg-3">
+                        <div class="card border p-2 text-center">
+                          <div class="fw-bold text-capitalize">{{ campo }}</div>
+                          <img
+                            [src]="imagenesVisita[campo].url"
+                            alt="{{ campo }}"
+                            class="img-thumbnail"
+                            style="cursor: pointer; max-height: 150px"
+                            (click)="
+                              abrirImagenModal(imagenesVisita[campo].url)
+                            "
+                          />
+                        </div>
+                      </div>
+                    }
+                  }
                 </div>
-                } }
               </div>
-            </div>
             }
           </div>
         </div>
 
-        @if (trabajoVista?.age_tipo !== 'INFRAESTRUCTURA' ) {
-        <hr />
-        <h6 class="">Imágenes de instalación</h6>
-        <!-- Grid de imágenes de instalacion -->
-        <div class="imagenes-grid">
-          @for (campo of ['fachada', 'router', 'ont', 'potencia', 'speedtest',
-          'cable_1', 'cable_2', 'equipo_1', 'equipo_2', 'equipo_3']; track
-          campo) { @if ( imagenesInstalacion[campo] &&
-          imagenesInstalacion[campo].ruta !== 'null' &&
-          imagenesInstalacion[campo].url !== 'undefined/imagenes/null' ) {
-          <div class="col-6 col-md-3 col-lg-2">
-            <div class="card shadow-sm border rounded">
-              <div class="card-body p-2 text-center">
-                <div class="fw-bold text-capitalize mb-1">{{ campo }}</div>
-                <img
-                  [src]="imagenesInstalacion[campo].url"
-                  alt="{{ campo }}"
-                  class="img-thumbnail"
-                  style="cursor: pointer; max-height: 150px"
-                  (click)="abrirImagenModal(imagenesInstalacion[campo].url)"
-                />
-              </div>
-            </div>
-          </div>
-          } }
-        </div>
-        }
-        <!-- + NUEVO: Galería de INFRAESTRUCTURA -->
-        @if (trabajoVista?.age_tipo === 'INFRAESTRUCTURA') {
-        <hr />
-        <h6 class="mt-2">Imágenes de infraestructura</h6>
+        @if (trabajoVista?.age_tipo !== "INFRAESTRUCTURA") {
+          <hr />
+          <h6 class="">Imágenes de instalación</h6>
 
-        <div class="row g-2">
-          <div
-            class="col-6 col-md-3 col-lg-2"
-            *ngFor="let img of imagenesInfra; trackBy: trackImg"
-          >
-            <div class="card shadow-sm border rounded">
-              <div class="card-body p-2 text-center">
-                <div class="fw-bold text-capitalize mb-1">
-                  {{ img.tag || "—" }} <small>#{{ img.position }}</small>
+          <div class="imagenes-grid">
+            @for (
+              campo of [
+                "fachada",
+                "router",
+                "ont",
+                "potencia",
+                "speedtest",
+                "cable_1",
+                "cable_2",
+                "equipo_1",
+                "equipo_2",
+                "equipo_3",
+              ];
+              track campo
+            ) {
+              @if (
+                imagenesInstalacion[campo] &&
+                imagenesInstalacion[campo].ruta !== "null" &&
+                imagenesInstalacion[campo].url !== "undefined/imagenes/null"
+              ) {
+                <div class="col-6 col-md-3 col-lg-2">
+                  <div class="card shadow-sm border rounded">
+                    <div class="card-body p-2 text-center">
+                      <div class="fw-bold text-capitalize mb-1">
+                        {{ campo }}
+                      </div>
+                      <img
+                        [src]="imagenesInstalacion[campo].url"
+                        alt="{{ campo }}"
+                        class="img-thumbnail"
+                        style="cursor: pointer; max-height: 150px"
+                        (click)="
+                          abrirImagenModal(imagenesInstalacion[campo].url)
+                        "
+                      />
+                    </div>
+                  </div>
                 </div>
-                <img
-                  [src]="img.url"
-                  [alt]="img.filename"
-                  class="img-thumbnail"
-                  style="cursor: pointer; max-height: 150px"
-                  (click)="abrirImagenModal(img.url)"
-                />
+              }
+            }
+          </div>
+        }
+
+        @if (trabajoVista?.age_tipo === "INFRAESTRUCTURA") {
+          <hr />
+          <h6 class="mt-2">Imágenes de infraestructura</h6>
+
+          <div class="row g-2">
+            <div
+              class="col-6 col-md-3 col-lg-2"
+              *ngFor="let img of imagenesInfra; trackBy: trackImg"
+            >
+              <div class="card shadow-sm border rounded">
+                <div class="card-body p-2 text-center">
+                  <div class="fw-bold text-capitalize mb-1">
+                    {{ img.tag || "—" }} <small>#{{ img.position }}</small>
+                  </div>
+                  <img
+                    [src]="img.url"
+                    [alt]="img.filename"
+                    class="img-thumbnail"
+                    style="cursor: pointer; max-height: 150px"
+                    (click)="abrirImagenModal(img.url)"
+                  />
+                </div>
               </div>
             </div>
-          </div>
 
-          <div *ngIf="!imagenesInfra.length" class="text-muted">
-            Sin imágenes de infraestructura
+            <div *ngIf="!imagenesInfra.length" class="text-muted">
+              Sin imágenes de infraestructura
+            </div>
           </div>
-        </div>
         }
       </div>
     </div>
   </div>
 </div>
 
-<!-- Modal Imagen Ampliada -->
+<!-- ================= MODAL IMAGEN AMPLIADA ================= -->
 <div
   class="modal fade"
   id="modalImagenAmpliada"
@@ -490,6 +560,7 @@
           alt="Imagen ampliada"
         />
       </div>
+
       <div class="modal-footer justify-content-center border-0">
         <button
           type="button"

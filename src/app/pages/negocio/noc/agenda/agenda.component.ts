@@ -167,7 +167,7 @@ export class AgendaComponent {
   async contarpendientes(): Promise<void> {
     try {
       const r = await this.agendaService.getAgendaPendienteByFecha(
-        this.fechaSeleccionada
+        this.fechaSeleccionada,
       );
       this.pendientes = r.soportes_pendientes;
     } catch (error) {
@@ -180,12 +180,12 @@ export class AgendaComponent {
 
     try {
       this.agendaList = await this.agendaService.getAgendaByDate(
-        this.fechaSeleccionada
+        this.fechaSeleccionada,
       );
 
       if (typeof (this as any).enrichAgendaListBatch === 'function') {
         this.agendaList = await (this as any).enrichAgendaListBatch(
-          this.agendaList
+          this.agendaList,
         );
       }
 
@@ -194,7 +194,7 @@ export class AgendaComponent {
       this.horarios.forEach((hora) => {
         this.agendaAsignada[hora] = {};
         this.vehiculos.forEach(
-          (v) => (this.agendaAsignada[hora][v.codigo] = null)
+          (v) => (this.agendaAsignada[hora][v.codigo] = null),
         );
       });
 
@@ -212,7 +212,7 @@ export class AgendaComponent {
 
       if (typeof (this as any).enrichAgendaListBatch === 'function') {
         this.preAgendaList = await (this as any).enrichAgendaListBatch(
-          this.preAgendaList
+          this.preAgendaList,
         );
       }
     } catch (e) {
@@ -229,15 +229,15 @@ export class AgendaComponent {
       new Set(
         lista
           .map((it) => String(it?.ord_ins ?? '').trim())
-          .filter((v) => v.length > 0)
-      )
+          .filter((v) => v.length > 0),
+      ),
     );
 
     const faltantes = ords.filter((k) => !this.clienteCache.has(k));
     if (faltantes.length > 0) {
       try {
         const resp = await firstValueFrom(
-          this.clienteService.getClientesByOrdInsBatch(faltantes)
+          this.clienteService.getClientesByOrdInsBatch(faltantes),
         );
         for (const row of resp ?? []) {
           this.clienteCache.set(String(row.orden_instalacion), row);
@@ -365,7 +365,7 @@ export class AgendaComponent {
 
     await this.ngOnInit();
     bootstrap.Modal.getInstance(
-      document.getElementById('asignarModal')
+      document.getElementById('asignarModal'),
     )?.hide();
   }
 
@@ -383,8 +383,9 @@ export class AgendaComponent {
     this.edicionHabilitada = !this.esFechaPasada(trabajo.age_fecha);
 
     bootstrap.Modal.getOrCreateInstance(
-      document.getElementById('asignarModal')
+      document.getElementById('asignarModal'),
     ).show();
+    this.abrirAsignarPanel();
   }
 
   abrirModalAsignacion(trabajo: Iagenda): void {
@@ -394,7 +395,7 @@ export class AgendaComponent {
     this.fechaTrabajoSeleccionada = this.fechaSeleccionada;
 
     bootstrap.Modal.getOrCreateInstance(
-      document.getElementById('asignarModal')
+      document.getElementById('asignarModal'),
     ).show();
   }
 
@@ -408,19 +409,20 @@ export class AgendaComponent {
     this.modoEdicion = false;
 
     bootstrap.Modal.getInstance(
-      document.getElementById('modalSoportes')
+      document.getElementById('modalSoportes'),
     )?.hide();
 
     setTimeout(() => {
       bootstrap.Modal.getOrCreateInstance(
-        document.getElementById('asignarModal')
+        document.getElementById('asignarModal'),
       ).show();
     });
+    this.abrirAsignarPanel();
   }
 
   cerrarModalPreagenda(): void {
     bootstrap.Modal.getInstance(
-      document.getElementById('modalSoportes')
+      document.getElementById('modalSoportes'),
     )?.hide();
   }
 
@@ -469,7 +471,7 @@ export class AgendaComponent {
     }
 
     bootstrap.Modal.getOrCreateInstance(
-      document.getElementById('modalVistaSoporte')
+      document.getElementById('modalVistaSoporte'),
     ).show();
   }
 
@@ -501,7 +503,7 @@ export class AgendaComponent {
    */
   private cargarImagenesVisita(
     _tabla: string | null,
-    id?: number | string
+    id?: number | string,
   ): void;
   private cargarImagenesVisita(id: number | string): void;
   private cargarImagenesVisita(a: any, b?: any): void {
@@ -522,7 +524,7 @@ export class AgendaComponent {
    * si es > 0 → usar sufijo (router_2, …)
    */
   private adaptInstalacion(
-    items: ImageItem[]
+    items: ImageItem[],
   ): Record<string, { url: string; ruta: string }> {
     const map: Record<string, { url: string; ruta: string }> = {};
     for (const it of items ?? []) {
@@ -538,7 +540,7 @@ export class AgendaComponent {
   }
 
   private adaptVisita(
-    items: ImageItem[]
+    items: ImageItem[],
   ): Record<string, { url: string; ruta: string }> {
     const map: Record<string, { url: string; ruta: string }> = {};
     for (const it of items ?? []) {
@@ -557,7 +559,7 @@ export class AgendaComponent {
   abrirImagenModal(url: string): void {
     this.imagenSeleccionada = url;
     bootstrap.Modal.getOrCreateInstance(
-      document.getElementById('modalImagenAmpliada')!
+      document.getElementById('modalImagenAmpliada')!,
     ).show();
   }
 
@@ -648,7 +650,7 @@ export class AgendaComponent {
       this.horarios.push(horaFormateada);
       this.agendaAsignada[horaFormateada] = {};
       this.vehiculos.forEach(
-        (v) => (this.agendaAsignada[horaFormateada][v.codigo] = null)
+        (v) => (this.agendaAsignada[horaFormateada][v.codigo] = null),
       );
     }
   }
@@ -701,7 +703,7 @@ export class AgendaComponent {
 
   actualizarHorasFinDisponibles(): void {
     const indexInicio = this.horarios.findIndex(
-      (h) => h.split(' - ')[0] === this.horaInicio
+      (h) => h.split(' - ')[0] === this.horaInicio,
     );
     this.horariosDisponiblesFin = [];
 
@@ -750,5 +752,15 @@ export class AgendaComponent {
     if (!ip) return '#';
     const clean = ip.trim();
     return /^https?:\/\//i.test(clean) ? clean : `http://${clean}`;
+  }
+
+  showAsignarPanel = false;
+
+  abrirAsignarPanel() {
+    this.showAsignarPanel = true;
+  }
+
+  cerrarAsignarPanel() {
+    this.showAsignarPanel = false;
   }
 }

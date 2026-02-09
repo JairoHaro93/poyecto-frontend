@@ -1,6 +1,6 @@
 /* === Contenedor Scroll === */
 .agenda-scroll-wrapper {
-  max-height: 100vh; /* altura dinámica */
+  max-height: 100vh;
   overflow-y: auto;
   overflow-x: auto;
   width: 100%;
@@ -15,13 +15,13 @@
   border-collapse: collapse;
 }
 
-/* === Cabecera Fija === */
+/* === Cabecera Fija / colores === */
 .agenda-table thead th {
   position: sticky;
   top: 0;
   background-color: #cc2929;
   color: white;
-  z-index: 10; /* sube si hiciera falta */
+  z-index: 10;
   text-align: center;
   vertical-align: middle;
 }
@@ -30,6 +30,7 @@ td {
   text-align: center;
   vertical-align: middle;
 }
+
 thead th {
   background-color: #cc2929;
   color: white;
@@ -40,6 +41,7 @@ td button {
   font-size: 0.75rem;
   padding: 2px 6px;
 }
+
 .btn-success {
   background-color: #28a745;
   border-color: #28a745;
@@ -52,7 +54,7 @@ td button {
   position: relative;
 }
 
-/* === Modal === */
+/* === Modal base === */
 .modal-content {
   border-radius: 12px;
 }
@@ -66,7 +68,7 @@ td button {
 
 .celda-agenda {
   max-width: 120px;
-  position: relative; /* para ubicar botones absolutos */
+  position: relative;
   padding: 0;
 }
 
@@ -82,7 +84,7 @@ td button {
   white-space: normal;
   word-break: break-word;
   text-align: center;
-  padding: 0; /* evita duplicados: dejas solo este */
+  padding: 0;
   border: 0;
 }
 
@@ -108,7 +110,6 @@ td button {
   background-color: #007bff !important;
   color: white;
 }
-
 .bg-visita {
   background-color: #007bff !important;
   color: white;
@@ -138,7 +139,8 @@ td button {
   background-color: rgb(104, 102, 105) !important;
   color: white;
 }
-/* ⚠️ reconsidera esto si quieres “muted” gris */
+
+/* ⚠️ tú lo tenías así; si querías gris, cambia este color */
 .text-muted {
   color: #cc2929 !important;
 }
@@ -160,21 +162,6 @@ td button {
 }
 .btn-vista-badge {
   left: 2px;
-}
-
-/* Ideas de detalle (si usas) */
-.cuadro-detalle-idea .card {
-  border: 2px dashed red;
-}
-.cuadro-detalle-idea .detalle-pico {
-  position: absolute;
-  bottom: -10px;
-  left: 20px;
-  width: 0;
-  height: 0;
-  border-left: 8px solid transparent;
-  border-right: 8px solid transparent;
-  border-top: 10px solid #fffbea;
 }
 
 /* Si aún quieres un modal pequeño genérico */
@@ -234,7 +221,7 @@ img.img-fluid.w-100.rounded {
   object-fit: contain;
 }
 
-/*--------------------------------------------------------------------*/
+/* -------------------------------------------------------------------- */
 /* Transición suave al mostrar el contenido real */
 .fade-in {
   opacity: 0;
@@ -246,14 +233,13 @@ img.img-fluid.w-100.rounded {
   }
 }
 
-/* ====== Variables de animación ====== */
+/* ====== Animación modales (tú la tenías) ====== */
 :root {
-  --modal-dur: 220ms;
+  --modal-dur: 520ms;
   --modal-ease: cubic-bezier(0.2, 0.7, 0.2, 1);
   --backdrop-op: 0.35;
 }
 
-/* ====== Transición base de todos los modales ====== */
 .modal.fade {
   opacity: 0;
   transition: opacity var(--modal-dur) var(--modal-ease);
@@ -262,11 +248,11 @@ img.img-fluid.w-100.rounded {
   opacity: 1;
 }
 
-/* Desplazamiento + opacidad del dialog centrado */
 .modal.fade .modal-dialog {
   transform: translate3d(0, -12px, 0);
   opacity: 0;
-  transition: transform var(--modal-dur) var(--modal-ease),
+  transition:
+    transform var(--modal-dur) var(--modal-ease),
     opacity var(--modal-dur) var(--modal-ease);
   will-change: transform, opacity;
 }
@@ -275,7 +261,6 @@ img.img-fluid.w-100.rounded {
   opacity: 1;
 }
 
-/* Backdrop suave */
 .modal-backdrop {
   opacity: 0;
   transition: opacity var(--modal-dur) var(--modal-ease);
@@ -284,31 +269,11 @@ img.img-fluid.w-100.rounded {
   opacity: var(--backdrop-op);
 }
 
-/* ====== Drawer lateral (modal-right) ====== */
-.modal-dialog.modal-right {
-  margin: 0;
-  height: 100%;
-  max-width: 280px; /* ajusta a gusto o usa solo esta sin modal-sm */
-  transform: translate3d(-18px, 0, 0);
-  opacity: 0;
-  transition: transform var(--modal-dur) var(--modal-ease),
-    opacity var(--modal-dur) var(--modal-ease);
-  will-change: transform, opacity;
-}
-.modal.show .modal-dialog.modal-right {
-  transform: translate3d(0, 0, 0);
-  opacity: 1;
-}
-.modal-dialog.modal-right .modal-content {
-  min-height: 100%;
-  border-radius: 0 12px 12px 0;
-}
-
-/* ====== Zoom sutil para el modal de imagen ====== */
 #modalImagenAmpliada.modal.fade .modal-dialog {
   transform: scale(0.98);
   opacity: 0;
-  transition: transform var(--modal-dur) var(--modal-ease),
+  transition:
+    transform var(--modal-dur) var(--modal-ease),
     opacity var(--modal-dur) var(--modal-ease);
 }
 #modalImagenAmpliada.modal.show .modal-dialog {
@@ -316,7 +281,6 @@ img.img-fluid.w-100.rounded {
   opacity: 1;
 }
 
-/* ====== Reduced motion ====== */
 @media (prefers-reduced-motion: reduce) {
   .modal,
   .modal-dialog,
@@ -329,5 +293,137 @@ img.img-fluid.w-100.rounded {
   .modal.fade .modal-dialog {
     transform: none;
     opacity: 1;
+  }
+}
+
+/* =================================================================== */
+/* ===================  PANEL TOP-SHEET (NUEVO)  ======================= */
+/* =================================================================== */
+
+/* Contenedor sticky completo */
+.agenda-sticky {
+  position: sticky;
+  top: 0;
+  background: #fff;
+}
+
+/* Espaciado del topbar */
+.agenda-topbar {
+  padding: 0.25rem 0;
+}
+
+/* Header tabla dentro del sticky: sin “salto” */
+.agenda-head table {
+  margin-bottom: 0;
+}
+
+/* Wrap del panel: colapsado (slide desde arriba) */
+.asignar-panel-wrap {
+  max-height: 0;
+  overflow: hidden;
+  opacity: 0;
+  transform: translateY(-10px);
+  transition:
+    max-height 220ms cubic-bezier(0.2, 0.7, 0.2, 1),
+    opacity 160ms ease,
+    transform 520ms cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+
+/* Abierto */
+.asignar-panel-wrap.open {
+  max-height: 900px; /* desktop */
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Panel compacto estilo “cajas” */
+.asignar-panel .card-body {
+  padding-top: 0.25rem !important;
+  padding-bottom: 0.25rem !important;
+}
+
+.asignar-panel .form-select-sm,
+.asignar-panel .form-control-sm {
+  padding-top: 0.125rem;
+  padding-bottom: 0.125rem;
+  height: 28px;
+}
+
+/* ✅ MÓVIL: cuando el panel está abierto, ocupa TODO el alto del sticky
+   y el header de la tabla queda visible abajo */
+@media (max-width: 1000px) {
+  .agenda-sticky.panel-open {
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .agenda-sticky.panel-open .asignar-panel-wrap.open {
+    flex: 1 1 auto;
+    max-height: none;
+    overflow: auto; /* scroll interno */
+  }
+
+  .agenda-sticky.panel-open .agenda-head {
+    margin-top: auto; /* pega el header al fondo */
+  }
+}
+
+/* ====== Barra superior del panel (info + acciones) ====== */
+.asignar-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.asignar-info {
+  min-width: 0; /* permite ellipsis */
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.asignar-title,
+.asignar-sub {
+  line-height: 1.1;
+}
+
+/* si el cliente es largo, que no rompa horrible */
+.asignar-sub {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+/* Acciones a la derecha */
+.asignar-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex: 0 0 auto;
+}
+
+/* botón X sin empujar todo */
+.asignar-actions .btn-close {
+  margin-left: 4px;
+}
+
+/* En móvil: que los botones bajen y queden full-width ordenados */
+@media (max-width: 576px) {
+  .asignar-top {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .asignar-actions {
+    width: 100%;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+  }
+
+  .asignar-actions .btn {
+    flex: 0 0 auto;
   }
 }

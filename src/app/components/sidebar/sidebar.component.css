@@ -30,7 +30,7 @@
   transition: left 0.5s ease;
 
   /* ✅ por delante del contenido */
-  z-index: 9998;
+  z-index: 1040;
 }
 
 /* MENU (hamburguesa) */
@@ -51,7 +51,7 @@
   display: none;
 
   /* ✅ SIEMPRE por delante del sidebar y del contenido */
-  z-index: 9999;
+  z-index: 1041;
 }
 
 /* Responsive */

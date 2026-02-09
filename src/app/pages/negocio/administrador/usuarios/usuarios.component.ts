@@ -23,7 +23,7 @@ export class UsuariosComponent {
       const response = await this.usuarioServices.getAll();
       this.arrUsuarios = response;
     } catch (error) {
-      console.log(error);
+      //  console.log(error);
     } finally {
       this.isReady = true;
     }

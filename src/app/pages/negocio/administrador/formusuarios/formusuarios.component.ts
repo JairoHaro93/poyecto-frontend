@@ -244,10 +244,10 @@ export class FormusuariosComponent {
   private async loadUsuario(id: string) {
     try {
       const usuario: Iusuarios = await this.usuarioServices.getbyId(id);
-
-      console.log('[FORMUSUARIOS] usuario recibido:', usuario);
-      console.log('[FORMUSUARIOS] roles desde backend:', usuario.rol);
-      console.log('[FORMUSUARIOS] arrfunciones:', this.arrfunciones);
+      //
+      //    console.log('[FORMUSUARIOS] usuario recibido:', usuario);
+      //   console.log('[FORMUSUARIOS] roles desde backend:', usuario.rol);
+      //   console.log('[FORMUSUARIOS] arrfunciones:', this.arrfunciones);
 
       this.usuarioForm.patchValue({
         id: usuario.id,
@@ -278,7 +278,7 @@ export class FormusuariosComponent {
 
       this.usuarioForm.get('rol')!.setValue([...this.selectedIds]);
 
-      console.log('[FORMUSUARIOS] selectedIds calculados:', this.selectedIds);
+      //   console.log('[FORMUSUARIOS] selectedIds calculados:', this.selectedIds);
     } catch (error) {
       console.error('Error loading usuario:', error);
     }
