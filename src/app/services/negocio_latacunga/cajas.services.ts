@@ -90,7 +90,7 @@ export class CajasService {
       }
     }
 
-    console.log('[CajasService] GET /cajas params', httpParams.toString()); // DEBUG 👈
+   // console.log('[CajasService] GET /cajas params', httpParams.toString()); // DEBUG 👈
 
     return firstValueFrom(
       this.http.get<ApiListResp>(this.baseUrl, { params: httpParams })

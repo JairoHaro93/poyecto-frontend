@@ -15,6 +15,7 @@ import {
 
 import { firstValueFrom } from 'rxjs';
 import { ImagesService } from '../../../../services/negocio_latacunga/images.service';
+import { Router } from '@angular/router';
 
 type ImgField = 'img_ref1' | 'img_ref2';
 
@@ -27,7 +28,7 @@ type ImgField = 'img_ref1' | 'img_ref2';
 })
 export class InfraestructuraComponent {
   infraestructuraForm!: FormGroup;
-
+  router = inject(Router);
   // Suavizado de render
   isReady = false;
   isSubmitting = false;
@@ -139,8 +140,8 @@ export class InfraestructuraComponent {
             this.imagesService.upload('infraestructura', infraId, img_ref1, {
               tag: 'referencia',
               position: 1,
-            })
-          )
+            }),
+          ),
         );
       }
       if (img_ref2) {
@@ -149,8 +150,8 @@ export class InfraestructuraComponent {
             this.imagesService.upload('infraestructura', infraId, img_ref2, {
               tag: 'referencia',
               position: 2,
-            })
-          )
+            }),
+          ),
         );
       }
 
@@ -170,6 +171,8 @@ export class InfraestructuraComponent {
 
       console.log('✅ Infraestructura creada. ID:', infraId);
 
+      await this.router.navigateByUrl(`/home/noc/agenda`);
+
       // (Opcional) limpiar imágenes del formulario y previews
       this.infraestructuraForm.patchValue({ img_ref1: null, img_ref2: null });
       this.previewImg_ref1 = null;
@@ -180,7 +183,7 @@ export class InfraestructuraComponent {
     } catch (error) {
       console.error(
         '❌ Error creando infraestructura / subiendo imágenes:',
-        error
+        error,
       );
     } finally {
       this.isSubmitting = false;

@@ -37,17 +37,17 @@ export class SoketService {
 
       this.socket.on('connect', () => {
         this.isSocketConnected = true;
-        console.log('✅ WebSocket conectado:', this.socket?.id);
+        //  console.log('✅ WebSocket conectado:', this.socket?.id);
       });
 
       this.socket.on('disconnect', () => {
         this.isSocketConnected = false;
-        console.log('❌ WebSocket desconectado:', this.socket?.id);
+        // console.log('❌ WebSocket desconectado:', this.socket?.id);
       });
     } catch (error) {
       console.error(
         '❌ No se pudo obtener el usuario para conectar socket:',
-        error
+        error,
       );
     }
   }
@@ -58,7 +58,7 @@ export class SoketService {
       this.socket = null;
       this.isSocketConnected = false;
       this.listeners.clear();
-      console.log('🧹 WebSocket desconectado manualmente');
+      //console.log('🧹 WebSocket desconectado manualmente');
     }
   }
 
@@ -67,7 +67,7 @@ export class SoketService {
       console.warn(
         '⚠️ emit(): socket no inicializado para evento',
         event,
-        data
+        data,
       );
       return;
     }

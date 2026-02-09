@@ -54,14 +54,12 @@ export class SoporteTecnicoComponent {
       });
 
       this.socketService.on('soporteActualizadoNOC', async () => {
-        console.log(
-          '📢 Evento recibido EN SOPORTE TECNICO solo por NOC: soporteActualizadoNOC',
-        );
+        //  console.log(          '📢 Evento recibido EN SOPORTE TECNICO solo por NOC: soporteActualizadoNOC',        );
         await this.cargarDatos(noc_id);
       });
 
       this.socketService.on('trabajoCulminadoNOC', async () => {
-        console.log('📥 trabajoCulminadoNOC recibido');
+        //  console.log('📥 trabajoCulminadoNOC recibido');
         await this.cargarDatos(noc_id);
       });
     } catch (error) {
@@ -161,7 +159,7 @@ export class SoporteTecnicoComponent {
       const body = { reg_sop_noc_id_acepta: usuario.id };
 
       await this.soporteService.aceptarSoporte(id, body);
-      console.log(`✅ Soporte ${id} aceptado con éxito`);
+      //  console.log(`✅ Soporte ${id} aceptado con éxito`);
 
       this.dataSharingService.updateData(
         this.soportesPendientes.length,
@@ -169,7 +167,7 @@ export class SoporteTecnicoComponent {
       );
 
       this.socketService.emit('soporteActualizado');
-      console.log('📢 Soporte actualizado en tiempo real');
+      //  console.log('📢 Soporte actualizado en tiempo real');
 
       await this.router.navigateByUrl(`/home/noc/info-sop/${id}/${ord_ins}`);
     } catch (error) {

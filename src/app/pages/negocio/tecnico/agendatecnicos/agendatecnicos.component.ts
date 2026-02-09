@@ -118,7 +118,7 @@ export class AgendatecnicosComponent {
       const idtec = this.datosUsuario.id;
 
       this.socketService.on('trabajoAgendadoTecnico', async () => {
-        console.log('📥 Trabajo agendado para este técnico');
+        //  console.log('📥 Trabajo agendado para este técnico');
         this.agendaTecnicosList = await this.agendaService.getAgendaTec(idtec!);
         await this.enrichAgendaTecnicosList();
       });
@@ -143,14 +143,14 @@ export class AgendatecnicosComponent {
       new Set(
         items
           .map((it) => String((it as any).ord_ins))
-          .filter((key) => !!key && !this.clienteCache.has(key))
-      )
+          .filter((key) => !!key && !this.clienteCache.has(key)),
+      ),
     );
 
     if (faltantes.length > 0) {
       try {
         const resp = await firstValueFrom(
-          this.clientesService.getClientesByOrdInsBatch(faltantes)
+          this.clientesService.getClientesByOrdInsBatch(faltantes),
         );
         for (const row of resp ?? []) {
           this.clienteCache.set(String(row.orden_instalacion), row);
@@ -200,7 +200,7 @@ export class AgendatecnicosComponent {
       // datos de cliente
       this.clienteSeleccionado =
         await this.clientesService.getInfoServicioByOrdId(
-          Number(trabajo.ord_ins)
+          Number(trabajo.ord_ins),
         );
 
       // ⬇️ SOLO si ES INFRAESTRUCTURA
@@ -229,7 +229,7 @@ export class AgendatecnicosComponent {
 
       if (this.trabajoAgenda.age_tipo !== 'INSTALACION') {
         const idVis = Number(
-          this.trabajoTabla?.id ?? this.trabajoAgenda.age_id_tipo
+          this.trabajoTabla?.id ?? this.trabajoAgenda.age_id_tipo,
         );
         /* await this.visService.updateVisById(
           idVis,
@@ -243,7 +243,7 @@ export class AgendatecnicosComponent {
         };
         await this.soporteService.actualizarEstadoSop(
           this.trabajoAgenda.age_id_sop,
-          bodySop
+          bodySop,
         );
       }
 
@@ -283,7 +283,7 @@ export class AgendatecnicosComponent {
     try {
       this.clienteSeleccionado =
         await this.clientesService.getInfoServicioByOrdId(
-          Number(trabajo.ord_ins)
+          Number(trabajo.ord_ins),
         );
 
       this.trabajoAgenda = { ...trabajo };
@@ -312,7 +312,7 @@ export class AgendatecnicosComponent {
       // trabajoTabla (igual que ya tenías)
       if (this.trabajoAgenda.age_tipo === 'SOPORTE') {
         this.trabajoTabla = await this.soporteService.getSopById(
-          Number(this.trabajoAgenda.age_id_tipo)
+          Number(this.trabajoAgenda.age_id_tipo),
         );
       } else if (
         this.trabajoAgenda.age_tipo === 'VISITA' ||
@@ -442,7 +442,7 @@ export class AgendatecnicosComponent {
         error: (err) => {
           console.error(
             `❌ Error subiendo imagen de instalación (${campo})`,
-            err
+            err,
           );
           URL.revokeObjectURL(objectUrl);
           // opcional: revertir al estado del servidor
@@ -537,11 +537,11 @@ export class AgendatecnicosComponent {
   // 👇 añade este getter en la clase
   get nextSolPosition(): number {
     const sols = (this.imagenesInfra ?? []).filter(
-      (i) => (i.tag || '').toLowerCase() === 'sol'
+      (i) => (i.tag || '').toLowerCase() === 'sol',
     );
     const maxPos = Math.max(
       0,
-      ...sols.map((i) => (typeof i.position === 'number' ? i.position : 0))
+      ...sols.map((i) => (typeof i.position === 'number' ? i.position : 0)),
     );
     return maxPos + 1;
   }

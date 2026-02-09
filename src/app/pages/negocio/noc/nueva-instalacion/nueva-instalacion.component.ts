@@ -10,6 +10,7 @@ import { CommonModule } from '@angular/common';
 import { InstalacionesService } from '../../../../services/negocio_latacunga/instalaciones.service';
 import Swal from 'sweetalert2';
 import { AgendaService } from '../../../../services/negocio_latacunga/agenda.service';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-nueva-instalacion',
@@ -21,13 +22,13 @@ import { AgendaService } from '../../../../services/negocio_latacunga/agenda.ser
 export class NuevaInstalacionComponent {
   instalacionForm!: FormGroup;
   agendaService = inject(AgendaService);
-
+  router = inject(Router);
   // ✅ Suavizado de render (NUEVO)
   isReady = false;
 
   constructor(
     private fb: FormBuilder,
-    private instalacionesService: InstalacionesService
+    private instalacionesService: InstalacionesService,
   ) {
     this.instalacionForm = this.fb.group({
       ord_ins: [null, Validators.required],
@@ -75,7 +76,8 @@ export class NuevaInstalacionComponent {
       // 2. Crear el caso en la tabla neg_t_agenda
       await this.agendaService.postSopAgenda(bodyAge);
 
-      console.log('✅ Instalación creada:', response);
+      // console.log('✅ Instalación creada:', response);
+      await this.router.navigateByUrl(`/home/noc/agenda`);
       Swal.fire('Éxito', 'Instalación registrada correctamente', 'success');
       this.instalacionForm.reset();
     } catch (error: any) {
@@ -83,7 +85,7 @@ export class NuevaInstalacionComponent {
       Swal.fire(
         'Error',
         error?.message || 'No se pudo registrar la instalación',
-        'error'
+        'error',
       );
     }
   }
