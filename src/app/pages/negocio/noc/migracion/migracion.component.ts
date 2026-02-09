@@ -13,6 +13,7 @@ import { AgendaService } from '../../../../services/negocio_latacunga/agenda.ser
 // import { InstalacionesService } from '../../../../services/negocio_latacunga/instalaciones.service'; // ❌ No usado
 import { VisService } from '../../../../services/negocio_latacunga/vis.service';
 import { ClientesService } from '../../../../services/negocio_atuntaqui/clientes.service';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-migracion',
@@ -27,8 +28,11 @@ export class MigracionComponent {
   clientesServie = inject(ClientesService);
   // ✅ Suavizado de render
   isReady = false;
-
-  constructor(private fb: FormBuilder, private visitaService: VisService) {
+  router = inject(Router);
+  constructor(
+    private fb: FormBuilder,
+    private visitaService: VisService,
+  ) {
     this.migracionForm = this.fb.group({
       ord_ins: new FormControl<string | null>(null, [
         Validators.required,
@@ -73,7 +77,7 @@ export class MigracionComponent {
       });
 */
       const response2 = await this.clientesServie.getInfoServicioByOrdId(
-        data.ord_ins
+        data.ord_ins,
       );
 
       // 2) Crear el caso en la tabla neg_t_agenda
@@ -86,7 +90,7 @@ export class MigracionComponent {
         age_telefono: data.telefonos,
       };
       await this.agendaService.postSopAgenda(bodyAge);
-
+      await this.router.navigateByUrl(`/home/noc/agenda`);
       Swal.fire('Éxito', 'Migracion registrado correctamente', 'success');
       this.migracionForm.reset();
     } catch (error: any) {
@@ -94,7 +98,7 @@ export class MigracionComponent {
       Swal.fire(
         'Error',
         error?.message || 'No se pudo registrar la migracion',
-        'error'
+        'error',
       );
     }
   }
