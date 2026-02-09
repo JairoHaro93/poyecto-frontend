@@ -12,18 +12,26 @@
         >
           <!-- TOPBAR: badge + día + fecha -->
           <div
-            class="agenda-topbar d-flex justify-content-between align-items-center flex-wrap"
+            class="d-flex align-items-start gap-2 mb-2 mb-lg-0 flex-column flex-lg-row w-100"
           >
-            <div
-              class="d-flex align-items-start gap-2 mb-2 mb-lg-0 flex-column flex-lg-row w-100"
-            >
-              <p class="badge-circle bg-danger text-white">
-                {{ pendientes }}
-              </p>
+            <p class="badge-circle bg-danger text-white">
+              {{ pendientes }}
+            </p>
 
-              <p class="text-muted small mb-0">
-                <strong>{{ nombreDelDia }}</strong>
-              </p>
+            <p class="text-muted small mb-0">
+              <strong>{{ nombreDelDia }}</strong>
+            </p>
+
+            <!-- Controles fecha + flechas -->
+            <div class="d-flex align-items-center gap-2">
+              <button
+                type="button"
+                class="btn btn-outline-secondary btn-sm"
+                title="Día anterior"
+                (click)="prevDia()"
+              >
+                <i class="fas fa-chevron-left"></i>
+              </button>
 
               <input
                 id="fechaAgenda"
@@ -32,6 +40,15 @@
                 [(ngModel)]="fechaSeleccionada"
                 (change)="alCambiarFecha()"
               />
+
+              <button
+                type="button"
+                class="btn btn-outline-secondary btn-sm"
+                title="Día siguiente"
+                (click)="nextDia()"
+              >
+                <i class="fas fa-chevron-right"></i>
+              </button>
             </div>
           </div>
 

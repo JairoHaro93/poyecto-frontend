@@ -4,6 +4,10 @@
   --color-texto-menu: rgb(134, 136, 144);
   --color-boton: rgb(0, 0, 0);
   --color-boton-texto: rgb(255, 255, 255);
+
+  /* ✅ capas (Bootstrap modal ~1050/1055) */
+  --z-sidebar: 1040;
+  --z-menu: 1041;
 }
 
 * {
@@ -29,8 +33,8 @@
 
   transition: left 0.5s ease;
 
-  /* ✅ por delante del contenido */
-  z-index: 1040;
+  /* ✅ debajo del modal de bootstrap */
+  z-index: var(--z-sidebar);
 }
 
 /* MENU (hamburguesa) */
@@ -50,8 +54,8 @@
 
   display: none;
 
-  /* ✅ SIEMPRE por delante del sidebar y del contenido */
-  z-index: 1041;
+  /* ✅ debajo del modal de bootstrap */
+  z-index: var(--z-menu);
 }
 
 /* Responsive */
@@ -66,7 +70,7 @@
   }
 
   .menu {
-    display: flex; /* ✅ aparece en móvil */
+    display: flex; /* aparece en móvil */
   }
 }
 
@@ -93,7 +97,6 @@
   width: 100%;
 }
 
-/* ✅ CSS válido (sin anidado tipo SCSS) */
 ul {
   list-style-type: none;
   justify-content: center;
@@ -149,24 +152,10 @@ ul li {
   margin-left: 8px;
 }
 
-.sidebar {
-  z-index: 9998;
-}
-.menu {
-  z-index: 9999;
-}
-
-@media (max-width: 1000px) {
-  .sidebar {
-    position: fixed;
-    top: 0;
-    left: -250px;
-    height: 100vh;
-  }
-  .mostrar-sidebar {
-    left: 0;
-  }
-  .menu {
-    display: flex;
-  }
+.logo {
+  border-radius: 14px;
+  overflow: hidden; /* por si el contenedor lo necesita */
+  background: #fff; /* si el PNG tiene transparencia */
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 }

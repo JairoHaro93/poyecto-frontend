@@ -1,3 +1,168 @@
+:host {
+  --panel-open-dur: 1s;
+  --panel-close-dur: 0.5s; /* tu valor */
+  --panel-opacity-dur: 0.2s;
+  --panel-ease: cubic-bezier(0.2, 0.8, 0.2, 1);
+
+  /* Modal (porque en tu CSS se usa y no estaba definido aquí) */
+  --modal-dur: 220ms;
+  --modal-ease: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --backdrop-op: 0.55;
+}
+
+/* ===========================================================
+   PANEL TOP-SHEET (STICKY + SLIDE)  ✅ SIN BLUR
+   =========================================================== */
+
+/* Contenedor sticky completo */
+.agenda-sticky {
+  position: sticky;
+  top: 0;
+  background: #fff;
+}
+
+/* Espaciado topbar */
+.agenda-topbar {
+  padding: 0.25rem 0;
+}
+
+/* Header tabla dentro del sticky: sin salto */
+.agenda-head table {
+  margin-bottom: 0;
+}
+
+/* -------------------------
+   PANEL ASIGNACIÓN
+   - SIN transform en wrapper (evita texto difuminado)
+   - Slide visual con margin-top en .asignar-panel
+   ------------------------- */
+
+/* CERRADO */
+.asignar-panel-wrap {
+  max-height: 0;
+  overflow: hidden;
+  opacity: 0;
+  pointer-events: none;
+
+  will-change: max-height, opacity;
+
+  transition-property: max-height, opacity;
+  transition-duration: var(--panel-close-dur), var(--panel-opacity-dur);
+  transition-timing-function: var(--panel-ease), ease;
+}
+
+/* ABIERTO */
+.asignar-panel-wrap.open {
+  max-height: 1200px; /* grande para no recortar */
+  opacity: 1;
+  pointer-events: auto;
+
+  transition-duration: var(--panel-open-dur), var(--panel-opacity-dur);
+}
+
+/* Slide SIN transform (evita blur en letras) */
+.asignar-panel {
+  margin-top: -10px;
+  transition: margin-top var(--panel-open-dur) var(--panel-ease);
+  -webkit-font-smoothing: auto;
+}
+.asignar-panel-wrap.open .asignar-panel {
+  margin-top: 0;
+}
+
+/* Panel compacto estilo "cajas" */
+.asignar-panel .card-body {
+  padding-top: 0.25rem !important;
+  padding-bottom: 0.25rem !important;
+}
+
+.asignar-panel .form-select-sm,
+.asignar-panel .form-control-sm {
+  padding-top: 0.125rem;
+  padding-bottom: 0.125rem;
+  height: 28px;
+}
+
+/* Barra superior del panel (info + acciones) */
+.asignar-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.asignar-info {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.asignar-title,
+.asignar-sub {
+  line-height: 1.1;
+}
+
+/* cliente largo con ellipsis */
+.asignar-sub {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+/* acciones derecha */
+.asignar-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex: 0 0 auto;
+}
+.asignar-actions .btn-close {
+  margin-left: 4px;
+}
+
+/* MÓVIL/TABLET: panel ocupa alto y header queda abajo */
+@media (max-width: 1000px) {
+  .agenda-sticky.panel-open {
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .agenda-sticky.panel-open .asignar-panel-wrap.open {
+    flex: 1 1 auto;
+    max-height: 100vh; /* ✅ animable */
+    overflow: auto; /* scroll interno */
+  }
+
+  .agenda-sticky.panel-open .agenda-head {
+    margin-top: auto;
+  }
+}
+
+/* móvil pequeño: botones bajan */
+@media (max-width: 576px) {
+  .asignar-top {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .asignar-actions {
+    width: 100%;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+  }
+
+  .asignar-actions .btn {
+    flex: 0 0 auto;
+  }
+}
+
+/* ===========================================================
+   CONTENEDOR / TABLA AGENDA
+   =========================================================== */
+
 /* === Contenedor Scroll === */
 .agenda-scroll-wrapper {
   max-height: 100vh;
@@ -36,7 +201,9 @@ thead th {
   color: white;
 }
 
-/* === Botones === */
+/* ===========================================================
+   BOTONES
+   =========================================================== */
 td button {
   font-size: 0.75rem;
   padding: 2px 6px;
@@ -54,12 +221,77 @@ td button {
   position: relative;
 }
 
-/* === Modal base === */
+/* ===========================================================
+   MODALES (base + animación)
+   =========================================================== */
 .modal-content {
   border-radius: 12px;
 }
 
-/* === Celdas de Agenda === */
+.modal.fade {
+  opacity: 0;
+  transition: opacity var(--modal-dur) var(--modal-ease);
+}
+.modal.show {
+  opacity: 1;
+}
+
+.modal.fade .modal-dialog {
+  transform: translate3d(0, -12px, 0);
+  opacity: 0;
+  transition:
+    transform var(--modal-dur) var(--modal-ease),
+    opacity var(--modal-dur) var(--modal-ease);
+  will-change: transform, opacity;
+}
+.modal.show .modal-dialog {
+  transform: translate3d(0, 0, 0);
+  opacity: 1;
+}
+
+.modal-backdrop {
+  opacity: 0;
+  transition: opacity var(--modal-dur) var(--modal-ease);
+}
+.modal-backdrop.show {
+  opacity: var(--backdrop-op);
+}
+
+#modalImagenAmpliada.modal.fade .modal-dialog {
+  transform: scale(0.98);
+  opacity: 0;
+  transition:
+    transform var(--modal-dur) var(--modal-ease),
+    opacity var(--modal-dur) var(--modal-ease);
+}
+#modalImagenAmpliada.modal.show .modal-dialog {
+  transform: scale(1);
+  opacity: 1;
+}
+
+/* Modal pequeño genérico */
+.modal-dialog.modal-sm {
+  max-width: 230px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .modal,
+  .modal-dialog,
+  .modal-backdrop {
+    transition: none !important;
+  }
+  .modal.fade {
+    opacity: 1;
+  }
+  .modal.fade .modal-dialog {
+    transform: none;
+    opacity: 1;
+  }
+}
+
+/* ===========================================================
+   CELDAS / COLUMNAS AGENDA
+   =========================================================== */
 .col-horario {
   width: 100px;
   white-space: nowrap;
@@ -88,7 +320,28 @@ td button {
   border: 0;
 }
 
-/* === Estados === */
+/* Botones flotantes en celdas */
+.btn-editar-badge,
+.btn-vista-badge {
+  position: absolute;
+  top: 0;
+  font-size: 1.2rem;
+  border-radius: 50%;
+  background-color: #ff0000;
+  color: white;
+  border: none;
+  z-index: 1;
+}
+.btn-editar-badge {
+  right: 2px;
+}
+.btn-vista-badge {
+  left: 2px;
+}
+
+/* ===========================================================
+   ESTADOS (COLORES)
+   =========================================================== */
 .bg-trabajo {
   background-color: #1fe5f4 !important;
 }
@@ -140,36 +393,15 @@ td button {
   color: white;
 }
 
-/* ⚠️ tú lo tenías así; si querías gris, cambia este color */
+/* ⚠️ OJO: esto hace que TODO .text-muted sea rojo.
+   Si quieres que "text-muted" sea gris, borra esta regla. */
 .text-muted {
   color: #cc2929 !important;
 }
 
-/* Botones flotantes en celdas */
-.btn-editar-badge,
-.btn-vista-badge {
-  position: absolute;
-  top: 0;
-  font-size: 1.2rem;
-  border-radius: 50%;
-  background-color: #ff0000;
-  color: white;
-  border: none;
-  z-index: 1;
-}
-.btn-editar-badge {
-  right: 2px;
-}
-.btn-vista-badge {
-  left: 2px;
-}
-
-/* Si aún quieres un modal pequeño genérico */
-.modal-dialog.modal-sm {
-  max-width: 230px;
-}
-
-/* Badges */
+/* ===========================================================
+   BADGES
+   =========================================================== */
 .badge-circle {
   display: inline-block;
   width: 30px;
@@ -181,7 +413,9 @@ td button {
   font-size: 14px;
 }
 
-/* ------------------------ IMAGENES ----------------------------- */
+/* ===========================================================
+   IMÁGENES / GALERÍAS
+   =========================================================== */
 .imagenes-grid {
   display: flex;
   flex-wrap: wrap;
@@ -189,6 +423,7 @@ td button {
   margin-top: 1rem;
   justify-content: center;
 }
+
 .imagen-card {
   width: 200px;
   border: 1px solid #ddd;
@@ -199,6 +434,7 @@ td button {
   padding: 0.5rem;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
 }
+
 .imagen-card img {
   width: 100%;
   height: 200px;
@@ -210,6 +446,7 @@ td button {
 .imagen-card img:hover {
   transform: scale(1.05);
 }
+
 .imagen-label {
   font-weight: 600;
   margin-bottom: 0.5rem;
@@ -221,8 +458,9 @@ img.img-fluid.w-100.rounded {
   object-fit: contain;
 }
 
-/* -------------------------------------------------------------------- */
-/* Transición suave al mostrar el contenido real */
+/* ===========================================================
+   ANIMACIÓN CONTENIDO (fade)
+   =========================================================== */
 .fade-in {
   opacity: 0;
   animation: fadeIn 0.35s ease-out forwards;
@@ -230,200 +468,5 @@ img.img-fluid.w-100.rounded {
 @keyframes fadeIn {
   to {
     opacity: 1;
-  }
-}
-
-/* ====== Animación modales (tú la tenías) ====== */
-:root {
-  --modal-dur: 520ms;
-  --modal-ease: cubic-bezier(0.2, 0.7, 0.2, 1);
-  --backdrop-op: 0.35;
-}
-
-.modal.fade {
-  opacity: 0;
-  transition: opacity var(--modal-dur) var(--modal-ease);
-}
-.modal.show {
-  opacity: 1;
-}
-
-.modal.fade .modal-dialog {
-  transform: translate3d(0, -12px, 0);
-  opacity: 0;
-  transition:
-    transform var(--modal-dur) var(--modal-ease),
-    opacity var(--modal-dur) var(--modal-ease);
-  will-change: transform, opacity;
-}
-.modal.show .modal-dialog {
-  transform: translate3d(0, 0, 0);
-  opacity: 1;
-}
-
-.modal-backdrop {
-  opacity: 0;
-  transition: opacity var(--modal-dur) var(--modal-ease);
-}
-.modal-backdrop.show {
-  opacity: var(--backdrop-op);
-}
-
-#modalImagenAmpliada.modal.fade .modal-dialog {
-  transform: scale(0.98);
-  opacity: 0;
-  transition:
-    transform var(--modal-dur) var(--modal-ease),
-    opacity var(--modal-dur) var(--modal-ease);
-}
-#modalImagenAmpliada.modal.show .modal-dialog {
-  transform: scale(1);
-  opacity: 1;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .modal,
-  .modal-dialog,
-  .modal-backdrop {
-    transition: none !important;
-  }
-  .modal.fade {
-    opacity: 1;
-  }
-  .modal.fade .modal-dialog {
-    transform: none;
-    opacity: 1;
-  }
-}
-
-/* =================================================================== */
-/* ===================  PANEL TOP-SHEET (NUEVO)  ======================= */
-/* =================================================================== */
-
-/* Contenedor sticky completo */
-.agenda-sticky {
-  position: sticky;
-  top: 0;
-  background: #fff;
-}
-
-/* Espaciado del topbar */
-.agenda-topbar {
-  padding: 0.25rem 0;
-}
-
-/* Header tabla dentro del sticky: sin “salto” */
-.agenda-head table {
-  margin-bottom: 0;
-}
-
-/* Wrap del panel: colapsado (slide desde arriba) */
-.asignar-panel-wrap {
-  max-height: 0;
-  overflow: hidden;
-  opacity: 0;
-  transform: translateY(-10px);
-  transition:
-    max-height 220ms cubic-bezier(0.2, 0.7, 0.2, 1),
-    opacity 160ms ease,
-    transform 520ms cubic-bezier(0.2, 0.7, 0.2, 1);
-}
-
-/* Abierto */
-.asignar-panel-wrap.open {
-  max-height: 900px; /* desktop */
-  opacity: 1;
-  transform: translateY(0);
-}
-
-/* Panel compacto estilo “cajas” */
-.asignar-panel .card-body {
-  padding-top: 0.25rem !important;
-  padding-bottom: 0.25rem !important;
-}
-
-.asignar-panel .form-select-sm,
-.asignar-panel .form-control-sm {
-  padding-top: 0.125rem;
-  padding-bottom: 0.125rem;
-  height: 28px;
-}
-
-/* ✅ MÓVIL: cuando el panel está abierto, ocupa TODO el alto del sticky
-   y el header de la tabla queda visible abajo */
-@media (max-width: 1000px) {
-  .agenda-sticky.panel-open {
-    height: 100vh;
-    display: flex;
-    flex-direction: column;
-  }
-
-  .agenda-sticky.panel-open .asignar-panel-wrap.open {
-    flex: 1 1 auto;
-    max-height: none;
-    overflow: auto; /* scroll interno */
-  }
-
-  .agenda-sticky.panel-open .agenda-head {
-    margin-top: auto; /* pega el header al fondo */
-  }
-}
-
-/* ====== Barra superior del panel (info + acciones) ====== */
-.asignar-top {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 10px;
-}
-
-.asignar-info {
-  min-width: 0; /* permite ellipsis */
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.asignar-title,
-.asignar-sub {
-  line-height: 1.1;
-}
-
-/* si el cliente es largo, que no rompa horrible */
-.asignar-sub {
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  max-width: 100%;
-}
-
-/* Acciones a la derecha */
-.asignar-actions {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  flex: 0 0 auto;
-}
-
-/* botón X sin empujar todo */
-.asignar-actions .btn-close {
-  margin-left: 4px;
-}
-
-/* En móvil: que los botones bajen y queden full-width ordenados */
-@media (max-width: 576px) {
-  .asignar-top {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .asignar-actions {
-    width: 100%;
-    justify-content: flex-end;
-    flex-wrap: wrap;
-  }
-
-  .asignar-actions .btn {
-    flex: 0 0 auto;
   }
 }

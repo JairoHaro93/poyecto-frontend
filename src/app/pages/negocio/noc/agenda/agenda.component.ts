@@ -358,15 +358,35 @@ export class AgendaComponent {
       age_tecnico: this.idTecnico,
     };
 
-    await this.agendaService.actualizarAgendaHorario(body.id, body);
+    try {
+      await this.agendaService.actualizarAgendaHorario(body.id, body);
 
-    this.socketService.emit('trabajoAgendado', { tecnicoId: this.idTecnico });
-    this.socketService.emit('trabajoPreagendado');
+      this.socketService.emit('trabajoAgendado', { tecnicoId: this.idTecnico });
+      this.socketService.emit('trabajoPreagendado');
 
-    await this.ngOnInit();
-    bootstrap.Modal.getInstance(
-      document.getElementById('asignarModal'),
-    )?.hide();
+      // ✅ cerrar panel automáticamente
+      this.cerrarAsignarPanel();
+
+      // opcional: limpiar formulario (si quieres)
+      this.resetAsignacionForm();
+
+      // ✅ refrescar sin duplicar sockets
+      await this.cargarAgendaPorFecha();
+      await this.cargarPreAgenda();
+      await this.contarpendientes();
+    } catch (e) {
+      console.error(e);
+    }
+  }
+
+  private resetAsignacionForm(): void {
+    this.trabajoSeleccionado = null;
+    this.horaInicio = '';
+    this.horaFin = '';
+    this.vehiculoSeleccionado = '';
+    this.idTecnico = 0;
+    this.modoEdicion = false;
+    this.edicionHabilitada = true;
   }
 
   iniciarEdicionDesdeTabla(hora: string, vehiculo: string): void {
@@ -381,11 +401,19 @@ export class AgendaComponent {
     this.vehiculoSeleccionado = trabajo.age_vehiculo;
     this.idTecnico = trabajo.age_tecnico || 0;
     this.edicionHabilitada = !this.esFechaPasada(trabajo.age_fecha);
+    this.modoEdicion = true;
 
-    bootstrap.Modal.getOrCreateInstance(
-      document.getElementById('asignarModal'),
-    ).show();
-    this.abrirAsignarPanel();
+    // ✅ abrir panel (si ya estaba abierto, re-animar)
+    this.reAbrirAsignarPanel();
+  }
+
+  private reAbrirAsignarPanel(): void {
+    if (this.showAsignarPanel) {
+      this.showAsignarPanel = false;
+      setTimeout(() => (this.showAsignarPanel = true), 0);
+    } else {
+      this.showAsignarPanel = true;
+    }
   }
 
   abrirModalAsignacion(trabajo: Iagenda): void {
@@ -762,5 +790,26 @@ export class AgendaComponent {
 
   cerrarAsignarPanel() {
     this.showAsignarPanel = false;
+  }
+
+  prevDia(): void {
+    this.moverDia(-1);
+  }
+
+  nextDia(): void {
+    this.moverDia(1);
+  }
+
+  private moverDia(delta: number): void {
+    const [y, m, d] = this.fechaSeleccionada.split('-').map(Number);
+    const dt = new Date(y, m - 1, d);
+    dt.setDate(dt.getDate() + delta);
+
+    const yy = dt.getFullYear();
+    const mm = String(dt.getMonth() + 1).padStart(2, '0');
+    const dd = String(dt.getDate()).padStart(2, '0');
+
+    this.fechaSeleccionada = `${yy}-${mm}-${dd}`;
+    this.alCambiarFecha(); // ✅ actualiza nombreDelDia y recarga agenda
   }
 }
