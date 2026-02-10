@@ -80,15 +80,13 @@ export class SidebarComponent implements OnInit, OnDestroy {
       this.arrClientes = roles.filter((r) => r.startsWith('C'));
       this.arrRecuperacion = roles.filter((r) => r.startsWith('R'));
 
-      //  console.log('👤 Usuario autenticado:', this.data.usuario);
-      //console.log('🎭 Roles asignados:', this.data.rol);
-
       // ya con sesión ok, ahora sí el resto
       this.obtenerSoportesPendientes();
       this.cargarPreAgenda();
 
       try {
-        this.soketService.connectSocket();
+        await this.soketService.connectSocket();
+        this.configurarListenersSidebar();
       } catch (e) {
         console.error('❌ Error connectSocket en sidebar:', e);
       }
@@ -130,12 +128,6 @@ export class SidebarComponent implements OnInit, OnDestroy {
     this.isMenu = !this.isMenu;
   }
 
-  async ngOnDestroy() {
-    // si quieres seguir cerrando sesión al destruir el sidebar, puedes dejar esto
-    // pero normalmente con el botón de "Cerrar sesión" es suficiente.
-    // await this.authService.logout(this.data.id!);
-  }
-
   toggleCollapse(targetId: string) {
     const allPanels = document.querySelectorAll('.accordion-collapse');
     allPanels.forEach((panel: any) => {
@@ -154,5 +146,84 @@ export class SidebarComponent implements OnInit, OnDestroy {
         new bootstrap.Collapse(target, { toggle: false });
       target.classList.contains('show') ? instance.hide() : instance.show();
     }
+  }
+  // --- callbacks como propiedades (referencia estable) ---
+  private cbSoporteCreadoNOC = () => {
+    this.reproducirSonido();
+    this.obtenerSoportesPendientes();
+  };
+
+  private cbSoporteActualizadoNOC = () => {
+    this.obtenerSoportesPendientes();
+  };
+
+  private cbTrabajoPreagendadoNOC = () => {
+    this.reproducirSonido();
+    this.cargarPreAgenda();
+  };
+
+  private cbTrabajoAgendadoNOC = () => {
+    this.cargarPreAgenda();
+  };
+
+  private cbTrabajoCulminadoNOC = () => {
+    this.cargarPreAgenda();
+  };
+
+  // ✅ técnico (sin inline)
+  private cbTrabajoAgendadoTecnico = () => this.reproducirSonido();
+  private cbTrabajoCulminadoTecnico = () => this.reproducirSonido();
+
+  private configurarListenersSidebar() {
+    if (this.arrNoc.length > 0) {
+      this.soketService.on('soporteCreadoNOC', this.cbSoporteCreadoNOC);
+      this.soketService.on(
+        'soporteActualizadoNOC',
+        this.cbSoporteActualizadoNOC,
+      );
+
+      this.soketService.on(
+        'trabajoPreagendadoNOC',
+        this.cbTrabajoPreagendadoNOC,
+      );
+      this.soketService.on('trabajoAgendadoNOC', this.cbTrabajoAgendadoNOC);
+      this.soketService.on('trabajoCulminadoNOC', this.cbTrabajoCulminadoNOC);
+    }
+
+    if (this.arrTecnico.length > 0) {
+      this.soketService.on(
+        'trabajoAgendadoTecnico',
+        this.cbTrabajoAgendadoTecnico,
+      );
+      this.soketService.on(
+        'trabajoCulminadoTecnico',
+        this.cbTrabajoCulminadoTecnico,
+      );
+    }
+  }
+
+  ngOnDestroy(): void {
+    // NOC
+    this.soketService.off('soporteCreadoNOC', this.cbSoporteCreadoNOC);
+    this.soketService.off(
+      'soporteActualizadoNOC',
+      this.cbSoporteActualizadoNOC,
+    );
+    this.soketService.off(
+      'trabajoPreagendadoNOC',
+      this.cbTrabajoPreagendadoNOC,
+    );
+    this.soketService.off('trabajoAgendadoNOC', this.cbTrabajoAgendadoNOC);
+    this.soketService.off('trabajoCulminadoNOC', this.cbTrabajoCulminadoNOC);
+
+    // Técnico
+    this.soketService.off(
+      'trabajoAgendadoTecnico',
+      this.cbTrabajoAgendadoTecnico,
+    );
+    this.soketService.off(
+      'trabajoCulminadoTecnico',
+      this.cbTrabajoCulminadoTecnico,
+    );
   }
 }

@@ -10,10 +10,10 @@ import { CommonModule } from '@angular/common';
 import Swal from 'sweetalert2';
 
 import { AgendaService } from '../../../../services/negocio_latacunga/agenda.service';
-// import { InstalacionesService } from '../../../../services/negocio_latacunga/instalaciones.service'; // ❌ No usado
 import { VisService } from '../../../../services/negocio_latacunga/vis.service';
 import { ClientesService } from '../../../../services/negocio_atuntaqui/clientes.service';
 import { Router } from '@angular/router';
+import { SoketService } from '../../../../services/socket_io/soket.service'; // ✅
 
 @Component({
   selector: 'app-migracion',
@@ -24,11 +24,14 @@ import { Router } from '@angular/router';
 })
 export class MigracionComponent {
   migracionForm!: FormGroup;
+
   agendaService = inject(AgendaService);
   clientesServie = inject(ClientesService);
-  // ✅ Suavizado de render
-  isReady = false;
+  soketService = inject(SoketService); // ✅
   router = inject(Router);
+
+  isReady = false;
+
   constructor(
     private fb: FormBuilder,
     private visitaService: VisService,
@@ -36,18 +39,12 @@ export class MigracionComponent {
     this.migracionForm = this.fb.group({
       ord_ins: new FormControl<string | null>(null, [
         Validators.required,
-        Validators.pattern(/^\d+$/), // solo números
+        Validators.pattern(/^\d+$/),
       ]),
       telefonos: new FormControl<string | null>(null, [Validators.required]),
-      /*  coordenadas: new FormControl<string | null>(null, [
-        Validators.required,
-        // Acepta: -0.12345,-78.56789 (con o sin espacios alrededor de la coma)
-        Validators.pattern(/^\s*-?\d+(\.\d+)?\s*,\s*-?\d+(\.\d+)?\s*$/),
-      ]),*/
       observacion: new FormControl<string | null>(null, [Validators.required]),
     });
 
-    // Muestra el contenido (si quieres el doble frame como en otros comps, puedes añadirlo)
     this.isReady = true;
   }
 
@@ -66,38 +63,45 @@ export class MigracionComponent {
     }
 
     try {
-      const data = this.migracionForm.value; // { ord_ins, telefonos, coordenadas, observacion }
-      /*
-      // 1) Crear el traslado en la tabla neg_t_vis
-      const response = await this.visitaService.createVis({
-        ord_ins: data.ord_ins,
-        vis_diagnostico: data.observacion,
-        vis_tipo: 'MIGRACION',
-        vis_estado: 'PENDIENTE',
-      });
-*/
+      const data = this.migracionForm.value;
+
       const response2 = await this.clientesServie.getInfoServicioByOrdId(
         data.ord_ins,
       );
 
-      // 2) Crear el caso en la tabla neg_t_agenda
+      const coord = response2?.servicios?.[0]?.coordenadas;
+      if (!coord) {
+        await Swal.fire(
+          'Atención',
+          'No se encontraron coordenadas para ese ORD_INS.',
+          'warning',
+        );
+        return;
+      }
+
       const bodyAge = {
         ord_ins: Number(data.ord_ins),
         age_tipo: 'MIGRACION',
-        // age_id_tipo: response.id, // asegúrate que el backend devuelva { id }
         age_diagnostico: data.observacion,
-        age_coordenadas: response2.servicios[0].coordenadas,
+        age_coordenadas: coord,
         age_telefono: data.telefonos,
       };
+
       await this.agendaService.postSopAgenda(bodyAge);
-      await this.router.navigateByUrl(`/home/noc/agenda`);
-      Swal.fire('Éxito', 'Migracion registrado correctamente', 'success');
+
+      // ✅ asegura conexión y notifica a NOC
+      await this.soketService.connectSocket();
+      this.soketService.emit('trabajoPreagendado');
+
+      await Swal.fire('Éxito', 'Migración registrada correctamente', 'success');
+
       this.migracionForm.reset();
+      await this.router.navigateByUrl(`/home/noc/agenda`);
     } catch (error: any) {
-      console.error('❌ Error al crear la migracion:', error);
+      console.error('❌ Error al crear la migración:', error);
       Swal.fire(
         'Error',
-        error?.message || 'No se pudo registrar la migracion',
+        error?.message || 'No se pudo registrar la migración',
         'error',
       );
     }

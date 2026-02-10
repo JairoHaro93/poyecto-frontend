@@ -7,15 +7,12 @@ import {
   Validators,
 } from '@angular/forms';
 import { CommonModule } from '@angular/common';
-import { AgendaService } from '../../../../services/negocio_latacunga/agenda.service';
-import {
-  CreateInfraDto,
-  InfraestructuraService,
-} from '../../../../services/negocio_latacunga/infraestructura.service';
-
 import { firstValueFrom } from 'rxjs';
-import { ImagesService } from '../../../../services/negocio_latacunga/images.service';
 import { Router } from '@angular/router';
+
+import { InfraestructuraService } from '../../../../services/negocio_latacunga/infraestructura.service';
+import { ImagesService } from '../../../../services/negocio_latacunga/images.service';
+import { SoketService } from '../../../../services/socket_io/soket.service';
 
 type ImgField = 'img_ref1' | 'img_ref2';
 
@@ -28,7 +25,12 @@ type ImgField = 'img_ref1' | 'img_ref2';
 })
 export class InfraestructuraComponent {
   infraestructuraForm!: FormGroup;
+
   router = inject(Router);
+  infraService = inject(InfraestructuraService);
+  imagesService = inject(ImagesService);
+  socketService = inject(SoketService);
+
   // Suavizado de render
   isReady = false;
   isSubmitting = false;
@@ -37,22 +39,14 @@ export class InfraestructuraComponent {
   previewImg_ref1: string | null = null;
   previewImg_ref2: string | null = null;
 
-  // SERVICIOS
-  agendaService = inject(AgendaService);
-  infraService = inject(InfraestructuraService);
-  imagesService = inject(ImagesService);
-
   constructor(private fb: FormBuilder) {
     this.infraestructuraForm = this.fb.group({
       nombre: new FormControl<string | null>(null, [Validators.required]),
       coordenadas: new FormControl<string | null>(null, [
         Validators.required,
-        // lat,lng con o sin espacios
         Validators.pattern(/^\s*-?\d+(\.\d+)?\s*,\s*-?\d+(\.\d+)?\s*$/),
       ]),
       observacion: new FormControl<string | null>(null, [Validators.required]),
-
-      // Imágenes opcionales
       img_ref1: new FormControl<File | null>(null),
       img_ref2: new FormControl<File | null>(null),
     });
@@ -73,10 +67,9 @@ export class InfraestructuraComponent {
     return !!(control?.touched && control.hasError(error));
   }
 
-  // Pegado desde portapapeles (compatible sin dom.iterable)
+  // Pegado desde portapapeles
   handlePaste(event: ClipboardEvent, field: ImgField) {
     event.preventDefault();
-
     const dt = event.clipboardData;
     if (!dt || !dt.items || dt.items.length === 0) return;
 
@@ -91,7 +84,7 @@ export class InfraestructuraComponent {
             else this.previewImg_ref2 = dataUrl;
           });
         }
-        break; // usamos la primera imagen encontrada
+        break;
       }
     }
   }
@@ -105,6 +98,12 @@ export class InfraestructuraComponent {
     });
   }
 
+  clearImage(field: ImgField) {
+    this.infraestructuraForm.get(field)?.setValue(null);
+    if (field === 'img_ref1') this.previewImg_ref1 = null;
+    if (field === 'img_ref2') this.previewImg_ref2 = null;
+  }
+
   async submitForm(): Promise<void> {
     if (this.infraestructuraForm.invalid) {
       this.infraestructuraForm.markAllAsTouched();
@@ -112,6 +111,7 @@ export class InfraestructuraComponent {
     }
 
     this.isSubmitting = true;
+
     try {
       const { img_ref1, img_ref2, ...resto } = this.infraestructuraForm
         .value as {
@@ -122,7 +122,7 @@ export class InfraestructuraComponent {
         img_ref2: File | null;
       };
 
-      // 1) Crear registro base en neg_t_infraestructura
+      // 1) Crear infraestructura (tu backend ya crea también la agenda dentro)
       const resp = await this.infraService.createInfra({
         nombre: resto.nombre,
         coordenadas: resto.coordenadas,
@@ -132,6 +132,7 @@ export class InfraestructuraComponent {
       const infraId = resp?.id;
       if (!infraId) throw new Error('No se recibió el ID del registro creado');
 
+      // 2) Subir imágenes
       const uploads: Promise<any>[] = [];
 
       if (img_ref1) {
@@ -144,6 +145,7 @@ export class InfraestructuraComponent {
           ),
         );
       }
+
       if (img_ref2) {
         uploads.push(
           firstValueFrom(
@@ -157,29 +159,24 @@ export class InfraestructuraComponent {
 
       if (uploads.length) {
         const results = await Promise.allSettled(uploads);
-        results.forEach((r, idx) => {
-          const campo = idx === 0 && img_ref1 ? 'img_ref1' : 'img_ref2';
-          if (r.status === 'fulfilled') {
-            // console.log(`✅ ${campo} subida correctamente`, r.value);
-          } else {
-            console.error(`❌ Error subiendo ${campo}`, r.reason);
+        results.forEach((r) => {
+          if (r.status === 'rejected') {
+            console.error('❌ Error subiendo imagen:', r.reason);
           }
         });
-      } else {
-        //console.log('ℹ️ No se adjuntaron imágenes, solo se creó el registro.');
       }
 
-      //  console.log('✅ Infraestructura creada. ID:', infraId);
+      // 3) ✅ SOCKET: notificar que hubo preagenda nueva
+      // (como tu backend escucha "trabajoPreagendado" sin payload)
+      await this.socketService.connectSocket(); // seguro aunque ya esté conectado
+      this.socketService.emit('trabajoPreagendado');
 
-      await this.router.navigateByUrl(`/home/noc/agenda`);
-
-      // (Opcional) limpiar imágenes del formulario y previews
+      // 4) Limpieza + navegar
       this.infraestructuraForm.patchValue({ img_ref1: null, img_ref2: null });
       this.previewImg_ref1 = null;
       this.previewImg_ref2 = null;
 
-      // (Opcional) limpiar todo:
-      // this.infraestructuraForm.reset();
+      await this.router.navigateByUrl(`/home/noc/agenda`);
     } catch (error) {
       console.error(
         '❌ Error creando infraestructura / subiendo imágenes:',
@@ -188,11 +185,5 @@ export class InfraestructuraComponent {
     } finally {
       this.isSubmitting = false;
     }
-  }
-
-  clearImage(field: ImgField) {
-    this.infraestructuraForm.get(field)?.setValue(null);
-    if (field === 'img_ref1') this.previewImg_ref1 = null;
-    if (field === 'img_ref2') this.previewImg_ref2 = null;
   }
 }

@@ -10,24 +10,26 @@ import { CommonModule } from '@angular/common';
 import Swal from 'sweetalert2';
 
 import { AgendaService } from '../../../../services/negocio_latacunga/agenda.service';
-// import { InstalacionesService } from '../../../../services/negocio_latacunga/instalaciones.service'; // ❌ No usado
 import { VisService } from '../../../../services/negocio_latacunga/vis.service';
 import { Router } from '@angular/router';
+import { SoketService } from '../../../../services/socket_io/soket.service'; // ✅
 
 @Component({
   selector: 'app-traslado-ext',
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule],
   templateUrl: './traslado-ext.component.html',
-  styleUrls: ['./traslado-ext.component.css'], // plural recomendado
+  styleUrls: ['./traslado-ext.component.css'],
 })
 export class TrasladoExtComponent {
   TrasladoForm!: FormGroup;
-  agendaService = inject(AgendaService);
 
-  // ✅ Suavizado de render
-  isReady = false;
+  agendaService = inject(AgendaService);
+  soketService = inject(SoketService); // ✅
   router = inject(Router);
+
+  isReady = false;
+
   constructor(
     private fb: FormBuilder,
     private visitaService: VisService,
@@ -35,18 +37,16 @@ export class TrasladoExtComponent {
     this.TrasladoForm = this.fb.group({
       ord_ins: new FormControl<string | null>(null, [
         Validators.required,
-        Validators.pattern(/^\d+$/), // solo números
+        Validators.pattern(/^\d+$/),
       ]),
       telefonos: new FormControl<string | null>(null, [Validators.required]),
       coordenadas: new FormControl<string | null>(null, [
         Validators.required,
-        // Acepta: -0.12345,-78.56789 (con o sin espacios alrededor de la coma)
         Validators.pattern(/^\s*-?\d+(\.\d+)?\s*,\s*-?\d+(\.\d+)?\s*$/),
       ]),
       observacion: new FormControl<string | null>(null, [Validators.required]),
     });
 
-    // Muestra el contenido (si quieres el doble frame como en otros comps, puedes añadirlo)
     this.isReady = true;
   }
 
@@ -65,35 +65,33 @@ export class TrasladoExtComponent {
     }
 
     try {
-      const data = this.TrasladoForm.value; // { ord_ins, telefonos, coordenadas, observacion }
-      /*
-      // 1) Crear el traslado en la tabla neg_t_vis
-      const response = await this.visitaService.createVis({
-        ord_ins: data.ord_ins,
-        vis_diagnostico: data.observacion,
-        vis_tipo: 'TRASLADO EXT',
-        vis_coment_cliente: data.coordenadas,
-        vis_estado: 'PENDIENTE',
-      });
-*/
-      // 2) Crear el caso en la tabla neg_t_agenda
+      const data = this.TrasladoForm.value;
+
       const bodyAge = {
         ord_ins: Number(data.ord_ins),
         age_tipo: 'TRASLADO EXT',
-        // age_id_tipo: response.id, // asegúrate que el backend devuelva { id }
         age_diagnostico: data.observacion,
         age_coordenadas: data.coordenadas,
         age_telefono: data.telefonos,
         age_coment_cliente: data.coordenadas,
       };
+
       await this.agendaService.postSopAgenda(bodyAge);
-      await this.router.navigateByUrl(`/home/noc/agenda`);
-      Swal.fire(
+
+      // ✅ asegura conexión (si ya estaba, no pasa nada)
+      await this.soketService.connectSocket();
+
+      // ✅ notifica a NOC: backend reenviará trabajoPreagendadoNOC
+      this.soketService.emit('trabajoPreagendado');
+
+      await Swal.fire(
         'Éxito',
         'Traslado externo registrado correctamente',
         'success',
       );
+
       this.TrasladoForm.reset();
+      await this.router.navigateByUrl(`/home/noc/agenda`);
     } catch (error: any) {
       console.error('❌ Error al crear el traslado externo:', error);
       Swal.fire(

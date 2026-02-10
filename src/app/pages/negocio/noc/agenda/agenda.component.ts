@@ -125,6 +125,8 @@ export class AgendaComponent {
   // =========================================================
   async ngOnInit() {
     try {
+      await this.socketService.connectSocket(); // ✅ asegura socket
+      this.registrarSockets(); // ✅ registra una vez
       await this.contarpendientes();
       this.datosUsuario = await this.authService.getUsuarioAutenticado();
 
@@ -135,30 +137,8 @@ export class AgendaComponent {
     } catch {
       // silencio
     } finally {
-      this.registrarSockets();
+      this.isReady = true; // si quieres mover isReady aquí
     }
-  }
-
-  // =========================================================
-  // sockets
-  // =========================================================
-  private registrarSockets(): void {
-    this.socketService.on('trabajoAgendadoNOC', async () => {
-      await this.cargarAgendaPorFecha();
-      await this.contarpendientes();
-    });
-
-    this.socketService.on('trabajoCulminadoNOC', async () => {
-      await this.cargarAgendaPorFecha();
-      await this.contarpendientes();
-    });
-
-    this.socketService.on('trabajoPreagendadoNOC', async () => {
-      await this.contarpendientes();
-      const anterior = this.preAgendaPendientesCount;
-      await this.cargarPreAgenda();
-      if (this.preAgendaPendientesCount > anterior) this.reproducirSonido();
-    });
   }
 
   // =========================================================
@@ -362,7 +342,6 @@ export class AgendaComponent {
       await this.agendaService.actualizarAgendaHorario(body.id, body);
 
       this.socketService.emit('trabajoAgendado', { tecnicoId: this.idTecnico });
-      this.socketService.emit('trabajoPreagendado');
 
       // ✅ cerrar panel automáticamente
       this.cerrarAsignarPanel();
@@ -811,5 +790,41 @@ export class AgendaComponent {
 
     this.fechaSeleccionada = `${yy}-${mm}-${dd}`;
     this.alCambiarFecha(); // ✅ actualiza nombreDelDia y recarga agenda
+  }
+
+  private cbTrabajoAgendadoNOC = async () => {
+    await this.cargarAgendaPorFecha();
+    await this.cargarPreAgenda(); // ✅ IMPORTANTÍSIMO
+    await this.contarpendientes();
+  };
+
+  private cbTrabajoCulminadoNOC = async () => {
+    await this.cargarAgendaPorFecha();
+    await this.contarpendientes();
+  };
+
+  private cbTrabajoPreagendadoNOC = async () => {
+    const anterior = this.preAgendaPendientesCount;
+    await this.cargarPreAgenda();
+    await this.contarpendientes();
+    if (this.preAgendaPendientesCount > anterior) this.reproducirSonido();
+  };
+
+  private registrarSockets(): void {
+    this.socketService.on('trabajoAgendadoNOC', this.cbTrabajoAgendadoNOC);
+    this.socketService.on('trabajoCulminadoNOC', this.cbTrabajoCulminadoNOC);
+    this.socketService.on(
+      'trabajoPreagendadoNOC',
+      this.cbTrabajoPreagendadoNOC,
+    );
+  }
+
+  ngOnDestroy(): void {
+    this.socketService.off('trabajoAgendadoNOC', this.cbTrabajoAgendadoNOC);
+    this.socketService.off('trabajoCulminadoNOC', this.cbTrabajoCulminadoNOC);
+    this.socketService.off(
+      'trabajoPreagendadoNOC',
+      this.cbTrabajoPreagendadoNOC,
+    );
   }
 }

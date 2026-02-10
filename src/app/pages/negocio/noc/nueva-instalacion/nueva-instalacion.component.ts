@@ -11,6 +11,7 @@ import { InstalacionesService } from '../../../../services/negocio_latacunga/ins
 import Swal from 'sweetalert2';
 import { AgendaService } from '../../../../services/negocio_latacunga/agenda.service';
 import { Router } from '@angular/router';
+import { SoketService } from '../../../../services/socket_io/soket.service'; // ✅
 
 @Component({
   selector: 'app-nueva-instalacion',
@@ -22,8 +23,9 @@ import { Router } from '@angular/router';
 export class NuevaInstalacionComponent {
   instalacionForm!: FormGroup;
   agendaService = inject(AgendaService);
+  soketService = inject(SoketService); // ✅
   router = inject(Router);
-  // ✅ Suavizado de render (NUEVO)
+
   isReady = false;
 
   constructor(
@@ -32,25 +34,23 @@ export class NuevaInstalacionComponent {
   ) {
     this.instalacionForm = this.fb.group({
       ord_ins: [null, Validators.required],
-      //    nombres: new FormControl(null, [Validators.required]), // corregido
-      //   apellidos: new FormControl(null, [Validators.required]), // corregido
-      //    cedula: new FormControl(null, [        Validators.required,        Validators.pattern(/^\d{10}$/),      ]),
-      //   tipo: new FormControl('NUEVA', Validators.required),
-      //   plan: new FormControl(null, Validators.required),
       telefonos: new FormControl(null, Validators.required),
       coordenadas: new FormControl(null, Validators.required),
       observacion: new FormControl(null),
     });
 
-    this.isReady = true; // ⬅️ muestra el contenido
+    this.isReady = true;
   }
 
   convertToUppercase(field: string): void {
     const control = this.instalacionForm.get(field);
     if (control) {
-      control.setValue(control.value.toUpperCase(), { emitEvent: false });
+      control.setValue(String(control.value ?? '').toUpperCase(), {
+        emitEvent: false,
+      });
     }
   }
+
   async submitForm(): Promise<void> {
     if (this.instalacionForm.invalid) {
       this.instalacionForm.markAllAsTouched();
@@ -60,26 +60,33 @@ export class NuevaInstalacionComponent {
     try {
       const data = this.instalacionForm.value;
 
-      // 1. Crear LA INSTALACION en la tabla neg_t_instalaciones
-
+      // 1) Crear instalación
       const response = await this.instalacionesService.createInst(data);
 
+      // 2) Crear trabajo en agenda (preagenda)
       const bodyAge = {
         ord_ins: data.ord_ins,
-        age_tipo: 'INSTALACION', // ✅ usa INSTALACION, no SOPORTE
+        age_tipo: 'INSTALACION',
         age_id_tipo: response.id,
         age_diagnostico: data.observacion,
         age_coordenadas: data.coordenadas,
         age_telefono: data.telefonos,
       };
 
-      // 2. Crear el caso en la tabla neg_t_agenda
       await this.agendaService.postSopAgenda(bodyAge);
 
-      // console.log('✅ Instalación creada:', response);
-      await this.router.navigateByUrl(`/home/noc/agenda`);
-      Swal.fire('Éxito', 'Instalación registrada correctamente', 'success');
+      // ✅ notificar a NOC (sidebar/agenda en otros equipos)
+      await this.soketService.connectSocket();
+      this.soketService.emit('trabajoPreagendado');
+
+      await Swal.fire(
+        'Éxito',
+        'Instalación registrada correctamente',
+        'success',
+      );
+
       this.instalacionForm.reset();
+      await this.router.navigateByUrl(`/home/noc/agenda`);
     } catch (error: any) {
       console.error('❌ Error al crear instalación:', error);
       Swal.fire(

@@ -4,9 +4,11 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Modal } from 'bootstrap';
 
+import Swal from 'sweetalert2';
+import { environment } from '../../../../../environments/environment';
+
 import { Isoportes } from '../../../../interfaces/negocio/soportes/isoportes.interface';
 import { Iclientes } from '../../../../interfaces/negocio/clientes/iclientes.interface';
-import { IVis } from '../../../../interfaces/negocio/vis/vis.interface';
 import { IVisConImagenes } from '../../../../interfaces/negocio/imagenes/imagenes.interface';
 import { ImageItem } from '../../../../interfaces/negocio/images/images';
 
@@ -18,9 +20,6 @@ import { ImagesService } from '../../../../services/negocio_latacunga/images.ser
 import { VisService } from '../../../../services/negocio_latacunga/vis.service';
 import { SoketService } from '../../../../services/socket_io/soket.service';
 
-import Swal from 'sweetalert2';
-import { environment } from '../../../../../environments/environment';
-
 type TabKey = 'instalacion' | 'soportes' | 'visitas';
 
 @Component({
@@ -31,17 +30,17 @@ type TabKey = 'instalacion' | 'soportes' | 'visitas';
   styleUrls: ['./info-sop.component.css'],
 })
 export class InfoSopComponent implements OnInit, OnDestroy {
+  // ====== Tabs ======
   activeTab: TabKey = 'instalacion';
   setTab(tab: TabKey) {
     this.activeTab = tab;
   }
 
   // ====== Inputs / estado ======
-  @Input() ordIns!: number | string; // viene del detalle actual (opcional si hay ruta)
+  @Input() ordIns!: number | string;
 
   soporte: Isoportes | null = null;
   soportesResueltos: Isoportes[] = [];
-
   loadingSoportes = false;
   errorSoportes: string | null = null;
 
@@ -52,10 +51,9 @@ export class InfoSopComponent implements OnInit, OnDestroy {
   id_sop: number | null = null;
   ord_Ins: string = '';
 
-  // Mostrar/Ocultar secciones (arrancan ocultas para no saturar)
+  // Mostrar/Ocultar secciones
   showSoportes = false;
   showVisitas = false;
-
   toggleSoportesList() {
     this.showSoportes = !this.showSoportes;
   }
@@ -65,7 +63,7 @@ export class InfoSopComponent implements OnInit, OnDestroy {
 
   // Datos/servicios
   datosUsuario: any;
-  datosNoc: any;
+
   clientelista: Iclientes[] = [];
   clienteSeleccionado: Iclientes | null = null;
   servicioSeleccionado: any = null;
@@ -76,7 +74,7 @@ export class InfoSopComponent implements OnInit, OnDestroy {
   imagenesInstalacion: Record<string, { ruta: string; url: string }> = {};
   imagenesVisitas: IVisConImagenes[] = [];
 
-  // ====== Inyección (consistente) ======
+  // ====== Inyección ======
   private activatedRoute = inject(ActivatedRoute);
   private router = inject(Router);
 
@@ -92,6 +90,9 @@ export class InfoSopComponent implements OnInit, OnDestroy {
 
   async ngOnInit(): Promise<void> {
     this.datosUsuario = await this.authService.getUsuarioAutenticado();
+
+    // ✅ intenta conectar (si ya está conectado por sidebar, no pasa nada)
+    void this.ensureSocket();
 
     // Si ya viene ordIns por @Input, carga listado
     if (
@@ -129,14 +130,14 @@ export class InfoSopComponent implements OnInit, OnDestroy {
             await this.cargarSoportes();
           }
 
-          this.cargarImagenesInstalacion('neg_t_instalaciones', this.ord_Ins);
+          this.cargarImagenesInstalacion(this.ord_Ins);
           await this.cargarImagenesVisitas(this.ord_Ins);
         } catch (e) {
           console.error('❌ Error inicial InfoSop:', e);
         } finally {
           this.isReady = true;
         }
-      }
+      },
     );
   }
 
@@ -146,20 +147,49 @@ export class InfoSopComponent implements OnInit, OnDestroy {
     }
   }
 
-  // ====== Listado de soportes resueltos ======
+  // ============================
+  // sockets helpers
+  // ============================
+  private async ensureSocket(): Promise<void> {
+    try {
+      await this.socketService.connectSocket();
+    } catch {
+      // silencio
+    }
+  }
 
+  private emitSoporteActualizado(extra?: any): void {
+    // Backend: "soporteActualizado" -> server emite "soporteActualizadoNOC"
+    this.socketService.emit('soporteActualizado', {
+      id_sop: this.id_sop,
+      ord_ins: this.ord_Ins,
+      estado: this.solucionSeleccionada,
+      ...extra,
+    });
+  }
+
+  private emitTrabajoPreagendado(): void {
+    // Backend: "trabajoPreagendado" -> server emite "trabajoPreagendadoNOC"
+    this.socketService.emit('trabajoPreagendado');
+  }
+
+  // ============================
+  // Listado de soportes resueltos
+  // ============================
   async cargarSoportes(): Promise<void> {
     this.loadingSoportes = true;
     this.errorSoportes = null;
+
     try {
       const ord =
         typeof this.ordIns === 'string' ? Number(this.ordIns) : this.ordIns;
+
       if (!Number.isFinite(ord as number)) {
         this.soportesResueltos = [];
         this.errorSoportes = 'ord_ins inválido para cargar soportes.';
       } else {
         const data = await this.soportesService.getAllResueltosSopByOrdIns(
-          ord as number
+          ord as number,
         );
         this.soportesResueltos = Array.isArray(data) ? data : [];
       }
@@ -169,18 +199,17 @@ export class InfoSopComponent implements OnInit, OnDestroy {
       this.loadingSoportes = false;
     }
   }
+
   recargar(): void {
     void this.cargarSoportes();
   }
 
-  // ====== Carga detalle del soporte actual ======
+  // ============================
+  // Carga detalle del soporte actual
+  // ============================
   async cargarSoporte(id: number, ord_ins: string | number): Promise<void> {
     try {
       this.datosUsuario = await this.authService.getUsuarioAutenticado();
-      const reg_sop_registrado_por_id = this.datosUsuario?.id;
-
-      // Si luego se re-activa aceptar:
-      // await this.soportesService.aceptarSoporte(id, { reg_sop_noc_id_acepta: reg_sop_registrado_por_id });
 
       this.soporte = await this.soportesService.getSopById(id);
       this.solucionSeleccionada = this.soporte?.reg_sop_estado || 'REVISION';
@@ -191,10 +220,7 @@ export class InfoSopComponent implements OnInit, OnDestroy {
         this.servicioSeleccionado =
           await this.clienteService.getInfoServicioByOrdId(ordNum);
       } else {
-        console.warn(
-          '[InfoSop] ord_ins no numérico para getInfoServicioByOrdId:',
-          ord_ins
-        );
+        console.warn('[InfoSop] ord_ins no numérico:', ord_ins);
         this.servicioSeleccionado = null;
       }
     } catch (error) {
@@ -202,8 +228,10 @@ export class InfoSopComponent implements OnInit, OnDestroy {
     }
   }
 
-  // ====== Imágenes instalación ======
-  private cargarImagenesInstalacion(_: string, ord_Ins: string): void {
+  // ============================
+  // Imágenes instalación
+  // ============================
+  private cargarImagenesInstalacion(ord_Ins: string): void {
     this.imagesService.list('instalaciones', ord_Ins).subscribe({
       next: (items) => {
         this.imagenesInstalacion = this.adaptInstToLegacyMap(items);
@@ -215,7 +243,9 @@ export class InfoSopComponent implements OnInit, OnDestroy {
     });
   }
 
-  // ====== Imágenes visitas ======
+  // ============================
+  // Imágenes visitas
+  // ============================
   private async cargarImagenesVisitas(ord_Ins: string): Promise<void> {
     return new Promise<void>((resolve) => {
       if (!ord_Ins) {
@@ -225,7 +255,7 @@ export class InfoSopComponent implements OnInit, OnDestroy {
 
       console.debug(
         '[VIS][InfoSop] GET:',
-        `${environment.API_URL}/images/visitas/by-ord/${ord_Ins}`
+        `${environment.API_URL}/images/visitas/by-ord/${ord_Ins}`,
       );
 
       this.imagesService.listVisitasByOrdIns(ord_Ins).subscribe({
@@ -233,8 +263,8 @@ export class InfoSopComponent implements OnInit, OnDestroy {
           const arr = Array.isArray(visitas)
             ? visitas
             : visitas
-            ? [visitas]
-            : [];
+              ? [visitas]
+              : [];
           this.imagenesVisitas = (arr as any[]).map((v) => ({
             ...v,
             imagenes: this._adaptVisitaImgsToLegacyMap(v?.imagenes),
@@ -252,7 +282,7 @@ export class InfoSopComponent implements OnInit, OnDestroy {
 
   // Convierte ImageItem[] => { [clave]: { url, ruta } }
   private adaptInstToLegacyMap(
-    items: ImageItem[]
+    items: ImageItem[],
   ): Record<string, { url: string; ruta: string }> {
     const map: Record<string, { url: string; ruta: string }> = {};
     for (const it of items ?? []) {
@@ -262,8 +292,7 @@ export class InfoSopComponent implements OnInit, OnDestroy {
           ? `${base}_${it.position}`
           : base;
 
-      const url =
-        it.url ?? (it as any).ruta_absoluta ?? (it as any).ruta_relativa ?? '';
+      const url = (it as any).url || '';
       if (!url) continue;
 
       map[key] = { url, ruta: url };
@@ -272,10 +301,11 @@ export class InfoSopComponent implements OnInit, OnDestroy {
   }
 
   private _adaptVisitaImgsToLegacyMap(
-    imgs: Record<string, any> | ImageItem[] | undefined
+    imgs: Record<string, any> | ImageItem[] | undefined,
   ): Record<string, { url: string; ruta: string }> {
     const out: Record<string, { url: string; ruta: string }> = {};
 
+    // si backend ya manda map {img_1:{url},...}
     if (imgs && !Array.isArray(imgs)) {
       for (const [k, v] of Object.entries(imgs)) {
         const url = (v as any)?.url || (v as any)?.ruta || '';
@@ -285,6 +315,7 @@ export class InfoSopComponent implements OnInit, OnDestroy {
       return out;
     }
 
+    // si manda ImageItem[]
     const arr = Array.isArray(imgs) ? (imgs as ImageItem[]) : [];
     for (const it of arr) {
       const tag = (it.tag || 'img').trim();
@@ -293,14 +324,10 @@ export class InfoSopComponent implements OnInit, OnDestroy {
         tag === 'img' && pos > 0
           ? `img_${pos}`
           : pos > 0
-          ? `${tag}_${pos}`
-          : tag;
+            ? `${tag}_${pos}`
+            : tag;
 
-      const url =
-        (it as any).url ||
-        (it as any).ruta_absoluta ||
-        (it as any).ruta_relativa ||
-        '';
+      const url = (it as any).url || '';
       if (!url) continue;
       out[key] = { url, ruta: url };
     }
@@ -308,7 +335,9 @@ export class InfoSopComponent implements OnInit, OnDestroy {
     return out;
   }
 
-  // ====== Utilitarios ======
+  // ============================
+  // Utilitarios UI
+  // ============================
   copyIp(ip: string): void {
     const textarea = document.createElement('textarea');
     textarea.value = ip;
@@ -335,7 +364,9 @@ export class InfoSopComponent implements OnInit, OnDestroy {
     this.solucionSeleccionada = inputElement.value;
   }
 
-  // ====== Guardar solución ======
+  // ============================
+  // Guardar solución + sockets
+  // ============================
   async guardarSolucion() {
     if (!this.solucionSeleccionada) {
       Swal.fire({
@@ -345,6 +376,7 @@ export class InfoSopComponent implements OnInit, OnDestroy {
       });
       return;
     }
+
     if (!this.detalleSolucion || !this.detalleSolucion.trim()) {
       Swal.fire({
         title: 'Advertencia',
@@ -360,6 +392,10 @@ export class InfoSopComponent implements OnInit, OnDestroy {
       reg_sop_noc_id_acepta: this.datosUsuario?.id,
     };
 
+    // Asegura socket antes de emitir (por si entraste directo por URL)
+    void this.ensureSocket();
+
+    // ========= RESUELTO =========
     if (this.solucionSeleccionada === 'RESUELTO') {
       const result = await Swal.fire({
         title: '¿Estás seguro?',
@@ -372,22 +408,20 @@ export class InfoSopComponent implements OnInit, OnDestroy {
         cancelButtonText: 'Cancelar',
       });
 
-      if (!result.isConfirmed) {
-        Swal.fire({
-          title: 'Acción cancelada',
-          text: 'El soporte no ha sido marcado como resuelto.',
-          icon: 'info',
-          timer: 2000,
-          showConfirmButton: false,
-        });
-        return;
-      }
+      if (!result.isConfirmed) return;
 
       try {
         await this.soportesService.actualizarEstadoSop(
           String(this.id_sop),
-          body
+          body,
         );
+
+        // ✅ socket: soporte actualizado
+        this.emitSoporteActualizado({ motivo: 'RESUELTO' });
+
+        // opcional: refrescar lista
+        await this.cargarSoportes();
+
         this.router.navigateByUrl('/home/noc/soporte-tecnico');
       } catch ({ error }: any) {
         console.error(error);
@@ -400,6 +434,7 @@ export class InfoSopComponent implements OnInit, OnDestroy {
       return;
     }
 
+    // ========= LOS / VISITA =========
     if (
       this.solucionSeleccionada === 'LOS' ||
       this.solucionSeleccionada === 'VISITA'
@@ -415,23 +450,20 @@ export class InfoSopComponent implements OnInit, OnDestroy {
         cancelButtonText: 'Cancelar',
       });
 
-      if (!result.isConfirmed) {
-        Swal.fire({
-          title: 'Cancelado',
-          text: 'El soporte no fue agendado.',
-          icon: 'info',
-          timer: 2000,
-          showConfirmButton: false,
-        });
-        return;
-      }
+      if (!result.isConfirmed) return;
 
       try {
-        // 1) Actualiza estado del soporte
+        // 1) Actualiza soporte
         await this.soportesService.actualizarEstadoSop(
           String(this.id_sop),
-          body
+          body,
         );
+
+        // ✅ socket: soporte actualizado
+        this.emitSoporteActualizado({
+          motivo: 'AGENDAR',
+          tipo: this.solucionSeleccionada,
+        });
 
         // 2) Crea agenda
         const ageTipo =
@@ -442,7 +474,7 @@ export class InfoSopComponent implements OnInit, OnDestroy {
         const bodyAge: any = {
           ord_ins: this.ord_Ins,
           age_id_sop: this.id_sop,
-          age_diagnostico: this.detalleSolucion,
+          age_diagnostico: this.detalleSolucion.trim(),
           age_coordenadas: coords,
           age_telefono: this.soporte?.reg_sop_tel,
           age_tipo: ageTipo,
@@ -450,8 +482,12 @@ export class InfoSopComponent implements OnInit, OnDestroy {
 
         await this.agendaService.postSopAgenda(bodyAge);
 
-        // 3) Notifica por socket y navega
-        this.socketService.emit('trabajoPreagendado');
+        // ✅ socket: nuevo trabajo en preagenda
+        this.emitTrabajoPreagendado();
+
+        // opcional: refrescar lista
+        await this.cargarSoportes();
+
         this.router.navigateByUrl('/home/noc/soporte-tecnico');
       } catch ({ error }: any) {
         console.error(error);
@@ -460,10 +496,10 @@ export class InfoSopComponent implements OnInit, OnDestroy {
       return;
     }
 
-    // Otros estados
+    // ========= Otros estados =========
     const result = await Swal.fire({
       title: '¿Estás seguro?',
-      text: '¿GUARDAR LA SOLUCION?',
+      text: '¿GUARDAR LA SOLUCIÓN?',
       icon: 'warning',
       showCancelButton: true,
       confirmButtonColor: '#3085d6',
@@ -472,38 +508,37 @@ export class InfoSopComponent implements OnInit, OnDestroy {
       cancelButtonText: 'Cancelar',
     });
 
-    if (!result.isConfirmed) {
-      Swal.fire({
-        title: 'Cancelado',
-        text: 'El soporte no fue agendado.',
-        icon: 'info',
-        timer: 2000,
-        showConfirmButton: false,
-      });
-      return;
-    }
+    if (!result.isConfirmed) return;
 
     try {
       await this.soportesService.actualizarEstadoSop(String(this.id_sop), body);
-      this.socketService.emit('trabajoPreagendado');
+
+      // ✅ socket: soporte actualizado
+      this.emitSoporteActualizado({ motivo: 'CAMBIO_ESTADO' });
+
+      // opcional: refrescar lista
+      await this.cargarSoportes();
+
       this.router.navigateByUrl('/home/noc/soporte-tecnico');
     } catch (error) {
       console.error(error);
       Swal.fire({
         title: 'Error!',
-        text: 'Ocurrió un error al cerrar el soporte.',
+        text: 'Ocurrió un error al actualizar el soporte.',
         icon: 'error',
       });
     }
   }
 
-  // Mapea el tipo de visita a una clase de fondo
+  // ============================
+  // Badge visitas
+  // ============================
   getVisitaBadgeClass(tipo: string | null | undefined): string {
     const norm = (tipo ?? '')
       .toString()
       .toLowerCase()
       .normalize('NFD')
-      .replace(/[\u0300-\u036f]/g, '') // quita acentos
+      .replace(/[\u0300-\u036f]/g, '')
       .trim();
 
     switch (norm) {
@@ -518,7 +553,7 @@ export class InfoSopComponent implements OnInit, OnDestroy {
       case 'migracion':
         return 'bg-migracion';
       default:
-        return 'bg-secondary text-white'; // fallback Bootstrap
+        return 'bg-secondary text-white';
     }
   }
 }
