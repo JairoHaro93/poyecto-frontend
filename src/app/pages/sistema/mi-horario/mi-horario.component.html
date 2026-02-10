@@ -47,7 +47,7 @@
         </div>
       </div>
 
-      <!-- RESUMEN (como Flutter) -->
+      <!-- RESUMEN -->
       <div class="summary mt-3">
         <div class="sum-item">
           <div class="sum-label">Horas Acumuladas</div>
@@ -87,11 +87,10 @@
                 </ng-container>
                 <ng-template #sinTurno>Sin turno</ng-template>
               </div>
+
               <div class="marked">
-                Marcado:
-                {{ d.hora_entrada_real | date: "HH:mm" }}
-                -
-                {{ d.hora_salida_real | date: "HH:mm" }}
+                Marcado: {{ horaMarcada(d.hora_entrada_real) }} -
+                {{ horaMarcada(d.hora_salida_real) }}
               </div>
 
               <div class="obs" *ngIf="(d.observacion || '').trim().length">
@@ -101,35 +100,24 @@
 
             <!-- TRAILING -->
             <div class="trail">
+              <!-- Estado principal -->
               <span class="chip" [ngClass]="chipClassEstado(d)">{{
                 estadoUILabel(d)
               }}</span>
 
+              <!-- Hora acumulada -->
               <span
-                class="chip mt-1"
+                class="chip"
                 *ngIf="horaAcumuladaVisible(d)"
                 [ngClass]="chipClassHA(d)"
               >
                 {{ horaAcumuladaLabel(d) }}
               </span>
 
-              <span
-                class="chip mt-1"
-                *ngIf="(d.just_atraso_estado || 'NO') !== 'NO'"
-                [ngClass]="chipClassJust(d.just_atraso_estado)"
-              >
-                ATRASO
-                {{ shortEstado((d.just_atraso_estado || "").toUpperCase()) }}
-              </span>
-
-              <span
-                class="chip mt-1"
-                *ngIf="(d.just_salida_estado || 'NO') !== 'NO'"
-                [ngClass]="chipClassJust(d.just_salida_estado)"
-              >
-                INCOMPLETO
-                {{ shortEstado((d.just_salida_estado || "").toUpperCase()) }}
-              </span>
+              <!-- ✅ Incidencias SIN duplicados -->
+              <ng-container *ngFor="let c of incidenciaChips(d)">
+                <span class="chip" [ngClass]="c.cls">{{ c.text }}</span>
+              </ng-container>
 
               <button
                 class="btn-edit"
@@ -155,9 +143,7 @@
   </div>
 </div>
 
-<!-- =========================
-     MODAL (tipo Flutter)
-========================= -->
+<!-- MODAL -->
 <div class="modal-backdrop" *ngIf="modalOpen" (click)="cerrarModal()"></div>
 
 <div class="modal-shell" *ngIf="modalOpen">

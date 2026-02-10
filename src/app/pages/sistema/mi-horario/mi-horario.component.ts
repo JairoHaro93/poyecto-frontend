@@ -14,6 +14,8 @@ type EditForm = {
   motSalida: string;
 };
 
+type ChipVM = { text: string; cls: string };
+
 @Component({
   selector: 'app-mi-horario',
   standalone: true,
@@ -64,8 +66,10 @@ export class MiHorarioComponent implements OnInit {
     this.cargando = true;
     try {
       const res = await this.srv.getMiHorarioSemana(fechaYmd);
+
       this.desde = res.desde;
       this.hasta = res.hasta;
+
       this.totalHorasAcumuladasMin = Number(
         res.total_horas_acumuladas_min ?? 0,
       );
@@ -101,6 +105,16 @@ export class MiHorarioComponent implements OnInit {
     await this.cargarSemanaPorFecha(this.selectedYmd);
   }
 
+  private toBool(v: any): boolean {
+    if (v === true) return true;
+    if (v === false) return false;
+    if (typeof v === 'number') return v !== 0;
+    const s = String(v ?? '')
+      .trim()
+      .toLowerCase();
+    return s === '1' || s === 'true' || s === 'si' || s === 'yes' || s === 'ok';
+  }
+
   private normalize(d: DiaHorarioSemanaApi): DiaHorarioSemanaApi {
     return {
       ...d,
@@ -113,6 +127,7 @@ export class MiHorarioComponent implements OnInit {
         .toString()
         .toUpperCase()
         .trim(),
+
       just_atraso_estado: (d.just_atraso_estado ?? 'NO')
         .toString()
         .toUpperCase()
@@ -121,13 +136,22 @@ export class MiHorarioComponent implements OnInit {
         .toString()
         .toUpperCase()
         .trim(),
+
+      min_atraso: d.min_atraso == null ? 0 : Number(d.min_atraso) || 0,
+      min_salida_temprana:
+        d.min_salida_temprana == null ? 0 : Number(d.min_salida_temprana) || 0,
+
+      // flags
+      atraso_si: this.toBool(d.atraso_si),
+      salida_temprana_si: this.toBool(d.salida_temprana_si),
+      almuerzo_excedido_si: this.toBool(d.almuerzo_excedido_si),
     };
   }
 
   trackByFecha = (_: number, d: DiaHorarioSemanaApi) => d.fecha;
 
   // =========================
-  // UI helpers (similar Flutter)
+  // UI helpers
   // =========================
   get totalHorasAcumuladasHHMM() {
     return this.mmToHHMM(this.totalHorasAcumuladasMin);
@@ -137,6 +161,51 @@ export class MiHorarioComponent implements OnInit {
     return String(this.vacacionesDisponiblesDias ?? 0);
   }
 
+  // -------------------------
+  // JUST helpers
+  // -------------------------
+  private normEstado(v?: string | null): string {
+    return String(v ?? 'NO')
+      .trim()
+      .toUpperCase();
+  }
+
+  private shortEstado(st: string) {
+    switch (st) {
+      case 'SOLICITUD':
+        return 'SOL';
+      case 'APROBADO':
+      case 'APROBADA':
+        return 'OK';
+      case 'RECHAZADO':
+      case 'RECHAZADA':
+        return 'RECH';
+      case 'PENDIENTE':
+        return 'PEND';
+      default:
+        return st.length > 4 ? st.substring(0, 4) : st;
+    }
+  }
+
+  private esAprobadaJust(v?: string | null): boolean {
+    const s = this.normEstado(v);
+    return s === 'APROBADA' || s === 'APROBADO';
+  }
+
+  private esPendienteJust(v?: string | null): boolean {
+    const s = this.normEstado(v);
+    return s === 'PENDIENTE';
+  }
+
+  private esRechazadaJust(v?: string | null): boolean {
+    const s = this.normEstado(v);
+    return s === 'RECHAZADA' || s === 'RECHAZADO';
+  }
+
+  // -------------------------
+  // Estado principal (chip de arriba)
+  // ✅ si todo queda perdonado => COMPLETO
+  // -------------------------
   estadoUILabel(d: DiaHorarioSemanaApi): string {
     const tipo = (d.tipo_dia ?? 'NORMAL').toUpperCase();
     if (tipo !== 'NORMAL') return tipo;
@@ -149,8 +218,11 @@ export class MiHorarioComponent implements OnInit {
 
     if (this.isTodayObj(day)) {
       if (d.hora_entrada_real && !d.hora_salida_real) return 'EN CURSO';
-
       const est = (d.estado_asistencia ?? 'SIN_MARCA').toUpperCase();
+
+      // ✅ si el día tiene incidencias pero TODAS justificadas APROBADO => COMPLETO
+      if (this.todoPerdonado(d)) return 'COMPLETO';
+
       if (est === 'SIN_MARCA')
         return this.isBeforeHoraEntradaProgHoy(d) ? 'PROGRAMADO' : 'SIN MARCA';
       if (est === 'OK') return 'COMPLETO';
@@ -159,21 +231,128 @@ export class MiHorarioComponent implements OnInit {
 
     // pasado
     const est = (d.estado_asistencia ?? 'SIN_MARCA').toUpperCase();
+
+    if (this.todoPerdonado(d)) return 'COMPLETO';
+
     if (est === 'SIN_MARCA') return 'FALTA';
     if (est === 'OK') return 'COMPLETO';
     return est.replaceAll('_', ' ');
   }
 
+  private todoPerdonado(d: DiaHorarioSemanaApi): boolean {
+    // incidencias detectadas
+    const minA = Number(d.min_atraso ?? 0) || 0;
+    const minS = Number(d.min_salida_temprana ?? 0) || 0;
+
+    const atr = !!d.atraso_si || minA > 0;
+    const sal = !!d.salida_temprana_si || minS > 0;
+    const alm = !!d.almuerzo_excedido_si;
+
+    // si no hay incidencias, no aplica “perdonado”
+    if (!atr && !sal && !alm) return false;
+
+    // atraso perdonado si está y está aprobado
+    const atrOk = !atr || this.esAprobadaJust(d.just_atraso_estado);
+    // salida perdonada si está y está aprobado
+    const salOk = !sal || this.esAprobadaJust(d.just_salida_estado);
+    // almuerzo (por ahora) NO tiene justificación en tu modelo => si existe, NO se perdona
+    const almOk = !alm;
+
+    return atrOk && salOk && almOk;
+  }
+
   chipClassEstado(d: DiaHorarioSemanaApi): string {
     const s = this.estadoUILabel(d);
+
     if (['COMPLETO', 'OK'].includes(s)) return 'chip-ok';
-    if (['ATRASO', 'INCOMPLETO', 'FALTA', 'SIN MARCA'].includes(s))
-      return 'chip-bad';
-    if (['EN CURSO'].includes(s)) return 'chip-warn';
     if (['PROGRAMADO'].includes(s)) return 'chip-info';
+    if (['EN CURSO'].includes(s)) return 'chip-warn';
+
+    // el resto
+    if (['FALTA', 'INCOMPLETO'].includes(s)) return 'chip-bad';
+    if (['ATRASO', 'SIN MARCA', 'SOLO ENTRADA', 'SOLO SALIDA'].includes(s))
+      return 'chip-warn';
+
     return 'chip-muted';
   }
 
+  // -------------------------
+  // ✅ Chips de incidencias SIN duplicar
+  // -------------------------
+  incidenciaChips(d: DiaHorarioSemanaApi): ChipVM[] {
+    const chips: ChipVM[] = [];
+
+    const minA = Number(d.min_atraso ?? 0) || 0;
+    const minS = Number(d.min_salida_temprana ?? 0) || 0;
+
+    const atr = !!d.atraso_si || minA > 0;
+    const sal = !!d.salida_temprana_si || minS > 0;
+    const alm = !!d.almuerzo_excedido_si;
+
+    const stAtr = this.normEstado(d.just_atraso_estado);
+    const stSal = this.normEstado(d.just_salida_estado);
+
+    // ATRASO
+    if (atr) {
+      let text = `ATRASO${minA > 0 ? ` ${minA}m` : ''}`;
+      if (stAtr !== 'NO') text += ` (JUST ${this.shortEstado(stAtr)})`;
+
+      const cls = this.esAprobadaJust(stAtr)
+        ? 'chip-ok'
+        : this.esPendienteJust(stAtr)
+          ? 'chip-warn'
+          : this.esRechazadaJust(stAtr)
+            ? 'chip-bad'
+            : 'chip-warn';
+
+      chips.push({ text, cls });
+    } else if (stAtr !== 'NO') {
+      // justificación sin atraso visible (caso raro) => mostramos solo JUST
+      const text = `JUST ATRASO ${this.shortEstado(stAtr)}`;
+      const cls = this.esAprobadaJust(stAtr)
+        ? 'chip-ok'
+        : this.esPendienteJust(stAtr)
+          ? 'chip-warn'
+          : 'chip-bad';
+      chips.push({ text, cls });
+    }
+
+    // SALIDA TEMPRANA
+    if (sal) {
+      let text = `SALIDA${minS > 0 ? ` ${minS}m` : ''}`;
+      if (stSal !== 'NO') text += ` (JUST ${this.shortEstado(stSal)})`;
+
+      const cls = this.esAprobadaJust(stSal)
+        ? 'chip-ok'
+        : this.esPendienteJust(stSal)
+          ? 'chip-warn'
+          : this.esRechazadaJust(stSal)
+            ? 'chip-bad'
+            : 'chip-warn';
+
+      chips.push({ text, cls });
+    } else if (stSal !== 'NO') {
+      const text = `JUST SALIDA ${this.shortEstado(stSal)}`;
+      const cls = this.esAprobadaJust(stSal)
+        ? 'chip-ok'
+        : this.esPendienteJust(stSal)
+          ? 'chip-warn'
+          : 'chip-bad';
+      chips.push({ text, cls });
+    }
+
+    // ALMUERZO EXCEDIDO (llamado de atención si es true)
+    if (alm) {
+      // si quieres que diga “LLAMADO”, déjalo así:
+      chips.push({ text: 'ALMUERZO EXCEDIDO', cls: 'chip-warn' });
+    }
+
+    return chips;
+  }
+
+  // -------------------------
+  // Horas acumuladas (chip)
+  // -------------------------
   horaAcumuladaVisible(d: DiaHorarioSemanaApi): boolean {
     return (d.estado_hora_acumulada ?? 'NO').toUpperCase() !== 'NO';
   }
@@ -193,33 +372,8 @@ export class MiHorarioComponent implements OnInit {
     return 'chip-muted';
   }
 
-  chipClassJust(estado?: string | null): string {
-    const s = (estado ?? 'NO').toUpperCase();
-    if (s.includes('APRO')) return 'chip-ok';
-    if (s.includes('RECH')) return 'chip-bad';
-    if (s.includes('PEND')) return 'chip-warn';
-    return 'chip-muted';
-  }
-
-  shortEstado(st: string) {
-    switch (st) {
-      case 'SOLICITUD':
-        return 'SOL';
-      case 'APROBADO':
-      case 'APROBADA':
-        return 'OK';
-      case 'RECHAZADO':
-      case 'RECHAZADA':
-        return 'RECH';
-      case 'PENDIENTE':
-        return 'PENDIENTE';
-      default:
-        return st.length > 4 ? st.substring(0, 4) : st;
-    }
-  }
-
   // =========================
-  // Permisos (igual lógica Flutter)
+  // Permisos (igual Flutter)
   // =========================
   isTodayYmd(ymd: string) {
     return this.isTodayObj(this.parseYmdLocal(ymd));
@@ -232,7 +386,7 @@ export class MiHorarioComponent implements OnInit {
   }
 
   puedeSolicitarJustAtraso(d: DiaHorarioSemanaApi): boolean {
-    if (!this.isTodayYmd(d.fecha)) return false; // ✅ solo HOY (regla del módulo)
+    if (!this.isTodayYmd(d.fecha)) return false;
     if (!d.id || !d.tiene_turno) return false;
     if ((d.tipo_dia ?? 'NORMAL').toUpperCase() !== 'NORMAL') return false;
 
@@ -241,7 +395,7 @@ export class MiHorarioComponent implements OnInit {
   }
 
   puedeSolicitarJustSalida(d: DiaHorarioSemanaApi): boolean {
-    if (!this.isTodayYmd(d.fecha)) return false; // ✅ solo HOY
+    if (!this.isTodayYmd(d.fecha)) return false;
     if (!d.id || !d.tiene_turno) return false;
     if ((d.tipo_dia ?? 'NORMAL').toUpperCase() !== 'NORMAL') return false;
 
@@ -262,13 +416,12 @@ export class MiHorarioComponent implements OnInit {
   abrirModalEditar(d: DiaHorarioSemanaApi) {
     this.diaEdit = d;
 
-    // permisos
     this.puedeObsHA = this.puedeEditarObsHA(d);
     this.puedeJustA = this.puedeSolicitarJustAtraso(d);
     this.puedeJustS = this.puedeSolicitarJustSalida(d);
 
-    // form init
     const obs = (d.observacion ?? '').trim();
+
     let haMin = this.haToMinutes(d.num_minutos_acumulados);
     if (haMin === 30) haMin = 60;
     if (haMin > 0 && haMin < 60) haMin = 60;
@@ -292,9 +445,6 @@ export class MiHorarioComponent implements OnInit {
     this.diaEdit = null;
   }
 
-  // =========================
-  // Stepper HA (0 -> 60 -> +30)
-  // =========================
   haInc() {
     if (!this.puedeObsHA) return;
     const v = this.form.haMin;
@@ -309,19 +459,14 @@ export class MiHorarioComponent implements OnInit {
     else this.form.haMin = Math.max(0, v - 30);
   }
 
-  // =========================
-  // Guardar
-  // =========================
   async guardarModal() {
     const d = this.diaEdit;
     if (!d) return;
 
-    // Normalizar uppercase (como UpperCaseTextFormatter)
     this.form.obs = (this.form.obs ?? '').toUpperCase();
     this.form.motAtraso = (this.form.motAtraso ?? '').toUpperCase();
     this.form.motSalida = (this.form.motSalida ?? '').toUpperCase();
 
-    // ✅ Validación: si solicita HA (haMin>0) obs >=5
     if (this.puedeObsHA && this.form.haMin > 0) {
       const motivo = (this.form.obs ?? '').trim();
       if (motivo.length < 5) {
@@ -332,7 +477,6 @@ export class MiHorarioComponent implements OnInit {
       }
     }
 
-    // ✅ Validación backend justificaciones: motivo >=5 si se envía
     if (this.puedeJustA) {
       const m = (this.form.motAtraso ?? '').trim();
       if (m && m.length < 5) {
@@ -350,7 +494,6 @@ export class MiHorarioComponent implements OnInit {
 
     this.cargando = true;
     try {
-      // 1) Observación + HA (solo si permitido)
       if (this.puedeObsHA) {
         await this.srv.putObservacionTurnoHoy({
           observacion: (this.form.obs ?? '').trim() || null,
@@ -359,20 +502,15 @@ export class MiHorarioComponent implements OnInit {
         });
       }
 
-      // 2) Solicitar justificaciones (solo si permitido y hay texto)
       if (d.id) {
         if (this.puedeJustA) {
           const motivo = (this.form.motAtraso ?? '').trim();
-          if (motivo.length >= 5) {
-            await this.srv.postJustAtraso(d.id, motivo);
-          }
+          if (motivo.length >= 5) await this.srv.postJustAtraso(d.id, motivo);
         }
 
         if (this.puedeJustS) {
           const motivo = (this.form.motSalida ?? '').trim();
-          if (motivo.length >= 5) {
-            await this.srv.postJustSalida(d.id, motivo);
-          }
+          if (motivo.length >= 5) await this.srv.postJustSalida(d.id, motivo);
         }
       }
 
@@ -429,6 +567,20 @@ export class MiHorarioComponent implements OnInit {
     return String(hm).slice(0, 5);
   }
 
+  horaMarcada(dt?: string | null): string {
+    if (!dt) return '-';
+    try {
+      const d = new Date(dt);
+      if (Number.isNaN(d.getTime())) return '-';
+      return new Intl.DateTimeFormat('es-EC', {
+        hour: '2-digit',
+        minute: '2-digit',
+      }).format(d);
+    } catch {
+      return '-';
+    }
+  }
+
   mmToHHMM(min: number) {
     const sign = min < 0 ? '-' : '';
     const abs = Math.abs(min);
@@ -472,7 +624,6 @@ export class MiHorarioComponent implements OnInit {
 
   private parseYmdLocal(ymd: string): Date {
     const [y, m, d] = (ymd ?? '').split('-').map((n) => Number(n));
-    // 12:00 para evitar temas DST
     return new Date(y, (m || 1) - 1, d || 1, 12, 0, 0);
   }
 

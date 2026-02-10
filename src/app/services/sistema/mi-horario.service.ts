@@ -8,10 +8,10 @@ export interface DiaHorarioSemanaApi {
   fecha: string; // YYYY-MM-DD
   tiene_turno: boolean;
 
-  hora_entrada_prog?: string | null; // HH:mm
-  hora_salida_prog?: string | null; // HH:mm
+  hora_entrada_prog?: string | null; // HH:mm / HH:mm:ss
+  hora_salida_prog?: string | null; // HH:mm / HH:mm:ss
 
-  // backend puede devolver DATETIME; tú lo renderizas como texto
+  // backend puede devolver DATETIME (string)
   hora_entrada_real?: string | null;
   hora_salida_real?: string | null;
 
@@ -20,19 +20,26 @@ export interface DiaHorarioSemanaApi {
 
   min_trabajados?: number | null;
   min_atraso?: number | null;
-  min_extra?: number | null; // informativo
+  min_salida_temprana?: number | null;
 
   observacion?: string | null;
   sucursal?: string | null;
 
+  // Horas acumuladas
   estado_hora_acumulada: string; // NO|SOLICITUD|APROBADO|RECHAZADO
   num_minutos_acumulados?: number | null;
 
+  // Justificaciones
   just_atraso_estado?: string | null; // NO|PENDIENTE|APROBADA|RECHAZADA
   just_atraso_motivo?: string | null;
 
   just_salida_estado?: string | null;
   just_salida_motivo?: string | null;
+
+  // ✅ Flags calculadas (vienen del SQL)
+  atraso_si?: any;
+  salida_temprana_si?: any;
+  almuerzo_excedido_si?: any;
 }
 
 export interface MiHorarioSemanaResponseApi {
