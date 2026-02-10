@@ -1,17 +1,17 @@
 :host {
   --panel-open-dur: 1s;
-  --panel-close-dur: 0.5s; /* tu valor */
+  --panel-close-dur: 2s;
   --panel-opacity-dur: 0.2s;
   --panel-ease: cubic-bezier(0.2, 0.8, 0.2, 1);
 
-  /* Modal (porque en tu CSS se usa y no estaba definido aquí) */
+  /* Modal (porque lo usas abajo) */
   --modal-dur: 220ms;
   --modal-ease: cubic-bezier(0.2, 0.8, 0.2, 1);
   --backdrop-op: 0.55;
 }
 
 /* ===========================================================
-   PANEL TOP-SHEET (STICKY + SLIDE)  ✅ SIN BLUR
+   PANEL TOP-SHEET (STICKY + SIN ANIMACIÓN)
    =========================================================== */
 
 /* Contenedor sticky completo */
@@ -31,11 +31,7 @@
   margin-bottom: 0;
 }
 
-/* -------------------------
-   PANEL ASIGNACIÓN
-   - SIN transform en wrapper (evita texto difuminado)
-   - Slide visual con margin-top en .asignar-panel
-   ------------------------- */
+/* ===================  PANEL ASIGNACIÓN (SIN ANIMACIÓN) ======================= */
 
 /* CERRADO */
 .asignar-panel-wrap {
@@ -43,31 +39,13 @@
   overflow: hidden;
   opacity: 0;
   pointer-events: none;
-
-  will-change: max-height, opacity;
-
-  transition-property: max-height, opacity;
-  transition-duration: var(--panel-close-dur), var(--panel-opacity-dur);
-  transition-timing-function: var(--panel-ease), ease;
 }
 
 /* ABIERTO */
 .asignar-panel-wrap.open {
-  max-height: 1200px; /* grande para no recortar */
+  max-height: 1200px; /* ajusta si crece más */
   opacity: 1;
   pointer-events: auto;
-
-  transition-duration: var(--panel-open-dur), var(--panel-opacity-dur);
-}
-
-/* Slide SIN transform (evita blur en letras) */
-.asignar-panel {
-  margin-top: -10px;
-  transition: margin-top var(--panel-open-dur) var(--panel-ease);
-  -webkit-font-smoothing: auto;
-}
-.asignar-panel-wrap.open .asignar-panel {
-  margin-top: 0;
 }
 
 /* Panel compacto estilo "cajas" */
@@ -132,7 +110,7 @@
 
   .agenda-sticky.panel-open .asignar-panel-wrap.open {
     flex: 1 1 auto;
-    max-height: 100vh; /* ✅ animable */
+    max-height: 100vh;
     overflow: auto; /* scroll interno */
   }
 
@@ -222,7 +200,8 @@ td button {
 }
 
 /* ===========================================================
-   MODALES (base + animación)
+   MODALES (base + animación Bootstrap)
+   (Si quisieras también quitar esta animación, lo hacemos)
    =========================================================== */
 .modal-content {
   border-radius: 12px;
@@ -393,8 +372,7 @@ td button {
   color: white;
 }
 
-/* ⚠️ OJO: esto hace que TODO .text-muted sea rojo.
-   Si quieres que "text-muted" sea gris, borra esta regla. */
+/* ⚠️ OJO: esto hace que TODO .text-muted sea rojo. */
 .text-muted {
   color: #cc2929 !important;
 }
@@ -459,14 +437,9 @@ img.img-fluid.w-100.rounded {
 }
 
 /* ===========================================================
-   ANIMACIÓN CONTENIDO (fade)
+   ANIMACIÓN CONTENIDO (fade)  ✅ DESACTIVADA
    =========================================================== */
 .fade-in {
-  opacity: 0;
-  animation: fadeIn 0.35s ease-out forwards;
-}
-@keyframes fadeIn {
-  to {
-    opacity: 1;
-  }
+  opacity: 1;
+  animation: none;
 }
