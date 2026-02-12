@@ -38,6 +38,7 @@ import { HorariosComponent } from './pages/negocio/administrador/horarios/horari
 import { HorasExtrasService } from './services/negocio_latacunga/horas-extras.service';
 import { HorasextraComponent } from './pages/negocio/administrador/horasextra/horasextra.component';
 import { MiHorarioComponent } from './pages/sistema/mi-horario/mi-horario.component';
+import { OltComponent } from './pages/negocio/noc/olt/olt.component';
 
 export const routes: Routes = [
   { path: '', pathMatch: 'full', redirectTo: 'login' },
@@ -202,6 +203,12 @@ export const routes: Routes = [
             path: 'agenda',
             component: AgendaComponent,
             canActivate: [permisosGuard('NAgenda')],
+          },
+
+          {
+            path: 'olt',
+            component: OltComponent,
+            canActivate: [permisosGuard('NOLT')],
           },
         ],
       },

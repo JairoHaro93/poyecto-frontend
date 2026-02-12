@@ -251,6 +251,14 @@
               Mapeo cajas
             </li>
           }
+           @if (arrNoc.includes("NOLT")) {
+            <li
+              (click)="onClickMenu()"
+              [routerLink]="['/home/noc/olt']"
+            >
+              OLT
+            </li>
+          }
           @if (arrNoc.includes("NNueva Instalacion")) {
             <li
               (click)="onClickMenu()"

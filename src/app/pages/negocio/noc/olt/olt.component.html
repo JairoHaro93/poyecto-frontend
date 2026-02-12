@@ -1,1 +1,22 @@
 <p>olt works!</p>
+<div class="olt-wrap">
+  <h4 class="title">Conexión a OLT (MA5800-X15)</h4>
+
+  <button class="btn" (click)="conectar()" [disabled]="estado === 'CONNECTING'">
+    {{ estado === 'CONNECTING' ? 'Conectando...' : 'Conectar' }}
+  </button>
+
+  <div
+    class="status"
+    [class.ok]="estado === 'OK'"
+    [class.err]="estado === 'ERROR'"
+    [class.wait]="estado === 'CONNECTING'"
+  >
+    <span class="dot"></span>
+    <span class="text">{{ estadoLabel }}</span>
+  </div>
+
+  @if (detalle) {
+    <p class="detalle">{{ detalle }}</p>
+  }
+</div>

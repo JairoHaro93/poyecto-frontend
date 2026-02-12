@@ -1,0 +1,70 @@
+.olt-wrap {
+  max-width: 520px;
+  margin: 24px auto;
+  padding: 16px;
+  border: 1px solid #e9e9e9;
+  border-radius: 12px;
+  background: #fff;
+}
+
+.title {
+  margin: 0 0 14px 0;
+  font-weight: 700;
+}
+
+.btn {
+  border: 0;
+  padding: 10px 14px;
+  border-radius: 10px;
+  cursor: pointer;
+  font-weight: 700;
+  background: #111;
+  color: #fff;
+}
+
+.btn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.status {
+  margin-top: 14px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid #eee;
+  background: #fafafa;
+}
+
+.dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #999;
+}
+
+.status.wait .dot {
+  background: #999;
+}
+
+.status.ok .dot {
+  background: #1a7f37;
+}
+
+.status.err .dot {
+  background: #c1121f;
+}
+
+.text {
+  font-weight: 600;
+}
+
+.detalle {
+  margin: 10px 0 0 0;
+  color: #555;
+  font-size: 13px;
+  line-height: 1.35;
+  word-break: break-word;
+}
