@@ -1,22 +1,29 @@
-<p>olt works!</p>
-<div class="olt-wrap">
-  <h4 class="title">Conexión a OLT (MA5800-X15)</h4>
+<div class="olt-card">
+  <div class="top">
+    <div class="left">
+      <div class="title">OLT MA5800-X15</div>
+      <div class="subtitle">Prueba de conexión</div>
+    </div>
 
-  <button class="btn" (click)="conectar()" [disabled]="estado === 'CONNECTING'">
-    {{ estado === 'CONNECTING' ? 'Conectando...' : 'Conectar' }}
-  </button>
-
-  <div
-    class="status"
-    [class.ok]="estado === 'OK'"
-    [class.err]="estado === 'ERROR'"
-    [class.wait]="estado === 'CONNECTING'"
-  >
-    <span class="dot"></span>
-    <span class="text">{{ estadoLabel }}</span>
+    <div class="right">
+      <span [class]="badgeClass">{{ estadoTexto }}</span>
+    </div>
   </div>
 
-  @if (detalle) {
-    <p class="detalle">{{ detalle }}</p>
-  }
+  <div class="actions">
+    <button class="btn" (click)="conectar()" [disabled]="estado === 'CONECTANDO' || estado === 'COOLDOWN'">
+      {{ estado === 'CONECTANDO' ? 'Conectando...' : 'Conectar' }}
+    </button>
+
+    <label class="chk">
+      <input type="checkbox" [(ngModel)]="debug" />
+      <span>debug</span>
+    </label>
+  </div>
+
+  <div class="msg" *ngIf="mensaje">
+    {{ mensaje }}
+  </div>
+
+  <pre class="out" *ngIf="output">{{ output }}</pre>
 </div>

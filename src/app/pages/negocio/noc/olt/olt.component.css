@@ -1,70 +1,92 @@
-.olt-wrap {
+.olt-card {
   max-width: 520px;
-  margin: 24px auto;
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
   padding: 16px;
-  border: 1px solid #e9e9e9;
-  border-radius: 12px;
   background: #fff;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.06);
+}
+
+.top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
 }
 
 .title {
-  margin: 0 0 14px 0;
   font-weight: 700;
+  font-size: 16px;
+}
+
+.subtitle {
+  color: #6b7280;
+  font-size: 12px;
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 10px 0 6px;
 }
 
 .btn {
-  border: 0;
-  padding: 10px 14px;
+  border: none;
   border-radius: 10px;
+  padding: 10px 14px;
   cursor: pointer;
-  font-weight: 700;
-  background: #111;
+  font-weight: 600;
+  background: #111827;
   color: #fff;
 }
 
 .btn:disabled {
-  opacity: 0.7;
+  opacity: 0.6;
   cursor: not-allowed;
 }
 
-.status {
-  margin-top: 14px;
-  display: flex;
+.chk {
+  display: inline-flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
+  font-size: 13px;
+  color: #374151;
+  user-select: none;
+}
+
+.badge {
+  padding: 6px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+  border: 1px solid transparent;
+}
+
+.badge.idle { background: #f3f4f6; color: #374151; border-color: #e5e7eb; }
+.badge.con  { background: #eff6ff; color: #1d4ed8; border-color: #bfdbfe; }
+.badge.ok   { background: #ecfdf5; color: #047857; border-color: #a7f3d0; }
+.badge.err  { background: #fef2f2; color: #b91c1c; border-color: #fecaca; }
+.badge.cool { background: #fffbeb; color: #b45309; border-color: #fde68a; }
+
+.msg {
+  margin-top: 10px;
   padding: 10px 12px;
   border-radius: 10px;
-  border: 1px solid #eee;
-  background: #fafafa;
-}
-
-.dot {
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  background: #999;
-}
-
-.status.wait .dot {
-  background: #999;
-}
-
-.status.ok .dot {
-  background: #1a7f37;
-}
-
-.status.err .dot {
-  background: #c1121f;
-}
-
-.text {
-  font-weight: 600;
-}
-
-.detalle {
-  margin: 10px 0 0 0;
-  color: #555;
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  color: #111827;
   font-size: 13px;
-  line-height: 1.35;
-  word-break: break-word;
+}
+
+.out {
+  margin-top: 10px;
+  padding: 12px;
+  border-radius: 10px;
+  background: #0b1020;
+  color: #d1e7ff;
+  overflow: auto;
+  font-size: 12px;
+  max-height: 260px;
 }
