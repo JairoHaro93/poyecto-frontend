@@ -182,6 +182,40 @@
       </td>
     </tr>
 
+
+
+    <tr>
+      <th scope="row">Teléfonos Instalación</th>
+      <td>{{ servicioSeleccionado?.servicios[0]?.telefonos }}</td>
+    </tr>
+
+    <tr>
+      <th scope="row">Técnico Instalador</th>
+      <td>{{ servicioSeleccionado?.servicios[0]?.instalado_por }}</td>
+    </tr>
+
+  </tbody>
+</table>
+
+
+
+      <!-- SECCION DE SOLUCION-->
+      <div
+        class="opciones-resolucion d-flex flex-column border border-2 p-1 bg-dark-subtle"
+      >
+        <!-- SECCION DE DESCRIPCION SOLUCION-->
+        <div class="solucion w-100">
+          <textarea
+            id="solucionInput"
+            class="form-control w-100"
+            rows="3"
+            [(ngModel)]="detalleSolucion"
+            name="solucion"
+            placeholder="Describe la solución"
+            (ngModelChange)="detalleSolucion = ($event || '').toUpperCase()"
+          ></textarea>
+        </div>
+
     <!-- ✅ AQUÍ VA EL RESULTADO (DENTRO DE LA MISMA TABLA) -->
    @if (onuSn && showOntPanel) {
   <tr>
@@ -250,40 +284,6 @@
     </td>
   </tr>
 }
-
-
-    <tr>
-      <th scope="row">Teléfonos Instalación</th>
-      <td>{{ servicioSeleccionado?.servicios[0]?.telefonos }}</td>
-    </tr>
-
-    <tr>
-      <th scope="row">Técnico Instalador</th>
-      <td>{{ servicioSeleccionado?.servicios[0]?.instalado_por }}</td>
-    </tr>
-
-  </tbody>
-</table>
-
-
-
-      <!-- SECCION DE SOLUCION-->
-      <div
-        class="opciones-resolucion d-flex flex-column border border-2 p-1 bg-dark-subtle"
-      >
-        <!-- SECCION DE DESCRIPCION SOLUCION-->
-        <div class="solucion w-100">
-          <textarea
-            id="solucionInput"
-            class="form-control w-100"
-            rows="3"
-            [(ngModel)]="detalleSolucion"
-            name="solucion"
-            placeholder="Describe la solución"
-            (ngModelChange)="detalleSolucion = ($event || '').toUpperCase()"
-          ></textarea>
-        </div>
-
 
 
         <!-- SECCION DE OPCIONES SOLUCION-->
