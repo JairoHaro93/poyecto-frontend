@@ -5,8 +5,8 @@
 
         <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
           <div>
-            <h5 class="mb-0">OLT MA5800-X15</h5>
-            <small class="text-muted">Prueba de conexión (display time)</small>
+            <h5 class="mb-0">Consulta ONT</h5>
+         
           </div>
 
           <span class="badge text-white" [ngClass]="badgeClass">
@@ -14,32 +14,45 @@
           </span>
         </div>
 
-        <form [formGroup]="oltForm" (ngSubmit)="submitForm()" class="mt-3">
-          <div class="d-flex align-items-center gap-3 flex-wrap">
-            <button
-              type="submit"
-              class="btn btn-dark"
-              [disabled]="estado === 'CONECTANDO' || estado === 'COOLDOWN'"
-            >
-              @if (estado === 'CONECTANDO') {
-                Conectando...
-              } @else if (estado === 'COOLDOWN') {
-                Espera...
-              } @else {
-                Probar conexión
+        <form [formGroup]="oltForm" (ngSubmit)="consultarOnt()" class="mt-3">
+          <div class="row g-2 align-items-end">
+            <div class="col-12 col-md-7">
+              <label class="form-label mb-1">Serie ONT</label>
+              <input
+                type="text"
+                class="form-control"
+                formControlName="sn"
+              
+                (input)="normalizeInput('sn')"
+              />
+
+              @if (checkError('sn','required')) {
+                <small class="text-danger">Requerido</small>
               }
-            </button>
+              @if (checkError('sn','snInvalid')) {
+                <small class="text-danger">
+                  Formato inválido..
+                </small>
+              }
+            </div>
 
-            <label class="form-check mb-0">
-              <input class="form-check-input" type="checkbox" formControlName="debug" />
-              <span class="form-check-label">debug</span>
-            </label>
+            <div class="col-12 col-md-5">
+              <button
+                type="submit"
+                class="btn btn-dark w-100"
+                [disabled]="estado === 'CONECTANDO' || estado === 'COOLDOWN'"
+              >
+                @if (estado === 'CONECTANDO') { Consultando... }
+                @else if (estado === 'COOLDOWN') { Espera... }
+                @else { Consultar}
+              </button>
 
-            @if (estado === 'COOLDOWN') {
-              <small class="text-warning fw-semibold">
-                Reintento en {{ cooldownSec }}s
-              </small>
-            }
+              @if (estado === 'COOLDOWN') {
+                <small class="text-warning fw-semibold d-block mt-2">
+                  Reintento en {{ cooldownSec }}s
+                </small>
+              }
+            </div>
           </div>
         </form>
 
@@ -49,15 +62,54 @@
           </div>
         }
 
-        @if (time) {
-          <div class="time-box mt-3">
-            <div class="time-label">Hora OLT</div>
-            <div class="time-value">{{ time }}</div>
-          </div>
-        }
+        @if (result) {
+          <div class="mt-3 result-card">
+            <div class="row g-2">
+              <div class="col-12 col-md-6">
+                <div class="kv"><span>SN</span><b>{{ result.sn }}</b></div>
+                <div class="kv"><span>F/S/P</span><b>{{ result.fsp || '—' }}</b></div>
+                <div class="kv"><span>ONT-ID</span><b>{{ result.ontId ?? '—' }}</b></div>
+                <div class="kv"><span>Distancia</span><b>{{ result.ontLastDistanceM ?? '—' }} m</b></div>
+              </div>
 
-        @if (raw) {
-          <pre class="out mt-3">{{ raw }}</pre>
+              <div class="col-12 col-md-6">
+                <div class="kv"><span>Estado</span><b>{{ result.runState || '—' }}</b></div>
+                <div class="kv"><span>Causa caída</span><b>{{ result.lastDownCause || '—' }}</b></div>
+                <div class="kv"><span>Último UP</span><b>{{ result.lastUpTime || '—' }}</b></div>
+                <div class="kv"><span>Online</span><b>{{ result.onlineDuration || '—' }}</b></div>
+              </div>
+
+              <div class="col-12">
+                <div class="kv">
+                  <span>Descripción</span>
+                  <b>{{ result.description || '—' }}</b>
+                </div>
+              </div>
+            </div>
+
+            @if (result.optical) {
+              <hr class="my-3" />
+              <div class="fw-bold mb-2">Potencia</div>
+
+              @if (!result.optical.available) {
+                <div class="text-muted small">
+                  No disponible: {{ result.optical.reason || '—' }}
+                </div>
+              } @else {
+                <div class="row g-2">
+                  <div class="col-12 col-md-4">
+                    <div class="kv"><span>Rx (ONT)</span><b>{{ result.optical.rxDbm ?? '—' }} dBm</b></div>
+                  </div>
+                  <div class="col-12 col-md-4">
+                    <div class="kv"><span>Tx (ONT)</span><b>{{ result.optical.txDbm ?? '—' }} dBm</b></div>
+                  </div>
+                  <div class="col-12 col-md-4">
+                    <div class="kv"><span>OLT Rx</span><b>{{ result.optical.oltRxDbm ?? '—' }} dBm</b></div>
+                  </div>
+                </div>
+              }
+            }
+          </div>
         }
       </div>
     </div>

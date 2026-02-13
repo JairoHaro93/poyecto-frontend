@@ -1,13 +1,37 @@
+// src/app/services/negocio_latacunga/olt.services.ts
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../environments/environment';
 
-export interface OltTestResponse {
+export interface OntOpticalInfo {
+  available: boolean;
+  reason?: string;
+  rxDbm: number | null;
+  txDbm: number | null;
+  oltRxDbm: number | null;
+}
+
+export interface OntInfoBySnResponse {
   ok: boolean;
-  message?: string;
-  time?: string | null; // ✅ viene del backend
-  raw?: string; // ✅ solo si debug=true
-  error?: any; // backend manda { error: { message } }
+  cmdId: 'ONT_INFO_BY_SN';
+  sn: string;
+
+  fsp: string | null;
+  ontId: number | null;
+  runState: string | null;
+
+  description: string | null;
+  ontLastDistanceM: number | null;
+
+  lastDownCause: string | null;
+  lastUpTime: string | null;
+  lastDownTime: string | null;
+  lastDyingGaspTime: string | null;
+  onlineDuration: string | null;
+
+  optical?: OntOpticalInfo;
+
+  error?: any;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -16,13 +40,15 @@ export class OltService {
 
   constructor(private http: HttpClient) {}
 
-  testConnection(debug = false) {
-    const params: any = {};
-    if (debug) params.debug = 'true';
-
-    return this.http.get<OltTestResponse>(`${this.baseUrl}/test`, {
-      withCredentials: true,
-      params,
-    });
+  // ✅ siempre incluye potencia
+  ontInfoBySn(snHex16: string) {
+    return this.http.post<OntInfoBySnResponse>(
+      `${this.baseUrl}/exec`,
+      {
+        cmdId: 'ONT_INFO_BY_SN',
+        args: { sn: snHex16, includeOptical: true },
+      },
+      { withCredentials: true },
+    );
   }
 }
