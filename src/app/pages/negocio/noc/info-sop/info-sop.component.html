@@ -216,74 +216,7 @@
           ></textarea>
         </div>
 
-    <!-- ✅ AQUÍ VA EL RESULTADO (DENTRO DE LA MISMA TABLA) -->
-   @if (onuSn && showOntPanel) {
-  <tr>
-    <td colspan="2">
 
-      @if (ontMensaje) {
-        <div class="alert alert-light border mt-2 mb-0">
-          {{ ontMensaje }}
-        </div>
-      }
-
-      <!-- 👇 AQUÍ PEGA ESTO -->
-      @if (ontResult) {
-        <div class="mt-2 ont-result-card">
-          <div class="row g-2">
-            <div class="col-12 col-md-6">
-              <div class="ont-kv"><span>SN</span><b>{{ ontResult.sn || '—' }}</b></div>
-              <div class="ont-kv"><span>F/S/P</span><b>{{ ontResult.fsp || '—' }}</b></div>
-              <div class="ont-kv"><span>ONT-ID</span><b>{{ ontResult.ontId ?? '—' }}</b></div>
-              <div class="ont-kv"><span>Distancia</span><b>{{ ontResult.ontLastDistanceM ?? '—' }} m</b></div>
-            </div>
-
-            <div class="col-12 col-md-6">
-              <div class="ont-kv"><span>Estado</span><b>{{ ontResult.runState || '—' }}</b></div>
-              <div class="ont-kv"><span>Causa caída</span><b>{{ ontResult.lastDownCause || '—' }}</b></div>
-              <div class="ont-kv"><span>Último UP</span><b>{{ ontResult.lastUpTime || '—' }}</b></div>
-              <div class="ont-kv"><span>Online</span><b>{{ ontResult.onlineDuration || '—' }}</b></div>
-            </div>
-
-            <div class="col-12">
-              <div class="ont-kv">
-                <span>Descripción</span>
-                <b>{{ ontResult.description || '—' }}</b>
-              </div>
-            </div>
-          </div>
-
-          @if (ontResult.optical) {
-            <hr class="my-2" />
-            <div class="fw-bold mb-1">Potencia</div>
-
-            @if (!ontResult.optical.available) {
-              <div class="text-muted small">
-                No disponible: {{ ontResult.optical.reason || '—' }}
-              </div>
-            } @else {
-              <div class="row g-2">
-                <div class="col-12 col-md-4">
-                  <div class="ont-kv"><span>Rx (ONT)</span><b>{{ ontResult.optical.rxDbm ?? '—' }} dBm</b></div>
-                </div>
-                <div class="col-12 col-md-4">
-                  <div class="ont-kv"><span>Tx (ONT)</span><b>{{ ontResult.optical.txDbm ?? '—' }} dBm</b></div>
-                </div>
-                <div class="col-12 col-md-4">
-                  <div class="ont-kv"><span>OLT Rx</span><b>{{ ontResult.optical.oltRxDbm ?? '—' }} dBm</b></div>
-                </div>
-              </div>
-            }
-          }
-        </div>
-
-        <!-- DEBUG (solo para verificar estructura, luego quítalo) -->
-        <!-- <pre class="out mt-2 mb-0">{{ ontResult | json }}</pre> -->
-      }
-
-    </td>
-  </tr>
-}
 
 
         <!-- SECCION DE OPCIONES SOLUCION-->
@@ -420,7 +353,74 @@
     </div>
 
 
+    <!-- ✅ AQUÍ VA EL RESULTADO (DENTRO DE LA MISMA TABLA) -->
+   @if (onuSn && showOntPanel) {
+  <tr>
+    <td colspan="2">
 
+      @if (ontMensaje) {
+        <div class="alert alert-light border mt-2 mb-0">
+          {{ ontMensaje }}
+        </div>
+      }
+
+      <!-- 👇 AQUÍ PEGA ESTO -->
+      @if (ontResult) {
+        <div class="mt-2 ont-result-card">
+          <div class="row g-2">
+            <div class="col-12 col-md-6">
+              <div class="ont-kv"><span>SN</span><b>{{ ontResult.sn || '—' }}</b></div>
+              <div class="ont-kv"><span>F/S/P</span><b>{{ ontResult.fsp || '—' }}</b></div>
+              <div class="ont-kv"><span>ONT-ID</span><b>{{ ontResult.ontId ?? '—' }}</b></div>
+              <div class="ont-kv"><span>Distancia</span><b>{{ ontResult.ontLastDistanceM ?? '—' }} m</b></div>
+            </div>
+
+            <div class="col-12 col-md-6">
+              <div class="ont-kv"><span>Estado</span><b>{{ ontResult.runState || '—' }}</b></div>
+              <div class="ont-kv"><span>Causa caída</span><b>{{ ontResult.lastDownCause || '—' }}</b></div>
+              <div class="ont-kv"><span>Último UP</span><b>{{ ontResult.lastUpTime || '—' }}</b></div>
+              <div class="ont-kv"><span>Online</span><b>{{ ontResult.onlineDuration || '—' }}</b></div>
+            </div>
+
+            <div class="col-12">
+              <div class="ont-kv">
+                <span>Descripción</span>
+                <b>{{ ontResult.description || '—' }}</b>
+              </div>
+            </div>
+          </div>
+
+          @if (ontResult.optical) {
+            <hr class="my-2" />
+            <div class="fw-bold mb-1">Potencia</div>
+
+            @if (!ontResult.optical.available) {
+              <div class="text-muted small">
+                No disponible: {{ ontResult.optical.reason || '—' }}
+              </div>
+            } @else {
+              <div class="row g-2">
+                <div class="col-12 col-md-4">
+                  <div class="ont-kv"><span>Rx (ONT)</span><b>{{ ontResult.optical.rxDbm ?? '—' }} dBm</b></div>
+                </div>
+                <div class="col-12 col-md-4">
+                  <div class="ont-kv"><span>Tx (ONT)</span><b>{{ ontResult.optical.txDbm ?? '—' }} dBm</b></div>
+                </div>
+                <div class="col-12 col-md-4">
+                  <div class="ont-kv"><span>OLT Rx</span><b>{{ ontResult.optical.oltRxDbm ?? '—' }} dBm</b></div>
+                </div>
+              </div>
+            }
+          }
+        </div>
+
+        <!-- DEBUG (solo para verificar estructura, luego quítalo) -->
+        <!-- <pre class="out mt-2 mb-0">{{ ontResult | json }}</pre> -->
+      }
+
+    </td>
+  </tr>
+}
     <!-- BARRA HORIZONTAL DE TABS -->
     <div class="container mt-3">
       <div class="btn-group w-100" role="group" aria-label="Secciones">
