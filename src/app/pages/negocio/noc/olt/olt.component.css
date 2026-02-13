@@ -1,114 +1,29 @@
-.olt-card {
-  max-width: 520px;
+.time-box {
   border: 1px solid #e5e7eb;
-  border-radius: 14px;
-  padding: 16px;
+  border-radius: 12px;
+  padding: 12px 14px;
   background: #fff;
-  box-shadow: 0 6px 18px rgba(0,0,0,0.06);
-}
-
-.top {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  margin-bottom: 12px;
-}
-
-.title {
-  font-weight: 700;
-  font-size: 16px;
-}
-
-.subtitle {
-  color: #6b7280;
-  font-size: 12px;
-}
-
-.actions {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin: 10px 0 6px;
-}
-
-.btn {
-  border: none;
-  border-radius: 10px;
-  padding: 10px 14px;
-  cursor: pointer;
-  font-weight: 600;
-  background: #111827;
-  color: #fff;
-}
-
-.btn:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-.chk {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 13px;
-  color: #374151;
-  user-select: none;
-}
-
-.badge {
-  padding: 6px 10px;
-  border-radius: 999px;
-  font-size: 12px;
-  font-weight: 700;
-  border: 1px solid transparent;
-}
-
-.badge.idle { background: #f3f4f6; color: #374151; border-color: #e5e7eb; }
-.badge.con  { background: #eff6ff; color: #1d4ed8; border-color: #bfdbfe; }
-.badge.ok   { background: #ecfdf5; color: #047857; border-color: #a7f3d0; }
-.badge.err  { background: #fef2f2; color: #b91c1c; border-color: #fecaca; }
-.badge.cool { background: #fffbeb; color: #b45309; border-color: #fde68a; }
-
-.msg {
-  margin-top: 10px;
-  padding: 10px 12px;
-  border-radius: 10px;
-  background: #f9fafb;
-  border: 1px solid #e5e7eb;
-  color: #111827;
-  font-size: 13px;
-}
-
-.out {
-  margin-top: 10px;
-  padding: 12px;
-  border-radius: 10px;
-  background: #0b1020;
-  color: #d1e7ff;
-  overflow: auto;
-  font-size: 12px;
-  max-height: 260px;
-}
-
-.time {
-  margin-top: 10px;
-  padding: 10px 12px;
-  border-radius: 10px;
-  background: #f9fafb;
-  border: 1px solid #e5e7eb;
-  font-size: 13px;
-  display: flex;
-  gap: 8px;
-  align-items: center;
 }
 
 .time-label {
+  font-size: 12px;
   color: #6b7280;
   font-weight: 700;
+  margin-bottom: 4px;
 }
 
 .time-value {
+  font-size: 14px;
+  font-weight: 700;
   color: #111827;
-  font-weight: 600;
+}
+
+.out {
+  border-radius: 12px;
+  padding: 12px;
+  background: #0b1020;
+  color: #d1e7ff;
+  font-size: 12px;
+  max-height: 280px;
+  overflow: auto;
 }

@@ -1,102 +1,158 @@
-import { Component } from '@angular/core';
+import { Component, inject, OnDestroy } from '@angular/core';
+import {
+  FormBuilder,
+  FormControl,
+  FormGroup,
+  ReactiveFormsModule,
+} from '@angular/forms';
 import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
+import Swal from 'sweetalert2';
+import { lastValueFrom } from 'rxjs';
+import {
+  OltService,
+  OltTestResponse,
+} from '../../../../services/negocio_latacunga/olt.services';
 
 type Estado = 'IDLE' | 'CONECTANDO' | 'OK' | 'ERROR' | 'COOLDOWN';
 
 @Component({
   selector: 'app-olt',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, ReactiveFormsModule],
   templateUrl: './olt.component.html',
   styleUrl: './olt.component.css',
 })
-export class OltComponent {
-  private readonly API_BASE = 'http://localhost:3000';
-  private readonly ENDPOINT = '/api/olt/test';
+export class OltComponent implements OnDestroy {
+  oltForm!: FormGroup;
+
+  oltService = inject(OltService);
+
+  isReady = false;
 
   estado: Estado = 'IDLE';
   mensaje = '';
-  output = '';
-  time = ''; // ✅ NUEVO: fecha/hora de la OLT
-  debug = false;
+  time: string | null = null;
+  raw = '';
 
-  private cooldownTimer: any = null;
   cooldownSec = 0;
+  private cooldownTimer: any = null;
 
-  async conectar() {
+  constructor(private fb: FormBuilder) {
+    this.oltForm = this.fb.group({
+      debug: new FormControl<boolean>(false),
+    });
+
+    this.isReady = true;
+  }
+
+  ngOnDestroy(): void {
+    this.clearCooldown();
+  }
+
+  async submitForm(): Promise<void> {
     if (this.estado === 'CONECTANDO' || this.estado === 'COOLDOWN') return;
 
     this.estado = 'CONECTANDO';
-    this.mensaje = 'Conectando...';
-    this.output = '';
-    this.time = ''; // ✅ limpiar
+    this.mensaje = 'Conectando a la OLT...';
+    this.time = null;
+    this.raw = '';
 
-    const url = new URL(this.API_BASE + this.ENDPOINT);
-    if (this.debug) url.searchParams.set('debug', 'true');
+    const debug = !!this.oltForm.value.debug;
 
     try {
-      const resp = await fetch(url.toString(), {
-        method: 'GET',
-        credentials: 'include',
-        headers: { Accept: 'application/json' },
-      });
+      const data = await lastValueFrom(this.oltService.testConnection(debug));
 
-      const data = await resp.json().catch(() => ({}));
-
-      if (resp.status === 429) {
-        this.estado = 'COOLDOWN';
-        this.mensaje = data?.error?.message || 'Espera antes de reintentar';
-        this.output = '';
-        this.time = '';
-        this.iniciarCooldownDesdeMensaje(this.mensaje);
-        return;
+      if (!data?.ok) {
+        throw { error: data };
       }
 
-      if (!resp.ok || !data?.ok) {
-        this.estado = 'ERROR';
-        this.mensaje =
-          data?.error?.message || data?.message || `Error HTTP ${resp.status}`;
-        this.output = '';
-        this.time = '';
-        return;
-      }
-
-      // ✅ OK
       this.estado = 'OK';
-      this.mensaje = data?.message || 'Conexión establecida';
+      this.mensaje = data?.message || 'OK';
+      this.time = data?.time || null;
 
-      // ✅ OLT time viene como: "12-02-2026 18:56:09-05:00"
-      this.time = this.formatearTime(data?.time || '');
+      // solo si debug=true el backend manda raw (ideal)
+      this.raw = debug ? data?.raw || '' : '';
 
-      // ✅ si debug=true, el backend manda "raw"
-      //    si debug=false, normalmente NO manda raw; puedes dejar output vacío
-      this.output = data?.raw || '';
-    } catch (e: any) {
+      await Swal.fire(
+        'Conectado',
+        this.time ? `Hora OLT: ${this.time}` : 'Conexión OK',
+        'success',
+      );
+    } catch (err: any) {
+      // HttpClient: errores vienen como HttpErrorResponse
+      const status = err?.status;
+      const backendMsg =
+        err?.error?.error?.message ||
+        err?.error?.message ||
+        err?.error?.error ||
+        err?.message;
+
+      // ✅ cooldown del backend (429)
+      if (status === 429) {
+        this.estado = 'COOLDOWN';
+        this.mensaje = backendMsg || 'Espera antes de reintentar';
+        this.time = null;
+        this.raw = '';
+
+        this.startCooldownFromMessage(this.mensaje);
+
+        await Swal.fire('Espera', this.mensaje, 'warning');
+        return;
+      }
+
       this.estado = 'ERROR';
-      this.mensaje = e?.message || 'Error de conexión';
-      this.output = '';
-      this.time = '';
+      this.mensaje = backendMsg || 'No se pudo conectar con la OLT';
+      this.time = null;
+      this.raw = '';
+
+      await Swal.fire('Error', this.mensaje, 'error');
     }
   }
 
-  private formatearTime(t: string) {
-    // Mantener simple: solo reemplaza el formato DD-MM-YYYY por YYYY-MM-DD si quieres
-    // o déjalo tal cual si te gusta.
-    // Ejemplo: "12-02-2026 18:56:09-05:00" => "12/02/2026 18:56:09 (-05:00)"
-    if (!t) return '';
-    return t.replace(/^(\d{2})-(\d{2})-(\d{4})\s+/, '$1/$2/$3 ');
+  // ====== UI helpers ======
+  get badgeClass(): string {
+    switch (this.estado) {
+      case 'OK':
+        return 'bg-success';
+      case 'ERROR':
+        return 'bg-danger';
+      case 'COOLDOWN':
+        return 'bg-warning text-dark';
+      case 'CONECTANDO':
+        return 'bg-primary';
+      default:
+        return 'bg-secondary';
+    }
   }
 
-  private iniciarCooldownDesdeMensaje(msg: string) {
-    this.limpiarCooldown();
+  get estadoTexto(): string {
+    switch (this.estado) {
+      case 'OK':
+        return 'OK';
+      case 'ERROR':
+        return 'ERROR';
+      case 'COOLDOWN':
+        return 'ESPERA';
+      case 'CONECTANDO':
+        return 'CONECTANDO';
+      default:
+        return 'IDLE';
+    }
+  }
+
+  // ====== cooldown ======
+  private startCooldownFromMessage(msg: string) {
+    this.clearCooldown();
+
+    // Ej: "OLT: espera 23s antes de reintentar"
     const m = /espera\s+(\d+)s/i.exec(msg);
     this.cooldownSec = m ? Number(m[1]) : 30;
 
     this.cooldownTimer = setInterval(() => {
       this.cooldownSec -= 1;
+
       if (this.cooldownSec <= 0) {
-        this.limpiarCooldown();
+        this.clearCooldown();
         this.estado = 'IDLE';
         this.mensaje = '';
       } else {
@@ -105,39 +161,9 @@ export class OltComponent {
     }, 1000);
   }
 
-  private limpiarCooldown() {
+  private clearCooldown() {
     if (this.cooldownTimer) clearInterval(this.cooldownTimer);
     this.cooldownTimer = null;
     this.cooldownSec = 0;
-  }
-
-  get badgeClass() {
-    switch (this.estado) {
-      case 'OK':
-        return 'badge ok';
-      case 'ERROR':
-        return 'badge err';
-      case 'COOLDOWN':
-        return 'badge cool';
-      case 'CONECTANDO':
-        return 'badge con';
-      default:
-        return 'badge idle';
-    }
-  }
-
-  get estadoTexto() {
-    switch (this.estado) {
-      case 'OK':
-        return 'Conexión establecida';
-      case 'ERROR':
-        return 'Error de conexión';
-      case 'COOLDOWN':
-        return 'Espera';
-      case 'CONECTANDO':
-        return 'Conectando';
-      default:
-        return 'Sin conexión';
-    }
   }
 }

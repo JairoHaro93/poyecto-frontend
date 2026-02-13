@@ -5,8 +5,9 @@ import { environment } from '../../../environments/environment';
 export interface OltTestResponse {
   ok: boolean;
   message?: string;
-  output?: string;
-  error?: string;
+  time?: string | null; // ✅ viene del backend
+  raw?: string; // ✅ solo si debug=true
+  error?: any; // backend manda { error: { message } }
 }
 
 @Injectable({ providedIn: 'root' })
@@ -15,10 +16,13 @@ export class OltService {
 
   constructor(private http: HttpClient) {}
 
-  testConnection() {
-    // si tu backend usa cookie/JWT, deja withCredentials: true
+  testConnection(debug = false) {
+    const params: any = {};
+    if (debug) params.debug = 'true';
+
     return this.http.get<OltTestResponse>(`${this.baseUrl}/test`, {
       withCredentials: true,
+      params,
     });
   }
 }
