@@ -25,5 +25,11 @@
     {{ mensaje }}
   </div>
 
+  <!-- ✅ FECHA/HORA OLT -->
+  <div class="time" *ngIf="time">
+    <span class="time-label">Hora OLT:</span>
+    <span class="time-value">{{ time }}</span>
+  </div>
+
   <pre class="out" *ngIf="output">{{ output }}</pre>
 </div>
