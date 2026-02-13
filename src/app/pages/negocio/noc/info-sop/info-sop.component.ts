@@ -1,6 +1,15 @@
 import { Component, inject, Input, OnDestroy, OnInit } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
-import { FormsModule } from '@angular/forms';
+import {
+  AbstractControl,
+  FormBuilder,
+  FormControl,
+  FormGroup,
+  FormsModule,
+  ReactiveFormsModule,
+  ValidationErrors,
+  Validators,
+} from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Modal } from 'bootstrap';
 
@@ -19,13 +28,33 @@ import { AgendaService } from '../../../../services/negocio_latacunga/agenda.ser
 import { ImagesService } from '../../../../services/negocio_latacunga/images.service';
 import { VisService } from '../../../../services/negocio_latacunga/vis.service';
 import { SoketService } from '../../../../services/socket_io/soket.service';
+import {
+  OltService,
+  OntInfoBySnResponse,
+} from '../../../../services/negocio_latacunga/olt.services';
+import { lastValueFrom } from 'rxjs';
 
 type TabKey = 'instalacion' | 'soportes' | 'visitas';
+
+type EstadoOnt = 'IDLE' | 'CONECTANDO' | 'OK' | 'ERROR' | 'COOLDOWN';
+
+function snOntValidator(control: AbstractControl): ValidationErrors | null {
+  const raw = String(control.value ?? '');
+  const v = raw.replace(/\s+/g, '').toUpperCase();
+
+  // 16 HEX
+  if (/^[0-9A-F]{16}$/.test(v)) return null;
+
+  // 4 letras + 8 HEX, con o sin guion (TPLG934700ED / TPLG-934700ED)
+  if (/^[A-Z]{4}-?[0-9A-F]{8}$/.test(v)) return null;
+
+  return { snInvalid: true };
+}
 
 @Component({
   selector: 'app-info-sop',
   standalone: true,
-  imports: [CommonModule, DatePipe, FormsModule],
+  imports: [CommonModule, DatePipe, FormsModule, ReactiveFormsModule],
   templateUrl: './info-sop.component.html',
   styleUrls: ['./info-sop.component.css'],
 })
@@ -88,6 +117,195 @@ export class InfoSopComponent implements OnInit, OnDestroy {
 
   private paramsSub: any;
 
+  // ============================
+  // ONT (solo si onu != null)
+  // ============================
+  showOntPanel = false;
+
+  ontEstado: EstadoOnt = 'IDLE';
+  ontMensaje = '';
+  ontResult: OntInfoBySnResponse | null = null;
+
+  cooldownSecOnt = 0;
+  private cooldownTimerOnt: any = null;
+
+  private fb = inject(FormBuilder);
+  private oltService = inject(OltService);
+
+  ontForm: FormGroup = this.fb.group({
+    sn: new FormControl<string>('', {
+      nonNullable: true,
+      validators: [Validators.required, snOntValidator],
+    }),
+  });
+
+  // ✅ lee onu desde tu respuesta (ajusta si tu onu está en otro lugar)
+  get onuSn(): string | null {
+    const onu =
+      this.servicioSeleccionado?.servicios?.[0]?.onu ??
+      this.servicioSeleccionado?.onu ??
+      null;
+
+    const v = String(onu ?? '').trim();
+    return v ? v : null;
+  }
+
+  toggleOntPanel(): void {
+    if (!this.onuSn) return;
+    this.showOntPanel = !this.showOntPanel;
+
+    // al abrir, precarga onu al input si está vacío o distinto
+    if (this.showOntPanel) {
+      const cur = String(this.ontForm.value.sn ?? '').trim();
+      if (!cur || cur !== this.onuSn) {
+        this.ontForm.patchValue({ sn: this.onuSn }, { emitEvent: false });
+        this.normalizeOntInput('sn');
+      }
+    }
+  }
+
+  // normaliza input ONT
+  normalizeOntInput(field: string): void {
+    const c = this.ontForm.get(field);
+    if (!c) return;
+    const v = String(c.value ?? '')
+      .replace(/\s+/g, '')
+      .toUpperCase();
+    c.setValue(v, { emitEvent: false });
+  }
+
+  // ✅ convierte TPLG934700ED -> 54504C47934700ED (ASCIIHEX(TPLG) + 934700ED)
+  private toHex16(sn: string): string {
+    const v = String(sn || '')
+      .replace(/\s+/g, '')
+      .toUpperCase();
+    if (/^[0-9A-F]{16}$/.test(v)) return v;
+
+    const noDash = v.replace(/-/g, '');
+    if (/^[A-Z]{4}[0-9A-F]{8}$/.test(noDash)) {
+      const pref = noDash.slice(0, 4);
+      const suf = noDash.slice(4);
+
+      const prefHex = pref
+        .split('')
+        .map((ch) => ch.charCodeAt(0).toString(16).padStart(2, '0'))
+        .join('')
+        .toUpperCase();
+
+      return `${prefHex}${suf}`;
+    }
+
+    return v;
+  }
+
+  async consultarOnt(): Promise<void> {
+    if (!this.onuSn) return;
+    if (this.ontEstado === 'CONECTANDO' || this.ontEstado === 'COOLDOWN')
+      return;
+
+    if (this.ontForm.invalid) {
+      this.ontForm.markAllAsTouched();
+      return;
+    }
+
+    this.ontEstado = 'CONECTANDO';
+    this.ontMensaje = 'Consultando ONT...';
+    this.ontResult = null;
+
+    try {
+      const snInput = String(this.ontForm.value.sn || '');
+      const snHex16 = this.toHex16(snInput);
+
+      const data = await lastValueFrom(this.oltService.ontInfoBySn(snHex16));
+      if (!data?.ok) throw { error: data };
+
+      this.ontEstado = 'OK';
+      this.ontMensaje = 'OK';
+      this.ontResult = data;
+
+      await Swal.fire('Listo', `ONT consultada: ${data.sn}`, 'success');
+    } catch (err: any) {
+      const status = err?.status;
+      const backendMsg =
+        err?.error?.error?.message ||
+        err?.error?.message ||
+        err?.error?.error ||
+        err?.message;
+
+      if (status === 429) {
+        this.ontEstado = 'COOLDOWN';
+        this.ontMensaje = backendMsg || 'Espera antes de reintentar';
+        this.ontResult = null;
+        this.startCooldownFromMessageOnt(this.ontMensaje);
+        await Swal.fire('Espera', this.ontMensaje, 'warning');
+        return;
+      }
+
+      this.ontEstado = 'ERROR';
+      this.ontMensaje = backendMsg || 'No se pudo consultar la ONT';
+      this.ontResult = null;
+      await Swal.fire('Error', this.ontMensaje, 'error');
+    }
+  }
+
+  checkOntError(controlName: string, error: string): boolean {
+    const c = this.ontForm.get(controlName);
+    return !!(c?.touched && c.hasError(error));
+  }
+
+  get ontBadgeClass(): string {
+    switch (this.ontEstado) {
+      case 'OK':
+        return 'bg-success';
+      case 'ERROR':
+        return 'bg-danger';
+      case 'COOLDOWN':
+        return 'bg-warning text-dark';
+      case 'CONECTANDO':
+        return 'bg-primary';
+      default:
+        return 'bg-secondary';
+    }
+  }
+
+  get ontEstadoTexto(): string {
+    switch (this.ontEstado) {
+      case 'OK':
+        return 'OK';
+      case 'ERROR':
+        return 'ERROR';
+      case 'COOLDOWN':
+        return 'ESPERA';
+      case 'CONECTANDO':
+        return 'CONECTANDO';
+      default:
+        return 'IDLE';
+    }
+  }
+
+  private startCooldownFromMessageOnt(msg: string) {
+    this.clearCooldownOnt();
+    const m = /espera\s+(\d+)s/i.exec(msg);
+    this.cooldownSecOnt = m ? Number(m[1]) : 30;
+
+    this.cooldownTimerOnt = setInterval(() => {
+      this.cooldownSecOnt -= 1;
+      if (this.cooldownSecOnt <= 0) {
+        this.clearCooldownOnt();
+        this.ontEstado = 'IDLE';
+        this.ontMensaje = '';
+      } else {
+        this.ontMensaje = `Espera ${this.cooldownSecOnt}s antes de reintentar`;
+      }
+    }, 1000);
+  }
+
+  private clearCooldownOnt() {
+    if (this.cooldownTimerOnt) clearInterval(this.cooldownTimerOnt);
+    this.cooldownTimerOnt = null;
+    this.cooldownSecOnt = 0;
+  }
+
   async ngOnInit(): Promise<void> {
     this.datosUsuario = await this.authService.getUsuarioAutenticado();
 
@@ -144,6 +362,7 @@ export class InfoSopComponent implements OnInit, OnDestroy {
   ngOnDestroy(): void {
     if (this.paramsSub && typeof this.paramsSub.unsubscribe === 'function') {
       this.paramsSub.unsubscribe();
+      this.clearCooldownOnt();
     }
   }
 
@@ -187,6 +406,12 @@ export class InfoSopComponent implements OnInit, OnDestroy {
       if (!Number.isFinite(ord as number)) {
         this.soportesResueltos = [];
         this.errorSoportes = 'ord_ins inválido para cargar soportes.';
+      }
+
+      // si hay ONU, precargar en el form
+      if (this.onuSn) {
+        this.ontForm.patchValue({ sn: this.onuSn }, { emitEvent: false });
+        this.normalizeOntInput('sn');
       } else {
         const data = await this.soportesService.getAllResueltosSopByOrdIns(
           ord as number,
@@ -219,6 +444,7 @@ export class InfoSopComponent implements OnInit, OnDestroy {
       if (Number.isFinite(ordNum)) {
         this.servicioSeleccionado =
           await this.clienteService.getInfoServicioByOrdId(ordNum);
+        console.log(this.servicioSeleccionado);
       } else {
         console.warn('[InfoSop] ord_ins no numérico:', ord_ins);
         this.servicioSeleccionado = null;
@@ -555,5 +781,19 @@ export class InfoSopComponent implements OnInit, OnDestroy {
       default:
         return 'bg-secondary text-white';
     }
+  }
+
+  async consultarOntConOnu(): Promise<void> {
+    if (!this.onuSn) return;
+
+    // ✅ mostrar área de resultados “dentro”
+    this.showOntPanel = true;
+
+    // ✅ precargar el SN desde onu
+    this.ontForm.patchValue({ sn: this.onuSn }, { emitEvent: false });
+    this.normalizeOntInput('sn');
+
+    // ✅ ejecutar consulta
+    await this.consultarOnt();
   }
 }

@@ -22,6 +22,9 @@ export interface Iclientes {
       tipo_instalacion: string;
       estado_instalacion: string;
       servicio: string;
-    }
+      onu: string;
+      fecha_prorroga: string;
+      prorroga: string;
+    },
   ];
 }

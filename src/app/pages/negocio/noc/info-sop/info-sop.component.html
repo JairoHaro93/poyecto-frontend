@@ -98,62 +98,124 @@
     <!-- DIV TABLA DEL SERVICIO Y SECCION SOLUCION  -->
     <div class="d-flex justify-content-between align-items-stretch">
       <!-- TABLA DATOS DEL SERVICIO -->
-      <table class="Datos-servicio table table-bordered table-striped mb-0">
-        <tbody>
-          <tr>
-            <th scope="row">Dirección</th>
-            <td>{{ servicioSeleccionado?.servicios[0]?.direccion }}</td>
-          </tr>
-          <tr>
-            <th scope="row">Referencia</th>
-            <td>{{ servicioSeleccionado?.servicios[0]?.referencia }}</td>
-          </tr>
-          <tr>
-            <th scope="row">Coordenadas</th>
-            <td>
-              <a
-                [href]="
-                  'https://www.google.com/maps/search/' +
-                  servicioSeleccionado?.servicios[0]?.coordenadas
-                "
-                class="text-danger"
-                target="_blank"
-              >
-                {{ servicioSeleccionado?.servicios[0]?.coordenadas }}
-              </a>
-            </td>
-          </tr>
-          <tr>
-            <th scope="row">Fecha Instalación</th>
-            <td>
-              {{
-                servicioSeleccionado?.servicios[0]?.fecha_instalacion
-                  | date : "EEEE dd MMMM YYYY"
-              }}
-            </td>
-          </tr>
-          <tr>
-            <th scope="row">IP Equipo</th>
-            <td>
-              {{ servicioSeleccionado?.servicios[0]?.ip }}
+<table class="Datos-servicio table table-bordered table-striped mb-0">
+  <tbody>
+
+    <tr>
+      <th scope="row">Dirección</th>
+      <td>{{ servicioSeleccionado?.servicios[0]?.direccion }}</td>
+    </tr>
+
+    <tr>
+      <th scope="row">Referencia</th>
+      <td>{{ servicioSeleccionado?.servicios[0]?.referencia }}</td>
+    </tr>
+
+    <tr>
+      <th scope="row">Coordenadas</th>
+      <td>
+        <a
+          [href]="'https://www.google.com/maps/search/' + servicioSeleccionado?.servicios[0]?.coordenadas"
+          class="text-danger"
+          target="_blank"
+        >
+          {{ servicioSeleccionado?.servicios[0]?.coordenadas }}
+        </a>
+      </td>
+    </tr>
+
+    <tr>
+      <th scope="row">Fecha Instalación</th>
+      <td>
+        {{
+          servicioSeleccionado?.servicios[0]?.fecha_instalacion
+            | date : "EEEE dd MMMM YYYY"
+        }}
+      </td>
+    </tr>
+
+    <tr>
+      <th scope="row">IP Equipo</th>
+      <td>
+        {{ servicioSeleccionado?.servicios[0]?.ip }}
+        <button
+          (click)="copyIp(servicioSeleccionado?.servicios[0]?.ip)"
+          class="btn btn-sm btn-danger ms-2"
+        >
+          Copiar
+        </button>
+      </td>
+    </tr>
+
+    <!-- ✅ UNA SOLA FILA ONU/ONT -->
+    <tr>
+      <th scope="row">ONU / ONT</th>
+      <td>
+        <div class="d-flex align-items-center justify-content-between gap-2 flex-wrap">
+          <span class="text-monospace">{{ onuSn || "—" }}</span>
+
+          @if (onuSn) {
+            <div class="d-flex align-items-center gap-2">
+              <span class="badge text-white" [ngClass]="ontBadgeClass">
+                {{ ontEstadoTexto }}
+              </span>
+
               <button
-                (click)="copyIp(servicioSeleccionado?.servicios[0]?.ip)"
-                class="btn btn-sm btn-danger ms-2"
+                type="button"
+                class="btn btn-sm btn-dark"
+                (click)="consultarOntConOnu()"
+                [disabled]="ontEstado === 'CONECTANDO' || ontEstado === 'COOLDOWN'"
               >
-                Copiar
+                @if (ontEstado === 'CONECTANDO') { Consultando... }
+                @else if (ontEstado === 'COOLDOWN') { Espera... }
+                @else { Consultar ONT }
               </button>
-            </td>
-          </tr>
-          <tr>
-            <th scope="row">Teléfonos Instalación</th>
-            <td>{{ servicioSeleccionado?.servicios[0]?.telefonos }}</td>
-          </tr>
-          <tr>
-            <th scope="row">Técnico Instalador</th>
-            <td>{{ servicioSeleccionado?.servicios[0]?.instalado_por }}</td>
-          </tr>
-        </tbody>
-      </table>
+            </div>
+          }
+        </div>
+
+        @if (ontEstado === 'COOLDOWN') {
+          <small class="text-warning fw-semibold d-block mt-1">
+            Reintento en {{ cooldownSecOnt }}s
+          </small>
+        }
+      </td>
+    </tr>
+
+    <!-- ✅ AQUÍ VA EL RESULTADO (DENTRO DE LA MISMA TABLA) -->
+    @if (onuSn && showOntPanel) {
+      <tr>
+        <td colspan="2">
+          @if (ontMensaje) {
+            <div class="alert alert-light border mt-2 mb-0">
+              {{ ontMensaje }}
+            </div>
+          }
+
+          @if (ontResult) {
+            <div class="mt-2 ont-result-card">
+              <!-- aquí pegas tu bloque ontResult completo (kv, potencia, etc.) -->
+              <!-- tal como lo tenías, PERO DENTRO de este <td> -->
+            </div>
+          }
+        </td>
+      </tr>
+    }
+
+    <tr>
+      <th scope="row">Teléfonos Instalación</th>
+      <td>{{ servicioSeleccionado?.servicios[0]?.telefonos }}</td>
+    </tr>
+
+    <tr>
+      <th scope="row">Técnico Instalador</th>
+      <td>{{ servicioSeleccionado?.servicios[0]?.instalado_por }}</td>
+    </tr>
+
+  </tbody>
+</table>
+
+
 
       <!-- SECCION DE SOLUCION-->
       <div
@@ -171,6 +233,9 @@
             (ngModelChange)="detalleSolucion = ($event || '').toUpperCase()"
           ></textarea>
         </div>
+
+
+
         <!-- SECCION DE OPCIONES SOLUCION-->
         <div class="d-flex justify-content-between w-100 h-100">
           <div
@@ -303,6 +368,8 @@
         </div>
       </div>
     </div>
+
+
 
     <!-- BARRA HORIZONTAL DE TABS -->
     <div class="container mt-3">
