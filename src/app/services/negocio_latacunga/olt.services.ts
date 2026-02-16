@@ -12,6 +12,15 @@ export interface OntOpticalInfo {
   oltRxDbm: number | null;
 }
 
+export interface OltReadyResponse {
+  ok: boolean;
+  ready: boolean;
+  message?: string;
+  time?: string | null;
+  status?: any;
+  error?: any;
+}
+
 export interface OntInfoBySnResponse {
   ok: boolean;
   cmdId: string;
@@ -70,6 +79,13 @@ export class OltService {
   private baseUrl = `${environment.API_URL}/olt`;
 
   constructor(private http: HttpClient) {}
+
+  // ✅ NUEVO: warmup/ready
+  ready(): Observable<OltReadyResponse> {
+    return this.http.get<OltReadyResponse>(`${this.baseUrl}/ready`, {
+      withCredentials: true,
+    });
+  }
 
   ontInfoBySn(
     sn: string,

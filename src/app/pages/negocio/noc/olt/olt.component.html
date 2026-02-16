@@ -14,6 +14,46 @@
           </span>
         </div>
 
+        <!-- ACCIONES SESIÓN -->
+        <div class="d-flex flex-wrap gap-2 mt-3">
+          <button
+            type="button"
+            class="btn btn-outline-primary"
+            (click)="warmupReady()"
+            [disabled]="
+              estado === 'READYING' ||
+              estado === 'CONECTANDO' ||
+              estado === 'COOLDOWN' ||
+              estado === 'ELIMINANDO'
+            "
+          >
+            @if (estado === "READYING") {
+              <span
+                class="spinner-border spinner-border-sm me-2"
+                role="status"
+                aria-hidden="true"
+              ></span>
+              Conectando...
+            } @else {
+              🔌 Conectar
+            }
+          </button>
+
+          <button
+            type="button"
+            class="btn btn-outline-secondary"
+            (click)="limpiar()"
+            [disabled]="
+              estado === 'READYING' ||
+              estado === 'CONECTANDO' ||
+              estado === 'COOLDOWN' ||
+              estado === 'ELIMINANDO'
+            "
+          >
+            🧹 Limpiar
+          </button>
+        </div>
+
         <form [formGroup]="oltForm" (ngSubmit)="consultarOnt()" class="mt-3">
           <div class="row g-2 align-items-end">
             <div class="col-12 col-md-7">
@@ -23,13 +63,19 @@
                 class="form-control"
                 formControlName="sn"
                 (input)="normalizeInput('sn')"
+                [disabled]="
+                  estado === 'READYING' ||
+                  estado === 'CONECTANDO' ||
+                  estado === 'COOLDOWN' ||
+                  estado === 'ELIMINANDO'
+                "
               />
 
               @if (checkError("sn", "required")) {
                 <small class="text-danger">Requerido</small>
               }
               @if (checkError("sn", "snInvalid")) {
-                <small class="text-danger"> Formato inválido.. </small>
+                <small class="text-danger">Formato inválido..</small>
               }
             </div>
 
@@ -37,11 +83,7 @@
               <button
                 type="submit"
                 class="btn btn-dark w-100"
-                [disabled]="
-                  estado === 'CONECTANDO' ||
-                  estado === 'COOLDOWN' ||
-                  estado === 'ELIMINANDO'
-                "
+                [disabled]="disableConsultar"
               >
                 @if (estado === "CONECTANDO") {
                   Consultando...
@@ -49,6 +91,8 @@
                   Espera...
                 } @else if (estado === "ELIMINANDO") {
                   Eliminando...
+                } @else if (estado === "READYING") {
+                  Conectando...
                 } @else {
                   Consultar
                 }
@@ -59,15 +103,21 @@
                   Reintento en {{ cooldownSec }}s
                 </small>
               }
+
+              @if (estado === "ERROR") {
+                <small class="text-danger fw-semibold d-block mt-2">
+                  {{ mensaje || "Error con OLT. Reintenta conexión." }}
+                </small>
+              }
+
+              @if (estado === "IDLE") {
+                <small class="text-muted fw-semibold d-block mt-2">
+                  Presiona “Conectar” para preparar la sesión.
+                </small>
+              }
             </div>
           </div>
         </form>
-
-        @if (mensaje) {
-          <div class="alert alert-light border mt-3 mb-0">
-            {{ mensaje }}
-          </div>
-        }
 
         @if (result) {
           <div class="mt-3 result-card">
@@ -144,18 +194,13 @@
               }
             }
 
-            <!-- Botón de eliminar ONT -->
             <hr class="my-3" />
-            <div class="d-flex justify-content-end">
+            <div class="d-flex justify-content-end gap-2 flex-wrap">
               <button
                 type="button"
                 class="btn btn-danger"
                 (click)="eliminarOnt()"
-                [disabled]="
-                  estado === 'CONECTANDO' ||
-                  estado === 'COOLDOWN' ||
-                  estado === 'ELIMINANDO'
-                "
+                [disabled]="disableEliminar"
               >
                 @if (estado === "ELIMINANDO") {
                   <span
@@ -167,6 +212,15 @@
                 } @else {
                   🗑️ Eliminar ONT
                 }
+              </button>
+
+              <button
+                type="button"
+                class="btn btn-outline-secondary"
+                (click)="consultarOnt()"
+                [disabled]="disableConsultar"
+              >
+                🔄 Re-consultar
               </button>
             </div>
           </div>

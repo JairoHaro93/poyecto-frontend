@@ -11,17 +11,6 @@
   }
 }
 
-/* ====== Aparición suave de la vista ====== */
-.fade-in {
-  opacity: 0;
-  animation: fadeIn 0.3s ease-out forwards;
-}
-@keyframes fadeIn {
-  to {
-    opacity: 1;
-  }
-}
-
 /* ====== Variables y easing unificados ====== */
 :root {
   --modal-dur: 220ms;
@@ -41,7 +30,8 @@
 .modal.fade .modal-dialog {
   transform: translate3d(0, -12px, 0);
   opacity: 0;
-  transition: transform var(--modal-dur) var(--modal-ease),
+  transition:
+    transform var(--modal-dur) var(--modal-ease),
     opacity var(--modal-dur) var(--modal-ease);
   will-change: transform, opacity;
 }
@@ -63,7 +53,8 @@
 #modalImagenAmpliada.modal.fade .modal-dialog {
   transform: scale(0.985);
   opacity: 0;
-  transition: transform var(--modal-dur) var(--modal-ease),
+  transition:
+    transform var(--modal-dur) var(--modal-ease),
     opacity var(--modal-dur) var(--modal-ease);
 }
 #modalImagenAmpliada.modal.show .modal-dialog {
@@ -71,7 +62,7 @@
   opacity: 1;
 }
 
-/* ====== Sticky header de tablas (por si lo necesitas aquí también) ====== */
+/* ====== Sticky header de tablas ====== */
 .table .custom-header th,
 table thead.custom-header th {
   position: sticky;
@@ -79,7 +70,16 @@ table thead.custom-header th {
   z-index: 2;
 }
 
-/* ====== Imágenes en modal (ya lo tenías) ====== */
+/* ====== Estilo cabecera (si ya lo tienes global, igual no molesta) ====== */
+.custom-header th {
+  background-color: #ce2929;
+  color: #fff;
+  font-weight: 800;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+}
+
+/* ====== Imágenes en modal ====== */
 img.img-fluid.w-100.rounded {
   max-height: 75vh;
   object-fit: contain;
@@ -105,9 +105,12 @@ img.img-fluid.w-100.rounded {
 
 /* === Tabs (Instalación / Soportes / Visitas) — Rojo empresarial === */
 .btn-group[aria-label="Secciones"] .btn {
-  flex: 1 1 0; /* mismo ancho para los tres */
-  transition: background-color 0.2s ease, color 0.2s ease,
-    border-color 0.2s ease, box-shadow 0.2s ease;
+  flex: 1 1 0;
+  transition:
+    background-color 0.2s ease,
+    color 0.2s ease,
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
 }
 
 .btn-group[aria-label="Secciones"] .btn-outline-primary {
@@ -116,7 +119,6 @@ img.img-fluid.w-100.rounded {
   background-color: #fff;
 }
 
-/* Hover y focus */
 .btn-group[aria-label="Secciones"] .btn-outline-primary:hover,
 .btn-group[aria-label="Secciones"] .btn-outline-primary:focus {
   color: #fff;
@@ -124,7 +126,6 @@ img.img-fluid.w-100.rounded {
   border-color: #ce2929;
 }
 
-/* Activo / seleccionado (usas [class.active]) */
 .btn-group[aria-label="Secciones"] .btn-outline-primary.active,
 .btn-group[aria-label="Secciones"] .btn-outline-primary:active {
   color: #fff;
@@ -132,12 +133,12 @@ img.img-fluid.w-100.rounded {
   border-color: #ce2929;
 }
 
-/* Anillo de enfoque accesible en activo */
 .btn-group[aria-label="Secciones"] .btn-outline-primary.active:focus,
 .btn-group[aria-label="Secciones"] .btn-outline-primary:focus-visible {
   box-shadow: 0 0 0 0.2rem rgba(206, 41, 41, 0.25);
 }
 
+/* Badges de visitas */
 .bg-visita {
   background-color: #007bff !important;
   color: white;
@@ -149,7 +150,6 @@ img.img-fluid.w-100.rounded {
 .bg-retiro {
   background-color: oklch(59.153% 0.20203 21.222) !important;
 }
-
 .bg-traslado-ext {
   background-color: oklch(62.523% 0.25625 341.84) !important;
 }
@@ -158,30 +158,57 @@ img.img-fluid.w-100.rounded {
   color: white;
 }
 
-.ont-result-card{
-  border: 1px solid #e5e7eb;
-  border-radius: 12px;
-  padding: 12px 14px;
-  background: #fff;
+/* Monospace para SN */
+.text-monospace {
+  font-family:
+    ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono",
+    "Courier New", monospace;
 }
 
-.ont-kv{
-  display: flex;
-  gap: 10px;
-  align-items: baseline;
-  padding: 4px 0;
-  border-bottom: 1px dashed #eef2f7;
+/* =============================== */
+/* ✅ Tabla Resultado ONT (limpia)  */
+/* =============================== */
+.ont-table th,
+.ont-table td {
+  padding: 0.35rem 0.55rem; /* compacto */
+  vertical-align: middle;
 }
 
-.ont-kv span{
-  min-width: 150px;
-  color: #6b7280;
-  font-size: 12px;
-  font-weight: 700;
+/* reduce espacio del label para dar más ancho al valor */
+.ont-table th {
+  width: 120px;
+  white-space: nowrap;
 }
 
-.ont-kv b{
-  color: #111827;
-  font-size: 13px;
+/* columna label de potencia (derecha) */
+.ont-table .ont-pwr-th {
+  width: 105px;
+  white-space: nowrap;
+}
+
+/* evita salto en el tiempo online */
+.ont-nowrap {
+  white-space: nowrap;
+}
+
+/* descripción sí puede envolver */
+.ont-wrap {
+  white-space: normal;
+  word-break: break-word;
+}
+
+/* badge compactito */
+.ont-pill {
   font-weight: 800;
+  padding: 0.35rem 0.6rem;
+  border-radius: 999px;
+}
+
+@media (max-width: 576px) {
+  .ont-table th {
+    width: 110px;
+  }
+  .ont-table .ont-pwr-th {
+    width: 95px;
+  }
 }

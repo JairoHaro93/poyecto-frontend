@@ -36,7 +36,14 @@ import { lastValueFrom } from 'rxjs';
 
 type TabKey = 'instalacion' | 'soportes' | 'visitas';
 
-type EstadoOnt = 'IDLE' | 'CONECTANDO' | 'OK' | 'ERROR' | 'COOLDOWN';
+type EstadoOnt =
+  | 'IDLE'
+  | 'READYING'
+  | 'READY'
+  | 'CONECTANDO'
+  | 'OK'
+  | 'ERROR'
+  | 'COOLDOWN';
 
 function snOntValidator(control: AbstractControl): ValidationErrors | null {
   const raw = String(control.value ?? '');
@@ -75,7 +82,14 @@ export class InfoSopComponent implements OnInit, OnDestroy {
 
   isReady = false;
   imagenSeleccionada: string | null = null;
-
+  ontReady = false;
+  get disableOntAccion(): boolean {
+    return (
+      this.ontEstado === 'READYING' ||
+      this.ontEstado === 'CONECTANDO' ||
+      this.ontEstado === 'COOLDOWN'
+    );
+  }
   // Ruta
   id_sop: number | null = null;
   ord_Ins: string = '';
@@ -198,56 +212,6 @@ export class InfoSopComponent implements OnInit, OnDestroy {
     return v;
   }
 
-  async consultarOnt(): Promise<void> {
-    if (!this.onuSn) return;
-    if (this.ontEstado === 'CONECTANDO' || this.ontEstado === 'COOLDOWN')
-      return;
-
-    if (this.ontForm.invalid) {
-      this.ontForm.markAllAsTouched();
-      return;
-    }
-
-    this.ontEstado = 'CONECTANDO';
-    this.ontMensaje = 'Consultando ONT...';
-    this.ontResult = null;
-
-    try {
-      const snInput = String(this.ontForm.value.sn || '');
-      const snHex16 = this.toHex16(snInput);
-
-      const data = await lastValueFrom(this.oltService.ontInfoBySn(snHex16));
-      if (!data?.ok) throw { error: data };
-
-      this.ontEstado = 'OK';
-      this.ontMensaje = 'OK';
-      this.ontResult = data;
-
-      await Swal.fire('Listo', `ONT consultada: ${data.sn}`, 'success');
-    } catch (err: any) {
-      const status = err?.status;
-      const backendMsg =
-        err?.error?.error?.message ||
-        err?.error?.message ||
-        err?.error?.error ||
-        err?.message;
-
-      if (status === 429) {
-        this.ontEstado = 'COOLDOWN';
-        this.ontMensaje = backendMsg || 'Espera antes de reintentar';
-        this.ontResult = null;
-        this.startCooldownFromMessageOnt(this.ontMensaje);
-        await Swal.fire('Espera', this.ontMensaje, 'warning');
-        return;
-      }
-
-      this.ontEstado = 'ERROR';
-      this.ontMensaje = backendMsg || 'No se pudo consultar la ONT';
-      this.ontResult = null;
-      await Swal.fire('Error', this.ontMensaje, 'error');
-    }
-  }
-
   checkOntError(controlName: string, error: string): boolean {
     const c = this.ontForm.get(controlName);
     return !!(c?.touched && c.hasError(error));
@@ -265,21 +229,6 @@ export class InfoSopComponent implements OnInit, OnDestroy {
         return 'bg-primary';
       default:
         return 'bg-secondary';
-    }
-  }
-
-  get ontEstadoTexto(): string {
-    switch (this.ontEstado) {
-      case 'OK':
-        return 'OK';
-      case 'ERROR':
-        return 'ERROR';
-      case 'COOLDOWN':
-        return 'ESPERA';
-      case 'CONECTANDO':
-        return 'CONECTANDO';
-      default:
-        return 'IDLE';
     }
   }
 
@@ -783,17 +732,248 @@ export class InfoSopComponent implements OnInit, OnDestroy {
     }
   }
 
-  async consultarOntConOnu(): Promise<void> {
-    if (!this.onuSn) return;
+  // ============================
+  // READY / DISABLES (ONT panel)
+  // ============================
 
-    // ✅ mostrar área de resultados “dentro”
+  get disableOntConectar(): boolean {
+    return (
+      this.ontEstado === 'READYING' ||
+      this.ontEstado === 'CONECTANDO' ||
+      this.ontEstado === 'COOLDOWN'
+    );
+  }
+
+  get disableOntConsultar(): boolean {
+    return (
+      !this.ontReady ||
+      this.ontEstado === 'READYING' ||
+      this.ontEstado === 'CONECTANDO' ||
+      this.ontEstado === 'COOLDOWN'
+    );
+  }
+
+  async warmupOntReady(): Promise<void> {
+    if (!this.onuSn) return;
+    if (this.disableOntConectar) return;
+
+    this.showOntPanel = true;
+    this.ontEstado = 'READYING';
+    this.ontMensaje = '';
+    this.ontResult = null;
+
+    try {
+      // ✅ 1) precarga ONU en el input (solo si está vacío o distinto)
+      const cur = String(this.ontForm.value.sn ?? '').trim();
+      if (!cur || cur !== this.onuSn) {
+        this.ontForm.patchValue({ sn: this.onuSn }, { emitEvent: false });
+        this.normalizeOntInput('sn');
+      }
+
+      // ✅ 2) aquí debes llamar al "READY" que ya usas en tu otro componente (OltComponent)
+      // Si en tu OltService aún no existe, más abajo te dejo cómo agregarlo.
+      await lastValueFrom(this.oltService.ready());
+
+      this.ontReady = true;
+      this.ontEstado = 'READY';
+      this.ontMensaje = '';
+    } catch (err: any) {
+      const backendMsg =
+        err?.error?.error?.message ||
+        err?.error?.message ||
+        err?.error?.error ||
+        err?.message;
+
+      this.ontReady = false;
+      this.ontEstado = 'ERROR';
+      this.ontMensaje = backendMsg || 'No se pudo preparar la sesión OLT';
+      await Swal.fire('Error', this.ontMensaje, 'error');
+    }
+  }
+
+  limpiarOntPanel(): void {
+    this.ontResult = null;
+    this.ontMensaje = '';
+    this.clearCooldownOnt();
+    this.showOntPanel = false;
+
+    // si ya estaba ready, vuelve a READY; si no, vuelve a IDLE
+    this.ontEstado = this.ontReady ? 'READY' : 'IDLE';
+  }
+
+  private async ensureOntReady(): Promise<boolean> {
+    if (this.ontReady) return true;
+
+    this.ontEstado = 'READYING';
+    this.ontMensaje = '';
+    this.ontResult = null;
+
+    try {
+      await lastValueFrom(this.oltService.ready()); // 🔥 warmup backend
+      this.ontReady = true;
+      this.ontEstado = 'READY';
+      return true;
+    } catch (err: any) {
+      const backendMsg =
+        err?.error?.error?.message ||
+        err?.error?.message ||
+        err?.error?.error ||
+        err?.message;
+
+      this.ontReady = false;
+      this.ontEstado = 'ERROR';
+      this.ontMensaje = backendMsg || 'No se pudo preparar la sesión OLT';
+      await Swal.fire('Error', this.ontMensaje, 'error');
+      return false;
+    }
+  }
+
+  async consultarOntConOnu(): Promise<void> {
+    await this.consultarOnt();
+  }
+
+  async consultarOnt(): Promise<void> {
+    if (!this.onuSn) return;
+    if (this.disableOntAccion) return;
+
+    // ✅ siempre muestra panel de resultados
     this.showOntPanel = true;
 
-    // ✅ precargar el SN desde onu
+    // ✅ precarga ONU en input
     this.ontForm.patchValue({ sn: this.onuSn }, { emitEvent: false });
     this.normalizeOntInput('sn');
 
-    // ✅ ejecutar consulta
-    await this.consultarOnt();
+    // ✅ asegura sesión sin pedir “Conectar”
+    const okReady = await this.ensureOntReady();
+    if (!okReady) return;
+
+    if (this.ontForm.invalid) {
+      this.ontForm.markAllAsTouched();
+      return;
+    }
+
+    this.ontEstado = 'CONECTANDO';
+    this.ontMensaje = '';
+    this.ontResult = null;
+
+    try {
+      const snInput = String(this.ontForm.value.sn || '');
+      const snHex16 = this.toHex16(snInput);
+
+      const data = await lastValueFrom(this.oltService.ontInfoBySn(snHex16));
+      if (!data?.ok) throw { error: data };
+
+      this.ontEstado = 'OK';
+      this.ontResult = data;
+    } catch (err: any) {
+      const status = err?.status;
+      const backendMsg =
+        err?.error?.error?.message ||
+        err?.error?.message ||
+        err?.error?.error ||
+        err?.message;
+
+      if (status === 429) {
+        this.ontEstado = 'COOLDOWN';
+        this.ontMensaje = backendMsg || 'Espera antes de reintentar';
+        this.ontResult = null;
+        this.startCooldownFromMessageOnt(this.ontMensaje);
+        return;
+      }
+
+      this.ontEstado = 'ERROR';
+      this.ontMensaje = backendMsg || 'No se pudo consultar la ONT';
+      this.ontResult = null;
+    }
+  }
+
+  get ontEstadoTexto(): string {
+    switch (this.ontEstado) {
+      case 'READY':
+        return 'LISTO';
+      case 'READYING':
+        return 'PREPARANDO';
+      case 'OK':
+        return 'OK';
+      case 'ERROR':
+        return 'ERROR';
+      case 'COOLDOWN':
+        return 'ESPERA';
+      case 'CONECTANDO':
+        return 'CONSULTANDO';
+      default:
+        return 'IDLE';
+    }
+  }
+
+  get runStateClass(): string {
+    const v = String(this.ontResult?.runState ?? '')
+      .toLowerCase()
+      .trim();
+
+    if (!v) return 'ont-pill--neutral';
+
+    // ✅ estados “buenos”
+    if (v.includes('online') || v === 'up' || v.includes('active')) {
+      return 'ont-pill--ok';
+    }
+
+    // ⚠️ estados “warning”
+    if (v.includes('unknown') || v.includes('standby') || v.includes('init')) {
+      return 'ont-pill--warn';
+    }
+
+    // ❌ estados “malos”
+    if (
+      v.includes('offline') ||
+      v.includes('down') ||
+      v.includes('los') ||
+      v.includes('dying') ||
+      v.includes('power') ||
+      v.includes('deregister')
+    ) {
+      return 'ont-pill--bad';
+    }
+
+    return 'ont-pill--neutral';
+  }
+
+  private formatLastUpTime(raw: unknown): string {
+    const s = String(raw ?? '').trim();
+    if (!s) return '—';
+
+    // Caso típico: "29-12-2025 18:39:49-05:00" (con o sin zona)
+    const m = s.match(/(\d{2})-(\d{2})-(\d{4})\s+(\d{2}):(\d{2}):(\d{2})/);
+    if (m) {
+      const [, dd, mm, yyyy, hh, mi, ss] = m;
+      return `${dd}/${mm}/${yyyy} ${hh}:${mi}:${ss}`;
+    }
+
+    // Fallback: quitar zona si viene al final
+    return s.replace(/([+-]\d{2}:\d{2})$/, '').trim();
+  }
+
+  get lastUpTimeUI(): string {
+    return this.formatLastUpTime(this.ontResult?.lastUpTime);
+  }
+
+  get onlineDurationUI(): string {
+    const raw = String(this.ontResult?.onlineDuration ?? '').trim();
+    if (!raw) return '—';
+
+    // "48 day(s), 22 hour(s), 29 minute(s), 15 second(s)" => "48d 22h 29m 15s"
+    let s = raw
+      .replace(/day\(s\)/gi, 'd')
+      .replace(/hour\(s\)/gi, 'h')
+      .replace(/minute\(s\)/gi, 'm')
+      .replace(/second\(s\)/gi, 's')
+      .replace(/,/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+
+    // junta número+unidad: "48 d" -> "48d"
+    s = s.replace(/(\d+)\s*([dhms])/gi, '$1$2');
+
+    return s || raw;
   }
 }

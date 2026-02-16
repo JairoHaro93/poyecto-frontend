@@ -1,587 +1,687 @@
 <!-- Overlay local del componente -->
 @if (isReady) {
-<div class="fade-in">
-  <!-- ======= TU CONTENIDO ORIGINAL (SIN CAMBIOS) ======= -->
-  <section class="container mt-1">
-    <div class="d-flex justify-content-between border-5 m-2">
-      <!-- TABLA DATOS DEL USUARIO -->
-      <table class="table table-bordered table-striped w-50 me-3">
-        <thead class="custom-header">
-          <tr>
-            <th colspan="2" class="text-center">Datos del Usuario</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <th scope="row">Cliente</th>
+  <div class="fade-in">
+    <section class="container mt-1">
+      <div class="d-flex justify-content-between border-5 m-2">
+        <!-- TABLA DATOS DEL USUARIO -->
+        <table class="table table-bordered table-striped w-50 me-3">
+          <thead class="custom-header">
+            <tr>
+              <th colspan="2" class="text-center">Datos del Usuario</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <th scope="row">Cliente</th>
+              <td>{{ servicioSeleccionado?.nombre_completo }}</td>
+            </tr>
+            <tr>
+              <th scope="row">Cédula</th>
+              <td>{{ servicioSeleccionado?.cedula }}</td>
+            </tr>
+            <tr>
+              <th scope="row">Precio</th>
+              <td>${{ servicioSeleccionado?.servicios[0]?.precio }}</td>
+            </tr>
+            <tr>
+              <th scope="row">Estado de Pago</th>
+              <td>{{ servicioSeleccionado?.servicios[0]?.estado }}</td>
+            </tr>
+            <tr>
+              <th scope="row">Plan</th>
+              <td>{{ servicioSeleccionado?.servicios[0]?.plan_nombre }}</td>
+            </tr>
+            <tr>
+              <th scope="row">Cortado</th>
+              <td>{{ servicioSeleccionado?.servicios[0]?.cortado }}</td>
+            </tr>
+          </tbody>
+        </table>
 
-            <td>{{ servicioSeleccionado?.nombre_completo }}</td>
-          </tr>
-          <tr>
-            <th scope="row">Cédula</th>
-            <td>{{ servicioSeleccionado?.cedula }}</td>
-          </tr>
-          <tr>
-            <th scope="row">Precio</th>
-            <td>${{ servicioSeleccionado?.servicios[0]?.precio }}</td>
-          </tr>
-          <tr>
-            <th scope="row">Estado de Pago</th>
-            <td>{{ servicioSeleccionado?.servicios[0]?.estado }}</td>
-          </tr>
-          <tr>
-            <th scope="row">Plan</th>
-            <td>{{ servicioSeleccionado?.servicios[0]?.plan_nombre }}</td>
-          </tr>
-          <tr>
-            <th scope="row">Cortado</th>
-            <td>{{ servicioSeleccionado?.servicios[0]?.cortado }}</td>
-          </tr>
-        </tbody>
-      </table>
-      <!-- TABLA DATOS DEL SOPORTE -->
-      <table class="table table-bordered table-striped w-50">
-        <thead class="custom-header">
-          <tr>
-            <th colspan="2" class="text-center">Datos del Soporte</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <th scope="row">Motivo</th>
-            <td>
-              <span>
-                @switch (soporte?.reg_sop_opc) { @case (1) {
-                <span>Sin servicio de Internet</span>
-                } @case (2) {
-                <span> Internet Intermitente</span>
-                } @case (3) {
-                <span> Cambio de contraseña</span>
-                } @case (4) {
-                <span> Manipulacion de equipos</span>
-                } @case (5) {
-                <span> Sin Definir</span>
-                } }
-              </span>
-            </td>
-          </tr>
-          <tr>
-            <th scope="row">Ingreso de Soporte</th>
-            <td>
-              {{ soporte?.reg_sop_fecha | date : "EEEE dd MMMM YYYY hh:mm:ss" }}
-            </td>
-          </tr>
-          <tr>
-            <th scope="row">Inicio Revisión</th>
-            <td>
-              {{
-                soporte?.reg_sop_fecha_acepta
-                  | date : "EEEE dd MMMM YYYY hh:mm:ss"
-              }}
-            </td>
-          </tr>
-          <tr>
-            <th scope="row">Teléfonos Soporte</th>
-            <td>{{ soporte?.reg_sop_tel }}</td>
-          </tr>
-          <tr>
-            <th scope="row">Registrado por</th>
-            <td>{{ soporte?.reg_sop_registrado_por_nombre }}</td>
-          </tr>
-          <tr>
-            <th scope="row">Observación</th>
-            <td>{{ soporte?.reg_sop_coment_cliente }}</td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-    <!-- DIV TABLA DEL SERVICIO Y SECCION SOLUCION  -->
-    <div class="d-flex justify-content-between align-items-stretch">
-      <!-- TABLA DATOS DEL SERVICIO -->
-<table class="Datos-servicio table table-bordered table-striped mb-0">
-  <tbody>
+        <!-- TABLA DATOS DEL SOPORTE -->
+        <table class="table table-bordered table-striped w-50">
+          <thead class="custom-header">
+            <tr>
+              <th colspan="2" class="text-center">Datos del Soporte</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <th scope="row">Motivo</th>
+              <td>
+                <span>
+                  @switch (soporte?.reg_sop_opc) {
+                    @case (1) {
+                      <span>Sin servicio de Internet</span>
+                    }
+                    @case (2) {
+                      <span>Internet Intermitente</span>
+                    }
+                    @case (3) {
+                      <span>Cambio de contraseña</span>
+                    }
+                    @case (4) {
+                      <span>Manipulación de equipos</span>
+                    }
+                    @case (5) {
+                      <span>Sin Definir</span>
+                    }
+                  }
+                </span>
+              </td>
+            </tr>
+            <tr>
+              <th scope="row">Ingreso de Soporte</th>
+              <td>
+                {{
+                  soporte?.reg_sop_fecha | date: "EEEE dd MMMM YYYY hh:mm:ss"
+                }}
+              </td>
+            </tr>
+            <tr>
+              <th scope="row">Inicio Revisión</th>
+              <td>
+                {{
+                  soporte?.reg_sop_fecha_acepta
+                    | date: "EEEE dd MMMM YYYY hh:mm:ss"
+                }}
+              </td>
+            </tr>
+            <tr>
+              <th scope="row">Teléfonos Soporte</th>
+              <td>{{ soporte?.reg_sop_tel }}</td>
+            </tr>
+            <tr>
+              <th scope="row">Registrado por</th>
+              <td>{{ soporte?.reg_sop_registrado_por_nombre }}</td>
+            </tr>
+            <tr>
+              <th scope="row">Observación</th>
+              <td>{{ soporte?.reg_sop_coment_cliente }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
 
-    <tr>
-      <th scope="row">Dirección</th>
-      <td>{{ servicioSeleccionado?.servicios[0]?.direccion }}</td>
-    </tr>
+      <!-- DIV TABLA DEL SERVICIO Y SECCION SOLUCION -->
+      <div class="d-flex justify-content-between align-items-stretch">
+        <!-- TABLA DATOS DEL SERVICIO -->
+        <table class="Datos-servicio table table-bordered table-striped mb-0">
+          <tbody>
+            <tr>
+              <th scope="row">Dirección</th>
+              <td>{{ servicioSeleccionado?.servicios[0]?.direccion }}</td>
+            </tr>
 
-    <tr>
-      <th scope="row">Referencia</th>
-      <td>{{ servicioSeleccionado?.servicios[0]?.referencia }}</td>
-    </tr>
+            <tr>
+              <th scope="row">Referencia</th>
+              <td>{{ servicioSeleccionado?.servicios[0]?.referencia }}</td>
+            </tr>
 
-    <tr>
-      <th scope="row">Coordenadas</th>
-      <td>
-        <a
-          [href]="'https://www.google.com/maps/search/' + servicioSeleccionado?.servicios[0]?.coordenadas"
-          class="text-danger"
-          target="_blank"
+            <tr>
+              <th scope="row">Coordenadas</th>
+              <td>
+                <a
+                  [href]="
+                    'https://www.google.com/maps/search/' +
+                    servicioSeleccionado?.servicios[0]?.coordenadas
+                  "
+                  class="text-danger"
+                  target="_blank"
+                >
+                  {{ servicioSeleccionado?.servicios[0]?.coordenadas }}
+                </a>
+              </td>
+            </tr>
+
+            <tr>
+              <th scope="row">Fecha Instalación</th>
+              <td>
+                {{
+                  servicioSeleccionado?.servicios[0]?.fecha_instalacion
+                    | date: "EEEE dd MMMM YYYY"
+                }}
+              </td>
+            </tr>
+
+            <tr>
+              <th scope="row">IP Equipo</th>
+              <td>
+                {{ servicioSeleccionado?.servicios[0]?.ip }}
+                <button
+                  (click)="copyIp(servicioSeleccionado?.servicios[0]?.ip)"
+                  class="btn btn-sm btn-danger ms-2"
+                >
+                  Copiar
+                </button>
+              </td>
+            </tr>
+
+            <!-- ✅ ONU/ONT (estado + botón) -->
+            <tr>
+              <th scope="row">ONU / ONT</th>
+              <td>
+                <div
+                  class="d-flex align-items-center justify-content-between gap-2 flex-wrap"
+                >
+                  <span class="text-monospace">{{ onuSn || "—" }}</span>
+
+                  @if (onuSn) {
+                    <div class="d-flex align-items-center gap-2">
+                      <span class="badge text-white" [ngClass]="ontBadgeClass">
+                        {{ ontEstadoTexto }}
+                      </span>
+
+                      <button
+                        type="button"
+                        class="btn btn-sm btn-dark"
+                        (click)="consultarOntConOnu()"
+                        [disabled]="disableOntAccion"
+                      >
+                        @if (ontEstado === "READYING") {
+                          Preparando...
+                        } @else if (ontEstado === "CONECTANDO") {
+                          Consultando...
+                        } @else if (ontEstado === "COOLDOWN") {
+                          Espera...
+                        } @else {
+                          Consultar ONT
+                        }
+                      </button>
+                    </div>
+                  }
+                </div>
+
+                @if (ontEstado === "COOLDOWN") {
+                  <small class="text-warning fw-semibold d-block mt-1">
+                    Reintento en {{ cooldownSecOnt }}s
+                  </small>
+                }
+
+                @if (ontEstado === "ERROR") {
+                  <small class="text-danger fw-semibold d-block mt-1">
+                    {{ ontMensaje || "Error con OLT. Reintenta." }}
+                  </small>
+                }
+              </td>
+            </tr>
+
+            <tr>
+              <th scope="row">Teléfonos Instalación</th>
+              <td>{{ servicioSeleccionado?.servicios[0]?.telefonos }}</td>
+            </tr>
+
+            <tr>
+              <th scope="row">Técnico Instalador</th>
+              <td>{{ servicioSeleccionado?.servicios[0]?.instalado_por }}</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <!-- SECCION DE SOLUCION -->
+        <div
+          class="opciones-resolucion d-flex flex-column border border-2 p-1 bg-dark-subtle"
         >
-          {{ servicioSeleccionado?.servicios[0]?.coordenadas }}
-        </a>
-      </td>
-    </tr>
-
-    <tr>
-      <th scope="row">Fecha Instalación</th>
-      <td>
-        {{
-          servicioSeleccionado?.servicios[0]?.fecha_instalacion
-            | date : "EEEE dd MMMM YYYY"
-        }}
-      </td>
-    </tr>
-
-    <tr>
-      <th scope="row">IP Equipo</th>
-      <td>
-        {{ servicioSeleccionado?.servicios[0]?.ip }}
-        <button
-          (click)="copyIp(servicioSeleccionado?.servicios[0]?.ip)"
-          class="btn btn-sm btn-danger ms-2"
-        >
-          Copiar
-        </button>
-      </td>
-    </tr>
-
-    <!-- ✅ UNA SOLA FILA ONU/ONT -->
-    <tr>
-      <th scope="row">ONU / ONT</th>
-      <td>
-        <div class="d-flex align-items-center justify-content-between gap-2 flex-wrap">
-          <span class="text-monospace">{{ onuSn || "—" }}</span>
-
-          @if (onuSn) {
-            <div class="d-flex align-items-center gap-2">
-              <span class="badge text-white" [ngClass]="ontBadgeClass">
-                {{ ontEstadoTexto }}
-              </span>
-
-              <button
-                type="button"
-                class="btn btn-sm btn-dark"
-                (click)="consultarOntConOnu()"
-                [disabled]="ontEstado === 'CONECTANDO' || ontEstado === 'COOLDOWN'"
-              >
-                @if (ontEstado === 'CONECTANDO') { Consultando... }
-                @else if (ontEstado === 'COOLDOWN') { Espera... }
-                @else { Consultar ONT }
-              </button>
-            </div>
-          }
-        </div>
-
-        @if (ontEstado === 'COOLDOWN') {
-          <small class="text-warning fw-semibold d-block mt-1">
-            Reintento en {{ cooldownSecOnt }}s
-          </small>
-        }
-      </td>
-    </tr>
-
-
-
-    <tr>
-      <th scope="row">Teléfonos Instalación</th>
-      <td>{{ servicioSeleccionado?.servicios[0]?.telefonos }}</td>
-    </tr>
-
-    <tr>
-      <th scope="row">Técnico Instalador</th>
-      <td>{{ servicioSeleccionado?.servicios[0]?.instalado_por }}</td>
-    </tr>
-
-  </tbody>
-</table>
-
-
-
-      <!-- SECCION DE SOLUCION-->
-      <div
-        class="opciones-resolucion d-flex flex-column border border-2 p-1 bg-dark-subtle"
-      >
-        <!-- SECCION DE DESCRIPCION SOLUCION-->
-        <div class="solucion w-100">
-          <textarea
-            id="solucionInput"
-            class="form-control w-100"
-            rows="3"
-            [(ngModel)]="detalleSolucion"
-            name="solucion"
-            placeholder="Describe la solución"
-            (ngModelChange)="detalleSolucion = ($event || '').toUpperCase()"
-          ></textarea>
-        </div>
-
-
-
-
-        <!-- SECCION DE OPCIONES SOLUCION-->
-        <div class="d-flex justify-content-between w-100 h-100">
-          <div
-            class="opciones-radio d-flex flex-column flex-wrap justify-content-between"
-          >
-            <div class="form-check" style="min-width: 160px">
-              <input
-                class="form-check-input"
-                type="radio"
-                name="reg_sop_opc"
-                id="opcion1"
-                value="REVISION"
-                (change)="asignarSolucion($event)"
-                [(ngModel)]="solucionSeleccionada"
-              />
-              <label
-                class="form-check-label"
-                for="opcion1"
-                style="white-space: nowrap"
-              >
-                EN REVISIÓN
-              </label>
-            </div>
-
-            <div class="form-check" style="min-width: 160px">
-              <input
-                class="form-check-input"
-                type="radio"
-                name="reg_sop_opc"
-                id="opcion2"
-                value="RESUELTO"
-                [(ngModel)]="solucionSeleccionada"
-                (change)="asignarSolucion($event)"
-              />
-              <label
-                class="form-check-label"
-                for="opcion2"
-                style="white-space: nowrap"
-              >
-                RESUELTO
-              </label>
-            </div>
-
-            <div class="form-check" style="min-width: 160px">
-              <input
-                class="form-check-input"
-                type="radio"
-                name="reg_sop_opc"
-                id="opcion3"
-                value="VISITA"
-                [(ngModel)]="solucionSeleccionada"
-                (change)="asignarSolucion($event)"
-              />
-              <label
-                class="form-check-label"
-                for="opcion3"
-                style="white-space: nowrap"
-              >
-                VISITA TÉCNICA
-              </label>
-            </div>
-
-            <div class="form-check" style="min-width: 160px">
-              <input
-                class="form-check-input"
-                type="radio"
-                name="reg_sop_opc"
-                id="opcion4"
-                value="LOS"
-                [(ngModel)]="solucionSeleccionada"
-                (change)="asignarSolucion($event)"
-              />
-              <label
-                class="form-check-label"
-                for="opcion4"
-                style="white-space: nowrap"
-              >
-                VISITA TÉCNICA LOS
-              </label>
-            </div>
-
-            <div class="form-check" style="min-width: 200px">
-              <input
-                class="form-check-input"
-                type="radio"
-                name="reg_sop_opc"
-                id="opcion5"
-                value="INFRAESTRUCTURA"
-                [(ngModel)]="solucionSeleccionada"
-                (change)="asignarSolucion($event)"
-              />
-              <label
-                class="form-check-label"
-                for="opcion5"
-                style="white-space: nowrap"
-              >
-                MONTAJE DE INFRAESTRUCTURA
-              </label>
-            </div>
-
-            <div class="form-check" style="min-width: 160px">
-              <input
-                class="form-check-input"
-                type="radio"
-                name="reg_sop_opc"
-                id="opcion6"
-                value="NO CONTESTA"
-                [(ngModel)]="solucionSeleccionada"
-                (change)="asignarSolucion($event)"
-              />
-              <label
-                class="form-check-label"
-                for="opcion6"
-                style="white-space: nowrap"
-              >
-                NO CONTESTA
-              </label>
-            </div>
+          <div class="solucion w-100">
+            <textarea
+              id="solucionInput"
+              class="form-control w-100"
+              rows="3"
+              [(ngModel)]="detalleSolucion"
+              name="solucion"
+              placeholder="Describe la solución"
+              (ngModelChange)="detalleSolucion = ($event || '').toUpperCase()"
+            ></textarea>
           </div>
 
-          <div class="d-flex flex-column flex-wrap justify-content-center">
-            <button
-              (click)="guardarSolucion()"
-              class="btn btn-danger"
-              [disabled]="!detalleSolucion.trim()"
+          <div class="d-flex justify-content-between w-100 h-100">
+            <div
+              class="opciones-radio d-flex flex-column flex-wrap justify-content-between"
             >
-              Guardar
-            </button>
+              <div class="form-check" style="min-width: 160px">
+                <input
+                  class="form-check-input"
+                  type="radio"
+                  name="reg_sop_opc"
+                  id="opcion1"
+                  value="REVISION"
+                  (change)="asignarSolucion($event)"
+                  [(ngModel)]="solucionSeleccionada"
+                />
+                <label
+                  class="form-check-label"
+                  for="opcion1"
+                  style="white-space: nowrap"
+                >
+                  EN REVISIÓN
+                </label>
+              </div>
+
+              <div class="form-check" style="min-width: 160px">
+                <input
+                  class="form-check-input"
+                  type="radio"
+                  name="reg_sop_opc"
+                  id="opcion2"
+                  value="RESUELTO"
+                  [(ngModel)]="solucionSeleccionada"
+                  (change)="asignarSolucion($event)"
+                />
+                <label
+                  class="form-check-label"
+                  for="opcion2"
+                  style="white-space: nowrap"
+                >
+                  RESUELTO
+                </label>
+              </div>
+
+              <div class="form-check" style="min-width: 160px">
+                <input
+                  class="form-check-input"
+                  type="radio"
+                  name="reg_sop_opc"
+                  id="opcion3"
+                  value="VISITA"
+                  [(ngModel)]="solucionSeleccionada"
+                  (change)="asignarSolucion($event)"
+                />
+                <label
+                  class="form-check-label"
+                  for="opcion3"
+                  style="white-space: nowrap"
+                >
+                  VISITA TÉCNICA
+                </label>
+              </div>
+
+              <div class="form-check" style="min-width: 160px">
+                <input
+                  class="form-check-input"
+                  type="radio"
+                  name="reg_sop_opc"
+                  id="opcion4"
+                  value="LOS"
+                  [(ngModel)]="solucionSeleccionada"
+                  (change)="asignarSolucion($event)"
+                />
+                <label
+                  class="form-check-label"
+                  for="opcion4"
+                  style="white-space: nowrap"
+                >
+                  VISITA TÉCNICA LOS
+                </label>
+              </div>
+
+              <div class="form-check" style="min-width: 200px">
+                <input
+                  class="form-check-input"
+                  type="radio"
+                  name="reg_sop_opc"
+                  id="opcion5"
+                  value="INFRAESTRUCTURA"
+                  [(ngModel)]="solucionSeleccionada"
+                  (change)="asignarSolucion($event)"
+                />
+                <label
+                  class="form-check-label"
+                  for="opcion5"
+                  style="white-space: nowrap"
+                >
+                  MONTAJE DE INFRAESTRUCTURA
+                </label>
+              </div>
+
+              <div class="form-check" style="min-width: 160px">
+                <input
+                  class="form-check-input"
+                  type="radio"
+                  name="reg_sop_opc"
+                  id="opcion6"
+                  value="NO CONTESTA"
+                  [(ngModel)]="solucionSeleccionada"
+                  (change)="asignarSolucion($event)"
+                />
+                <label
+                  class="form-check-label"
+                  for="opcion6"
+                  style="white-space: nowrap"
+                >
+                  NO CONTESTA
+                </label>
+              </div>
+            </div>
+
+            <div class="d-flex flex-column flex-wrap justify-content-center">
+              <button
+                (click)="guardarSolucion()"
+                class="btn btn-danger"
+                [disabled]="!detalleSolucion.trim()"
+              >
+                Guardar
+              </button>
+            </div>
           </div>
         </div>
       </div>
-    </div>
 
+      <!-- ✅ TABLA RESULTADO ONT (aprovecha ancho + potencia a la derecha) -->
+      @if (onuSn && showOntPanel) {
+        @if (ontResult; as r) {
+          <div class="mt-2">
+            <table class="table table-bordered table-striped ont-table mb-0">
+              <thead class="custom-header">
+                <tr>
+                  <th colspan="4" class="text-center">
+                    <div
+                      class="d-flex align-items-center justify-content-between gap-2"
+                    >
+                      <span>RESULTADO ONT</span>
+                      <span
+                        class="badge ont-pill text-white"
+                        [ngClass]="ontBadgeClass"
+                      >
+                        {{ r.runState || "—" }}
+                      </span>
+                    </div>
+                  </th>
+                </tr>
+              </thead>
 
-    <!-- ✅ AQUÍ VA EL RESULTADO (DENTRO DE LA MISMA TABLA) -->
-   @if (onuSn && showOntPanel) {
-  <tr>
-    <td colspan="2">
+              <tbody>
+                <!-- SN + cabecera Potencia -->
+                <tr>
+                  <th scope="row">SN</th>
+                  <td class="text-monospace">{{ r.sn || "—" }}</td>
+                  <th colspan="2" class="table-light fw-bold text-center">
+                    POTENCIA
+                  </th>
+                </tr>
 
-      @if (ontMensaje) {
-        <div class="alert alert-light border mt-2 mb-0">
-          {{ ontMensaje }}
-        </div>
+                <!-- F/S/P + Rx -->
+                <tr>
+                  <th scope="row">F/S/P</th>
+                  <td>{{ r.fsp || "—" }}</td>
+
+                  @if (r.optical; as opt) {
+                    @if (opt.available === true) {
+                      <th scope="row" class="ont-pwr-th">Rx (ONT)</th>
+                      <td class="ont-pwr-td">{{ opt.rxDbm ?? "—" }} dBm</td>
+                    } @else {
+                      <td colspan="2" class="text-muted small">
+                        No disponible: {{ opt.reason || "—" }}
+                      </td>
+                    }
+                  } @else {
+                    <td colspan="2" class="text-muted small">No disponible</td>
+                  }
+                </tr>
+
+                <!-- ONT-ID + Tx -->
+                <tr>
+                  <th scope="row">ONT-ID</th>
+
+                  @if (r.optical?.available === true) {
+                    <td>{{ r.ontId ?? "—" }}</td>
+                    <th scope="row" class="ont-pwr-th">Tx (ONT)</th>
+                    <td class="ont-pwr-td">
+                      {{ r.optical?.txDbm ?? "—" }} dBm
+                    </td>
+                  } @else {
+                    <td colspan="3">{{ r.ontId ?? "—" }}</td>
+                  }
+                </tr>
+
+                <!-- Distancia + OLT Rx -->
+                <tr>
+                  <th scope="row">Distancia</th>
+
+                  @if (r.optical?.available === true) {
+                    <td>{{ r.ontLastDistanceM ?? "—" }} m</td>
+                    <th scope="row" class="ont-pwr-th">OLT Rx</th>
+                    <td class="ont-pwr-td">
+                      {{ r.optical?.oltRxDbm ?? "—" }} dBm
+                    </td>
+                  } @else {
+                    <td colspan="3">{{ r.ontLastDistanceM ?? "—" }} m</td>
+                  }
+                </tr>
+
+                <!-- resto: usar colspan=3 para aprovechar todo el ancho -->
+                <tr>
+                  <th scope="row">Ultima Caida</th>
+                  <td colspan="3">{{ r.lastDownCause || "—" }}</td>
+                </tr>
+
+                <tr>
+                  <th scope="row">Último Activo</th>
+                  <td colspan="3">{{ lastUpTimeUI }}</td>
+                </tr>
+
+                <tr>
+                  <th scope="row">Tiempo Online</th>
+                  <td colspan="3" class="ont-nowrap">{{ onlineDurationUI }}</td>
+                </tr>
+
+                <tr>
+                  <th scope="row">Descripción</th>
+                  <td colspan="3" class="ont-wrap">
+                    {{ r.description || "—" }}
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        }
       }
 
-      <!-- 👇 AQUÍ PEGA ESTO -->
-      @if (ontResult) {
-        <div class="mt-2 ont-result-card">
-          <div class="row g-2">
-            <div class="col-12 col-md-6">
-              <div class="ont-kv"><span>SN</span><b>{{ ontResult.sn || '—' }}</b></div>
-              <div class="ont-kv"><span>F/S/P</span><b>{{ ontResult.fsp || '—' }}</b></div>
-              <div class="ont-kv"><span>ONT-ID</span><b>{{ ontResult.ontId ?? '—' }}</b></div>
-              <div class="ont-kv"><span>Distancia</span><b>{{ ontResult.ontLastDistanceM ?? '—' }} m</b></div>
-            </div>
+      <!-- BARRA HORIZONTAL DE TABS -->
+      <div class="container mt-3">
+        <div class="btn-group w-100" role="group" aria-label="Secciones">
+          <button
+            type="button"
+            class="btn btn-outline-primary"
+            [class.active]="activeTab === 'instalacion'"
+            (click)="setTab('instalacion')"
+          >
+            Instalación
+          </button>
+          <button
+            type="button"
+            class="btn btn-outline-primary"
+            [class.active]="activeTab === 'soportes'"
+            (click)="setTab('soportes')"
+          >
+            Soportes
+          </button>
+          <button
+            type="button"
+            class="btn btn-outline-primary"
+            [class.active]="activeTab === 'visitas'"
+            (click)="setTab('visitas')"
+          >
+            Visitas
+          </button>
+        </div>
+      </div>
 
-            <div class="col-12 col-md-6">
-              <div class="ont-kv"><span>Estado</span><b>{{ ontResult.runState || '—' }}</b></div>
-              <div class="ont-kv"><span>Causa caída</span><b>{{ ontResult.lastDownCause || '—' }}</b></div>
-              <div class="ont-kv"><span>Último UP</span><b>{{ ontResult.lastUpTime || '—' }}</b></div>
-              <div class="ont-kv"><span>Online</span><b>{{ ontResult.onlineDuration || '—' }}</b></div>
-            </div>
-
-            <div class="col-12">
-              <div class="ont-kv">
-                <span>Descripción</span>
-                <b>{{ ontResult.description || '—' }}</b>
-              </div>
-            </div>
-          </div>
-
-          @if (ontResult.optical) {
-            <hr class="my-2" />
-            <div class="fw-bold mb-1">Potencia</div>
-
-            @if (!ontResult.optical.available) {
-              <div class="text-muted small">
-                No disponible: {{ ontResult.optical.reason || '—' }}
-              </div>
-            } @else {
-              <div class="row g-2">
-                <div class="col-12 col-md-4">
-                  <div class="ont-kv"><span>Rx (ONT)</span><b>{{ ontResult.optical.rxDbm ?? '—' }} dBm</b></div>
-                </div>
-                <div class="col-12 col-md-4">
-                  <div class="ont-kv"><span>Tx (ONT)</span><b>{{ ontResult.optical.txDbm ?? '—' }} dBm</b></div>
-                </div>
-                <div class="col-12 col-md-4">
-                  <div class="ont-kv"><span>OLT Rx</span><b>{{ ontResult.optical.oltRxDbm ?? '—' }} dBm</b></div>
+      <!-- INSTALACIÓN -->
+      @if (activeTab === "instalacion") {
+        <div class="imagenes-grid row">
+          @for (
+            campo of [
+              "fachada",
+              "router",
+              "ont",
+              "potencia",
+              "speedtest",
+              "cable_1",
+              "cable_2",
+              "equipo_1",
+              "equipo_2",
+              "equipo_3",
+            ];
+            track campo
+          ) {
+            @if (
+              imagenesInstalacion[campo] &&
+              imagenesInstalacion[campo].ruta !== "null" &&
+              imagenesInstalacion[campo].url !== "undefined/imagenes/null"
+            ) {
+              <div class="col-6 col-md-3 col-lg-2">
+                <div class="card shadow-sm border rounded">
+                  <div class="card-body p-2 text-center">
+                    <div class="fw-bold text-capitalize mb-1">{{ campo }}</div>
+                    <img
+                      [src]="imagenesInstalacion[campo].url"
+                      alt="{{ campo }}"
+                      class="img-thumbnail"
+                      style="cursor: pointer; max-height: 150px"
+                      (click)="abrirImagenModal(imagenesInstalacion[campo].url)"
+                    />
+                  </div>
                 </div>
               </div>
             }
           }
         </div>
-
-        <!-- DEBUG (solo para verificar estructura, luego quítalo) -->
-        <!-- <pre class="out mt-2 mb-0">{{ ontResult | json }}</pre> -->
       }
 
-    </td>
-  </tr>
-}
-    <!-- BARRA HORIZONTAL DE TABS -->
-    <div class="container mt-3">
-      <div class="btn-group w-100" role="group" aria-label="Secciones">
-        <button
-          type="button"
-          class="btn btn-outline-primary"
-          [class.active]="activeTab === 'instalacion'"
-          (click)="setTab('instalacion')"
-        >
-          Instalación
-        </button>
-        <button
-          type="button"
-          class="btn btn-outline-primary"
-          [class.active]="activeTab === 'soportes'"
-          (click)="setTab('soportes')"
-        >
-          Soportes
-        </button>
-        <button
-          type="button"
-          class="btn btn-outline-primary"
-          [class.active]="activeTab === 'visitas'"
-          (click)="setTab('visitas')"
-        >
-          Visitas
-        </button>
-      </div>
-    </div>
+      <!-- SOPORTES -->
+      @if (activeTab === "soportes") {
+        @if (soportesResueltos.length) {
+          @for (s of soportesResueltos; track s.id) {
+            <div class="mb-4 border rounded shadow-sm p-2">
+              <div class="d-flex flex-wrap gap-2 align-items-center mb-2">
+                <span class="badge bg-secondary">
+                  @switch (s?.reg_sop_opc) {
+                    @case (1) {
+                      <span>Sin servicio de Internet</span>
+                    }
+                    @case (2) {
+                      <span>Internet Intermitente</span>
+                    }
+                    @case (3) {
+                      <span>Cambio de contraseña</span>
+                    }
+                    @case (4) {
+                      <span>Manipulación de equipos</span>
+                    }
+                    @case (5) {
+                      <span>Sin Definir</span>
+                    }
+                  }
+                </span>
 
-    <!-- INSTALACIÓN -->
-    @if (activeTab === 'instalacion') {
+                <span class="badge bg-success">{{ s.reg_sop_estado }}</span>
+                <span class="ms-auto small text-muted">
+                  {{
+                    s.reg_sop_fecha_acepta || s.reg_sop_fecha
+                      | date: "dd/MM/yyyy HH:mm"
+                  }}
+                </span>
+              </div>
 
-    <div class="imagenes-grid row">
-      @for (campo of ['fachada', 'router', 'ont', 'potencia', 'speedtest',
-      'cable_1', 'cable_2', 'equipo_1', 'equipo_2', 'equipo_3']; track campo) {
-      @if (imagenesInstalacion[campo] && imagenesInstalacion[campo].ruta !==
-      'null' && imagenesInstalacion[campo].url !== 'undefined/imagenes/null') {
-      <div class="col-6 col-md-3 col-lg-2">
-        <div class="card shadow-sm border rounded">
-          <div class="card-body p-2 text-center">
-            <div class="fw-bold text-capitalize mb-1">{{ campo }}</div>
-            <img
-              [src]="imagenesInstalacion[campo].url"
-              alt="{{ campo }}"
-              class="img-thumbnail"
-              style="cursor: pointer; max-height: 150px"
-              (click)="abrirImagenModal(imagenesInstalacion[campo].url)"
-            />
+              <div class="small mb-2">
+                <strong>Tel:</strong> {{ s.reg_sop_tel || "—" }}
+                &nbsp;·&nbsp;
+                <strong>Registrado por:</strong>
+                {{
+                  s.reg_sop_registrado_por_nombre ||
+                    s.reg_sop_registrado_por_id ||
+                    "—"
+                }}
+                &nbsp;·&nbsp;
+                <strong>Responsable NOC:</strong>
+                {{
+                  s.reg_sop_aceptado_por_nombre ||
+                    s.reg_sop_noc_id_acepta ||
+                    "—"
+                }}
+              </div>
+
+              @if (s.reg_sop_coment_cliente) {
+                <div class="mb-1">
+                  Comentario Cliente: {{ s.reg_sop_coment_cliente }}
+                </div>
+              }
+
+              <div>
+                <strong>Solución:</strong>
+                @if (s.reg_sop_sol_det) {
+                  {{ s.reg_sop_sol_det }}
+                } @else {
+                  —
+                }
+              </div>
+            </div>
+          }
+        } @else {
+          <div class="text-muted text-center py-2">
+            Sin soportes resueltos para esta orden.
           </div>
-        </div>
-      </div>
-      } }
-    </div>
-
-    }
-
-    <!-- SOPORTES -->
-    @if (activeTab === 'soportes') { @if (soportesResueltos.length) { @for (s of
-    soportesResueltos; track s.id) {
-    <div class="mb-4 border rounded shadow-sm p-2">
-      <div class="d-flex flex-wrap gap-2 align-items-center mb-2">
-        <span class="badge bg-secondary">
-          @switch (s?.reg_sop_opc) { @case (1) {
-          <span>Sin servicio de Internet</span>
-          } @case (2) {
-          <span> Internet Intermitente</span>
-          } @case (3) {
-          <span> Cambio de contraseña</span>
-          } @case (4) {
-          <span> Manipulacion de equipos</span>
-          } @case (5) {
-          <span> Sin Definir</span>
-          } }</span
-        >
-
-        <span class="badge bg-success">{{ s.reg_sop_estado }}</span>
-        <span class="ms-auto small text-muted">
-          {{
-            s.reg_sop_fecha_acepta || s.reg_sop_fecha
-              | date : "dd/MM/yyyy HH:mm"
-          }}
-        </span>
-      </div>
-
-      <div class="small mb-2">
-        <strong>Tel:</strong>
-        {{ s.reg_sop_tel || "—" }}
-        &nbsp;·&nbsp;
-        <strong>Registrado por:</strong>
-        {{
-          s.reg_sop_registrado_por_nombre || s.reg_sop_registrado_por_id || "—"
-        }}
-        &nbsp;·&nbsp;
-        <strong>Responsable NOC:</strong>
-        {{ s.reg_sop_aceptado_por_nombre || s.reg_sop_noc_id_acepta || "—" }}
-      </div>
-
-      @if (s.reg_sop_coment_cliente) {
-      <div class="mb-1">Comentario Cliente: {{ s.reg_sop_coment_cliente }}</div>
-      } Solución : @if (s.reg_sop_sol_det) {
-      {{ s.reg_sop_sol_det }}
+        }
       }
-    </div>
-    } } @else {
-    <div class="text-muted text-center py-2">
-      Sin soportes resueltos para esta orden.
-    </div>
-    } }
 
-    <!-- VISITAS -->
-    @if (activeTab === 'visitas') { @for (visita of imagenesVisitas; track
-    visita.id) {
-    <div class="mb-4 border rounded shadow-sm p-2">
-      <div class="mb-2">
-        <strong class="me-1">Tipo:</strong>
-        <span
-          class="badge px-2 py-1"
-          [ngClass]="getVisitaBadgeClass(visita.vis_tipo)"
-        >
-          {{ visita.vis_tipo || "—" }}
-        </span>
-        <span class="mx-1">|</span> <strong>Estado:</strong>
-        {{ visita.vis_estado }} <br />
-        <!-- <strong>Comentario cliente:</strong>
-        {{ visita.vis_coment_cliente || "—" }}<br /> -->
-        <strong>Diagnóstico:</strong> {{ visita.vis_diagnostico || "—" }}
-        <br />
-        <strong>Detalle Solución:</strong> {{ visita.vis_solucion || "—" }}
-        <br />
-        <!-- <strong>Fecha resolución del problema:</strong>
-        {{ visita.fecha_actualizacion | date : "dd/MM/yyyy HH:mm" }} -->
-      </div>
+      <!-- VISITAS -->
+      @if (activeTab === "visitas") {
+        @for (visita of imagenesVisitas; track visita.id) {
+          <div class="mb-4 border rounded shadow-sm p-2">
+            <div class="mb-2">
+              <strong class="me-1">Tipo:</strong>
+              <span
+                class="badge px-2 py-1"
+                [ngClass]="getVisitaBadgeClass(visita.vis_tipo)"
+              >
+                {{ visita.vis_tipo || "—" }}
+              </span>
+              <span class="mx-1">|</span>
+              <strong>Estado:</strong> {{ visita.vis_estado }} <br />
 
-      <div class="imagenes-grid row">
-        @for (campo of ['img_1', 'img_2', 'img_3', 'img_4']; track campo) { @if
-        (visita.imagenes[campo] && visita.imagenes[campo].ruta !== 'null' &&
-        visita.imagenes[campo].url !== 'undefined/imagenes/null') {
-        <div class="col-6 col-md-3 col-lg-2">
-          <div class="card shadow-sm border rounded">
-            <div class="card-body p-2 text-center">
-              <div class="fw-bold text-uppercase mb-1">{{ campo }}</div>
-              <img
-                [src]="visita.imagenes[campo].url"
-                alt="{{ campo }}"
-                class="img-thumbnail"
-                style="cursor: pointer; max-height: 150px"
-                (click)="abrirImagenModal(visita.imagenes[campo].url)"
-              />
+              <strong>Diagnóstico:</strong> {{ visita.vis_diagnostico || "—"
+              }}<br />
+              <strong>Detalle Solución:</strong> {{ visita.vis_solucion || "—"
+              }}<br />
+            </div>
+
+            <div class="imagenes-grid row">
+              @for (
+                campo of ["img_1", "img_2", "img_3", "img_4"];
+                track campo
+              ) {
+                @if (
+                  visita.imagenes[campo] &&
+                  visita.imagenes[campo].ruta !== "null" &&
+                  visita.imagenes[campo].url !== "undefined/imagenes/null"
+                ) {
+                  <div class="col-6 col-md-3 col-lg-2">
+                    <div class="card shadow-sm border rounded">
+                      <div class="card-body p-2 text-center">
+                        <div class="fw-bold text-uppercase mb-1">
+                          {{ campo }}
+                        </div>
+                        <img
+                          [src]="visita.imagenes[campo].url"
+                          alt="{{ campo }}"
+                          class="img-thumbnail"
+                          style="cursor: pointer; max-height: 150px"
+                          (click)="abrirImagenModal(visita.imagenes[campo].url)"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                }
+              }
             </div>
           </div>
-        </div>
-        } }
-      </div>
-    </div>
-    } }
-  </section>
-</div>
+        }
+      }
+    </section>
+  </div>
 }
 
-<!-- Modal Imagen Ampliada (sin cambios estructurales) -->
+<!-- Modal Imagen Ampliada -->
 <div
   class="modal fade"
   id="modalImagenAmpliada"

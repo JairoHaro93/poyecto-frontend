@@ -1,4 +1,4 @@
-import { Component, inject, OnDestroy } from '@angular/core';
+import { Component, inject, OnDestroy, OnInit } from '@angular/core';
 import {
   FormBuilder,
   FormControl,
@@ -18,9 +18,11 @@ import {
 } from '../../../../services/negocio_latacunga/olt.services';
 
 type Estado =
-  | 'IDLE'
-  | 'CONECTANDO'
-  | 'OK'
+  | 'IDLE' // aún no se ha preparado sesión
+  | 'READYING' // preparando sesión /ready
+  | 'READY' // ✅ sesión lista
+  | 'CONECTANDO' // consultando ONT
+  | 'OK' // consulta OK + result
   | 'ERROR'
   | 'COOLDOWN'
   | 'ELIMINANDO';
@@ -29,10 +31,7 @@ function snOntValidator(control: AbstractControl): ValidationErrors | null {
   const raw = String(control.value ?? '');
   const v = raw.replace(/\s+/g, '').toUpperCase();
 
-  // 16 HEX
   if (/^[0-9A-F]{16}$/.test(v)) return null;
-
-  // 4 letras + 8 HEX, con o sin guion (TPLG934700ED / TPLG-934700ED)
   if (/^[A-Z]{4}-?[0-9A-F]{8}$/.test(v)) return null;
 
   return { snInvalid: true };
@@ -45,7 +44,7 @@ function snOntValidator(control: AbstractControl): ValidationErrors | null {
   templateUrl: './olt.component.html',
   styleUrl: './olt.component.css',
 })
-export class OltComponent implements OnDestroy {
+export class OltComponent implements OnInit, OnDestroy {
   oltForm!: FormGroup;
   oltService = inject(OltService);
 
@@ -69,11 +68,43 @@ export class OltComponent implements OnDestroy {
     this.isReady = true;
   }
 
+  // dentro del componente
+
+  get isBusy(): boolean {
+    return (
+      this.estado === 'READYING' ||
+      this.estado === 'CONECTANDO' ||
+      this.estado === 'COOLDOWN' ||
+      this.estado === 'ELIMINANDO'
+    );
+  }
+
+  // ✅ si quieres “estricto”: solo consultar cuando ya está READY (o ya consultaste OK)
+  get canConsultar(): boolean {
+    return this.estado === 'READY' || this.estado === 'OK';
+  }
+
+  get disableConsultar(): boolean {
+    return this.isBusy || !this.canConsultar;
+  }
+
+  get disableConectar(): boolean {
+    return this.isBusy; // o si quieres permitir conectar en ERROR/IDLE, igual funciona
+  }
+
+  get disableEliminar(): boolean {
+    return this.isBusy || this.estado === 'IDLE' || !this.result;
+  }
+
+  async ngOnInit(): Promise<void> {
+    // ✅ opcional: calentar sesión al entrar
+    await this.warmupReady(false);
+  }
+
   ngOnDestroy(): void {
     this.clearCooldown();
   }
 
-  // ✅ normaliza (quita espacios) y convierte a mayúsculas
   normalizeInput(field: string): void {
     const c = this.oltForm.get(field);
     if (!c) return;
@@ -83,7 +114,6 @@ export class OltComponent implements OnDestroy {
     c.setValue(v, { emitEvent: false });
   }
 
-  // ✅ convierte TPLG934700ED -> 54504C47934700ED (ASCIIHEX(TPLG) + 934700ED)
   private toHex16(sn: string): string {
     const v = String(sn || '')
       .replace(/\s+/g, '')
@@ -92,23 +122,79 @@ export class OltComponent implements OnDestroy {
 
     const noDash = v.replace(/-/g, '');
     if (/^[A-Z]{4}[0-9A-F]{8}$/.test(noDash)) {
-      const pref = noDash.slice(0, 4); // TPLG
-      const suf = noDash.slice(4); // 934700ED
+      const pref = noDash.slice(0, 4);
+      const suf = noDash.slice(4);
 
       const prefHex = pref
         .split('')
         .map((ch) => ch.charCodeAt(0).toString(16).padStart(2, '0'))
         .join('')
-        .toUpperCase(); // 54504C47
+        .toUpperCase();
 
-      return `${prefHex}${suf}`; // 54504C47934700ED
+      return `${prefHex}${suf}`;
     }
 
-    return v; // (no debería llegar si el validador está bien)
+    return v;
   }
 
+  // ✅ sesión lista si estado es READY u OK (porque OK implica que ya hubo sesión)
+  private get sessionReady(): boolean {
+    return this.estado === 'READY' || this.estado === 'OK';
+  }
+
+  // ===========================
+  // READY FLOW (solo estado)
+  // ===========================
+  async warmupReady(showSwal: boolean = true): Promise<boolean> {
+    if (this.estado === 'COOLDOWN' || this.estado === 'ELIMINANDO')
+      return false;
+
+    this.estado = 'READYING';
+    this.mensaje = 'Conectando a OLT...';
+
+    try {
+      const r = await lastValueFrom(this.oltService.ready());
+      if (!r?.ok || !r?.ready) throw { error: r };
+
+      this.estado = 'READY';
+      this.mensaje = ''; // si quieres, pon "Sesión lista ✅"
+      if (showSwal) await Swal.fire('Listo', 'Sesión OLT preparada', 'success');
+      return true;
+    } catch (err: any) {
+      const status = err?.status;
+      const backendMsg =
+        err?.error?.error?.message ||
+        err?.error?.message ||
+        err?.error?.error ||
+        err?.message;
+
+      if (status === 429) {
+        this.estado = 'COOLDOWN';
+        this.mensaje = backendMsg || 'Espera antes de reintentar';
+        this.startCooldownFromMessage(this.mensaje);
+        if (showSwal) await Swal.fire('Espera', this.mensaje, 'warning');
+        return false;
+      }
+
+      this.estado = 'ERROR';
+      this.mensaje = backendMsg || 'No se pudo preparar la sesión OLT';
+      if (showSwal) await Swal.fire('Error', this.mensaje, 'error');
+      return false;
+    }
+  }
+
+  private async ensureReady(): Promise<boolean> {
+    if (this.sessionReady) return true;
+    const ok = await this.warmupReady(false);
+    return ok;
+  }
+
+  // ===========================
+  // CONSULTAR
+  // ===========================
   async consultarOnt(): Promise<void> {
     if (
+      this.estado === 'READYING' ||
       this.estado === 'CONECTANDO' ||
       this.estado === 'COOLDOWN' ||
       this.estado === 'ELIMINANDO'
@@ -117,6 +203,13 @@ export class OltComponent implements OnDestroy {
 
     if (this.oltForm.invalid) {
       this.oltForm.markAllAsTouched();
+      return;
+    }
+
+    // ✅ asegura READY antes de consultar
+    const okReady = await this.ensureReady();
+    if (!okReady) {
+      // si no pudo, dejamos estado ERROR/COOLDOWN ya seteado
       return;
     }
 
@@ -153,6 +246,33 @@ export class OltComponent implements OnDestroy {
         return;
       }
 
+      // 🔁 retry 1 vez: re-warmup y reintento
+      const retryable =
+        /sesión|prompt|concatenado|corrupta|unknown command/i.test(
+          String(backendMsg || ''),
+        );
+
+      if (retryable) {
+        const warmed = await this.warmupReady(false);
+        if (warmed) {
+          try {
+            const snInput = String(this.oltForm.value.sn || '');
+            const snHex16 = this.toHex16(snInput);
+            const data2 = await lastValueFrom(
+              this.oltService.ontInfoBySn(snHex16),
+            );
+            if (!data2?.ok) throw { error: data2 };
+
+            this.estado = 'OK';
+            this.mensaje = 'OK';
+            this.result = data2;
+            await Swal.fire('Listo', `ONT consultada: ${data2.sn}`, 'success');
+            return;
+          } catch {}
+        }
+      }
+
+      // si falló: forzamos a NO READY para que el usuario reconecte
       this.estado = 'ERROR';
       this.mensaje = backendMsg || 'No se pudo consultar la ONT';
       this.result = null;
@@ -160,8 +280,12 @@ export class OltComponent implements OnDestroy {
     }
   }
 
+  // ===========================
+  // ELIMINAR
+  // ===========================
   async eliminarOnt(): Promise<void> {
     if (
+      this.estado === 'READYING' ||
       this.estado === 'CONECTANDO' ||
       this.estado === 'COOLDOWN' ||
       this.estado === 'ELIMINANDO'
@@ -173,7 +297,10 @@ export class OltComponent implements OnDestroy {
       return;
     }
 
-    // Confirmación inicial
+    // ✅ asegura READY antes de eliminar
+    const okReady = await this.ensureReady();
+    if (!okReady) return;
+
     const isOnline =
       String(this.result.runState || '').toLowerCase() === 'online';
 
@@ -197,10 +324,8 @@ export class OltComponent implements OnDestroy {
       confirmButtonText: 'Sí, eliminar',
       cancelButtonText: 'Cancelar',
     });
-
     if (!confirm1.isConfirmed) return;
 
-    // Segunda confirmación si está ONLINE
     if (isOnline) {
       const confirm2 = await Swal.fire({
         title: '⚠️ ONT ONLINE',
@@ -212,11 +337,9 @@ export class OltComponent implements OnDestroy {
         confirmButtonText: 'Sí, estoy seguro',
         cancelButtonText: 'Cancelar',
       });
-
       if (!confirm2.isConfirmed) return;
     }
 
-    // Proceder con eliminación
     this.estado = 'ELIMINANDO';
     this.mensaje = 'Eliminando ONT...';
 
@@ -227,15 +350,14 @@ export class OltComponent implements OnDestroy {
       const data: OntDeleteResponse = await lastValueFrom(
         this.oltService.ontDelete(snHex16),
       );
-
       if (!data?.ok) throw { error: data };
 
-      this.estado = 'IDLE';
+      // después de borrar, seguimos listos para otra acción
+      this.estado = 'READY';
       this.mensaje = '';
       this.result = null;
       this.oltForm.reset();
 
-      // Mensaje de éxito con detalles
       let successMsg = `<strong>ONT eliminada exitosamente</strong><br><br>`;
       successMsg += `SN: ${data.sn}<br>`;
       successMsg += `F/S/P: ${data.fsp}<br>`;
@@ -290,6 +412,14 @@ export class OltComponent implements OnDestroy {
     }
   }
 
+  limpiar(): void {
+    this.oltForm.reset();
+    this.result = null;
+    this.mensaje = '';
+    // si ya estabas READY u OK, vuelves a READY; caso contrario vuelves a IDLE
+    this.estado = this.sessionReady ? 'READY' : 'IDLE';
+  }
+
   checkError(controlName: string, error: string): boolean {
     const c = this.oltForm.get(controlName);
     return !!(c?.touched && c.hasError(error));
@@ -297,6 +427,8 @@ export class OltComponent implements OnDestroy {
 
   get badgeClass(): string {
     switch (this.estado) {
+      case 'READY':
+        return 'bg-success';
       case 'OK':
         return 'bg-success';
       case 'ERROR':
@@ -304,6 +436,7 @@ export class OltComponent implements OnDestroy {
       case 'COOLDOWN':
         return 'bg-warning text-dark';
       case 'CONECTANDO':
+      case 'READYING':
       case 'ELIMINANDO':
         return 'bg-primary';
       default:
@@ -313,6 +446,8 @@ export class OltComponent implements OnDestroy {
 
   get estadoTexto(): string {
     switch (this.estado) {
+      case 'READY':
+        return 'READY';
       case 'OK':
         return 'OK';
       case 'ERROR':
@@ -321,6 +456,8 @@ export class OltComponent implements OnDestroy {
         return 'ESPERA';
       case 'CONECTANDO':
         return 'CONSULTANDO';
+      case 'READYING':
+        return 'CONECTANDO OLT';
       case 'ELIMINANDO':
         return 'ELIMINANDO';
       default:
@@ -337,6 +474,7 @@ export class OltComponent implements OnDestroy {
       this.cooldownSec -= 1;
       if (this.cooldownSec <= 0) {
         this.clearCooldown();
+        // al terminar cooldown volvemos a IDLE (exige reconectar) o quieres READY?
         this.estado = 'IDLE';
         this.mensaje = '';
       } else {
