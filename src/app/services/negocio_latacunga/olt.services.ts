@@ -67,7 +67,7 @@ export interface OntDeleteResponse {
   providedIn: 'root',
 })
 export class OltService {
-  private baseUrl = `${environment.API_URL}/api/olt`;
+  private baseUrl = `${environment.API_URL}/olt`;
 
   constructor(private http: HttpClient) {}
 
