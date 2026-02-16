@@ -164,6 +164,73 @@ export class InfoSopComponent implements OnInit, OnDestroy {
     return v ? v : null;
   }
 
+  // ✅ Ajuste UX (no backend) — Rx(ONT) viene con offset
+  private readonly DBM_OFFSET_RX = 4.09;
+
+  // "48 day(s), 22 hour(s), 29 minute(s), 15 second(s)" => "48d 22h 29m 15s"
+  private compactDuration(raw?: string | null): string {
+    const s = String(raw ?? '').trim();
+    if (!s) return '—';
+
+    const compact = s
+      .replace(/day\(s\)/gi, 'd')
+      .replace(/hour\(s\)/gi, 'h')
+      .replace(/minute\(s\)/gi, 'm')
+      .replace(/second\(s\)/gi, 's')
+      .replace(/,/g, '')
+      .replace(/\s+/g, ' ')
+      .trim();
+
+    return compact || s;
+  }
+
+  // "29-12-2025 18:39:49-05:00" => "29/12/2025 18:39:49 -05:00"
+  private formatLastUp(raw?: string | null): string {
+    const s = String(raw ?? '').trim();
+    if (!s) return '—';
+
+    const m = s.match(
+      /(\d{2})-(\d{2})-(\d{4})\s+(\d{2}):(\d{2}):(\d{2})([+-]\d{2}:\d{2})?/,
+    );
+
+    if (!m) return s;
+
+    const [, dd, MM, yyyy, hh, mm, ss, tz] = m;
+    return `${dd}/${MM}/${yyyy} ${hh}:${mm}:${ss}${tz ? ' ' + tz : ''}`;
+  }
+
+  // ✅ dBm con unidad incluida SOLO si hay número (evita "sin dato dBm")
+  private dbmUI(value: unknown, offset = 0): string {
+    if (value === null || value === undefined || value === '')
+      return 'sin dato';
+
+    const n = typeof value === 'number' ? value : Number(String(value).trim());
+    if (!Number.isFinite(n)) return 'sin dato';
+
+    return `${(n + offset).toFixed(2)} dBm`;
+  }
+
+  // ✅ getters listos para template
+  get lastUpTimeUI(): string {
+    return this.formatLastUp(this.ontResult?.lastUpTime);
+  }
+
+  get onlineDurationUI(): string {
+    return this.compactDuration(this.ontResult?.onlineDuration);
+  }
+
+  get rxOntUI(): string {
+    return this.dbmUI(this.ontResult?.optical?.rxDbm, this.DBM_OFFSET_RX);
+  }
+
+  get txOntUI(): string {
+    return this.dbmUI(this.ontResult?.optical?.txDbm, 0);
+  }
+
+  get oltRxUI(): string {
+    return this.dbmUI(this.ontResult?.optical?.oltRxDbm, 0);
+  }
+
   toggleOntPanel(): void {
     if (!this.onuSn) return;
     this.showOntPanel = !this.showOntPanel;
@@ -951,29 +1018,5 @@ export class InfoSopComponent implements OnInit, OnDestroy {
 
     // Fallback: quitar zona si viene al final
     return s.replace(/([+-]\d{2}:\d{2})$/, '').trim();
-  }
-
-  get lastUpTimeUI(): string {
-    return this.formatLastUpTime(this.ontResult?.lastUpTime);
-  }
-
-  get onlineDurationUI(): string {
-    const raw = String(this.ontResult?.onlineDuration ?? '').trim();
-    if (!raw) return '—';
-
-    // "48 day(s), 22 hour(s), 29 minute(s), 15 second(s)" => "48d 22h 29m 15s"
-    let s = raw
-      .replace(/day\(s\)/gi, 'd')
-      .replace(/hour\(s\)/gi, 'h')
-      .replace(/minute\(s\)/gi, 'm')
-      .replace(/second\(s\)/gi, 's')
-      .replace(/,/g, ' ')
-      .replace(/\s+/g, ' ')
-      .trim();
-
-    // junta número+unidad: "48 d" -> "48d"
-    s = s.replace(/(\d+)\s*([dhms])/gi, '$1$2');
-
-    return s || raw;
   }
 }

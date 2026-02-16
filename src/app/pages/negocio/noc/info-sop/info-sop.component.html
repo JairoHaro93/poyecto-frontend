@@ -407,7 +407,7 @@
                   @if (r.optical; as opt) {
                     @if (opt.available === true) {
                       <th scope="row" class="ont-pwr-th">Rx (ONT)</th>
-                      <td class="ont-pwr-td">{{ opt.rxDbm ?? "—" }} dBm</td>
+                      <td class="ont-pwr-td">{{ rxOntUI }}</td>
                     } @else {
                       <td colspan="2" class="text-muted small">
                         No disponible: {{ opt.reason || "—" }}

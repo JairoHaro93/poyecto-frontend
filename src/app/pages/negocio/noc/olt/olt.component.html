@@ -143,14 +143,16 @@
                   <span>Estado</span><b>{{ result.runState || "—" }}</b>
                 </div>
                 <div class="kv">
-                  <span>Causa caída</span
+                  <span>Ultima caída</span
                   ><b>{{ result.lastDownCause || "—" }}</b>
                 </div>
                 <div class="kv">
-                  <span>Último UP</span><b>{{ result.lastUpTime || "—" }}</b>
+                  <span>Último Activo</span
+                  ><b class="nowrap">{{ lastUpTimeUI }}</b>
                 </div>
                 <div class="kv">
-                  <span>Online</span><b>{{ result.onlineDuration || "—" }}</b>
+                  <span> Tiempo Online</span
+                  ><b class="nowrap">{{ onlineDurationUI }}</b>
                 </div>
               </div>
 
@@ -174,8 +176,7 @@
                 <div class="row g-2">
                   <div class="col-12 col-md-4">
                     <div class="kv">
-                      <span>Rx (ONT)</span
-                      ><b>{{ result.optical.rxDbm ?? "—" }} dBm</b>
+                      <span>Rx (ONT)</span><b>{{ rxOntUI }} dBm</b>
                     </div>
                   </div>
                   <div class="col-12 col-md-4">

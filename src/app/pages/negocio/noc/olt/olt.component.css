@@ -1,11 +1,11 @@
-.result-card{
+.result-card {
   border: 1px solid #e5e7eb;
   border-radius: 12px;
   padding: 12px 14px;
   background: #fff;
 }
 
-.kv{
+.kv {
   display: flex;
   gap: 10px;
   align-items: baseline;
@@ -13,14 +13,14 @@
   border-bottom: 1px dashed #eef2f7;
 }
 
-.kv span{
+.kv span {
   min-width: 150px;
   color: #6b7280;
   font-size: 12px;
   font-weight: 700;
 }
 
-.kv b{
+.kv b {
   color: #111827;
   font-size: 13px;
   font-weight: 800;
@@ -34,4 +34,9 @@
   font-size: 12px;
   max-height: 280px;
   overflow: auto;
+}
+
+/* Para que Online no se parta */
+.kv b.nowrap {
+  white-space: nowrap;
 }

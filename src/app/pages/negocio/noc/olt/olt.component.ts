@@ -95,6 +95,66 @@ export class OltComponent implements OnInit, OnDestroy {
   get disableEliminar(): boolean {
     return this.isBusy || this.estado === 'IDLE' || !this.result;
   }
+  // ✅ Ajuste UX (no backend)
+  private readonly DBM_OFFSET_RX = 4.09;
+
+  private compactDuration(raw?: string | null): string {
+    const s = String(raw ?? '').trim();
+    if (!s) return '—';
+
+    const compact = s
+      .replace(/day\(s\)/gi, 'd')
+      .replace(/hour\(s\)/gi, 'h')
+      .replace(/minute\(s\)/gi, 'm')
+      .replace(/second\(s\)/gi, 's')
+      .replace(/,/g, '')
+      .replace(/\s+/g, ' ')
+      .trim();
+
+    return compact || s;
+  }
+
+  private formatLastUp(raw?: string | null): string {
+    const s = String(raw ?? '').trim();
+    if (!s) return '—';
+
+    const m = s.match(
+      /(\d{2})-(\d{2})-(\d{4})\s+(\d{2}):(\d{2}):(\d{2})([+-]\d{2}:\d{2})?/,
+    );
+
+    if (!m) return s;
+
+    const [, dd, MM, yyyy, hh, mm, ss, tz] = m;
+    return `${dd}/${MM}/${yyyy} ${hh}:${mm}:${ss}${tz ? ' ' + tz : ''}`;
+  }
+
+  private dbmUI(value: unknown, offset = 0): string {
+    if (value === null || value === undefined || value === '')
+      return 'sin dato';
+    const n = typeof value === 'number' ? value : Number(String(value).trim());
+    if (!Number.isFinite(n)) return 'sin dato';
+    return `${(n + offset).toFixed(2)} dBm`;
+  }
+
+  get lastUpTimeUI(): string {
+    return this.formatLastUp(this.result?.lastUpTime);
+  }
+
+  get onlineDurationUI(): string {
+    return this.compactDuration(this.result?.onlineDuration);
+  }
+
+  get rxOntUI(): string {
+    return this.dbmUI(this.result?.optical?.rxDbm, this.DBM_OFFSET_RX);
+  }
+
+  get txOntUI(): string {
+    return this.dbmUI(this.result?.optical?.txDbm, 0);
+  }
+
+  get oltRxUI(): string {
+    return this.dbmUI(this.result?.optical?.oltRxDbm, 0);
+  }
 
   async ngOnInit(): Promise<void> {
     // ✅ opcional: calentar sesión al entrar
@@ -487,5 +547,20 @@ export class OltComponent implements OnInit, OnDestroy {
     if (this.cooldownTimer) clearInterval(this.cooldownTimer);
     this.cooldownTimer = null;
     this.cooldownSec = 0;
+  }
+
+  private formatLastUpTime(raw: unknown): string {
+    const s = String(raw ?? '').trim();
+    if (!s) return '—';
+
+    // Caso típico: "29-12-2025 18:39:49-05:00" (con o sin zona)
+    const m = s.match(/(\d{2})-(\d{2})-(\d{4})\s+(\d{2}):(\d{2}):(\d{2})/);
+    if (m) {
+      const [, dd, mm, yyyy, hh, mi, ss] = m;
+      return `${dd}/${mm}/${yyyy} ${hh}:${mi}:${ss}`;
+    }
+
+    // Fallback: quitar zona si viene al final
+    return s.replace(/([+-]\d{2}:\d{2})$/, '').trim();
   }
 }
