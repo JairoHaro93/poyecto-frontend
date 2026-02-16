@@ -14,9 +14,16 @@ import { lastValueFrom } from 'rxjs';
 import {
   OltService,
   OntInfoBySnResponse,
+  OntDeleteResponse,
 } from '../../../../services/negocio_latacunga/olt.services';
 
-type Estado = 'IDLE' | 'CONECTANDO' | 'OK' | 'ERROR' | 'COOLDOWN';
+type Estado =
+  | 'IDLE'
+  | 'CONECTANDO'
+  | 'OK'
+  | 'ERROR'
+  | 'COOLDOWN'
+  | 'ELIMINANDO';
 
 function snOntValidator(control: AbstractControl): ValidationErrors | null {
   const raw = String(control.value ?? '');
@@ -101,7 +108,12 @@ export class OltComponent implements OnDestroy {
   }
 
   async consultarOnt(): Promise<void> {
-    if (this.estado === 'CONECTANDO' || this.estado === 'COOLDOWN') return;
+    if (
+      this.estado === 'CONECTANDO' ||
+      this.estado === 'COOLDOWN' ||
+      this.estado === 'ELIMINANDO'
+    )
+      return;
 
     if (this.oltForm.invalid) {
       this.oltForm.markAllAsTouched();
@@ -148,6 +160,136 @@ export class OltComponent implements OnDestroy {
     }
   }
 
+  async eliminarOnt(): Promise<void> {
+    if (
+      this.estado === 'CONECTANDO' ||
+      this.estado === 'COOLDOWN' ||
+      this.estado === 'ELIMINANDO'
+    )
+      return;
+
+    if (!this.result) {
+      await Swal.fire('Error', 'Primero debes consultar una ONT', 'warning');
+      return;
+    }
+
+    // Confirmación inicial
+    const isOnline =
+      String(this.result.runState || '').toLowerCase() === 'online';
+
+    let confirmText = `¿Estás seguro de eliminar esta ONT?<br><br>`;
+    confirmText += `<strong>SN:</strong> ${this.result.sn}<br>`;
+    confirmText += `<strong>Descripción:</strong> ${this.result.description || 'Sin descripción'}<br>`;
+    confirmText += `<strong>F/S/P:</strong> ${this.result.fsp}<br>`;
+    confirmText += `<strong>ONT-ID:</strong> ${this.result.ontId}<br>`;
+
+    if (isOnline) {
+      confirmText += `<br><span style="color: #f39c12; font-weight: bold;">⚠️ ADVERTENCIA: La ONT está ONLINE</span>`;
+    }
+
+    const confirm1 = await Swal.fire({
+      title: 'Confirmar Eliminación',
+      html: confirmText,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#d33',
+      cancelButtonColor: '#3085d6',
+      confirmButtonText: 'Sí, eliminar',
+      cancelButtonText: 'Cancelar',
+    });
+
+    if (!confirm1.isConfirmed) return;
+
+    // Segunda confirmación si está ONLINE
+    if (isOnline) {
+      const confirm2 = await Swal.fire({
+        title: '⚠️ ONT ONLINE',
+        html: 'La ONT está <strong>ACTIVA y EN LÍNEA</strong>.<br>Esto afectará al cliente.<br><br>¿Confirmas la eliminación?',
+        icon: 'error',
+        showCancelButton: true,
+        confirmButtonColor: '#d33',
+        cancelButtonColor: '#3085d6',
+        confirmButtonText: 'Sí, estoy seguro',
+        cancelButtonText: 'Cancelar',
+      });
+
+      if (!confirm2.isConfirmed) return;
+    }
+
+    // Proceder con eliminación
+    this.estado = 'ELIMINANDO';
+    this.mensaje = 'Eliminando ONT...';
+
+    try {
+      const snInput = String(this.oltForm.value.sn || '');
+      const snHex16 = this.toHex16(snInput);
+
+      const data: OntDeleteResponse = await lastValueFrom(
+        this.oltService.ontDelete(snHex16),
+      );
+
+      if (!data?.ok) throw { error: data };
+
+      this.estado = 'IDLE';
+      this.mensaje = '';
+      this.result = null;
+      this.oltForm.reset();
+
+      // Mensaje de éxito con detalles
+      let successMsg = `<strong>ONT eliminada exitosamente</strong><br><br>`;
+      successMsg += `SN: ${data.sn}<br>`;
+      successMsg += `F/S/P: ${data.fsp}<br>`;
+      successMsg += `ONT-ID: ${data.ontId}<br>`;
+
+      if (data.servicePorts.deleted.length > 0) {
+        successMsg += `<br><strong>Service-ports eliminados:</strong><br>`;
+        data.servicePorts.deleted.forEach((sp) => {
+          if (sp.index) {
+            successMsg += `• Index: ${sp.index}, VLAN: ${sp.vlanId}, Estado: ${sp.state}<br>`;
+          } else if (sp.warning) {
+            successMsg += `• ${sp.warning}<br>`;
+          }
+        });
+      }
+
+      if (data.warning) {
+        successMsg += `<br><span style="color: #f39c12;">${data.warning}</span>`;
+      }
+
+      await Swal.fire({
+        title: 'Eliminación Exitosa',
+        html: successMsg,
+        icon: 'success',
+      });
+    } catch (err: any) {
+      const status = err?.status;
+      const backendMsg =
+        err?.error?.error?.message ||
+        err?.error?.message ||
+        err?.error?.error ||
+        err?.message;
+
+      if (status === 429) {
+        this.estado = 'COOLDOWN';
+        this.mensaje = backendMsg || 'Espera antes de reintentar';
+        this.startCooldownFromMessage(this.mensaje);
+        await Swal.fire('Espera', this.mensaje, 'warning');
+        return;
+      }
+
+      if (status === 404) {
+        this.estado = 'ERROR';
+        this.mensaje = 'La ONT no existe en la OLT';
+        await Swal.fire('Error', this.mensaje, 'error');
+        return;
+      }
+
+      this.estado = 'ERROR';
+      this.mensaje = backendMsg || 'No se pudo eliminar la ONT';
+      await Swal.fire('Error', this.mensaje, 'error');
+    }
+  }
+
   checkError(controlName: string, error: string): boolean {
     const c = this.oltForm.get(controlName);
     return !!(c?.touched && c.hasError(error));
@@ -162,6 +304,7 @@ export class OltComponent implements OnDestroy {
       case 'COOLDOWN':
         return 'bg-warning text-dark';
       case 'CONECTANDO':
+      case 'ELIMINANDO':
         return 'bg-primary';
       default:
         return 'bg-secondary';
@@ -177,7 +320,9 @@ export class OltComponent implements OnDestroy {
       case 'COOLDOWN':
         return 'ESPERA';
       case 'CONECTANDO':
-        return 'CONECTANDO';
+        return 'CONSULTANDO';
+      case 'ELIMINANDO':
+        return 'ELIMINANDO';
       default:
         return 'IDLE';
     }
