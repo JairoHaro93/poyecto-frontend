@@ -243,6 +243,16 @@ export class InfoSopComponent implements OnInit, OnDestroy {
     return d ? this.formatLocalDateTime(d) : '—';
   }
 
+  get lastDyingGaspTimeUI(): string {
+    const d = this.parseOltDate(this.ontResult?.lastDyingGaspTime);
+    return d ? this.formatLocalDateTime(d) : '—';
+  }
+
+  get lastDownTimeUI(): string {
+    const d = this.parseOltDate(this.ontResult?.lastDownTime);
+    return d ? this.formatLocalDateTime(d) : '—';
+  }
+
   get onlineDurationUI(): string {
     return this.compactDuration(this.ontResult?.onlineDuration);
   }
@@ -1044,18 +1054,33 @@ export class InfoSopComponent implements OnInit, OnDestroy {
     return 'ont-pill--neutral';
   }
 
-  private formatLastUpTime(raw: unknown): string {
-    const s = String(raw ?? '').trim();
-    if (!s) return '—';
+  get runStateBadgeClass(): string {
+    const v = String(this.ontResult?.runState ?? '')
+      .toLowerCase()
+      .trim();
 
-    // Caso típico: "29-12-2025 18:39:49-05:00" (con o sin zona)
-    const m = s.match(/(\d{2})-(\d{2})-(\d{4})\s+(\d{2}):(\d{2}):(\d{2})/);
-    if (m) {
-      const [, dd, mm, yyyy, hh, mi, ss] = m;
-      return `${dd}/${mm}/${yyyy} ${hh}:${mi}:${ss}`;
+    // ✅ “buenos”
+    if (v.includes('online') || v === 'up' || v.includes('active')) {
+      return 'bg-success text-white';
     }
 
-    // Fallback: quitar zona si viene al final
-    return s.replace(/([+-]\d{2}:\d{2})$/, '').trim();
+    // ❌ “malos”
+    if (
+      v.includes('offline') ||
+      v.includes('down') ||
+      v.includes('los') ||
+      v.includes('dying') ||
+      v.includes('deregister') ||
+      v.includes('power')
+    ) {
+      return 'bg-danger text-white';
+    }
+
+    // ⚠️ “warning”
+    if (v.includes('unknown') || v.includes('standby') || v.includes('init')) {
+      return 'bg-warning text-dark';
+    }
+
+    return 'bg-secondary text-white';
   }
 }

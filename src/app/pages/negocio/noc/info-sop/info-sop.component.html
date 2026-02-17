@@ -379,8 +379,8 @@
                     >
                       <span>RESULTADO ONT</span>
                       <span
-                        class="badge ont-pill text-white"
-                        [ngClass]="ontBadgeClass"
+                        class="badge ont-pill"
+                        [ngClass]="runStateBadgeClass"
                       >
                         {{ r.runState || "—" }}
                       </span>
@@ -449,13 +449,24 @@
                 </tr>
 
                 <!-- resto: usar colspan=3 para aprovechar todo el ancho -->
+                <!-- resto: usar colspan=3 para aprovechar todo el ancho -->
                 <tr>
-                  <th scope="row">Ultima Caida</th>
+                  <th scope="row">Causa caída</th>
                   <td colspan="3">{{ r.lastDownCause || "—" }}</td>
                 </tr>
 
                 <tr>
-                  <th scope="row">Último Activo</th>
+                  <th scope="row">Última Hora Apagado</th>
+                  <td colspan="3">{{ lastDyingGaspTimeUI }}</td>
+                </tr>
+
+                <tr>
+                  <th scope="row">Última Hora Caída</th>
+                  <td colspan="3">{{ lastDownTimeUI }}</td>
+                </tr>
+
+                <tr>
+                  <th scope="row">Último Acople a OLT</th>
                   <td colspan="3">{{ lastUpTimeUI }}</td>
                 </tr>
 

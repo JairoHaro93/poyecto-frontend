@@ -160,6 +160,16 @@ export class OltComponent implements OnInit, OnDestroy {
     return d ? this.formatLocalDateTime(d) : '—';
   }
 
+  get lastDyingGaspTimeUI(): string {
+    const d = this.parseOltDate(this.result?.lastDyingGaspTime);
+    return d ? this.formatLocalDateTime(d) : '—';
+  }
+
+  get lastDownTimeUI(): string {
+    const d = this.parseOltDate(this.result?.lastDownTime);
+    return d ? this.formatLocalDateTime(d) : '—';
+  }
+
   get onlineDurationUI(): string {
     return this.compactDuration(this.result?.onlineDuration);
   }

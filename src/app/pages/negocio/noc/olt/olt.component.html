@@ -127,6 +127,10 @@
                   <span>SN</span><b>{{ result.sn }}</b>
                 </div>
                 <div class="kv">
+                  <span>Estado</span><b>{{ result.runState || "—" }}</b>
+                </div>
+
+                <div class="kv">
                   <span>F/S/P</span><b>{{ result.fsp || "—" }}</b>
                 </div>
                 <div class="kv">
@@ -134,23 +138,32 @@
                 </div>
                 <div class="kv">
                   <span>Distancia</span
-                  ><b>{{ result.ontLastDistanceM ?? "—" }} m</b>
+                  ><b>{{ result.ontLastDistanceM ?? "—" }} metros</b>
                 </div>
               </div>
 
               <div class="col-12 col-md-6">
                 <div class="kv">
-                  <span>Estado</span><b>{{ result.runState || "—" }}</b>
-                </div>
-                <div class="kv">
                   <span>Ultima caída</span
                   ><b>{{ result.lastDownCause || "—" }}</b>
                 </div>
-                <div class="kv">
-                  <span>Último Activo</span> <b>{{ lastUpTimeUI }}</b>
-                </div>
+
                 <div class="kv">
                   <span> Tiempo Online</span> <b>{{ onlineDurationUI }}</b>
+                </div>
+                <div class="kv">
+                  <span> Ultima Hora Apagado </span>
+                  <b>{{ lastDyingGaspTimeUI }}</b>
+                </div>
+
+                <div class="kv">
+                  <span> Ultima Hora Caida </span>
+                  <b>{{ lastDownTimeUI }}</b>
+                </div>
+
+                <div class="kv">
+                  <span> Ultimo Acople a OLT</span>
+                  <b>{{ lastUpTimeUI }}</b>
                 </div>
               </div>
 
