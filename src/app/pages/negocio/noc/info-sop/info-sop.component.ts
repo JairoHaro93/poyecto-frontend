@@ -167,23 +167,6 @@ export class InfoSopComponent implements OnInit, OnDestroy {
   // ✅ Ajuste UX (no backend) — Rx(ONT) viene con offset
   private readonly DBM_OFFSET_RX = 4.09;
 
-  // "48 day(s), 22 hour(s), 29 minute(s), 15 second(s)" => "48d 22h 29m 15s"
-  private compactDuration(raw?: string | null): string {
-    const s = String(raw ?? '').trim();
-    if (!s) return '—';
-
-    const compact = s
-      .replace(/day\(s\)/gi, 'd')
-      .replace(/hour\(s\)/gi, 'h')
-      .replace(/minute\(s\)/gi, 'm')
-      .replace(/second\(s\)/gi, 's')
-      .replace(/,/g, '')
-      .replace(/\s+/g, ' ')
-      .trim();
-
-    return compact || s;
-  }
-
   // "29-12-2025 18:39:49-05:00" => "29/12/2025 18:39:49 -05:00"
   private formatLastUp(raw?: string | null): string {
     const s = String(raw ?? '').trim();
@@ -199,6 +182,71 @@ export class InfoSopComponent implements OnInit, OnDestroy {
     return `${dd}/${MM}/${yyyy} ${hh}:${mm}:${ss}${tz ? ' ' + tz : ''}`;
   }
 
+  // ============================
+  // Formato UI OLT (fechas + duración)
+  // ============================
+  private readonly RE_OLT_DT =
+    /(\d{2})[\/-](\d{2})[\/-](\d{4})\s+(\d{2}):(\d{2}):(\d{2})(?:\s*([+-]\d{2}:\d{2}))?/;
+
+  private pad2(n: number): string {
+    return String(n).padStart(2, '0');
+  }
+
+  private formatLocalDateTime(d: Date): string {
+    return (
+      `${this.pad2(d.getDate())}/${this.pad2(d.getMonth() + 1)}/${d.getFullYear()} ` +
+      `${this.pad2(d.getHours())}:${this.pad2(d.getMinutes())}:${this.pad2(d.getSeconds())}`
+    );
+  }
+
+  private parseOltDate(raw: unknown): Date | null {
+    if (raw === null || raw === undefined) return null;
+
+    const s = String(raw).trim();
+    if (!s) return null;
+
+    // 1) Si viene en ISO, esto funciona directo
+    const isoTry = new Date(s);
+    if (!Number.isNaN(isoTry.getTime())) return isoTry;
+
+    // 2) Formato típico OLT: "29-12-2025 18:39:49-05:00" o "29/12/2025 18:39:49 -05:00"
+    const m = s.match(this.RE_OLT_DT);
+    if (!m) return null;
+
+    const [, dd, MM, yyyy, hh, mm, ss, off] = m;
+    const iso = `${yyyy}-${MM}-${dd}T${hh}:${mm}:${ss}${off ?? ''}`;
+    const d = new Date(iso);
+
+    return Number.isNaN(d.getTime()) ? null : d;
+  }
+
+  private compactDuration(raw: unknown): string {
+    const s = String(raw ?? '').trim();
+    if (!s) return '—';
+
+    // "48 day(s), 22 hour(s), 29 minute(s), 15 second(s)" => "48d 22h 29m 15s"
+    return (
+      s
+        .replace(/day\(s\)/gi, 'd')
+        .replace(/hour\(s\)/gi, 'h')
+        .replace(/minute\(s\)/gi, 'm')
+        .replace(/second\(s\)/gi, 's')
+        .replace(/,/g, '')
+        .replace(/\s+/g, ' ')
+        .trim() || s
+    );
+  }
+
+  // ✅ Getter para tu template (InfoSop usa ontResult)
+  get lastUpTimeUI(): string {
+    const d = this.parseOltDate(this.ontResult?.lastUpTime);
+    return d ? this.formatLocalDateTime(d) : '—';
+  }
+
+  get onlineDurationUI(): string {
+    return this.compactDuration(this.ontResult?.onlineDuration);
+  }
+
   // ✅ dBm con unidad incluida SOLO si hay número (evita "sin dato dBm")
   private dbmUI(value: unknown, offset = 0): string {
     if (value === null || value === undefined || value === '')
@@ -208,15 +256,6 @@ export class InfoSopComponent implements OnInit, OnDestroy {
     if (!Number.isFinite(n)) return 'sin dato';
 
     return `${(n + offset).toFixed(2)} dBm`;
-  }
-
-  // ✅ getters listos para template
-  get lastUpTimeUI(): string {
-    return this.formatLastUp(this.ontResult?.lastUpTime);
-  }
-
-  get onlineDurationUI(): string {
-    return this.compactDuration(this.ontResult?.onlineDuration);
   }
 
   get rxOntUI(): string {

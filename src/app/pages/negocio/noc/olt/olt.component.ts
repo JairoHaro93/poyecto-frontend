@@ -95,23 +95,73 @@ export class OltComponent implements OnInit, OnDestroy {
   get disableEliminar(): boolean {
     return this.isBusy || this.estado === 'IDLE' || !this.result;
   }
+
   // ✅ Ajuste UX (no backend)
   private readonly DBM_OFFSET_RX = 4.09;
 
-  private compactDuration(raw?: string | null): string {
+  // ============================
+  // Formato UI OLT (fechas + duración)
+  // ============================
+  private readonly RE_OLT_DT =
+    /(\d{2})[\/-](\d{2})[\/-](\d{4})\s+(\d{2}):(\d{2}):(\d{2})(?:\s*([+-]\d{2}:\d{2}))?/;
+
+  private pad2(n: number): string {
+    return String(n).padStart(2, '0');
+  }
+
+  private formatLocalDateTime(d: Date): string {
+    return (
+      `${this.pad2(d.getDate())}/${this.pad2(d.getMonth() + 1)}/${d.getFullYear()} ` +
+      `${this.pad2(d.getHours())}:${this.pad2(d.getMinutes())}:${this.pad2(d.getSeconds())}`
+    );
+  }
+
+  private parseOltDate(raw: unknown): Date | null {
+    if (raw === null || raw === undefined) return null;
+
+    const s = String(raw).trim();
+    if (!s) return null;
+
+    // 1) Si viene en ISO, esto funciona directo
+    const isoTry = new Date(s);
+    if (!Number.isNaN(isoTry.getTime())) return isoTry;
+
+    // 2) Formato típico OLT: "29-12-2025 18:39:49-05:00" o "29/12/2025 18:39:49 -05:00"
+    const m = s.match(this.RE_OLT_DT);
+    if (!m) return null;
+
+    const [, dd, MM, yyyy, hh, mm, ss, off] = m;
+    const iso = `${yyyy}-${MM}-${dd}T${hh}:${mm}:${ss}${off ?? ''}`;
+    const d = new Date(iso);
+
+    return Number.isNaN(d.getTime()) ? null : d;
+  }
+
+  private compactDuration(raw: unknown): string {
     const s = String(raw ?? '').trim();
     if (!s) return '—';
 
-    const compact = s
-      .replace(/day\(s\)/gi, 'd')
-      .replace(/hour\(s\)/gi, 'h')
-      .replace(/minute\(s\)/gi, 'm')
-      .replace(/second\(s\)/gi, 's')
-      .replace(/,/g, '')
-      .replace(/\s+/g, ' ')
-      .trim();
+    // "48 day(s), 22 hour(s), 29 minute(s), 15 second(s)" => "48d 22h 29m 15s"
+    return (
+      s
+        .replace(/day\(s\)/gi, 'd')
+        .replace(/hour\(s\)/gi, 'h')
+        .replace(/minute\(s\)/gi, 'm')
+        .replace(/second\(s\)/gi, 's')
+        .replace(/,/g, '')
+        .replace(/\s+/g, ' ')
+        .trim() || s
+    );
+  }
 
-    return compact || s;
+  // ✅ Getter para tu template (InfoSop usa ontResult)
+  get lastUpTimeUI(): string {
+    const d = this.parseOltDate(this.result?.lastUpTime);
+    return d ? this.formatLocalDateTime(d) : '—';
+  }
+
+  get onlineDurationUI(): string {
+    return this.compactDuration(this.result?.onlineDuration);
   }
 
   private formatLastUp(raw?: string | null): string {
@@ -134,14 +184,6 @@ export class OltComponent implements OnInit, OnDestroy {
     const n = typeof value === 'number' ? value : Number(String(value).trim());
     if (!Number.isFinite(n)) return 'sin dato';
     return `${(n + offset).toFixed(2)} dBm`;
-  }
-
-  get lastUpTimeUI(): string {
-    return this.formatLastUp(this.result?.lastUpTime);
-  }
-
-  get onlineDurationUI(): string {
-    return this.compactDuration(this.result?.onlineDuration);
   }
 
   get rxOntUI(): string {
