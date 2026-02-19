@@ -1,3 +1,56 @@
+.olt-head {
+  margin-bottom: 8px;
+}
+
+.segmented {
+  display: inline-flex;
+  border: 3px solid #111;
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.seg-btn {
+  border: 0;
+  background: #fff;
+  color: #111;
+  padding: 10px 16px;
+  font-weight: 800;
+  font-size: 12px;
+  letter-spacing: 0.3px;
+  border-right: 3px solid #111;
+}
+
+.seg-btn:last-child {
+  border-right: 0;
+}
+
+.seg-btn.active {
+  background: #111;
+  color: #fff;
+}
+
+.seg-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.olt-divider {
+  height: 4px;
+  background: #111;
+  border-radius: 2px;
+  margin: 8px 0 14px 0;
+}
+
+.olt-badge {
+  padding: 6px 10px;
+  border-radius: 999px;
+  font-weight: 800;
+}
+
+.btn-big {
+  height: 42px;
+}
+
 .result-card {
   border: 1px solid #e5e7eb;
   border-radius: 12px;
@@ -26,17 +79,6 @@
   font-weight: 800;
 }
 
-.out {
-  border-radius: 12px;
-  padding: 12px;
-  background: #0b1020;
-  color: #d1e7ff;
-  font-size: 12px;
-  max-height: 280px;
-  overflow: auto;
-}
-
-/* Para que Online no se parta */
-.kv b.nowrap {
+.nowrap {
   white-space: nowrap;
 }

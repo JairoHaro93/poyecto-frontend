@@ -1,4 +1,3 @@
-// src/services/negocio_latacunga/olt.services.ts
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
@@ -72,15 +71,62 @@ export interface OntDeleteResponse {
   rawDelete?: string;
 }
 
-@Injectable({
-  providedIn: 'root',
-})
+/** ====== NUEVO: AUTOFIND ====== */
+export interface OntAutofindAllItem {
+  number: number;
+  fsp: string;
+  snHex: string;
+  snLabel: string;
+  snRaw: string;
+  ontEquipmentId?: string;
+  ontSoftwareVersion?: string;
+  autofindTime?: string;
+}
+
+export interface OntAutofindAllResponse {
+  ok: boolean;
+  cmdId: string;
+  total: number;
+  items: OntAutofindAllItem[];
+  raw?: string;
+}
+
+/** ====== NUEVO: PROVISION ====== */
+export interface ServicePortInfo {
+  index: number;
+  vlanId: number;
+  fsp: string;
+  ontId: number;
+  gemIndex: number;
+  state: string;
+}
+
+export interface OntProvisionAutofindResponse {
+  ok: boolean;
+  cmdId: string;
+  sn: string;
+  fsp: string;
+  ontId: number;
+  desc: string;
+  vlan: number;
+  gemport: number;
+  eth: number;
+  traffic: { inbound: number; outbound: number };
+  servicePorts: ServicePortInfo[];
+  profiles?: { line: string; srv: string };
+  ontType?: string;
+  rawAdd?: string;
+  rawNative?: string;
+  rawSpCreate?: string;
+  rawSpList?: string;
+}
+
+@Injectable({ providedIn: 'root' })
 export class OltService {
   private baseUrl = `${environment.API_URL}/olt`;
 
   constructor(private http: HttpClient) {}
 
-  // ✅ NUEVO: warmup/ready
   ready(): Observable<OltReadyResponse> {
     return this.http.get<OltReadyResponse>(`${this.baseUrl}/ready`, {
       withCredentials: true,
@@ -102,5 +148,29 @@ export class OltService {
       cmdId: 'ONT_DELETE',
       args: { sn },
     });
+  }
+
+  // ✅ NUEVO
+  ontAutofindAll(): Observable<OntAutofindAllResponse> {
+    return this.http.post<OntAutofindAllResponse>(`${this.baseUrl}/exec`, {
+      cmdId: 'ONT_AUTOFIND_ALL',
+      args: {},
+    });
+  }
+
+  // ✅ NUEVO
+  ontProvisionAutofind(
+    sn: string,
+    desc: string,
+    trafficIn: number,
+    trafficOut: number,
+  ): Observable<OntProvisionAutofindResponse> {
+    return this.http.post<OntProvisionAutofindResponse>(
+      `${this.baseUrl}/exec`,
+      {
+        cmdId: 'ONT_PROVISION_AUTOFIND',
+        args: { sn, desc, trafficIn, trafficOut },
+      },
+    );
   }
 }
