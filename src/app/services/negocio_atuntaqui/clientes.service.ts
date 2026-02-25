@@ -3,6 +3,7 @@ import { environment } from '../../../environments/environment';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { lastValueFrom } from 'rxjs';
 import { Iclientes } from '../../interfaces/negocio/clientes/iclientes.interface';
+import { Iclientes_mapa } from '../../interfaces/negocio/clientes/iclientes_mapa.interface';
 
 export interface ClienteBatchItem {
   orden_instalacion: number;
@@ -29,8 +30,8 @@ export class ClientesService {
     return lastValueFrom(
       this.httpClient.get<{ cedula: string; nombre_completo: string }[]>(
         `${this.baseUrl}/activos`,
-        { params, withCredentials: true }
-      )
+        { params, withCredentials: true },
+      ),
     );
   }
 
@@ -39,8 +40,8 @@ export class ClientesService {
     return lastValueFrom(
       this.httpClient.get<{ cedula: string; nombre_completo: string }[]>(
         `${this.baseUrl}`,
-        { params, withCredentials: true }
-      )
+        { params, withCredentials: true },
+      ),
     );
   }
 
@@ -48,7 +49,7 @@ export class ClientesService {
     return lastValueFrom(
       this.httpClient.get<Iclientes>(`${this.baseUrl}/data/${cedula}`, {
         withCredentials: true,
-      })
+      }),
     );
   }
 
@@ -56,15 +57,7 @@ export class ClientesService {
     return lastValueFrom(
       this.httpClient.get<Iclientes>(`${this.baseUrl}/data-act/${cedula}`, {
         withCredentials: true,
-      })
-    );
-  }
-
-  getInfoClientesMapa() {
-    return lastValueFrom(
-      this.httpClient.get<[]>(`${this.baseUrl}/mapas`, {
-        withCredentials: true,
-      })
+      }),
     );
   }
 
@@ -74,7 +67,7 @@ export class ClientesService {
     return lastValueFrom(
       this.httpClient.get<Iclientes>(`${this.baseUrl}/${ord_ins}`, {
         withCredentials: true,
-      })
+      }),
     );
   }
 
@@ -84,7 +77,31 @@ export class ClientesService {
       { ord_ins: ordIns },
       {
         withCredentials: true,
-      }
+      },
+    );
+  }
+
+  getInfoClientesMapa(params?: {
+    suc_id?: number;
+    min_meses?: number;
+    incluir_eliminados?: boolean;
+  }) {
+    let httpParams = new HttpParams();
+    if (params?.suc_id != null)
+      httpParams = httpParams.set('suc_id', String(params.suc_id));
+    if (params?.min_meses != null)
+      httpParams = httpParams.set('min_meses', String(params.min_meses));
+    if (params?.incluir_eliminados != null)
+      httpParams = httpParams.set(
+        'incluir_eliminados',
+        String(params.incluir_eliminados),
+      );
+
+    return lastValueFrom(
+      this.httpClient.get<Iclientes_mapa[]>(`${this.baseUrl}/mapas`, {
+        params: httpParams,
+        withCredentials: true,
+      }),
     );
   }
 }

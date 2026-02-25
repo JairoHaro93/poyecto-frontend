@@ -26,6 +26,15 @@ export class DataclientesComponent {
   filtroDeuda: string = 'TODOS';
   busqueda: string = '';
   nombresFiltrados: string[] = [];
+
+  categoriaFiltro:
+    | 'TODOS'
+    | 'ACTIVO_PAGADO'
+    | 'ACTIVO_CON_DEUDA'
+    | 'ELIMINADO_SIN_DEUDA'
+    | 'ELIMINADO_CON_DEUDA' = 'TODOS';
+  minMesesDeuda = 0; // input number
+
   cargando = false; // Nueva variable para la animación de carga
   // 👇 NUEVO: control de reveal suave
   isReady = false;
@@ -128,7 +137,7 @@ export class DataclientesComponent {
   buscarClienteSeleccionado() {
     // Verificar si el nombre ingresado está en la lista de clientes
     const clienteSeleccionado = this.clientelista.find(
-      (c) => c.nombre_completo === this.busqueda
+      (c) => c.nombre_completo === this.busqueda,
     );
 
     if (clienteSeleccionado && clienteSeleccionado.servicios.length > 0) {
@@ -151,47 +160,85 @@ export class DataclientesComponent {
   }
 
   async filtrarClientes() {
-    this.cargando = true; // Inicia la animación de carga
+    this.cargando = true;
 
-    // Usar setTimeout para evitar congelamiento de UI
     setTimeout(() => {
       this.marcasList = this.clientelista.flatMap((cliente) =>
         cliente.servicios
-          .filter(
-            (servicio) =>
+          .filter((servicio) => {
+            const categoria = this.getCategoria(servicio);
+            const pasaCategoria =
+              this.categoriaFiltro === 'TODOS' ||
+              categoria === this.categoriaFiltro;
+
+            const meses = Number(servicio.meses_deuda || 0);
+            const pasaMinMeses =
+              this.minMesesDeuda <= 0 || meses >= this.minMesesDeuda;
+
+            return (
               (this.filtro === 'TODOS' || servicio.enlace === this.filtro) &&
               (this.filtroDeuda === 'TODOS' ||
-                (this.filtroDeuda === 'CON_DEUDA' &&
-                  servicio.meses_deuda > 1)) &&
+                (this.filtroDeuda === 'CON_DEUDA' && meses > 1)) &&
+              pasaCategoria &&
+              pasaMinMeses &&
               (this.busqueda === '' ||
-                cliente.nombre_completo === this.busqueda) // Búsqueda exacta
-          )
-          .map((servicio) => ({
-            nombre: cliente.nombre_completo,
-            deuda: servicio.deuda,
-            meses_deuda: servicio.meses_deuda,
-            id: servicio.orden_instalacion,
-            coordenadas: servicio.coordenadas,
-            enlace: servicio.enlace,
-            ip: servicio.ip,
-          }))
+                cliente.nombre_completo === this.busqueda)
+            );
+          })
+          .map((servicio) => {
+            const categoria = this.getCategoria(servicio);
+
+            return {
+              nombre: cliente.nombre_completo,
+              deuda: servicio.deuda,
+              meses_deuda: servicio.meses_deuda,
+              id: servicio.orden_instalacion,
+              coordenadas: servicio.coordenadas,
+              enlace: servicio.enlace,
+              ip: servicio.ip,
+              categoria,
+              // icon: this.getIcon(categoria), // opcional
+            };
+          }),
       );
 
-      this.cargando = false; // Termina la animación de carga
+      this.cargando = false;
     }, 500);
   }
 
   private mapearClientes(lista: Iclientes_mapa[]) {
     return lista.flatMap((cliente) =>
-      cliente.servicios.map((servicio) => ({
-        nombre: cliente.nombre_completo,
-        deuda: servicio.deuda,
-        meses_deuda: servicio.meses_deuda,
-        id: servicio.orden_instalacion,
-        coordenadas: servicio.coordenadas,
-        enlace: servicio.enlace,
-        ip: servicio.ip,
-      }))
+      cliente.servicios.map((servicio) => {
+        const categoria = this.getCategoria(servicio);
+
+        return {
+          nombre: cliente.nombre_completo,
+          deuda: servicio.deuda,
+          meses_deuda: servicio.meses_deuda,
+          id: servicio.orden_instalacion,
+          coordenadas: servicio.coordenadas,
+          enlace: servicio.enlace,
+          ip: servicio.ip,
+          categoria,
+          // icon: this.getIcon(categoria), // opcional
+        };
+      }),
     );
+  }
+
+  private getCategoria(s: any) {
+    const isEliminado =
+      Number(s.estado_servicio_id) === 10 ||
+      String(s.estado_servicio_nombre || '')
+        .toUpperCase()
+        .includes('ELIMIN');
+
+    const meses = Number(s.meses_deuda || 0);
+    const conDeuda = meses > 0;
+
+    if (!isEliminado && !conDeuda) return 'ACTIVO_PAGADO';
+    if (!isEliminado && conDeuda) return 'ACTIVO_CON_DEUDA';
+    if (isEliminado && !conDeuda) return 'ELIMINADO_SIN_DEUDA';
+    return 'ELIMINADO_CON_DEUDA';
   }
 }
