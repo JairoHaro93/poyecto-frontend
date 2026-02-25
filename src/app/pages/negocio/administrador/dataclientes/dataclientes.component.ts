@@ -23,9 +23,10 @@ export class DataclientesComponent {
   clientelista: Iclientes_mapa[] = [];
   marcasList: any[] = [];
   filtro: string = 'TODOS';
-  filtroDeuda: string = 'TODOS';
+
   busqueda: string = '';
   nombresFiltrados: string[] = [];
+  enlaceFiltro: 'TODOS' | 'WIFI' | 'FTTH' = 'TODOS';
 
   categoriaFiltro:
     | 'TODOS'
@@ -33,6 +34,7 @@ export class DataclientesComponent {
     | 'ACTIVO_CON_DEUDA'
     | 'ELIMINADO_SIN_DEUDA'
     | 'ELIMINADO_CON_DEUDA' = 'TODOS';
+
   minMesesDeuda = 0; // input number
 
   cargando = false; // Nueva variable para la animación de carga
@@ -167,6 +169,7 @@ export class DataclientesComponent {
         cliente.servicios
           .filter((servicio) => {
             const categoria = this.getCategoria(servicio);
+
             const pasaCategoria =
               this.categoriaFiltro === 'TODOS' ||
               categoria === this.categoriaFiltro;
@@ -175,15 +178,14 @@ export class DataclientesComponent {
             const pasaMinMeses =
               this.minMesesDeuda <= 0 || meses >= this.minMesesDeuda;
 
-            return (
-              (this.filtro === 'TODOS' || servicio.enlace === this.filtro) &&
-              (this.filtroDeuda === 'TODOS' ||
-                (this.filtroDeuda === 'CON_DEUDA' && meses > 1)) &&
-              pasaCategoria &&
-              pasaMinMeses &&
-              (this.busqueda === '' ||
-                cliente.nombre_completo === this.busqueda)
-            );
+            const pasaEnlace =
+              this.enlaceFiltro === 'TODOS' ||
+              servicio.enlace === this.enlaceFiltro;
+
+            const pasaBusqueda =
+              this.busqueda === '' || cliente.nombre_completo === this.busqueda;
+
+            return pasaCategoria && pasaMinMeses && pasaEnlace && pasaBusqueda;
           })
           .map((servicio) => {
             const categoria = this.getCategoria(servicio);
@@ -203,7 +205,7 @@ export class DataclientesComponent {
       );
 
       this.cargando = false;
-    }, 500);
+    }, 300);
   }
 
   private mapearClientes(lista: Iclientes_mapa[]) {
@@ -220,7 +222,7 @@ export class DataclientesComponent {
           enlace: servicio.enlace,
           ip: servicio.ip,
           categoria,
-          // icon: this.getIcon(categoria), // opcional
+          // icon: this.getIcon(categoria),
         };
       }),
     );
@@ -240,5 +242,96 @@ export class DataclientesComponent {
     if (!isEliminado && conDeuda) return 'ACTIVO_CON_DEUDA';
     if (isEliminado && !conDeuda) return 'ELIMINADO_SIN_DEUDA';
     return 'ELIMINADO_CON_DEUDA';
+  }
+
+  get categoriaSinDeuda(): boolean {
+    return (
+      this.categoriaFiltro === 'ACTIVO_PAGADO' ||
+      this.categoriaFiltro === 'ELIMINADO_SIN_DEUDA'
+    );
+  }
+
+  onCategoriaChange() {
+    // si eligen una categoría sin deuda, no tiene sentido filtrar por meses
+    if (this.categoriaSinDeuda) this.minMesesDeuda = 0;
+    this.filtrarClientes();
+  }
+
+  // ====== VERIFICADOR POR ORD_INS ======
+  verifOrdIns = '';
+  verifLoading = false;
+  verifError = '';
+  verifData: any = null;
+
+  private getCategoriaResumen(serv: any) {
+    // Eliminado: por nombre (si no tienes estado_servicio_id en este endpoint)
+    const isEliminado = String(serv.servicio || '')
+      .toUpperCase()
+      .includes('ELIMIN');
+
+    const meses = Number(serv.meses_deuda ?? 0); // si backend lo envía
+    const deuda = Number(serv.deuda ?? 0); // si backend lo envía
+    const conDeuda = meses > 0 || deuda > 0;
+
+    if (!isEliminado && !conDeuda) return 'ACTIVO_PAGADO';
+    if (!isEliminado && conDeuda) return 'ACTIVO_CON_DEUDA';
+    if (isEliminado && !conDeuda) return 'ELIMINADO_SIN_DEUDA';
+    return 'ELIMINADO_CON_DEUDA';
+  }
+
+  async verificarServicio() {
+    const ord = Number(String(this.verifOrdIns).trim());
+
+    if (!Number.isFinite(ord) || ord <= 0) {
+      this.verifError = 'Ingresa un código de servicio (ORD_INS) válido.';
+      this.verifData = null;
+      return;
+    }
+
+    this.verifLoading = true;
+    this.verifError = '';
+    this.verifData = null;
+
+    try {
+      const resp: any = await this.clienteService.getInfoServicioByOrdId(ord);
+
+      const s = resp?.servicios?.[0];
+      if (!s) {
+        this.verifError = 'No se encontró información para esa orden.';
+        return;
+      }
+
+      const categoria = this.getCategoriaResumen(s);
+
+      this.verifData = {
+        ord_ins: ord,
+        cedula: resp.cedula,
+        nombre: resp.nombre_completo,
+
+        estadoServicio: s.servicio, // ej: ACTIVO / CLIENTE ELIMINADO / etc.
+        estadoPago: s.estado, // PAGADO / PENDIENTE (según tu query actual)
+        meses_deuda: s.meses_deuda ?? null, // si el backend lo envía
+        deuda: s.deuda ?? null, // si el backend lo envía
+
+        ip: s.ip,
+        coordenadas: s.coordenadas,
+        direccion: s.direccion,
+        referencia: s.referencia,
+        plan: s.plan_nombre,
+        precio: s.precio,
+
+        cortado: s.cortado,
+        prorroga: s.prorroga,
+        fecha_prorroga: s.fecha_prorroga,
+        onu: s.onu,
+
+        categoria,
+      };
+    } catch (e: any) {
+      this.verifError =
+        e?.error?.message || e?.message || 'Error consultando el servicio.';
+    } finally {
+      this.verifLoading = false;
+    }
   }
 }
