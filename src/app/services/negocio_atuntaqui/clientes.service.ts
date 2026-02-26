@@ -83,19 +83,24 @@ export class ClientesService {
 
   getInfoClientesMapa(params?: {
     suc_id?: number;
-    min_meses?: number;
+    num_meses?: number;
+    meses_modo?: 'GTE' | 'EQ';
     incluir_eliminados?: boolean;
-  }) {
+  }): Promise<Iclientes_mapa[]> {
     let httpParams = new HttpParams();
+
     if (params?.suc_id != null)
       httpParams = httpParams.set('suc_id', String(params.suc_id));
-    if (params?.min_meses != null)
-      httpParams = httpParams.set('min_meses', String(params.min_meses));
-    if (params?.incluir_eliminados != null)
+    if (params?.num_meses != null)
+      httpParams = httpParams.set('num_meses', String(params.num_meses));
+    if (params?.meses_modo)
+      httpParams = httpParams.set('meses_modo', params.meses_modo);
+    if (params?.incluir_eliminados != null) {
       httpParams = httpParams.set(
         'incluir_eliminados',
         String(params.incluir_eliminados),
       );
+    }
 
     return lastValueFrom(
       this.httpClient.get<Iclientes_mapa[]>(`${this.baseUrl}/mapas`, {

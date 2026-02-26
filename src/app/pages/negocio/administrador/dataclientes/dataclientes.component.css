@@ -1,12 +1,33 @@
-/* contenedor relativo del mapa */
+/* =========================
+   CONTENEDOR + MAP WRAP
+   ========================= */
 .mapa-container {
   position: relative;
   width: 100%;
-
 }
 
-/* overlay solo sobre el google-map */
-.mapa-container .loading-overlay {
+.map-wrap {
+  position: relative; /* para overlay interno solo sobre el mapa */
+}
+
+/* =========================
+   OVERLAYS (GLOBAL / INNER)
+   ========================= */
+.mapa-container > .loading-overlay {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(2px);
+  z-index: 2000;
+}
+
+.mapa-container .loading-overlay.inner {
   position: absolute;
   inset: 0;
   display: flex;
@@ -14,13 +35,16 @@
   align-items: center;
   justify-content: center;
   text-align: center;
-  background: rgba(255, 255, 255, 0.9); /* semitransparente */
-  z-index: 5; /* sobre el mapa */
+
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(1px);
+  z-index: 20;
+  border-radius: 10px;
 }
 
 .mapa-container .spinner {
-  width: 50px;
-  height: 50px;
+  width: 48px;
+  height: 48px;
   border: 6px solid #f3f3f3;
   border-top: 6px solid #0d6efd;
   border-radius: 50%;
@@ -30,12 +54,166 @@
 
 .mapa-container .loading-overlay p {
   font-size: 1rem;
-  font-weight: 500;
+  font-weight: 600;
   color: #333;
+  margin: 0;
 }
 
 @keyframes spin {
   to {
     transform: rotate(360deg);
+  }
+}
+
+/* =========================
+   PANEL DE FILTROS (COMPACTO)
+   ========================= */
+.filters.card {
+  border-radius: 14px;
+}
+
+.filters .card-body {
+  padding: 12px;
+}
+
+.filters-row {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.filters-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+/* Grid compacto */
+.filters-grid {
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  gap: 10px;
+  align-items: end;
+}
+
+/* base */
+.f {
+  min-width: 0; /* evita huecos */
+}
+
+/* spans por tamaño */
+.w-xs {
+  grid-column: span 2;
+} /* 2/12 */
+.w-sm {
+  grid-column: span 3;
+} /* 3/12 */
+.w-md {
+  grid-column: span 4;
+} /* 4/12 */
+.w-lg {
+  grid-column: span 6;
+} /* 6/12 */
+
+.f-search {
+  grid-column: span 6;
+}
+
+.f-actions .btn {
+  height: 40px;
+}
+
+/* labels e inputs compactos */
+.f-label {
+  display: block;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #333;
+  margin: 0 0 6px 0;
+}
+
+.f-control {
+  height: 40px;
+  border-radius: 10px;
+}
+
+.f-hint {
+  display: block;
+  margin-top: 4px;
+  font-size: 0.75rem;
+  color: #6c757d;
+}
+
+.f-check .form-check {
+  margin: 0;
+  padding-top: 6px;
+}
+
+/* Responsive */
+@media (max-width: 992px) {
+  .w-xs,
+  .w-sm,
+  .w-md {
+    grid-column: span 6;
+  }
+  .w-lg,
+  .f-search {
+    grid-column: span 12;
+  }
+}
+
+@media (max-width: 576px) {
+  .filters-grid {
+    gap: 8px;
+  }
+  .w-xs,
+  .w-sm,
+  .w-md,
+  .w-lg,
+  .f-search {
+    grid-column: span 12;
+  }
+}
+
+/* opcional: fade-in (si ya lo tienes en otro lado, puedes borrar esto) */
+.fade-in {
+  animation: fadeIn 0.18s ease-out both;
+}
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+/* ===== 2 columnas: Carga SQL | Vista ===== */
+.filters-2col {
+  display: grid;
+  grid-template-columns: 1fr 1px 1fr;
+  gap: 14px;
+  align-items: start;
+}
+
+.filters-col {
+  min-width: 0;
+}
+
+.filters-divider {
+  width: 1px;
+  background: rgba(0, 0, 0, 0.08);
+  border-radius: 1px;
+}
+
+/* En pantallas medianas/bajas se apila */
+@media (max-width: 992px) {
+  .filters-2col {
+    grid-template-columns: 1fr;
+  }
+  .filters-divider {
+    display: none;
   }
 }

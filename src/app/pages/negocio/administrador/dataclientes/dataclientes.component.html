@@ -6,165 +6,257 @@
     </div>
   } @else {
     <section class="mapa fade-in">
-      <div>
-        <label>Buscar cliente:</label>
-        <input
-          type="text"
-          list="clientes-sugerencias"
-          [(ngModel)]="busqueda"
-          (input)="actualizarSugerencias()"
-          (change)="buscarClienteSeleccionado()"
-          placeholder="Ingrese el nombre del cliente"
-          style="width: 100%; max-width: 500px"
-        />
-        <datalist id="clientes-sugerencias" *ngIf="nombresFiltrados.length > 0">
-          <option
-            *ngFor="let nombre of nombresFiltrados"
-            [value]="nombre"
-          ></option>
-        </datalist>
-      </div>
-
-      <div class="d-flex flex-wrap gap-3 align-items-end mt-2">
-        <div>
-          <label>Tipo de enlace:</label>
-          <select [(ngModel)]="enlaceFiltro" (change)="filtrarClientes()">
-            <option value="TODOS">Todos</option>
-            <option value="WIFI">WIFI</option>
-            <option value="FTTH">FTTH</option>
-          </select>
-        </div>
-
-        <div>
-          <label>Categoría:</label>
-          <select [(ngModel)]="categoriaFiltro" (change)="onCategoriaChange()">
-            <option value="TODOS">Todos</option>
-            <option value="ACTIVO_PAGADO">Activos pagados</option>
-            <option value="ACTIVO_CON_DEUDA">Activos con deuda</option>
-            <option value="ELIMINADO_SIN_DEUDA">Eliminados sin deuda</option>
-            <option value="ELIMINADO_CON_DEUDA">Eliminados con deuda</option>
-          </select>
-        </div>
-
-        <div>
-          <label>Min meses deuda (>=)</label>
-          <input
-            type="number"
-            min="0"
-            style="width: 120px"
-            [(ngModel)]="minMesesDeuda"
-            [disabled]="categoriaSinDeuda"
-            (input)="filtrarClientes()"
-          />
-        </div>
-      </div>
-
-      <!-- ===== VERIFICADOR POR ORD_INS ===== -->
-      <div class="card mb-3">
+      <!-- ===== PANEL DE FILTROS (UNIFICADO) ===== -->
+      <div class="filters card mb-2">
         <div class="card-body">
-          <div
-            class="d-flex justify-content-between align-items-center flex-wrap gap-2"
-          >
-            <h6 class="mb-0">Verificador de servicio (ORD_INS)</h6>
+          <div class="filters-2col">
+            <!-- ===== CARGA (SQL) ===== -->
+            <div class="filters-col">
+              <div class="filters-grid">
+                <div class="f w-sm">
+                  <label class="f-label">Sucursal ID</label>
+                  <input
+                    type="number"
+                    class="form-control f-control"
+                    [(ngModel)]="sucursalId"
+                    (change)="cargarClientesMapaDesdeBack()"
+                  />
+                </div>
 
-            <div class="d-flex gap-2 align-items-center flex-wrap">
-              <input
-                type="number"
-                class="form-control"
-                style="width: 220px"
-                placeholder="Ej: 103521"
-                [(ngModel)]="verifOrdIns"
-                (keyup.enter)="verificarServicio()"
-              />
-              <button
-                class="btn btn-primary"
-                type="button"
-                (click)="verificarServicio()"
-                [disabled]="verifLoading"
-              >
-                {{ verifLoading ? "Verificando…" : "Verificar" }}
-              </button>
+                <div class="f w-xs">
+                  <label class="f-label">Morosidad</label>
+                  <select
+                    class="form-select f-control"
+                    [(ngModel)]="morosidadModo"
+                    (change)="cargarClientesMapaDesdeBack()"
+                  >
+                    <option value="GTE">&gt;=</option>
+                    <option value="EQ">=</option>
+                  </select>
+                </div>
+
+                <div class="f w-xs">
+                  <label class="f-label">N meses</label>
+                  <input
+                    type="number"
+                    min="0"
+                    class="form-control f-control"
+                    [(ngModel)]="morosidadMeses"
+                    (change)="cargarClientesMapaDesdeBack()"
+                  />
+                </div>
+
+                <div class="f w-md f-check">
+                  <label class="f-label">&nbsp;</label>
+                  <div class="form-check">
+                    <input
+                      class="form-check-input"
+                      type="checkbox"
+                      id="chkElim"
+                      [(ngModel)]="incluirEliminados"
+                      (change)="cargarClientesMapaDesdeBack()"
+                    />
+                    <label class="form-check-label" for="chkElim">
+                      Incluir eliminados
+                    </label>
+                  </div>
+                </div>
+
+                <div class="f w-sm f-actions">
+                  <label class="f-label">&nbsp;</label>
+                  <button
+                    class="btn btn-outline-primary w-100"
+                    type="button"
+                    (click)="cargarClientesMapaDesdeBack()"
+                  >
+                    Recargar
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Divider visual (solo desktop) -->
+            <div class="filters-divider" aria-hidden="true"></div>
+
+            <!-- ===== VISTA ===== -->
+            <div class="filters-col">
+              <div class="filters-grid filters-grid-front">
+                <div class="f w-lg f-search">
+                  <label class="f-label">Buscar cliente</label>
+                  <input
+                    type="text"
+                    class="form-control f-control"
+                    list="clientes-sugerencias"
+                    [(ngModel)]="busquedaInput"
+                    (input)="actualizarSugerencias()"
+                    (change)="buscarClienteSeleccionado()"
+                    (keyup.enter)="buscarClienteSeleccionado()"
+                    placeholder="Nombre del cliente"
+                  />
+                  <datalist
+                    id="clientes-sugerencias"
+                    *ngIf="nombresFiltrados.length > 0"
+                  >
+                    <option
+                      *ngFor="let nombre of nombresFiltrados"
+                      [value]="nombre"
+                    ></option>
+                  </datalist>
+                </div>
+
+                <div class="f w-md">
+                  <label class="f-label">Categoría</label>
+                  <select
+                    class="form-select f-control"
+                    [(ngModel)]="categoriaFiltro"
+                    (change)="filtrarClientes()"
+                  >
+                    <option value="TODOS">Todos</option>
+                    <option value="ACTIVO_PAGADO">Activos pagados</option>
+                    <option value="ACTIVO_CON_DEUDA">Activos con deuda</option>
+                    <option value="ELIMINADO_SIN_DEUDA">
+                      Eliminados sin deuda
+                    </option>
+                    <option value="ELIMINADO_CON_DEUDA">
+                      Eliminados con deuda
+                    </option>
+                  </select>
+                </div>
+
+                <div class="f w-sm">
+                  <label class="f-label">Enlace</label>
+                  <select
+                    class="form-select f-control"
+                    [(ngModel)]="enlaceFiltro"
+                    (change)="filtrarClientes()"
+                  >
+                    <option value="TODOS">Todos</option>
+                    <option value="WIFI">WIFI</option>
+                    <option value="FTTH">FTTH</option>
+                  </select>
+                </div>
+
+                <div class="f w-sm f-actions">
+                  <label class="f-label">&nbsp;</label>
+                  <button
+                    class="btn btn-outline-secondary w-100"
+                    type="button"
+                    (click)="
+                      busquedaInput = '';
+                      busquedaSeleccionada = '';
+                      nombresFiltrados = [];
+                      categoriaFiltro = 'TODOS';
+                      enlaceFiltro = 'TODOS';
+                      filtrarClientes()
+                    "
+                  >
+                    Limpiar
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
-
-          @if (verifError) {
-            <div class="alert alert-danger mt-3 mb-0">
-              {{ verifError }}
-            </div>
-          }
-
-          @if (verifData) {
-            <div class="mt-3">
-              <div class="alert alert-secondary mb-2">
-                <strong>Categoría:</strong> {{ verifData.categoria }}
-                &nbsp;|&nbsp;
-                <strong>Estado servicio:</strong> {{ verifData.estadoServicio }}
-                &nbsp;|&nbsp;
-                <strong>Pago:</strong> {{ verifData.estadoPago }}
-              </div>
-
-              <div class="row g-2">
-                <div class="col-12 col-md-6">
-                  <div><strong>Cliente:</strong> {{ verifData.nombre }}</div>
-                  <div><strong>Cédula:</strong> {{ verifData.cedula }}</div>
-                  <div><strong>ORD_INS:</strong> {{ verifData.ord_ins }}</div>
-                  <div><strong>IP:</strong> {{ verifData.ip }}</div>
-                </div>
-
-                <div class="col-12 col-md-6">
-                  <div>
-                    <strong>Plan:</strong> {{ verifData.plan }} ({{
-                      verifData.precio
-                    }})
-                  </div>
-                  <div><strong>Cortado:</strong> {{ verifData.cortado }}</div>
-                  <div>
-                    <strong>Prórroga:</strong> {{ verifData.prorroga }}
-                    {{ verifData.fecha_prorroga || "" }}
-                  </div>
-                  <div><strong>ONU:</strong> {{ verifData.onu || "—" }}</div>
-
-                  <div>
-                    <strong>Deuda:</strong>
-                    @if (verifData.deuda !== null) {
-                      {{ verifData.deuda }} $
-                    } @else {
-                      —
-                    }
-                    &nbsp;|&nbsp;
-                    <strong>Meses:</strong>
-                    @if (verifData.meses_deuda !== null) {
-                      {{ verifData.meses_deuda }}
-                    } @else {
-                      —
-                    }
-                  </div>
-                </div>
-              </div>
-
-              <hr />
-
-              <div class="small text-muted">
-                <div><strong>Dirección:</strong> {{ verifData.direccion }}</div>
-                <div>
-                  <strong>Referencia:</strong> {{ verifData.referencia }}
-                </div>
-                <div>
-                  <strong>Coordenadas:</strong> {{ verifData.coordenadas }}
-                </div>
-              </div>
-            </div>
-          }
         </div>
       </div>
 
-      @if (isGoogleMapsLoaded) {
-        @if (cargando) {
-          <div class="loading-overlay inner">
-            <div class="spinner"></div>
-            <p>Cargando ubicaciones…</p>
+      <!-- ===== VERIFICADOR (OPCIONAL) ===== -->
+      @if (enableVerificador) {
+        <div class="card mb-3">
+          <div class="card-body">
+            <div
+              class="d-flex justify-content-between align-items-center flex-wrap gap-2"
+            >
+              <h6 class="mb-0">Verificador de servicio (ORD_INS)</h6>
+
+              <div class="d-flex gap-2 align-items-center flex-wrap">
+                <input
+                  type="number"
+                  class="form-control"
+                  style="width: 220px"
+                  placeholder="Ej: 103521"
+                  [(ngModel)]="verifOrdIns"
+                  (keyup.enter)="verificarServicio()"
+                />
+                <button
+                  class="btn btn-primary"
+                  type="button"
+                  (click)="verificarServicio()"
+                  [disabled]="verifLoading"
+                >
+                  {{ verifLoading ? "Verificando…" : "Verificar" }}
+                </button>
+              </div>
+            </div>
+
+            @if (verifError) {
+              <div class="alert alert-danger mt-3 mb-0">{{ verifError }}</div>
+            }
+
+            @if (verifData) {
+              <div class="mt-3">
+                <div class="alert alert-secondary mb-2">
+                  <strong>Estado servicio:</strong>
+                  {{ verifData.estadoServicio }}
+                  &nbsp;|&nbsp;
+                  <strong>Pago:</strong> {{ verifData.estadoPago }}
+                  &nbsp;|&nbsp;
+                  <strong>Meses deuda:</strong> {{ verifData.meses_deuda }}
+                  &nbsp;|&nbsp;
+                  <strong>Deuda:</strong> {{ verifData.deuda }} $
+                </div>
+
+                <div class="row g-2">
+                  <div class="col-12 col-md-6">
+                    <div><strong>Cliente:</strong> {{ verifData.nombre }}</div>
+                    <div><strong>Cédula:</strong> {{ verifData.cedula }}</div>
+                    <div><strong>ORD_INS:</strong> {{ verifData.ord_ins }}</div>
+                    <div><strong>IP:</strong> {{ verifData.ip }}</div>
+                  </div>
+
+                  <div class="col-12 col-md-6">
+                    <div>
+                      <strong>Plan:</strong> {{ verifData.plan }} ({{
+                        verifData.precio
+                      }})
+                    </div>
+                    <div><strong>Cortado:</strong> {{ verifData.cortado }}</div>
+                    <div>
+                      <strong>Prórroga:</strong> {{ verifData.prorroga }}
+                      {{ verifData.fecha_prorroga || "" }}
+                    </div>
+                    <div><strong>ONU:</strong> {{ verifData.onu || "—" }}</div>
+                  </div>
+                </div>
+
+                <hr />
+
+                <div class="small text-muted">
+                  <div>
+                    <strong>Dirección:</strong> {{ verifData.direccion }}
+                  </div>
+                  <div>
+                    <strong>Referencia:</strong> {{ verifData.referencia }}
+                  </div>
+                  <div>
+                    <strong>Coordenadas:</strong> {{ verifData.coordenadas }}
+                  </div>
+                </div>
+              </div>
+            }
           </div>
-        } @else {
+        </div>
+      }
+
+      <!-- ===== MAPA ===== -->
+      @if (isGoogleMapsLoaded) {
+        <div class="map-wrap">
+          @if (cargando) {
+            <div class="loading-overlay inner">
+              <div class="spinner"></div>
+              <p>Cargando ubicaciones…</p>
+            </div>
+          }
+
           <google-map
             width="100%"
             height="80vh"
@@ -176,7 +268,7 @@
               <app-mapaclientes [myCoordenada]="marca"></app-mapaclientes>
             }
           </google-map>
-        }
+        </div>
       } @else {
         <div>Cargando mapa…</div>
       }

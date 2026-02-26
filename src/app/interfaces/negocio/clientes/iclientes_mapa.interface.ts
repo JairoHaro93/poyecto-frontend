@@ -9,9 +9,7 @@ export interface Iclientes_mapa {
       meses_deuda: number;
       enlace: string;
       ip: string;
-
       estado_servicio_id: number;
-      estado_servicio_nombre: string;
     },
   ];
 }
