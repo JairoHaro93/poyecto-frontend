@@ -58,6 +58,14 @@ export class MapaCajasViewComponent
   /** Emite lat/lng al click en modo picking */
   @Output() mapClick = new EventEmitter<{ lat: number; lng: number }>();
 
+  // arriba con los otros @Output()
+  @Output() markerClick = new EventEmitter<number>();
+
+  onMarkerClick(id: number) {
+    if (this.picking) return; // si estás eligiendo coords, ignora clicks en markers
+    this.markerClick.emit(id);
+  }
+
   @ViewChild(GoogleMap) mapRef!: GoogleMap;
 
   private readonly cursorTargetRed =
@@ -75,6 +83,9 @@ export class MapaCajasViewComponent
   markers: Marker[] = [];
   private fetched: Marker[] = [];
   private local: Marker[] = [];
+
+  private dispById = new Map<number, { disponibles: number }>();
+  private fetchedCajasRaw: ICajas[] = [];
 
   /** Cache de iconos SVG ya generados */
   private iconCache = new Map<string, google.maps.Icon>();
@@ -182,7 +193,7 @@ export class MapaCajasViewComponent
     if (!this.isGoogleMapsLoaded) return;
     const center = new google.maps.LatLng(
       this.DEFAULT_CENTER.lat,
-      this.DEFAULT_CENTER.lng
+      this.DEFAULT_CENTER.lng,
     );
     this.myposition.set(center);
     this.zoom.set(12);
@@ -203,7 +214,7 @@ export class MapaCajasViewComponent
         return;
       }
       const existing = document.querySelector<HTMLScriptElement>(
-        'script[src*="maps.googleapis.com/maps/api/js"]'
+        'script[src*="maps.googleapis.com/maps/api/js"]',
       );
 
       const onReady = () => {
@@ -278,50 +289,65 @@ export class MapaCajasViewComponent
   }
 
   private makeIcon(c: ICajas): google.maps.Icon {
+    // ✅ viene del backend (getCajas ya trae full/disponibles)
+    const isFull =
+      (c as any).full === true || Number((c as any).disponibles ?? 999999) <= 0;
+
+    const tipo = (c.caja_tipo || '').toUpperCase().trim();
+
     const { fill: estFill, stroke } = this.getColorsByEstado(c.caja_estado);
     const shape = this.getShapeByTipo(c.caja_tipo);
     const px = this.iconSizePx;
     const dpr = Math.max(1, window.devicePixelRatio || 1);
 
-    // PON con relleno blanco (si ya lo tienes así, mantenlo)
-    const fill =
-      (c.caja_tipo || '').toUpperCase() === 'PON' ? '#004ff8ff' : estFill;
+    // ====== RELLENO SEGÚN REGLAS ======
+    let fill = estFill;
 
-    // 👇 grosor deseado en pantalla (puedes usar this.borderPx o la función por tipo)
-    const borderScreenPx = this.getBorderPxByTipo(c); // o this.borderPx
+    if (tipo === 'PON') {
+      fill = isFull ? '#f97316' : '#004ff8ff'; // PON full -> naranja; normal -> azul
+    } else if (tipo === 'NAP') {
+      fill = isFull ? '#ff0000ff' : estFill; // NAP full -> rojo
+    }
+
+    // ====== BORDE / GROSOR ======
+    const borderScreenPx = this.getBorderPxByTipo(c);
     const strokeSvg = this.calcStrokeSvg(px, borderScreenPx);
     const strokeSvgStr = strokeSvg.toFixed(2);
 
+    // ✅ mejora performance: NO uses ID en el cache key
     const key = [
-      `TYPE:${(c.caja_tipo || '').toUpperCase()}`,
-      `EST:${(c.caja_estado || '').toUpperCase()}`,
+      `TYPE:${tipo}`,
+      `FULL:${isFull ? 1 : 0}`,
+      `EST:${(c.caja_estado || '').toUpperCase().trim()}`,
       `SHAPE:${shape}`,
       `SIZE:${px}`,
-      `BORDER:${borderScreenPx}`, // 👈 entra al caché
-      fill,
-      stroke,
-      dpr,
+      `BORDER:${borderScreenPx}`,
+      `FILL:${fill}`,
+      `STROKE:${stroke}`,
+      `DPR:${dpr}`,
     ].join('|');
 
     const cached = this.iconCache.get(key);
     if (cached) return cached;
 
     const svgHex = `
-<svg xmlns="http://www.w3.org/2000/svg" width="${px * dpr}" height="${
-      px * dpr
-    }" viewBox="0 0 48 48">
-  <defs><filter id="shadow" x="-50%" y="-50%" width="200%" height="200%">
-    <feDropShadow dx="0" dy="1" stdDeviation="1.5" flood-color="rgba(0,0,0,0.35)"/></filter></defs>
+<svg xmlns="http://www.w3.org/2000/svg" width="${px * dpr}" height="${px * dpr}" viewBox="0 0 48 48">
+  <defs>
+    <filter id="shadow" x="-50%" y="-50%" width="200%" height="200%">
+      <feDropShadow dx="0" dy="1" stdDeviation="1.5" flood-color="rgba(0,0,0,0.35)"/>
+    </filter>
+  </defs>
   <polygon points="24,6 36,14 36,28 24,36 12,28 12,14"
            fill="${fill}" stroke="${stroke}" stroke-width="${strokeSvgStr}" filter="url(#shadow)"/>
 </svg>`.trim();
 
     const svgSquare = `
-<svg xmlns="http://www.w3.org/2000/svg" width="${px * dpr}" height="${
-      px * dpr
-    }" viewBox="0 0 48 48">
-  <defs><filter id="shadow" x="-50%" y="-50%" width="200%" height="200%">
-    <feDropShadow dx="0" dy="1" stdDeviation="1.5" flood-color="rgba(0,0,0,0.35)"/></filter></defs>
+<svg xmlns="http://www.w3.org/2000/svg" width="${px * dpr}" height="${px * dpr}" viewBox="0 0 48 48">
+  <defs>
+    <filter id="shadow" x="-50%" y="-50%" width="200%" height="200%">
+      <feDropShadow dx="0" dy="1" stdDeviation="1.5" flood-color="rgba(0,0,0,0.35)"/>
+    </filter>
+  </defs>
   <rect x="12" y="10" width="24" height="24" rx="4" ry="4"
         fill="${fill}" stroke="${stroke}" stroke-width="${strokeSvgStr}" filter="url(#shadow)"/>
 </svg>`.trim();
@@ -340,7 +366,6 @@ export class MapaCajasViewComponent
     this.iconCache.set(key, icon);
     return icon;
   }
-
   // ===== Eventos =====
   onMapClickHandler(ev: google.maps.MapMouseEvent) {
     if (!this.picking) return;
@@ -350,7 +375,6 @@ export class MapaCajasViewComponent
     }
   }
 
-  /** Fetch por viewport + debounce y fusión con locales */
   async onMapIdle() {
     const gmap = this.mapRef?.googleMap;
     if (!gmap) return;
@@ -364,17 +388,22 @@ export class MapaCajasViewComponent
       const sw = bounds.getSouthWest();
 
       const stamp = ++this.inFlight;
+
       try {
         const cajas = await this.cajasService.getCajasInBounds(
           { lat: ne.lat(), lng: ne.lng() },
-          { lat: sw.lat(), lng: sw.lng() }
+          { lat: sw.lat(), lng: sw.lng() },
         );
 
+        if (stamp !== this.inFlight) return;
+
+        // (opcional) limpia caché para que el icono cambie si cambian "full/estado"
+        this.iconCache.clear();
+
+        // Construye marcadores directamente (ya viene full/disponibles en cada caja)
         this.fetched = cajas
           .map((c) => this.mapCajaToMarker(c))
           .filter(Boolean) as Marker[];
-
-        if (stamp !== this.inFlight) return;
 
         this.rebuildMarkers();
       } catch (e) {
@@ -382,7 +411,6 @@ export class MapaCajasViewComponent
       }
     }, 200);
   }
-
   // ===== Fusión de marcadores + etiquetas =====
   private rebuildMarkers() {
     const map = new Map<number, Marker>();
@@ -421,7 +449,7 @@ export class MapaCajasViewComponent
   private createNameOverlay(
     pos: google.maps.LatLngLiteral,
     text: string,
-    offsetY: number
+    offsetY: number,
   ) {
     class NameOverlay extends google.maps.OverlayView {
       private div?: HTMLDivElement;

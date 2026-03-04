@@ -1,4 +1,3 @@
-// src/app/services/negocio_latacunga/cajas.services.ts
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
@@ -8,64 +7,72 @@ import {
   ApiListResp,
 } from '../../interfaces/negocio/infraestructura/icajas.interface';
 
-// Para no depender de types de Google en este servicio:
 interface LatLngLiteral {
   lat: number;
   lng: number;
 }
 
-interface CreateCajaResponse {
-  success: boolean;
-  message: string;
-  data: {
-    id: number;
-    caja_tipo: string;
-    caja_nombre: string;
-    caja_estado: string;
-    caja_hilo?: string;
-    caja_coordenadas?: string;
-    caja_ciudad?: string;
-  };
+type ApiResp<T> = { success: boolean; message: string; data: T };
+
+interface CreatePonNapResp {
+  id: number;
+  caja_nombre: string;
+  caja_pon_id?: number;
+  caja_pon_ruta?: string;
+}
+
+interface RutasDisponiblesResp {
+  caja_id: number;
+  capacidad: number;
+  usadas: number;
+  disponibles: string[];
+}
+
+interface DisponibilidadResp {
+  caja_id: number;
+  tipo: string;
+  capacidad: number;
+  usados: number;
+  disponibles: number;
 }
 
 @Injectable({ providedIn: 'root' })
 export class CajasService {
   private http = inject(HttpClient);
-  private baseUrl = `${environment.API_URL}/cajas`; // p.ej: /api/negocio_lat/cajas
+  private baseUrl = `${environment.API_URL}/cajas`;
 
-  // ========== CREATE ==========
+  // ===== LEGACY (ya lo tienes) =====
   createCaja(dto: Partial<ICajas>) {
     return firstValueFrom(
-      this.http.post<CreateCajaResponse>(this.baseUrl, dto)
+      this.http.post<ApiResp<any>>(this.baseUrl, dto, {
+        withCredentials: true,
+      }),
     );
-    // Si prefieres devolver directo data (y cambiar tu componente):
-    // return firstValueFrom(this.http.post<CreateCajaResponse>(this.baseUrl, dto))
-    //   .then(r => r.data);
   }
 
-  // ========== LISTA SIMPLE ==========
   getCajas(params?: {
-    ciudad?: string; // 'LATACUNGA' | 'SALCEDO'
-    tipo?: string; // 'PON' | 'NAP'
-    estado?: string; // 'DISEÑO' | 'ACTIVO'
-    q?: string; // búsqueda libre
+    ciudad?: string;
+    tipo?: string;
+    estado?: string;
+    q?: string;
     limit?: number;
     offset?: number;
   }): Promise<ICajas[]> {
     let httpParams = new HttpParams();
     if (params) {
       for (const [k, v] of Object.entries(params)) {
-        if (v !== undefined && v !== null && v !== '') {
+        if (v !== undefined && v !== null && v !== '')
           httpParams = httpParams.set(k, String(v));
-        }
       }
     }
     return firstValueFrom(
-      this.http.get<ApiListResp>(this.baseUrl, { params: httpParams })
+      this.http.get<ApiListResp>(this.baseUrl, {
+        params: httpParams,
+        withCredentials: true,
+      }),
     ).then((r) => r.data ?? []);
   }
 
-  // ========== LISTA POR VIEWPORT (bbox) ==========
   getCajasInBounds(
     ne: LatLngLiteral,
     sw: LatLngLiteral,
@@ -76,7 +83,7 @@ export class CajasService {
       q?: string;
       limit?: number;
       offset?: number;
-    }
+    },
   ): Promise<ICajas[]> {
     let httpParams = new HttpParams()
       .set('ne', `${ne.lat},${ne.lng}`)
@@ -84,16 +91,71 @@ export class CajasService {
 
     if (extra) {
       for (const [k, v] of Object.entries(extra)) {
-        if (v !== undefined && v !== null && v !== '') {
+        if (v !== undefined && v !== null && v !== '')
           httpParams = httpParams.set(k, String(v));
-        }
       }
     }
 
-   // console.log('[CajasService] GET /cajas params', httpParams.toString()); // DEBUG 👈
-
     return firstValueFrom(
-      this.http.get<ApiListResp>(this.baseUrl, { params: httpParams })
+      this.http.get<ApiListResp>(this.baseUrl, {
+        params: httpParams,
+        withCredentials: true,
+      }),
     ).then((r) => r.data ?? []);
+  }
+
+  // ===== NUEVO: PON/NAP =====
+  createPon(dto: Partial<ICajas>) {
+    return firstValueFrom(
+      this.http.post<ApiResp<CreatePonNapResp>>(`${this.baseUrl}/pon`, dto, {
+        withCredentials: true,
+      }),
+    );
+  }
+
+  createNap(dto: Partial<ICajas>) {
+    return firstValueFrom(
+      this.http.post<ApiResp<CreatePonNapResp>>(`${this.baseUrl}/nap`, dto, {
+        withCredentials: true,
+      }),
+    );
+  }
+
+  getRutasDisponibles(ponId: number) {
+    return firstValueFrom(
+      this.http.get<ApiResp<RutasDisponiblesResp>>(
+        `${this.baseUrl}/${ponId}/rutas-disponibles`,
+        { withCredentials: true },
+      ),
+    );
+  }
+
+  getDisponibilidad(cajaId: number) {
+    return firstValueFrom(
+      this.http.get<ApiResp<DisponibilidadResp>>(
+        `${this.baseUrl}/${cajaId}/disponibilidad`,
+        { withCredentials: true },
+      ),
+    );
+  }
+
+  addSplitter(cajaId: number, payload: { path: string; factor: 2 | 8 | 16 }) {
+    return firstValueFrom(
+      this.http.post<ApiResp<any>>(
+        `${this.baseUrl}/${cajaId}/splitters`,
+        payload,
+        { withCredentials: true },
+      ),
+    );
+  }
+
+  // GET /cajas/:id
+  getCajaById(id: number): Promise<ICajas> {
+    return firstValueFrom(
+      this.http.get<{ success: boolean; message: string; data: ICajas }>(
+        `${this.baseUrl}/${id}`,
+        { withCredentials: true },
+      ),
+    ).then((r) => r.data);
   }
 }

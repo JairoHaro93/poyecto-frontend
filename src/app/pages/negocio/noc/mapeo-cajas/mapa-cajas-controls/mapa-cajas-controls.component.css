@@ -56,3 +56,32 @@
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
   user-select: none;
 }
+
+:host {
+  display: block;
+  width: 100%;
+}
+
+.card-body {
+  padding-top: 0.25rem !important;
+  padding-bottom: 0.25rem !important;
+}
+
+.input-group-text {
+  padding: 0.125rem 0.4rem;
+}
+.form-select-sm,
+.form-control-sm {
+  padding-top: 0.125rem;
+  padding-bottom: 0.125rem;
+  height: 28px;
+}
+
+.pick-btn,
+.pick-btn * {
+  cursor: pointer !important;
+}
+
+.alert {
+  border-radius: 10px;
+}

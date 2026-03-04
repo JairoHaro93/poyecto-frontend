@@ -7,7 +7,104 @@
       [selectedCoords]="pickedCoords()"
       [instantCajas]="cajas"
       (mapClick)="onMapClick($event)"
+      (markerClick)="onMarkerSelected($event)"
     ></app-mapa-cajas-view>
+
+    @if (detailsOpen()) {
+      <div class="caja-details">
+        <div class="caja-details__head">
+          <div class="min-w-0">
+            <div class="title">
+              {{ selectedCaja()?.caja_nombre || "Caja" }}
+            </div>
+            <div class="sub text-muted small">
+              {{ selectedCaja()?.caja_tipo }} •
+              {{ selectedCaja()?.caja_estado }}
+            </div>
+          </div>
+
+          <button
+            class="btn-close ms-auto"
+            type="button"
+            (click)="closeDetails()"
+          ></button>
+        </div>
+
+        @if (detailsLoading()) {
+          <div class="p-2 small text-muted">Cargando detalle…</div>
+        } @else {
+          <div class="caja-details__body">
+            <div class="kv">
+              <span class="k">Ciudad</span
+              ><span class="v">{{ selectedCaja()?.caja_ciudad || "—" }}</span>
+            </div>
+            <div class="kv">
+              <span class="k">SEG</span
+              ><span class="v">{{ selectedCaja()?.caja_segmento || "—" }}</span>
+            </div>
+            <div class="kv">
+              <span class="k">R</span
+              ><span class="v"
+                >R{{ selectedCaja()?.caja_root_split || "—" }}</span
+              >
+            </div>
+            <div class="kv">
+              <span class="k">Hilo</span
+              ><span class="v">{{ selectedCaja()?.caja_hilo || "—" }}</span>
+            </div>
+            <div class="kv">
+              <span class="k">Coords</span
+              ><span class="v">{{
+                selectedCaja()?.caja_coordenadas || "—"
+              }}</span>
+            </div>
+
+            @if (selectedCaja()?.caja_tipo === "NAP") {
+              <div class="kv">
+                <span class="k">PON ID</span
+                ><span class="v">{{ selectedCaja()?.caja_pon_id || "—" }}</span>
+              </div>
+              <div class="kv">
+                <span class="k">Puerto</span
+                ><span class="v">{{
+                  selectedCaja()?.caja_pon_ruta || "—"
+                }}</span>
+              </div>
+            }
+
+            @if (selectedDisp()) {
+              <div class="mt-2 d-flex gap-2 flex-wrap">
+                <span class="badge bg-secondary"
+                  >Cap: {{ selectedDisp()?.capacidad }}</span
+                >
+                <span class="badge bg-warning text-dark"
+                  >Us: {{ selectedDisp()?.usados }}</span
+                >
+                <span class="badge bg-success"
+                  >Disp: {{ selectedDisp()?.disponibles }}</span
+                >
+              </div>
+            }
+
+            @if (selectedCaja()?.caja_tipo === "PON") {
+              <div class="mt-2">
+                <div class="small text-muted mb-1">
+                  Puertos disponibles (muestra máx 30)
+                </div>
+                <div class="rutas">
+                  @for (r of (selectedRutas() ?? []).slice(0, 30); track r) {
+                    <span class="chip">{{ r }}</span>
+                  }
+                  @if ((selectedRutas() ?? []).length === 0) {
+                    <span class="small text-muted">—</span>
+                  }
+                </div>
+              </div>
+            }
+          </div>
+        }
+      </div>
+    }
 
     <!-- SIEMPRE visible; el overlay lo cubrirá cuando esté abierto -->
     <div class="fab-toolbar">
@@ -17,7 +114,7 @@
     </div>
 
     @if (picking()) {
-    <div class="pick-hint">Haz clic en el mapa para elegir la ubicación…</div>
+      <div class="pick-hint">Haz clic en el mapa para elegir la ubicación…</div>
     }
   </section>
 
