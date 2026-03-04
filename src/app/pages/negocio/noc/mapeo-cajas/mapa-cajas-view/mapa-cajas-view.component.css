@@ -41,11 +41,18 @@
 }
 .mapa-container.picking,
 .mapa-container.picking * {
-  cursor: url("/assets/cursors/target.svg") 16 16, crosshair !important;
+  cursor:
+    url("/assets/cursors/target.svg") 16 16,
+    crosshair !important;
 }
 /* Evita reglas globales que alteren imágenes del mapa */
 .gm-style img,
 .gm-style svg {
   max-width: none !important;
   transform: none !important;
+}
+
+:host(.measuring) .mapa-container,
+:host(.measuring) .mapa-container * {
+  cursor: crosshair !important;
 }

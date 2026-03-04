@@ -1,4 +1,8 @@
-<section class="mapa-container" [class.picking]="picking">
+<section
+  class="mapa-container"
+  [class.picking]="picking"
+  [class.measuring]="measureActive"
+>
   @if (!isReady) {
     <div class="loading-overlay">
       <div class="spinner"></div>

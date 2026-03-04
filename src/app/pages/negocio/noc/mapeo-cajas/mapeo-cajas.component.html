@@ -1,15 +1,18 @@
 <div class="mapeo-cajas" [class.overlay-open]="activeModal() === 'caja'">
-  <!-- MAPA (100%) con botones/hints dentro para respetar márgenes -->
+  <!-- MAPA (100%) -->
   <section class="map-area">
     <app-mapa-cajas-view
       [iconSizeMap]="iconSizeMap"
       [picking]="picking()"
       [selectedCoords]="pickedCoords()"
       [instantCajas]="cajas"
+      [measureActive]="measuring()"
+      [measurePoints]="measurePoints()"
       (mapClick)="onMapClick($event)"
       (markerClick)="onMarkerSelected($event)"
     ></app-mapa-cajas-view>
 
+    <!-- Panel detalles (solo si NO estás midiendo) -->
     @if (detailsOpen()) {
       <div class="caja-details">
         <div class="caja-details__head">
@@ -106,10 +109,58 @@
       </div>
     }
 
-    <!-- SIEMPRE visible; el overlay lo cubrirá cuando esté abierto -->
+    <!-- Panel distancia -->
+    @if (measuring()) {
+      <div class="distance-panel">
+        <div class="d-flex align-items-center gap-2">
+          <strong>Distancia</strong>
+          <span class="ms-auto badge bg-dark">{{ distanceLabel() }}</span>
+        </div>
+
+        <div class="small text-muted mt-1">
+          Puntos: {{ measurePoints().length }} — haz clic en el mapa para
+          agregar.
+        </div>
+
+        <div class="mt-2 d-flex gap-2 flex-wrap">
+          <button
+            class="btn btn-sm btn-outline-secondary"
+            type="button"
+            (click)="undoMeasure()"
+          >
+            Deshacer
+          </button>
+          <button
+            class="btn btn-sm btn-outline-secondary"
+            type="button"
+            (click)="clearMeasure()"
+          >
+            Limpiar
+          </button>
+          <button
+            class="btn btn-sm btn-outline-danger ms-auto"
+            type="button"
+            (click)="stopMeasuring()"
+          >
+            Salir
+          </button>
+        </div>
+      </div>
+    }
+
+    <!-- Botonera -->
     <div class="fab-toolbar">
       <button class="btn-red" type="button" (click)="openCrearCaja()">
         Crear caja
+      </button>
+
+      <button
+        class="btn-dark"
+        type="button"
+        [class.active]="measuring()"
+        (click)="toggleMeasuring()"
+      >
+        Distancia
       </button>
     </div>
 
@@ -118,7 +169,7 @@
     }
   </section>
 
-  <!-- OVERLAY de formulario (ancho completo, sobrepuesto) -->
+  <!-- OVERLAY de formulario -->
   <section class="overlay" [class.open]="activeModal() === 'caja'">
     <div class="overlay-card full">
       <app-mapa-cajas-controls

@@ -49,6 +49,9 @@ export class MapaCajasViewComponent
   // Tamaño “base” (se usa si no hay mapa o fuera de rango)
   @Input() iconSizePx = 32;
 
+  @Input() measureActive = false;
+  @Input() measurePoints: google.maps.LatLngLiteral[] = [];
+
   // Mapa opcional: nivel de zoom → tamaño en px
   // Ejemplo: 12→20px, 14→25px, 16→30px
   @Input() iconSizeMap?: Record<number, number>;
@@ -62,10 +65,17 @@ export class MapaCajasViewComponent
   @Output() markerClick = new EventEmitter<number>();
 
   onMarkerClick(id: number) {
-    if (this.picking) return; // si estás eligiendo coords, ignora clicks en markers
+    if (this.picking) return;
+
+    // ✅ si mides distancia: usar la posición del marker como punto
+    if (this.measureActive) {
+      const m = this.markers.find((x) => x.id === id);
+      if (m) this.mapClick.emit({ lat: m.position.lat, lng: m.position.lng });
+      return;
+    }
+
     this.markerClick.emit(id);
   }
-
   @ViewChild(GoogleMap) mapRef!: GoogleMap;
 
   private readonly cursorTargetRed =
@@ -110,6 +120,79 @@ export class MapaCajasViewComponent
     lng: -78.616569,
   };
 
+  private measureLine?: google.maps.Polyline;
+  private measurePointMarkers: google.maps.Marker[] = [];
+
+  private ensureMeasureLine() {
+    if (this.measureLine) return;
+
+    this.measureLine = new google.maps.Polyline({
+      geodesic: true,
+      strokeOpacity: 0.95,
+      strokeWeight: 3,
+      // color tipo Google Maps (rojo)
+      strokeColor: '#e50914',
+      clickable: false,
+    });
+  }
+
+  private clearMeasureMarkers() {
+    for (const m of this.measurePointMarkers) m.setMap(null);
+    this.measurePointMarkers = [];
+  }
+
+  private updateMeasureGraphics() {
+    const gmap = this.mapRef?.googleMap;
+    if (!gmap) return;
+
+    this.ensureMeasureLine();
+
+    // si no está activo o no hay puntos -> oculta todo
+    if (
+      !this.measureActive ||
+      !this.measurePoints ||
+      this.measurePoints.length === 0
+    ) {
+      this.measureLine!.setMap(null);
+      this.clearMeasureMarkers();
+      return;
+    }
+
+    // mostrar línea
+    this.measureLine!.setMap(gmap);
+    this.measureLine!.setPath(this.measurePoints);
+
+    // dibujar puntos (bolitas)
+    const icon: google.maps.Symbol = {
+      path: google.maps.SymbolPath.CIRCLE,
+      scale: 5,
+      fillColor: '#e50914',
+      fillOpacity: 1,
+      strokeColor: '#ffffff',
+      strokeWeight: 2,
+    };
+
+    // asegurar cantidad de markers = cantidad de puntos
+    while (this.measurePointMarkers.length < this.measurePoints.length) {
+      const mk = new google.maps.Marker({
+        map: gmap,
+        clickable: false,
+        optimized: false,
+        icon,
+      });
+      this.measurePointMarkers.push(mk);
+    }
+    while (this.measurePointMarkers.length > this.measurePoints.length) {
+      const mk = this.measurePointMarkers.pop()!;
+      mk.setMap(null);
+    }
+
+    // actualizar posiciones
+    for (let i = 0; i < this.measurePoints.length; i++) {
+      this.measurePointMarkers[i].setPosition(this.measurePoints[i]);
+    }
+  }
+
   // Debounce de peticiones
   private idleTimer?: any;
   private inFlight = 0;
@@ -150,8 +233,10 @@ export class MapaCajasViewComponent
       }
 
       map.setOptions({
-        draggableCursor: this.picking ? this.cursorTargetRed : undefined,
-        draggingCursor: this.picking ? this.cursorTargetRed : undefined,
+        draggableCursor:
+          this.picking || this.measureActive ? this.cursorTargetRed : undefined,
+        draggingCursor:
+          this.picking || this.measureActive ? this.cursorTargetRed : undefined,
       });
 
       // Fuerza redibujo de overlays al cambiar zoom
@@ -160,6 +245,8 @@ export class MapaCajasViewComponent
         this.refreshLabelOverlays();
       });
 
+      this.updateMeasureGraphics();
+      this.updateMeasureGraphics();
       setTimeout(() => this.onMapIdle(), 0);
     };
     waitForMap();
@@ -167,12 +254,23 @@ export class MapaCajasViewComponent
 
   ngOnChanges(changes: SimpleChanges): void {
     // Cambia cursor sin recrear
-    if (changes['picking'] && this.mapRef?.googleMap) {
+    if (
+      (changes['picking'] || changes['measureActive']) &&
+      this.mapRef?.googleMap
+    ) {
       this.mapRef.googleMap.setOptions({
-        draggableCursor: this.picking ? this.cursorTargetRed : undefined,
-        draggingCursor: this.picking ? this.cursorTargetRed : undefined,
+        draggableCursor:
+          this.picking || this.measureActive ? this.cursorTargetRed : undefined,
+        draggingCursor:
+          this.picking || this.measureActive ? this.cursorTargetRed : undefined,
       });
     }
+
+    if (changes['measureActive'] || changes['measurePoints']) {
+      // si el mapa ya existe, repinta línea/puntos
+      this.updateMeasureGraphics();
+    }
+
     // Cajas locales => recalcula y fusiona
     if (changes['instantCajas']) {
       const list = this.instantCajas ?? [];
@@ -186,6 +284,12 @@ export class MapaCajasViewComponent
   ngOnDestroy(): void {
     // Limpia overlays
     this.clearLabelOverlays();
+
+    this.measureLine?.setMap(null as any);
+    this.clearMeasureMarkers();
+
+    this.measureLine?.setMap(null as any);
+    this.clearMeasureMarkers();
   }
 
   // ===== Helpers =====
@@ -200,8 +304,10 @@ export class MapaCajasViewComponent
 
     setTimeout(() => {
       this.mapRef?.googleMap?.setOptions({
-        draggableCursor: this.picking ? this.cursorTargetRed : undefined,
-        draggingCursor: this.picking ? this.cursorTargetRed : undefined,
+        draggableCursor:
+          this.picking || this.measureActive ? this.cursorTargetRed : undefined,
+        draggingCursor:
+          this.picking || this.measureActive ? this.cursorTargetRed : undefined,
       });
     });
   }
@@ -368,7 +474,9 @@ export class MapaCajasViewComponent
   }
   // ===== Eventos =====
   onMapClickHandler(ev: google.maps.MapMouseEvent) {
-    if (!this.picking) return;
+    // ✅ permitir click si picking O measureActive
+    if (!this.picking && !this.measureActive) return;
+
     const ll = ev?.latLng?.toJSON?.();
     if (ll && Number.isFinite(ll.lat) && Number.isFinite(ll.lng)) {
       this.mapClick.emit({ lat: ll.lat, lng: ll.lng });
