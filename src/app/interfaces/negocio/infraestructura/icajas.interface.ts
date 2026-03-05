@@ -15,6 +15,17 @@ export interface ICajas {
   caja_pon_id?: number | null; // solo NAP
   caja_pon_ruta?: string | null; // "5" o "7/2"
 
+  // ✅ OLT (para automatización futura)
+  olt_id?: number | null;
+  olt_slot?: number | null;
+  olt_pon?: number | null;
+  olt_frame_override?: number | null;
+
+  // opcionales devueltos por el JOIN en backend (2.2)
+  olt_nombre?: string | null;
+  olt_frame_default?: number | null;
+  olt_frame?: number | null;
+
   // opcionales devueltos por el SELECT del backend
   lat?: number | string | null;
   lng?: number | string | null;

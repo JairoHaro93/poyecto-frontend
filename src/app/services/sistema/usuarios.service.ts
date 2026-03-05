@@ -16,7 +16,7 @@ export class UsuariosService {
     return lastValueFrom(
       this.httpClient.get<Iusuarios[]>(this.baseUrl, {
         withCredentials: true,
-      })
+      }),
     );
   }
 
@@ -24,7 +24,7 @@ export class UsuariosService {
     return lastValueFrom(
       this.httpClient.get<Iusuarios[]>(`${this.baseUrl}/agenda-tecnicos`, {
         withCredentials: true,
-      })
+      }),
     );
   }
 
@@ -32,7 +32,7 @@ export class UsuariosService {
     return firstValueFrom(
       this.httpClient.get<Iusuarios>(`${this.baseUrl}/${id}`, {
         withCredentials: true,
-      })
+      }),
     );
   }
 
@@ -43,7 +43,7 @@ export class UsuariosService {
     return firstValueFrom(
       this.httpClient.put<Iusuarios>(`${this.baseUrl}/${id}`, body, {
         withCredentials: true,
-      })
+      }),
     );
   }
 
@@ -51,7 +51,7 @@ export class UsuariosService {
     return firstValueFrom(
       this.httpClient.post<Iusuarios>(this.baseUrl, body, {
         withCredentials: true,
-      })
+      }),
     );
   }
 
@@ -59,7 +59,7 @@ export class UsuariosService {
     return firstValueFrom(
       this.httpClient.delete<Iusuarios>(`${this.baseUrl}/${id}`, {
         withCredentials: true,
-      })
+      }),
     );
   }
 
@@ -77,7 +77,14 @@ export class UsuariosService {
       this.httpClient.get<Iusuarios[]>(`${this.baseUrl}/para-turnos`, {
         withCredentials: true,
         params,
-      })
+      }),
+    );
+  }
+
+  getMisCiudadesCobertura() {
+    return this.httpClient.get<{ data: string[] }>(
+      `${this.baseUrl}/ciudades-cobertura/mias`,
+      { withCredentials: true },
     );
   }
 }

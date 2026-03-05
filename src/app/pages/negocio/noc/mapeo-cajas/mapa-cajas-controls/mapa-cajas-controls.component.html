@@ -71,49 +71,89 @@
     <!-- ===================== TAB PON ===================== -->
     @if (tab === "PON") {
       <form [formGroup]="formPon" (ngSubmit)="submitPon()">
-        <div class="row g-1 align-items-end">
+        <!-- ======= FILA 1: Ciudad + OLT + Slot/PON + R + Estado + SEG (derecha) + Guardar ======= -->
+        <div class="row g-1 align-items-end flex-nowrap">
+          <!-- OLT -->
           <div class="col-auto">
             <div class="input-group input-group-sm w-auto">
-              <span class="input-group-text">Ciudad</span>
+              <span class="input-group-text">OLT</span>
               <select
                 class="form-select form-select-sm"
-                formControlName="caja_ciudad"
+                formControlName="olt_id"
+                style="width: 210px"
               >
-                @for (c of ciudades; track c) {
-                  <option [value]="c">{{ c }}</option>
+                <option [ngValue]="null">— OLT —</option>
+                @for (o of olts; track o.id) {
+                  <option [ngValue]="o.id">{{ o.olt_nombre }}</option>
                 }
               </select>
             </div>
           </div>
 
+          <!-- Slot -->
           <div class="col-auto">
             <div class="input-group input-group-sm w-auto">
-              <span class="input-group-text">SEG</span>
+              <span class="input-group-text">S</span>
               <input
-                class="form-control form-control-sm"
-                style="width: 190px"
-                type="text"
-                formControlName="caja_segmento"
-                placeholder="4/9/S2/2"
+                class="form-control form-control-sm text-center"
+                style="width: 50px"
+                type="number"
+                formControlName="olt_slot"
+                min="0"
+                max="31"
               />
             </div>
           </div>
 
+          <!-- PON -->
           <div class="col-auto">
             <div class="input-group input-group-sm w-auto">
-              <span class="input-group-text">R</span>
+              <span class="input-group-text">PON</span>
+              <input
+                class="form-control form-control-sm text-center"
+                style="width: 50px"
+                type="number"
+                formControlName="olt_pon"
+                min="0"
+                max="31"
+              />
+            </div>
+          </div>
+
+          <!-- Split opcional -->
+          <div class="col-auto">
+            <div class="input-group input-group-sm w-auto">
+              <span class="input-group-text">Split</span>
               <select
                 class="form-select form-select-sm"
+                formControlName="espliteo"
+                style="width: 92px"
+                title="Opcional. Si no aplica, déjalo en —"
+              >
+                <option value="">—</option>
+                <option value="S2/1">S2/1</option>
+                <option value="S2/2">S2/2</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Root split -->
+          <div class="col-auto">
+            <div class="input-group input-group-sm w-auto">
+              <span class="input-group-text">Puertos</span>
+              <select
+                class="form-select form-select-sm text-center"
                 formControlName="caja_root_split"
-                style="width: 90px"
+                style="width: 80px"
               >
                 @for (s of splits; track s) {
-                  <option [ngValue]="s">R{{ s }}</option>
+                  <option [ngValue]="s">{{ s }}</option>
                 }
               </select>
             </div>
           </div>
 
+          <!-- Estado -->
           <div class="col-auto">
             <div class="input-group input-group-sm w-auto">
               <span class="input-group-text">Estado</span>
@@ -128,18 +168,15 @@
             </div>
           </div>
 
-          <div class="col-auto ms-auto">
-            <button
-              class="btn btn-danger btn-sm px-3"
-              type="submit"
-              [disabled]="isSaving || formPon.invalid"
-            >
-              {{ isSaving ? "Guardando…" : "Guardar PON" }}
-            </button>
+          <!-- Preview del nombre (misma fila, con ellipsis) -->
+          <div class="col ms-auto d-flex justify-content-end">
+            <div class="pon-name-preview" title="{{ ponNombrePreview }}">
+              {{ ponNombrePreview }}
+            </div>
           </div>
         </div>
 
-        <!-- fibra/hilo + coords -->
+        <!-- ======= FILA 2: fibra/hilo + coords ======= -->
         <div class="row g-1 align-items-end mt-1">
           <div class="col-auto">
             <div class="input-group input-group-sm w-auto">
@@ -164,9 +201,9 @@
                 id="chkUnknownPon"
                 formControlName="hilo_desconocido"
               />
-              <label class="form-check-label small" for="chkUnknownPon"
-                >DESCONOCIDO</label
-              >
+              <label class="form-check-label small" for="chkUnknownPon">
+                DESCONOCIDO
+              </label>
             </div>
 
             @if (isFibraSimplePon()) {
@@ -237,10 +274,19 @@
               </button>
             </div>
           </div>
+          <!-- Guardar -->
+          <div class="col-auto">
+            <button
+              class="btn btn-danger btn-sm px-3"
+              type="submit"
+              [disabled]="isSaving || formPon.invalid"
+            >
+              {{ isSaving ? "Guardando…" : "Guardar PON" }}
+            </button>
+          </div>
         </div>
       </form>
     }
-
     <!-- ===================== TAB NAP ===================== -->
     @if (tab === "NAP") {
       <form [formGroup]="formNap" (ngSubmit)="submitNap()">

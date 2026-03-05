@@ -14,6 +14,18 @@ interface LatLngLiteral {
 
 type ApiResp<T> = { success: boolean; message: string; data: T };
 
+export interface IOlt {
+  id: number;
+  sucursal_id: number;
+  olt_ciudad: string; // ✅ nuevo
+  olt_nombre: string;
+  olt_ip: string;
+  olt_vendor?: string | null;
+  olt_frame_default: number;
+  estado: 'ACTIVA' | 'INACTIVA';
+  created_at?: string;
+}
+
 interface CreatePonNapResp {
   id: number;
   caja_nombre: string;
@@ -157,5 +169,13 @@ export class CajasService {
         { withCredentials: true },
       ),
     ).then((r) => r.data);
+  }
+
+  getOlts() {
+    return firstValueFrom(
+      this.http.get<ApiResp<IOlt[]>>(`${this.baseUrl}/olts`, {
+        withCredentials: true,
+      }),
+    );
   }
 }

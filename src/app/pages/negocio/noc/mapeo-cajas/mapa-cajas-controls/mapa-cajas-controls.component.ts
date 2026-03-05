@@ -7,6 +7,7 @@ import {
   SimpleChanges,
   OnInit,
   inject,
+  computed,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import {
@@ -16,8 +17,13 @@ import {
   AbstractControl,
   ValidationErrors,
 } from '@angular/forms';
-import { CajasService } from '../../../../../services/negocio_latacunga/cajas.services';
+import {
+  CajasService,
+  IOlt,
+} from '../../../../../services/negocio_latacunga/cajas.services';
 import { ICajas } from '../../../../../interfaces/negocio/infraestructura/icajas.interface';
+import { UsuariosService } from '../../../../../services/sistema/usuarios.service';
+import { firstValueFrom } from 'rxjs';
 
 type TabKey = 'PON' | 'NAP' | 'SPLITTER';
 
@@ -58,21 +64,21 @@ export class MapaCajasControlsComponent implements OnInit, OnChanges {
 
   private fb = inject(FormBuilder);
   private cajasService = inject(CajasService);
-
+  private usuarioService = inject(UsuariosService);
   tab: TabKey = 'PON';
 
   isSaving = false;
   serverMsg = '';
-
+  oltCiudad = '';
   // combos
-  ciudades = ['LATACUNGA', 'SALCEDO'] as const;
+  ciudades: string[] = [];
   splits: Array<2 | 8 | 16> = [2, 8, 16];
-
+  olts: IOlt[] = [];
   // fibra/hilo (como tu versión)
   simpleHilos = [1, 2];
   buffers = [1, 2, 3, 4];
   hilos = [1, 2, 3, 4, 5, 6];
-
+  ponNombrePreview = '—';
   // data PONs / rutas
   pones: ICajas[] = [];
   rutasDisponibles: string[] = [];
@@ -85,6 +91,16 @@ export class MapaCajasControlsComponent implements OnInit, OnChanges {
     caja_segmento: ['', [Validators.required, Validators.maxLength(80)]],
     caja_root_split: [8 as 2 | 8 | 16, Validators.required],
     caja_estado: ['ACTIVO', Validators.required],
+    // ✅ OLT (solo en PON)
+    olt_id: [null as number | null, Validators.required],
+    olt_slot: [
+      1 as number | null,
+      [Validators.required, Validators.min(0), Validators.max(31)],
+    ],
+    olt_pon: [
+      null as number | null,
+      [Validators.required, Validators.min(0), Validators.max(31)],
+    ],
 
     fibra_tipo: ['DROP', Validators.required],
     hilo_desconocido: [false],
@@ -92,7 +108,8 @@ export class MapaCajasControlsComponent implements OnInit, OnChanges {
     buffer: [null as number | null],
     hilo_num: [null as number | null],
     caja_hilo: [{ value: '', disabled: true }],
-
+    // ✅ Espliteo opcional: '' | 'S2/1' | 'S2/2'
+    espliteo: ['' as '' | 'S2/1' | 'S2/2'],
     caja_coordenadas: ['', coordsValidator],
   });
 
@@ -132,13 +149,73 @@ export class MapaCajasControlsComponent implements OnInit, OnChanges {
     return this.formSplitter.controls;
   }
 
-  ngOnInit(): void {
+  async ngOnInit(): Promise<void> {
     this.wireFiberRules(this.formPon);
     this.wireFiberRules(this.formNap);
 
-    this.loadPones();
+    // 1) cargar ciudades permitidas (según sucursal del usuario logueado)
+    try {
+      const res = await firstValueFrom(
+        this.usuarioService.getMisCiudadesCobertura(),
+      );
+      this.ciudades = (res?.data ?? [])
+        .map((c) => (c || '').toString().toUpperCase().trim())
+        .filter(Boolean);
 
-    // cuando selecciona PON en NAP, cargar rutas y setear ciudad/segmento por defecto
+      // default en PON
+      this.formPon
+        .get('caja_ciudad')
+        ?.setValue(this.ciudades[0] ?? '', { emitEvent: false });
+    } catch (e) {
+      console.error(e);
+      this.ciudades = [];
+      this.formPon.get('caja_ciudad')?.setValue('', { emitEvent: false });
+      this.serverMsg = '⚠️ No se pudieron cargar las ciudades de cobertura.';
+    }
+
+    // ✅ cargar OLTs de mi sucursal
+    try {
+      const oltsRes = await this.cajasService.getOlts();
+      this.olts = (oltsRes.data ?? []).filter((o) => o.estado === 'ACTIVA');
+
+      this.syncOltCiudad();
+      this.formPon.get('olt_id')!.valueChanges.subscribe(() => {
+        this.syncOltCiudad();
+        this.syncSegmentFromOlt(); // para recalcular SEG con frame_default de la OLT
+        this.updatePonNombrePreview(); // para recalcular el nombre
+      });
+
+      ['olt_id', 'olt_slot', 'olt_pon', 'espliteo'].forEach((k) => {
+        this.formPon
+          .get(k)!
+          .valueChanges.subscribe(() => this.syncSegmentFromOlt());
+      });
+      this.formPon
+        .get('caja_ciudad')!
+        .valueChanges.subscribe(() => this.updatePonNombrePreview());
+      this.formPon
+        .get('caja_root_split')!
+        .valueChanges.subscribe(() => this.updatePonNombrePreview());
+
+      // inicial
+      this.updatePonNombrePreview();
+      // inicial
+      this.syncSegmentFromOlt();
+      // set default OLT
+      this.formPon
+        .get('olt_id')
+        ?.setValue(this.olts[0]?.id ?? null, { emitEvent: false });
+    } catch (e) {
+      console.error(e);
+      this.olts = [];
+      this.formPon.get('olt_id')?.setValue(null, { emitEvent: false });
+      this.serverMsg = '⚠️ No se pudieron cargar las OLTs.';
+    }
+
+    // 2) cargar PONs
+    await this.loadPones();
+
+    // 3) tus subscriptions (igual que ya las tienes)
     this.formNap.get('caja_pon_id')!.valueChanges.subscribe((ponId) => {
       if (!ponId) {
         this.rutasDisponibles = [];
@@ -146,31 +223,20 @@ export class MapaCajasControlsComponent implements OnInit, OnChanges {
         return;
       }
       const pon = this.pones.find((p) => p.id === Number(ponId));
-      this.formNap
-        .get('caja_ciudad')!
-        .setValue((pon?.caja_ciudad || 'LATACUNGA') as any, {
-          emitEvent: false,
-        });
-      this.formNap
-        .get('caja_segmento')!
-        .setValue((pon?.caja_segmento || '') as any, { emitEvent: false });
-      const ciudad = (pon?.caja_ciudad || 'LATACUNGA').toString();
+      const ciudad = (pon?.caja_ciudad || '').toString();
       const seg = (pon?.caja_segmento || '').toString();
-      this.formNap.patchValue(
-        {
-          caja_segmento: seg || this.formNap.get('caja_segmento')!.value || '',
-        },
-        { emitEvent: false },
-      );
+
       this.formNap
         .get('caja_ciudad')!
         .setValue(ciudad as any, { emitEvent: false });
+      this.formNap
+        .get('caja_segmento')!
+        .setValue(seg as any, { emitEvent: false });
 
       this.refreshRutasDisponibles(Number(ponId));
       this.refreshDisponibilidad(Number(ponId));
     });
 
-    // splitters tab: cuando elige PON, refresca rutas disponibles y disponibilidad
     this.formSplitter.get('caja_id')!.valueChanges.subscribe((id) => {
       if (!id) {
         this.ponInfo = null;
@@ -364,6 +430,11 @@ export class MapaCajasControlsComponent implements OnInit, OnChanges {
         caja_coordenadas:
           (this.formPon.get('caja_coordenadas')!.value || '').toString() ||
           null,
+
+        // ✅ OLT
+        olt_id: this.formPon.get('olt_id')!.value as any,
+        olt_slot: this.formPon.get('olt_slot')!.value as any,
+        olt_pon: this.formPon.get('olt_pon')!.value as any,
       };
 
       const res = await this.cajasService.createPon(payload);
@@ -489,5 +560,63 @@ export class MapaCajasControlsComponent implements OnInit, OnChanges {
   }
   hiloDesconocidoNap() {
     return this.hiloDesconocido(this.formNap);
+  }
+
+  private syncSegmentFromOlt() {
+    const oid = this.formPon.get('olt_id')!.value;
+    const slot = this.formPon.get('olt_slot')!.value;
+    const pon = this.formPon.get('olt_pon')!.value;
+
+    if (!oid || slot == null || pon == null) {
+      this.formPon.get('caja_segmento')!.setValue('', { emitEvent: false });
+      return;
+    }
+
+    const olt = this.olts.find((o) => o.id === Number(oid));
+    const frame = Number(olt?.olt_frame_default ?? 0);
+
+    const sp = (this.formPon.get('espliteo')!.value || '').toString().trim(); // '' | 'S2/1' | 'S2/2'
+    const base = `${frame}/${Number(slot)}/${Number(pon)}`;
+
+    this.formPon.get('caja_segmento')!.setValue(sp ? `${base}/${sp}` : base, {
+      emitEvent: false,
+    });
+
+    this.formPon.get('caja_segmento')!.setValue(sp ? `${base}/${sp}` : base, {
+      emitEvent: false,
+    });
+
+    // ✅ actualizar preview después de setear SEG
+    this.updatePonNombrePreview();
+  }
+
+  private updatePonNombrePreview() {
+    const ciudad = (this.formPon.get('caja_ciudad')!.value || '')
+      .toString()
+      .trim();
+    const seg = (this.formPon.get('caja_segmento')!.value || '')
+      .toString()
+      .trim();
+    const r = this.formPon.get('caja_root_split')!.value;
+
+    const abbr =
+      ciudad.toUpperCase() === 'LATACUNGA'
+        ? 'LAT'
+        : ciudad.toUpperCase() === 'SALCEDO'
+          ? 'SAL'
+          : ciudad.toUpperCase().slice(0, 3) || 'XXX';
+
+    if (!seg || !r) {
+      this.ponNombrePreview = '—';
+      return;
+    }
+
+    this.ponNombrePreview = `${abbr}-PON-${seg}-R${r}`;
+  }
+
+  private syncOltCiudad() {
+    const oid = this.formPon.get('olt_id')!.value;
+    const olt = this.olts.find((o) => o.id === Number(oid));
+    this.oltCiudad = (olt?.olt_ciudad || '').toString().toUpperCase().trim();
   }
 }

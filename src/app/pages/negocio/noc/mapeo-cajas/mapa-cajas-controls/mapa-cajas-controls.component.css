@@ -85,3 +85,50 @@
 .alert {
   border-radius: 10px;
 }
+/* SEG como resultado */
+.seg-result input[readonly] {
+  background: #f8fafc;
+  font-weight: 700;
+  letter-spacing: 0.2px;
+}
+/* Preview nombre */
+:host .text-end strong {
+  font-weight: 800;
+  letter-spacing: 0.2px;
+}
+
+.pon-name-preview {
+  font-weight: 800;
+  font-size: 13px;
+  padding: 4px 10px;
+  border-radius: 10px;
+  background: rgba(0, 0, 0, 0.04);
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  display: inline-block;
+  max-width: 420px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Mantener preview en una sola línea */
+.pon-name-preview {
+  font-weight: 800;
+  font-size: 13px;
+  padding: 4px 10px;
+  border-radius: 10px;
+  background: rgba(0, 0, 0, 0.04);
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  display: inline-block;
+
+  /* clave para que no baje */
+  max-width: 100%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Opcional: compactar un pelín inputs */
+.input-group-text {
+  padding: 0.125rem 0.35rem;
+}
