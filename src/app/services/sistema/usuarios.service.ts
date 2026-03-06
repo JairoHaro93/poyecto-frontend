@@ -1,9 +1,9 @@
-// usuarios.services.ts
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { environment } from '../../../environments/environment';
 import { firstValueFrom, lastValueFrom } from 'rxjs';
 import { Iusuarios } from '../../interfaces/sistema/iusuarios.interface';
+import { IDepartamento } from '../../interfaces/sistema/idepartamento.interface';
 
 @Injectable({
   providedIn: 'root',
@@ -63,14 +63,11 @@ export class UsuariosService {
     );
   }
 
-  /** 🔹 NUEVO: lista filtrada para módulo de turnos */
-  // usuarios.services.ts
-  // src/app/services/sistema/usuarios.service.ts
   getParaTurnos(departamentoId?: number): Promise<Iusuarios[]> {
-    // Construimos params solo si hay departamentoId
-    const params: any = {};
+    let params = new HttpParams();
+
     if (departamentoId != null) {
-      params.departamento_id = departamentoId;
+      params = params.set('departamento_id', String(departamentoId));
     }
 
     return firstValueFrom(
@@ -85,6 +82,17 @@ export class UsuariosService {
     return this.httpClient.get<{ data: string[] }>(
       `${this.baseUrl}/ciudades-cobertura/mias`,
       { withCredentials: true },
+    );
+  }
+
+  getMisDepartamentosControl(): Promise<IDepartamento[]> {
+    return lastValueFrom(
+      this.httpClient.get<IDepartamento[]>(
+        `${this.baseUrl}/departamentos-control/mios`,
+        {
+          withCredentials: true,
+        },
+      ),
     );
   }
 }

@@ -1,18 +1,16 @@
-// src/app/pages/.../turnos/turnos.component.ts
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 
 import { UsuariosService } from '../../../../services/sistema/usuarios.service';
 import { Iusuarios } from '../../../../interfaces/sistema/iusuarios.interface';
+import { IDepartamento } from '../../../../interfaces/sistema/idepartamento.interface';
 import {
   TurnosService,
   GenerarTurnosPayload,
   ITurnoDiario,
 } from '../../../../services/negocio_latacunga/turnos.service';
 import { AutenticacionService } from '../../../../services/sistema/autenticacion.service';
-import { DepartamentosService } from '../../../../services/sistema/departamentos.service';
-import { IDepartamento } from '../../../../interfaces/sistema/idepartamento.interface';
 
 import {
   VacacionesService,
@@ -31,12 +29,12 @@ type GenerarModo = 'SEMANA' | 'DIA';
 interface UsuarioResumen {
   id: number;
   nombre_completo: string;
-  saldo_minutos: number; // si backend no envía, queda 0
+  saldo_minutos: number;
 }
 
 interface DiaColumna {
-  fecha: string; // 'YYYY-MM-DD'
-  etiqueta: string; // 'Lun 12'
+  fecha: string; // YYYY-MM-DD
+  etiqueta: string; // Lun 12
 }
 
 @Component({
@@ -54,12 +52,12 @@ export class TurnosComponent implements OnInit {
 
   filtroSucursal: string | null = null;
 
-  // Vista SEMANAL (siempre se muestra Lun-Dom)
-  semanaRef: string | null = null; // fecha "ancla" para saltar de semana
-  semanaInicio: string | null = null; // lunes
-  semanaFin: string | null = null; // domingo
+  // Vista semanal (Lun-Dom)
+  semanaRef: string | null = null;
+  semanaInicio: string | null = null;
+  semanaFin: string | null = null;
 
-  // rango efectivo de consulta (siempre la semana actual)
+  // rango efectivo de consulta
   fechaDesde: string | null = null;
   fechaHasta: string | null = null;
 
@@ -83,13 +81,12 @@ export class TurnosComponent implements OnInit {
   excluirFinesSemana = true;
   generandoTurnos = false;
 
-  // ✅ modo extra: generar SOLO un día específico (por defecto HOY)
   generarModo: GenerarModo = 'SEMANA';
   generarDia: string | null = null;
 
   jefeActual?: Iusuarios;
 
-  departamentosSucursal: IDepartamento[] = [];
+  departamentosControlados: IDepartamento[] = [];
   departamentoSeleccionadoId: number | null = null;
 
   // ==========================
@@ -102,59 +99,17 @@ export class TurnosComponent implements OnInit {
   >();
   cargandoTurnos = false;
 
-  // evita “parpadeo” por botón (deshabilitar por turno)
   savingTurno: Record<number, boolean> = {};
 
-  constructor(
-    private usuariosService: UsuariosService,
-    private turnosService: TurnosService,
-    private authService: AutenticacionService,
-    private departamentosService: DepartamentosService,
-
-    private vacacionesService: VacacionesService
-  ) {}
-
-  // ✅ es jefe de sucursal => tiene sucursal pero NO departamento
-  get esJefeSucursal(): boolean {
-    return !!this.jefeActual?.sucursal_id && !this.jefeActual?.departamento_id;
-  }
-
-  // para info del panel (semana)
-  get diasAplicanSemana(): number {
-    return this.excluirFinesSemana ? this.diasHabiles : this.diasTotales;
-  }
-
-  // ✅ para habilitar el botón Generar, depende del modo (SEMANA vs DIA)
-  get diasAplicanGeneracion(): number {
-    if (this.generarModo === 'DIA') {
-      const d = this.parseFecha(this.generarDia);
-      if (!d) return 0;
-      if (this.excluirFinesSemana) {
-        const dow = d.getDay();
-        if (dow === 0 || dow === 6) return 0; // domingo o sábado
-      }
-      return 1;
-    }
-    return this.diasAplicanSemana;
-  }
-
-  get usuariosFiltrados(): UsuarioResumen[] {
-    const texto = this.filtroTextoUsuario.trim().toLowerCase();
-    if (!texto) return this.usuarios;
-    return this.usuarios.filter((u) =>
-      u.nombre_completo.toLowerCase().includes(texto)
-    );
-  }
-
   // ==========================
-  //   VACACIONES (JEFE)
+  //   VACACIONES
   // ==========================
   vacConfig?: VacConfig;
 
   vacUsuarioId: number | null = null;
   vacFechaDesde: string | null = null;
   vacFechaHasta: string | null = null;
-  vacObservacion: string = '';
+  vacObservacion = '';
 
   vacResumen?: VacResumenUsuario;
   vacPreview?: VacPreviewResponse;
@@ -164,9 +119,45 @@ export class TurnosComponent implements OnInit {
   creandoVac = false;
   anulandoVac: Record<number, boolean> = {};
 
-  // ==========================
-  //   CICLO DE VIDA
-  // ==========================
+  constructor(
+    private usuariosService: UsuariosService,
+    private turnosService: TurnosService,
+    private authService: AutenticacionService,
+    private vacacionesService: VacacionesService,
+  ) {}
+
+  get diasAplicanSemana(): number {
+    return this.excluirFinesSemana ? this.diasHabiles : this.diasTotales;
+  }
+
+  get debeElegirDepartamento(): boolean {
+    return this.departamentosControlados.length > 1;
+  }
+
+  get diasAplicanGeneracion(): number {
+    if (this.generarModo === 'DIA') {
+      const d = this.parseFecha(this.generarDia);
+      if (!d) return 0;
+
+      if (this.excluirFinesSemana) {
+        const dow = d.getDay();
+        if (dow === 0 || dow === 6) return 0;
+      }
+      return 1;
+    }
+
+    return this.diasAplicanSemana;
+  }
+
+  get usuariosFiltrados(): UsuarioResumen[] {
+    const texto = this.filtroTextoUsuario.trim().toLowerCase();
+    if (!texto) return this.usuarios;
+
+    return this.usuarios.filter((u) =>
+      u.nombre_completo.toLowerCase().includes(texto),
+    );
+  }
+
   async ngOnInit(): Promise<void> {
     try {
       this.jefeActual = await this.authService.getUsuarioAutenticado();
@@ -178,25 +169,19 @@ export class TurnosComponent implements OnInit {
           null;
       }
 
-      if (this.esJefeSucursal && this.jefeActual?.sucursal_id) {
-        await this.cargarDepartamentosSucursal(this.jefeActual.sucursal_id);
-      }
-
-      // ✅ Semana actual (Lun-Dom) como vista por defecto
       this.setSemanaActualSync();
 
-      // ✅ Config vacaciones (fecha_corte)
       try {
         this.vacConfig = await this.vacacionesService.getConfig();
       } catch {
         this.vacConfig = undefined;
       }
 
-      // ✅ Generación por defecto: Semana completa + día = hoy (para modo DIA si cambian)
       const hoyStr = this.formatFecha(new Date());
       this.generarModo = 'SEMANA';
       this.generarDia = hoyStr;
 
+      await this.cargarDepartamentosControlados();
       await this.cargarUsuarios();
       await this.buscarTurnos();
     } catch (e: any) {
@@ -205,7 +190,7 @@ export class TurnosComponent implements OnInit {
   }
 
   // ==========================
-  //   FECHAS / SEMANA (LUN-DOM)
+  //   FECHAS / SEMANA
   // ==========================
   private formatFecha(d: Date): string {
     const y = d.getFullYear();
@@ -223,8 +208,8 @@ export class TurnosComponent implements OnInit {
   private getMonday(d: Date): Date {
     const x = new Date(d);
     x.setHours(0, 0, 0, 0);
-    const day = x.getDay(); // 0=Dom ... 6=Sáb
-    const diff = day === 0 ? -6 : 1 - day; // lunes como inicio
+    const day = x.getDay();
+    const diff = day === 0 ? -6 : 1 - day;
     x.setDate(x.getDate() + diff);
     return x;
   }
@@ -236,10 +221,8 @@ export class TurnosComponent implements OnInit {
 
     this.semanaInicio = this.formatFecha(lunes);
     this.semanaFin = this.formatFecha(domingo);
-
     this.semanaRef = this.formatFecha(ref);
 
-    // rango efectivo para consultas y matriz
     this.fechaDesde = this.semanaInicio;
     this.fechaHasta = this.semanaFin;
 
@@ -308,7 +291,7 @@ export class TurnosComponent implements OnInit {
     while (tmp.getTime() <= d2.getTime()) {
       const fechaStr = this.formatFecha(tmp);
       const etiqueta = `${nombresDia[tmp.getDay()]} ${String(
-        tmp.getDate()
+        tmp.getDate(),
       ).padStart(2, '0')}`;
 
       this.diasVentana.push({ fecha: fechaStr, etiqueta });
@@ -317,31 +300,24 @@ export class TurnosComponent implements OnInit {
   }
 
   esHoy(fecha: string): boolean {
-    const hoyStr = this.formatFecha(new Date());
-    return fecha === hoyStr;
+    return fecha === this.formatFecha(new Date());
   }
 
   // ==========================
-  //   FECHA UI (evita mostrar T...Z y evita líos de zona)
+  //   FECHA UI
   // ==========================
   private ymdFromAny(value: any): string {
     if (!value) return '';
 
-    // Si viene string:
     if (typeof value === 'string') {
-      // "2026-01-19T05:00:00.000Z" => "2026-01-19"
       if (value.includes('T')) return value.slice(0, 10);
-
-      // ya es "YYYY-MM-DD"
       if (/^\d{4}-\d{2}-\d{2}$/.test(value)) return value;
 
-      // último intento (por si viene raro)
       const d = new Date(value);
       if (!isNaN(d.getTime())) return this.formatFecha(d);
       return '';
     }
 
-    // Si viene Date u otro:
     const d = value instanceof Date ? value : new Date(value);
     if (isNaN(d.getTime())) return '';
     return this.formatFecha(d);
@@ -359,19 +335,29 @@ export class TurnosComponent implements OnInit {
   }
 
   // ==========================
-  //   DEPARTAMENTOS
+  //   DEPARTAMENTOS CONTROLADOS
   // ==========================
-  private async cargarDepartamentosSucursal(sucursalId: number): Promise<void> {
+  private async cargarDepartamentosControlados(): Promise<void> {
     try {
-      const todos = await this.departamentosService.getAll();
-      this.departamentosSucursal = (todos || []).filter(
-        (d) => d.sucursal_id === sucursalId
+      const lista = await this.usuariosService.getMisDepartamentosControl();
+
+      this.departamentosControlados = (lista || []).sort((a: any, b: any) =>
+        String(a.nombre || '').localeCompare(String(b.nombre || '')),
       );
+
+      if (this.departamentosControlados.length === 1) {
+        this.departamentoSeleccionadoId = Number(
+          this.departamentosControlados[0].id,
+        );
+      } else {
+        this.departamentoSeleccionadoId = null;
+      }
     } catch (e: any) {
-      this.departamentosSucursal = [];
+      this.departamentosControlados = [];
+      this.departamentoSeleccionadoId = null;
       await SwalStd.error(
         SwalStd.getErrorMessage(e),
-        'Error cargando departamentos'
+        'Error cargando departamentos controlados',
       );
     }
   }
@@ -385,17 +371,22 @@ export class TurnosComponent implements OnInit {
   //   CARGA DE USUARIOS
   // ==========================
   private async cargarUsuarios(): Promise<void> {
+    if (this.debeElegirDepartamento && !this.departamentoSeleccionadoId) {
+      this.usuarios = [];
+      this.usuariosSeleccionadosIds = [];
+      return;
+    }
+
     this.cargandoUsuarios = true;
     try {
       let departamentoIdFiltro: number | undefined;
 
-      if (this.esJefeSucursal && this.departamentoSeleccionadoId) {
+      if (this.departamentoSeleccionadoId) {
         departamentoIdFiltro = this.departamentoSeleccionadoId;
       }
 
-      const lista: any[] = await this.usuariosService.getParaTurnos(
-        departamentoIdFiltro
-      );
+      const lista: any[] =
+        await this.usuariosService.getParaTurnos(departamentoIdFiltro);
 
       this.usuarios = (lista || [])
         .map((u: any) => ({
@@ -404,11 +395,15 @@ export class TurnosComponent implements OnInit {
           saldo_minutos: Number(u.saldo_minutos ?? 0),
         }))
         .sort((a, b) => a.nombre_completo.localeCompare(b.nombre_completo));
+
+      this.usuariosSeleccionadosIds = this.usuariosSeleccionadosIds.filter(
+        (id) => this.usuarios.some((u) => u.id === id),
+      );
     } catch (e: any) {
       this.usuarios = [];
       await SwalStd.error(
         SwalStd.getErrorMessage(e),
-        'Error cargando colaboradores'
+        'Error cargando colaboradores',
       );
     } finally {
       this.cargandoUsuarios = false;
@@ -425,7 +420,7 @@ export class TurnosComponent implements OnInit {
       return;
     }
 
-    if (this.esJefeSucursal && !this.departamentoSeleccionadoId) {
+    if (this.debeElegirDepartamento && !this.departamentoSeleccionadoId) {
       this.turnos = [];
       this.turnosPorUsuario.clear();
       return;
@@ -441,7 +436,7 @@ export class TurnosComponent implements OnInit {
 
       const idsEquipo = new Set(this.usuarios.map((u) => u.id));
       this.turnos = (turnos || []).filter((t) =>
-        idsEquipo.has(Number(t.usuario_id))
+        idsEquipo.has(Number(t.usuario_id)),
       );
 
       this.buildTurnosIndex();
@@ -464,13 +459,14 @@ export class TurnosComponent implements OnInit {
       if (!this.turnosPorUsuario.has(uid)) {
         this.turnosPorUsuario.set(uid, new Map<string, any>());
       }
+
       this.turnosPorUsuario.get(uid)!.set(fechaKey, t);
     }
   }
 
   getTurno(
     usuarioId: number,
-    fecha: string
+    fecha: string,
   ): (ITurnoDiario & { tipo_dia?: TipoDia }) | undefined {
     return this.turnosPorUsuario.get(usuarioId)?.get(fecha);
   }
@@ -479,12 +475,12 @@ export class TurnosComponent implements OnInit {
   //   REGLAS UI
   // ==========================
   puedeEditarTurno(
-    turno: (ITurnoDiario & { tipo_dia?: TipoDia }) | undefined
+    turno: (ITurnoDiario & { tipo_dia?: TipoDia }) | undefined,
   ): boolean {
     if (!turno) return false;
 
     const tipoDia = (turno.tipo_dia ?? 'NORMAL') as TipoDia;
-    if (tipoDia !== 'NORMAL') return false; // 👈 clave (NO editar VACACIONES / PERMISO / DEVOLUCION)
+    if (tipoDia !== 'NORMAL') return false;
 
     const hoyStr = this.formatFecha(new Date());
     const fechaTurno = (turno.fecha || '').slice(0, 10);
@@ -496,23 +492,21 @@ export class TurnosComponent implements OnInit {
   }
 
   puedeEliminarTurno(
-    turno: (ITurnoDiario & { tipo_dia?: TipoDia }) | undefined
+    turno: (ITurnoDiario & { tipo_dia?: TipoDia }) | undefined,
   ): boolean {
     return this.puedeEditarTurno(turno);
   }
 
   puedeAsignarDevolucion(
     turno: (ITurnoDiario & { tipo_dia?: TipoDia }) | undefined,
-    usuarioId: number
+    usuarioId: number,
   ): boolean {
     if (!turno) return false;
 
     const tipoDia = (turno.tipo_dia ?? 'NORMAL') as TipoDia;
     if (tipoDia !== 'NORMAL') return false;
-
     if (!this.puedeEditarTurno(turno)) return false;
 
-    const saldo = this.getSaldoMinutos(usuarioId);
     return this.getDisponibleMinutos(usuarioId) >= 480;
   }
 
@@ -533,7 +527,6 @@ export class TurnosComponent implements OnInit {
       return;
     }
 
-    // ✅ rango según modo
     const hoyStr = this.formatFecha(new Date());
     if (!this.generarDia) this.generarDia = hoyStr;
 
@@ -551,7 +544,7 @@ export class TurnosComponent implements OnInit {
       await SwalStd.warn(
         this.generarModo === 'DIA'
           ? 'El día seleccionado no aplica (fin de semana) con la opción actual.'
-          : 'El rango seleccionado no aplica.'
+          : 'El rango seleccionado no aplica.',
       );
       return;
     }
@@ -571,14 +564,12 @@ export class TurnosComponent implements OnInit {
     this.generandoTurnos = true;
     try {
       await this.turnosService.generarTurnos(payload);
-
-      // ✅ refresca la SEMANA visible (siempre)
       await this.buscarTurnos();
 
       await SwalStd.success(
         this.generarModo === 'DIA'
           ? 'Turno generado para el día seleccionado'
-          : 'Turnos generados para la semana'
+          : 'Turnos generados para la semana',
       );
     } catch (e: any) {
       await SwalStd.error(SwalStd.getErrorMessage(e), 'Error generando turnos');
@@ -588,10 +579,8 @@ export class TurnosComponent implements OnInit {
   }
 
   limpiarFormulario(): void {
-    // vuelve a semana actual
     this.setSemanaActualSync();
 
-    // defaults
     this.horaEntradaProg = '08:00';
     this.horaSalidaProg = '17:00';
     this.excluirFinesSemana = true;
@@ -599,7 +588,6 @@ export class TurnosComponent implements OnInit {
     this.filtroTextoUsuario = '';
     this.usuariosSeleccionadosIds = [];
 
-    // generación
     this.generarModo = 'SEMANA';
     this.generarDia = this.formatFecha(new Date());
 
@@ -631,7 +619,6 @@ export class TurnosComponent implements OnInit {
         hora_salida_prog: `${res.salida}:00`,
       });
 
-      // ✅ update local
       turno.hora_entrada_prog = `${res.entrada}:00`;
       turno.hora_salida_prog = `${res.salida}:00`;
 
@@ -652,7 +639,6 @@ export class TurnosComponent implements OnInit {
     await this.withSaving(turno.id, async () => {
       await this.turnosService.eliminarTurno(turno.id);
 
-      // ✅ remove local
       const uid = Number(turno.usuario_id);
       const fechaKey = (turno.fecha || '').slice(0, 10);
       this.turnosPorUsuario.get(uid)?.delete(fechaKey);
@@ -667,7 +653,7 @@ export class TurnosComponent implements OnInit {
   // ==========================
   async onAsignarDevolucion(
     turno: ITurnoDiario & { tipo_dia?: TipoDia },
-    usuarioId: number
+    usuarioId: number,
   ): Promise<void> {
     if (!this.puedeAsignarDevolucion(turno, usuarioId)) return;
 
@@ -693,7 +679,7 @@ export class TurnosComponent implements OnInit {
   // ==========================
   getSaldoMinutos(usuarioId: number): number {
     return Number(
-      this.usuarios.find((u) => u.id === usuarioId)?.saldo_minutos ?? 0
+      this.usuarios.find((u) => u.id === usuarioId)?.saldo_minutos ?? 0,
     );
   }
 
@@ -713,7 +699,7 @@ export class TurnosComponent implements OnInit {
 
     return `${sign}${String(hh).padStart(2, '0')}:${String(mm).padStart(
       2,
-      '0'
+      '0',
     )}`;
   }
 
@@ -751,6 +737,9 @@ export class TurnosComponent implements OnInit {
     return Math.max(0, -saldo);
   }
 
+  // ==========================
+  //   VACACIONES
+  // ==========================
   async onSelectVacUsuario(usuarioId: number | null): Promise<void> {
     this.vacUsuarioId = usuarioId;
     this.vacResumen = undefined;
@@ -761,9 +750,8 @@ export class TurnosComponent implements OnInit {
 
     this.cargandoVac = true;
     try {
-      this.vacResumen = await this.vacacionesService.getResumenUsuario(
-        usuarioId
-      );
+      this.vacResumen =
+        await this.vacacionesService.getResumenUsuario(usuarioId);
       this.vacHistorial = await this.vacacionesService.listarAsignaciones({
         usuario_id: usuarioId,
         estado: 'TODAS',
@@ -773,7 +761,7 @@ export class TurnosComponent implements OnInit {
     } catch (e: any) {
       await SwalStd.error(
         SwalStd.getErrorMessage(e),
-        'Error cargando vacaciones'
+        'Error cargando vacaciones',
       );
     } finally {
       this.cargandoVac = false;
@@ -782,15 +770,18 @@ export class TurnosComponent implements OnInit {
 
   private validarRangoVac(): string | null {
     if (!this.vacUsuarioId) return 'Seleccione un trabajador.';
-    if (!this.vacFechaDesde || !this.vacFechaHasta)
+    if (!this.vacFechaDesde || !this.vacFechaHasta) {
       return 'Seleccione fecha desde y hasta.';
-    if (this.vacFechaDesde > this.vacFechaHasta)
+    }
+    if (this.vacFechaDesde > this.vacFechaHasta) {
       return 'Rango inválido: desde > hasta.';
+    }
 
     const corte = this.vacConfig?.fecha_corte;
     if (corte && this.vacFechaDesde < corte) {
       return `No permitido antes de la fecha de corte (${corte}).`;
     }
+
     return null;
   }
 
@@ -812,7 +803,7 @@ export class TurnosComponent implements OnInit {
       this.vacPreview = undefined;
       await SwalStd.error(
         SwalStd.getErrorMessage(e),
-        'No se pudo previsualizar'
+        'No se pudo previsualizar',
       );
     } finally {
       this.cargandoVac = false;
@@ -842,15 +833,11 @@ export class TurnosComponent implements OnInit {
         observacion: this.vacObservacion?.trim() || null,
       });
 
-      // refresca semana visible para ver "VACACIONES" en la matriz
       await this.buscarTurnos();
-
-      // refresca resumen + historial
       await this.onSelectVacUsuario(this.vacUsuarioId);
 
       await SwalStd.success('✅ Vacaciones asignadas (acta generada)');
 
-      // si viene file_id, ofrecemos abrirlo
       const fileId = resp?.acta?.file_id;
       if (fileId) {
         const abrir = await SwalStd.confirm({
@@ -864,7 +851,7 @@ export class TurnosComponent implements OnInit {
     } catch (e: any) {
       await SwalStd.error(
         SwalStd.getErrorMessage(e),
-        'Error creando vacaciones'
+        'Error creando vacaciones',
       );
     } finally {
       this.creandoVac = false;
@@ -896,39 +883,36 @@ export class TurnosComponent implements OnInit {
 
   async onDescargarActaVacacion(asig: VacAsignacion): Promise<void> {
     try {
-      // si ya viene file_id del listado, lo usamos
       const fileId =
         asig.acta_file_id ||
         (await this.vacacionesService.getActa(asig.id)).file_id;
+
       if (!fileId) {
         await SwalStd.warn('Acta no encontrada.');
         return;
       }
+
       this.abrirDescargaFile(fileId);
     } catch (e: any) {
       await SwalStd.error(
         SwalStd.getErrorMessage(e),
-        'No se pudo obtener el acta'
+        'No se pudo obtener el acta',
       );
     }
   }
 
-  // ✅ descarga simple en nueva pestaña (envía cookie SameSite=Lax en navegación top-level)
   private abrirDescargaFile(fileId: number) {
     window.open(`${environment.API_URL}/files/${fileId}/download`, '_blank');
   }
 
-  // ✅ true si la asignación ya terminó (fecha_hasta < hoy)
   puedeAnularVacacion(asig: VacAsignacion): boolean {
     if (!asig) return false;
 
     const hoy = this.formatFecha(new Date());
     const hasta = (asig.fecha_hasta || '').toString().slice(0, 10);
 
-    // si no hay fecha válida, por seguridad no anules
     if (!hasta || hasta.length !== 10) return false;
 
-    // Solo se puede anular si está ACTIVA y el rango NO terminó aún
     return asig.estado === 'ACTIVA' && hasta >= hoy;
   }
 }
