@@ -24,17 +24,6 @@
         </button>
       </li>
 
-      <li class="nav-item">
-        <button
-          class="nav-link"
-          [class.active]="tab === 'SPLITTER'"
-          type="button"
-          (click)="setTab('SPLITTER')"
-        >
-          Splitters
-        </button>
-      </li>
-
       <!-- empuja el cierre al final -->
       <li class="nav-item ms-auto">
         <button
@@ -71,8 +60,8 @@
     <!-- ===================== TAB PON ===================== -->
     @if (tab === "PON") {
       <form [formGroup]="formPon" (ngSubmit)="submitPon()">
-        <!-- ======= FILA 1: Ciudad + OLT + Slot/PON + R + Estado + SEG (derecha) + Guardar ======= -->
-        <div class="row g-1 align-items-end flex-nowrap">
+        <!-- ======= FILA 1 ======= -->
+        <div class="row g-1 align-items-end flex-nowrap row-nowrap">
           <!-- OLT -->
           <div class="col-auto">
             <div class="input-group input-group-sm w-auto">
@@ -120,23 +109,6 @@
             </div>
           </div>
 
-          <!-- Split opcional -->
-          <div class="col-auto">
-            <div class="input-group input-group-sm w-auto">
-              <span class="input-group-text">Split</span>
-              <select
-                class="form-select form-select-sm"
-                formControlName="espliteo"
-                style="width: 92px"
-                title="Opcional. Si no aplica, déjalo en —"
-              >
-                <option value="">—</option>
-                <option value="S2/1">S2/1</option>
-                <option value="S2/2">S2/2</option>
-              </select>
-            </div>
-          </div>
-
           <!-- Root split -->
           <div class="col-auto">
             <div class="input-group input-group-sm w-auto">
@@ -149,6 +121,23 @@
                 @for (s of splits; track s) {
                   <option [ngValue]="s">{{ s }}</option>
                 }
+              </select>
+            </div>
+          </div>
+
+          <!-- Ramas -->
+          <div class="col-auto">
+            <div class="input-group input-group-sm w-auto">
+              <span class="input-group-text">Ramas</span>
+              <select
+                class="form-select form-select-sm"
+                formControlName="split_mode"
+                style="width: 110px"
+                title="Opcional: crea rama S2"
+              >
+                <option value="">—</option>
+                <option value="S2/1">S2/1</option>
+                <option value="S2/2">S2/2</option>
               </select>
             </div>
           </div>
@@ -168,7 +157,7 @@
             </div>
           </div>
 
-          <!-- Preview del nombre (misma fila, con ellipsis) -->
+          <!-- Preview nombre -->
           <div class="col ms-auto d-flex justify-content-end">
             <div class="pon-name-preview" title="{{ ponNombrePreview }}">
               {{ ponNombrePreview }}
@@ -176,7 +165,7 @@
           </div>
         </div>
 
-        <!-- ======= FILA 2: fibra/hilo + coords ======= -->
+        <!-- ======= FILA 2 ======= -->
         <div class="row g-1 align-items-end mt-1">
           <div class="col-auto">
             <div class="input-group input-group-sm w-auto">
@@ -201,9 +190,9 @@
                 id="chkUnknownPon"
                 formControlName="hilo_desconocido"
               />
-              <label class="form-check-label small" for="chkUnknownPon">
-                DESCONOCIDO
-              </label>
+              <label class="form-check-label small" for="chkUnknownPon"
+                >DESCONOCIDO</label
+              >
             </div>
 
             @if (isFibraSimplePon()) {
@@ -274,7 +263,7 @@
               </button>
             </div>
           </div>
-          <!-- Guardar -->
+
           <div class="col-auto">
             <button
               class="btn btn-danger btn-sm px-3"
@@ -287,9 +276,11 @@
         </div>
       </form>
     }
+
     <!-- ===================== TAB NAP ===================== -->
     @if (tab === "NAP") {
       <form [formGroup]="formNap" (ngSubmit)="submitNap()">
+        <!-- ======= FILA 1: PON + Puerto + R + Estado + Guardar ======= -->
         <div class="row g-1 align-items-end">
           <div class="col-auto">
             <div class="input-group input-group-sm w-auto">
@@ -315,6 +306,7 @@
                 formControlName="caja_pon_ruta"
                 style="width: 140px"
               >
+                <option value="">—</option>
                 @for (r of rutasDisponibles; track r) {
                   <option [value]="r">{{ r }}</option>
                 }
@@ -350,45 +342,69 @@
               </select>
             </div>
           </div>
+        </div>
 
-          <div class="col-auto ms-auto">
-            <button
-              class="btn btn-danger btn-sm px-3"
-              type="submit"
-              [disabled]="isSaving || formNap.invalid"
-            >
-              {{ isSaving ? "Guardando…" : "Guardar NAP" }}
-            </button>
+        <!-- ======= FILA 2: Expandir (opcional) + Nombre preview ======= -->
+        <div class="row g-1 align-items-end mt-1">
+          <!-- Expandir -->
+          <div class="col-auto">
+            <div class="input-group input-group-sm w-auto">
+              <span class="input-group-text">Esplitear al Puerto</span>
+
+              <select
+                class="form-select form-select-sm"
+                formControlName="expand_path"
+                style="width: 140px"
+                title="Elige una hoja disponible para expandir"
+              >
+                <option value="">— hoja —</option>
+                @for (r of rutasDisponibles; track r) {
+                  <option [value]="r">{{ r }}</option>
+                }
+              </select>
+
+              <select
+                class="form-select form-select-sm"
+                formControlName="expand_factor"
+                style="width: 80px"
+                title="Factor"
+              >
+                <option [ngValue]="2">R2</option>
+                <option [ngValue]="8">R8</option>
+                <option [ngValue]="16">R16</option>
+              </select>
+
+              <button
+                class="btn btn-outline-secondary btn-sm"
+                type="button"
+                (click)="expandNapRuta()"
+                [disabled]="
+                  !formNap.get('caja_pon_id')!.value ||
+                  !formNap.get('expand_path')!.value ||
+                  isSaving
+                "
+              >
+                Expandir
+              </button>
+            </div>
+          </div>
+
+          <!-- Nombre (preview) -->
+          <div class="col ms-auto">
+            <div class="input-group input-group-sm w-100 justify-content-end">
+              <span class="input-group-text">Nombre</span>
+              <input
+                class="form-control form-control-sm text-end nap-name-preview"
+                [value]="napNombrePreview"
+                readonly
+                title="{{ napNombrePreview }}"
+              />
+            </div>
           </div>
         </div>
 
+        <!-- ======= FILA 3: Ciudad + SEG + Fibra/Hilo + Coords ======= -->
         <div class="row g-1 align-items-end mt-1">
-          <div class="col-auto">
-            <div class="input-group input-group-sm w-auto">
-              <span class="input-group-text">Ciudad</span>
-              <input
-                class="form-control form-control-sm"
-                style="width: 140px"
-                type="text"
-                formControlName="caja_ciudad"
-                readonly
-              />
-            </div>
-          </div>
-
-          <div class="col-auto">
-            <div class="input-group input-group-sm w-auto">
-              <span class="input-group-text">SEG</span>
-              <input
-                class="form-control form-control-sm"
-                style="width: 190px"
-                type="text"
-                formControlName="caja_segmento"
-                readonly
-              />
-            </div>
-          </div>
-
           <div class="col-auto">
             <div class="input-group input-group-sm w-auto">
               <span class="input-group-text">Fibra</span>
@@ -412,9 +428,9 @@
                 id="chkUnknownNap"
                 formControlName="hilo_desconocido"
               />
-              <label class="form-check-label small" for="chkUnknownNap"
-                >DESCONOCIDO</label
-              >
+              <label class="form-check-label small" for="chkUnknownNap">
+                DESCONOCIDO
+              </label>
             </div>
 
             @if (isFibraSimpleNap()) {
@@ -483,76 +499,19 @@
               >
                 Seleccionar
               </button>
+
+              <!-- Guardar -->
+              <div class="col-auto ms-auto">
+                <button
+                  class="btn btn-danger btn-sm px-3"
+                  type="submit"
+                  [disabled]="isSaving || formNap.invalid"
+                >
+                  {{ isSaving ? "Guardando…" : "Guardar NAP" }}
+                </button>
+              </div>
             </div>
           </div>
-        </div>
-      </form>
-    }
-
-    <!-- ===================== TAB SPLITTER ===================== -->
-    @if (tab === "SPLITTER") {
-      <form [formGroup]="formSplitter" (ngSubmit)="submitSplitter()">
-        <div class="row g-1 align-items-end">
-          <div class="col-auto">
-            <div class="input-group input-group-sm w-auto">
-              <span class="input-group-text">PON</span>
-              <select
-                class="form-select form-select-sm"
-                formControlName="caja_id"
-                style="width: 320px"
-              >
-                <option [ngValue]="null">— Selecciona —</option>
-                @for (p of pones; track p.id) {
-                  <option [ngValue]="p.id">{{ p.caja_nombre }}</option>
-                }
-              </select>
-            </div>
-          </div>
-
-          <div class="col-auto">
-            <div class="input-group input-group-sm w-auto">
-              <span class="input-group-text">Path</span>
-              <select
-                class="form-select form-select-sm"
-                formControlName="path"
-                style="width: 140px"
-              >
-                @for (r of rutasDisponibles; track r) {
-                  <option [value]="r">{{ r }}</option>
-                }
-              </select>
-            </div>
-          </div>
-
-          <div class="col-auto">
-            <div class="input-group input-group-sm w-auto">
-              <span class="input-group-text">Factor</span>
-              <select
-                class="form-select form-select-sm"
-                formControlName="factor"
-                style="width: 110px"
-              >
-                @for (s of splits; track s) {
-                  <option [ngValue]="s">R{{ s }}</option>
-                }
-              </select>
-            </div>
-          </div>
-
-          <div class="col-auto ms-auto">
-            <button
-              class="btn btn-danger btn-sm px-3"
-              type="submit"
-              [disabled]="isSaving || formSplitter.invalid"
-            >
-              {{ isSaving ? "Guardando…" : "Agregar Splitter" }}
-            </button>
-          </div>
-        </div>
-
-        <div class="form-text small mt-1">
-          Expande una hoja disponible (ej: 7) con R2/R8/R16. No permite expandir
-          rutas ocupadas por NAP.
         </div>
       </form>
     }

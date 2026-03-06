@@ -132,3 +132,55 @@
 .input-group-text {
   padding: 0.125rem 0.35rem;
 }
+
+:host {
+  display: block;
+  width: 100%;
+}
+
+/* Controles y espacios mínimos */
+.card-body {
+  padding-top: 0.25rem !important;
+  padding-bottom: 0.25rem !important;
+}
+
+.input-group-text {
+  padding: 0.125rem 0.4rem;
+}
+
+.form-select-sm,
+.form-control-sm {
+  padding-top: 0.125rem;
+  padding-bottom: 0.125rem;
+  height: 28px;
+}
+
+/* Botón seleccionar */
+.pick-btn,
+.pick-btn * {
+  cursor: pointer !important;
+}
+
+.alert {
+  border-radius: 10px;
+}
+
+/* Preview PON */
+.pon-name-preview {
+  max-width: 520px;
+  padding: 4px 10px;
+  border: 1px dashed rgba(0, 0, 0, 0.25);
+  border-radius: 10px;
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  background: rgba(0, 0, 0, 0.02);
+}
+
+/* Para filas nowrap: si no cabe, scroll horizontal */
+.row-nowrap {
+  overflow-x: auto;
+  scrollbar-width: thin;
+}

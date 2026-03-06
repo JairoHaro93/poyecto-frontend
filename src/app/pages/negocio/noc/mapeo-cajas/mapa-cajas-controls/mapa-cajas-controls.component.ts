@@ -7,7 +7,6 @@ import {
   SimpleChanges,
   OnInit,
   inject,
-  computed,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import {
@@ -22,10 +21,8 @@ import {
   IOlt,
 } from '../../../../../services/negocio_latacunga/cajas.services';
 import { ICajas } from '../../../../../interfaces/negocio/infraestructura/icajas.interface';
-import { UsuariosService } from '../../../../../services/sistema/usuarios.service';
-import { firstValueFrom } from 'rxjs';
 
-type TabKey = 'PON' | 'NAP' | 'SPLITTER';
+type TabKey = 'PON' | 'NAP';
 
 function coordsValidator(ctrl: AbstractControl): ValidationErrors | null {
   const v = (ctrl.value ?? '').toString().trim();
@@ -64,21 +61,28 @@ export class MapaCajasControlsComponent implements OnInit, OnChanges {
 
   private fb = inject(FormBuilder);
   private cajasService = inject(CajasService);
-  private usuarioService = inject(UsuariosService);
+
   tab: TabKey = 'PON';
 
   isSaving = false;
   serverMsg = '';
-  oltCiudad = '';
-  // combos
-  ciudades: string[] = [];
-  splits: Array<2 | 8 | 16> = [2, 8, 16];
+
+  // OLTs
   olts: IOlt[] = [];
-  // fibra/hilo (como tu versión)
+  oltCiudad = '';
+
+  // combos
+  splits: Array<2 | 8 | 16> = [2, 8, 16];
+
+  // fibra/hilo
   simpleHilos = [1, 2];
   buffers = [1, 2, 3, 4];
   hilos = [1, 2, 3, 4, 5, 6];
+
+  // previews
   ponNombrePreview = '—';
+  napNombrePreview = '—';
+
   // data PONs / rutas
   pones: ICajas[] = [];
   rutasDisponibles: string[] = [];
@@ -87,11 +91,11 @@ export class MapaCajasControlsComponent implements OnInit, OnChanges {
 
   // ===== forms =====
   formPon = this.fb.group({
-    caja_ciudad: ['LATACUNGA', Validators.required],
     caja_segmento: ['', [Validators.required, Validators.maxLength(80)]],
+
     caja_root_split: [8 as 2 | 8 | 16, Validators.required],
     caja_estado: ['ACTIVO', Validators.required],
-    // ✅ OLT (solo en PON)
+
     olt_id: [null as number | null, Validators.required],
     olt_slot: [
       1 as number | null,
@@ -102,22 +106,23 @@ export class MapaCajasControlsComponent implements OnInit, OnChanges {
       [Validators.required, Validators.min(0), Validators.max(31)],
     ],
 
+    split_mode: ['' as '' | 'S2/1' | 'S2/2'],
+
     fibra_tipo: ['DROP', Validators.required],
     hilo_desconocido: [false],
     simple_hilo: [null as number | null],
     buffer: [null as number | null],
     hilo_num: [null as number | null],
     caja_hilo: [{ value: '', disabled: true }],
-    // ✅ Espliteo opcional: '' | 'S2/1' | 'S2/2'
-    espliteo: ['' as '' | 'S2/1' | 'S2/2'],
-    caja_coordenadas: ['', coordsValidator],
+
+    caja_coordenadas: ['', [Validators.required, coordsValidator]],
   });
 
   formNap = this.fb.group({
     caja_pon_id: [null as number | null, Validators.required],
     caja_pon_ruta: ['', rutaValidator],
 
-    caja_ciudad: [{ value: 'LATACUNGA', disabled: true }, Validators.required],
+    caja_ciudad: [{ value: '', disabled: true }, Validators.required],
     caja_segmento: [{ value: '', disabled: true }, Validators.required],
 
     caja_root_split: [16 as 2 | 8 | 16, Validators.required],
@@ -130,13 +135,11 @@ export class MapaCajasControlsComponent implements OnInit, OnChanges {
     hilo_num: [null as number | null],
     caja_hilo: [{ value: '', disabled: true }],
 
-    caja_coordenadas: ['', coordsValidator],
-  });
+    caja_coordenadas: ['', [Validators.required, coordsValidator]],
 
-  formSplitter = this.fb.group({
-    caja_id: [null as number | null, Validators.required], // por ahora solo PON
-    path: ['', rutaValidator],
-    factor: [2 as 2 | 8 | 16, Validators.required],
+    // Expandir (opcional) — usa splitter del PON
+    expand_path: [''],
+    expand_factor: [2 as 2 | 8 | 16, Validators.required],
   });
 
   get fPon() {
@@ -145,66 +148,46 @@ export class MapaCajasControlsComponent implements OnInit, OnChanges {
   get fNap() {
     return this.formNap.controls;
   }
-  get fSpl() {
-    return this.formSplitter.controls;
-  }
 
   async ngOnInit(): Promise<void> {
     this.wireFiberRules(this.formPon);
     this.wireFiberRules(this.formNap);
 
-    // 1) cargar ciudades permitidas (según sucursal del usuario logueado)
-    try {
-      const res = await firstValueFrom(
-        this.usuarioService.getMisCiudadesCobertura(),
-      );
-      this.ciudades = (res?.data ?? [])
-        .map((c) => (c || '').toString().toUpperCase().trim())
-        .filter(Boolean);
+    // NAP preview listeners
+    this.formNap.get('caja_pon_ruta')!.valueChanges.subscribe(() => {
+      this.updateNapNombrePreview();
+    });
+    this.formNap.get('caja_root_split')!.valueChanges.subscribe(() => {
+      this.updateNapNombrePreview();
+    });
 
-      // default en PON
-      this.formPon
-        .get('caja_ciudad')
-        ?.setValue(this.ciudades[0] ?? '', { emitEvent: false });
-    } catch (e) {
-      console.error(e);
-      this.ciudades = [];
-      this.formPon.get('caja_ciudad')?.setValue('', { emitEvent: false });
-      this.serverMsg = '⚠️ No se pudieron cargar las ciudades de cobertura.';
-    }
-
-    // ✅ cargar OLTs de mi sucursal
+    // 1) OLTs + listeners PON
     try {
       const oltsRes = await this.cajasService.getOlts();
       this.olts = (oltsRes.data ?? []).filter((o) => o.estado === 'ACTIVA');
 
-      this.syncOltCiudad();
-      this.formPon.get('olt_id')!.valueChanges.subscribe(() => {
-        this.syncOltCiudad();
-        this.syncSegmentFromOlt(); // para recalcular SEG con frame_default de la OLT
-        this.updatePonNombrePreview(); // para recalcular el nombre
-      });
-
-      ['olt_id', 'olt_slot', 'olt_pon', 'espliteo'].forEach((k) => {
-        this.formPon
-          .get(k)!
-          .valueChanges.subscribe(() => this.syncSegmentFromOlt());
-      });
-      this.formPon
-        .get('caja_ciudad')!
-        .valueChanges.subscribe(() => this.updatePonNombrePreview());
-      this.formPon
-        .get('caja_root_split')!
-        .valueChanges.subscribe(() => this.updatePonNombrePreview());
-
-      // inicial
-      this.updatePonNombrePreview();
-      // inicial
-      this.syncSegmentFromOlt();
-      // set default OLT
       this.formPon
         .get('olt_id')
         ?.setValue(this.olts[0]?.id ?? null, { emitEvent: false });
+
+      this.syncOltCiudad();
+      this.syncSegmentFromOlt();
+      this.updatePonNombrePreview();
+
+      ['olt_id', 'olt_slot', 'olt_pon'].forEach((k) => {
+        this.formPon.get(k)!.valueChanges.subscribe(() => {
+          this.syncOltCiudad();
+          this.syncSegmentFromOlt();
+        });
+      });
+
+      this.formPon.get('split_mode')!.valueChanges.subscribe(() => {
+        this.updatePonNombrePreview();
+      });
+
+      this.formPon.get('caja_root_split')!.valueChanges.subscribe(() => {
+        this.updatePonNombrePreview();
+      });
     } catch (e) {
       console.error(e);
       this.olts = [];
@@ -212,16 +195,19 @@ export class MapaCajasControlsComponent implements OnInit, OnChanges {
       this.serverMsg = '⚠️ No se pudieron cargar las OLTs.';
     }
 
-    // 2) cargar PONs
+    // 2) PONs
     await this.loadPones();
 
-    // 3) tus subscriptions (igual que ya las tienes)
+    // 3) NAP hereda de PON seleccionado
     this.formNap.get('caja_pon_id')!.valueChanges.subscribe((ponId) => {
       if (!ponId) {
         this.rutasDisponibles = [];
         this.ponInfo = null;
+        this.formNap.patchValue({ caja_pon_ruta: '' }, { emitEvent: false });
+        this.updateNapNombrePreview();
         return;
       }
+
       const pon = this.pones.find((p) => p.id === Number(ponId));
       const ciudad = (pon?.caja_ciudad || '').toString();
       const seg = (pon?.caja_segmento || '').toString();
@@ -235,16 +221,7 @@ export class MapaCajasControlsComponent implements OnInit, OnChanges {
 
       this.refreshRutasDisponibles(Number(ponId));
       this.refreshDisponibilidad(Number(ponId));
-    });
-
-    this.formSplitter.get('caja_id')!.valueChanges.subscribe((id) => {
-      if (!id) {
-        this.ponInfo = null;
-        this.rutasDisponibles = [];
-        return;
-      }
-      this.refreshRutasDisponibles(Number(id));
-      this.refreshDisponibilidad(Number(id));
+      this.updateNapNombrePreview();
     });
   }
 
@@ -253,11 +230,12 @@ export class MapaCajasControlsComponent implements OnInit, OnChanges {
       const c = (this.coords ?? '').toString();
       if (!c) return;
 
-      // solo aplica al tab actual
-      if (this.tab === 'PON')
+      if (this.tab === 'PON') {
         this.formPon.patchValue({ caja_coordenadas: c }, { emitEvent: false });
-      if (this.tab === 'NAP')
+      }
+      if (this.tab === 'NAP') {
         this.formNap.patchValue({ caja_coordenadas: c }, { emitEvent: false });
+      }
     }
   }
 
@@ -266,7 +244,6 @@ export class MapaCajasControlsComponent implements OnInit, OnChanges {
     this.tab = t;
   }
 
-  // ====== carga de PONs ======
   async loadPones() {
     try {
       this.pones = await this.cajasService.getCajas({
@@ -284,32 +261,22 @@ export class MapaCajasControlsComponent implements OnInit, OnChanges {
       const res = await this.cajasService.getRutasDisponibles(ponId);
       this.rutasDisponibles = res.data?.disponibles ?? [];
 
-      // si la ruta actual no es válida, setea una por defecto
       const current = (this.formNap.get('caja_pon_ruta')!.value || '')
         .toString()
         .trim();
-      if (this.tab === 'NAP') {
-        if (!current || !this.rutasDisponibles.includes(current)) {
-          this.formNap.patchValue(
-            { caja_pon_ruta: this.rutasDisponibles[0] ?? '' },
-            { emitEvent: false },
-          );
-        }
+      if (!current || !this.rutasDisponibles.includes(current)) {
+        this.formNap.patchValue(
+          { caja_pon_ruta: this.rutasDisponibles[0] ?? '' },
+          { emitEvent: false },
+        );
       }
-      if (this.tab === 'SPLITTER') {
-        const p = (this.formSplitter.get('path')!.value || '')
-          .toString()
-          .trim();
-        if (!p || !this.rutasDisponibles.includes(p)) {
-          this.formSplitter.patchValue(
-            { path: this.rutasDisponibles[0] ?? '' },
-            { emitEvent: false },
-          );
-        }
-      }
+
+      // ✅ importante (porque patchValue va con emitEvent:false)
+      this.updateNapNombrePreview();
     } catch (e) {
       console.error(e);
       this.rutasDisponibles = [];
+      this.updateNapNombrePreview();
     }
   }
 
@@ -327,16 +294,57 @@ export class MapaCajasControlsComponent implements OnInit, OnChanges {
     }
   }
 
-  // ====== fibra/hilo compartido ======
+  // ====== Expandir (NAP) ======
+  async expandNapRuta() {
+    this.serverMsg = '';
+
+    const ponId = Number(this.formNap.get('caja_pon_id')!.value);
+    const path = (this.formNap.get('expand_path')!.value || '')
+      .toString()
+      .trim();
+    const factor = this.formNap.get('expand_factor')!.value as 2 | 8 | 16;
+
+    if (!ponId) return void (this.serverMsg = '⚠️ Selecciona un PON primero.');
+    if (!path)
+      return void (this.serverMsg = '⚠️ Selecciona la hoja a expandir.');
+
+    this.isSaving = true;
+    try {
+      await this.cajasService.addSplitter(ponId, { path, factor });
+
+      await this.refreshRutasDisponibles(ponId);
+      await this.refreshDisponibilidad(ponId);
+
+      const desired = `${path}/1`;
+      const nextRuta = this.rutasDisponibles.includes(desired)
+        ? desired
+        : (this.rutasDisponibles[0] ?? '');
+
+      this.formNap.patchValue(
+        { caja_pon_ruta: nextRuta, expand_path: '' },
+        { emitEvent: false },
+      );
+
+      // ✅ como emitEvent:false, actualiza preview manual
+      this.updateNapNombrePreview();
+
+      this.serverMsg = `✅ Expandido ${path} con R${factor}`;
+    } catch (e: any) {
+      console.error(e);
+      this.serverMsg = `❌ Error expandiendo: ${e?.error?.message || 'revisa el backend'}`;
+    } finally {
+      this.isSaving = false;
+    }
+  }
+
+  // ====== fibra/hilo ======
   private isFibraSimple(form: any): boolean {
     const t = (form.get('fibra_tipo')!.value || '').toString();
     return t === 'DROP' || t === 'FLAT';
   }
-
   private hiloDesconocido(form: any): boolean {
     return form.get('hilo_desconocido')!.value === true;
   }
-
   private wireFiberRules(form: any) {
     const syncRules = () => this.syncHiloRules(form);
     const syncPreview = () => this.syncHiloPreview(form);
@@ -352,7 +360,6 @@ export class MapaCajasControlsComponent implements OnInit, OnChanges {
       'hilo_num',
     ].forEach((k) => form.get(k)!.valueChanges.subscribe(syncPreview));
 
-    // init
     this.syncHiloRules(form);
     this.syncHiloPreview(form);
   }
@@ -409,6 +416,95 @@ export class MapaCajasControlsComponent implements OnInit, OnChanges {
     form.get('caja_hilo')!.setValue(preview, { emitEvent: false });
   }
 
+  isFibraSimplePon() {
+    return this.isFibraSimple(this.formPon);
+  }
+  isFibraSimpleNap() {
+    return this.isFibraSimple(this.formNap);
+  }
+  hiloDesconocidoPon() {
+    return this.hiloDesconocido(this.formPon);
+  }
+  hiloDesconocidoNap() {
+    return this.hiloDesconocido(this.formNap);
+  }
+
+  // ====== PON: SEG + preview ======
+  private syncOltCiudad() {
+    const oid = this.formPon.get('olt_id')!.value;
+    const olt = this.olts.find((o) => o.id === Number(oid));
+    this.oltCiudad = (olt?.olt_ciudad || '').toString().toUpperCase().trim();
+  }
+
+  private syncSegmentFromOlt() {
+    const oid = this.formPon.get('olt_id')!.value;
+    const slot = this.formPon.get('olt_slot')!.value;
+    const pon = this.formPon.get('olt_pon')!.value;
+
+    if (!oid || slot == null || pon == null) {
+      this.formPon.get('caja_segmento')!.setValue('', { emitEvent: false });
+      this.updatePonNombrePreview();
+      return;
+    }
+
+    const olt = this.olts.find((o) => o.id === Number(oid));
+    const frame = Number(olt?.olt_frame_default ?? 0);
+
+    const base = `${frame}/${Number(slot)}/${Number(pon)}`;
+    this.formPon.get('caja_segmento')!.setValue(base, { emitEvent: false });
+
+    this.updatePonNombrePreview();
+  }
+
+  private cityAbbr(ciudad: string) {
+    const c = (ciudad || '').toUpperCase().trim();
+    if (c === 'LATACUNGA') return 'LAT';
+    if (c === 'SALCEDO') return 'SAL';
+    return c ? c.slice(0, 3) : 'XXX';
+  }
+
+  private updatePonNombrePreview(): void {
+    const baseSeg = (this.formPon.get('caja_segmento')!.value || '')
+      .toString()
+      .trim();
+    const r = this.formPon.get('caja_root_split')!.value;
+    const mode = (this.formPon.get('split_mode')!.value || '')
+      .toString()
+      .trim();
+    const abbr = this.cityAbbr(this.oltCiudad);
+
+    if (!baseSeg || !r) {
+      this.ponNombrePreview = '—';
+      return;
+    }
+
+    const seg =
+      mode === 'S2/1' || mode === 'S2/2' ? `${baseSeg}/${mode}` : baseSeg;
+
+    this.ponNombrePreview = `${abbr}-PON-${seg}-R${r}`;
+  }
+
+  private updateNapNombrePreview(): void {
+    const ciudad = (this.formNap.get('caja_ciudad')!.value || '')
+      .toString()
+      .trim();
+    const seg = (this.formNap.get('caja_segmento')!.value || '')
+      .toString()
+      .trim();
+    const ruta = (this.formNap.get('caja_pon_ruta')!.value || '')
+      .toString()
+      .trim();
+    const r = this.formNap.get('caja_root_split')!.value;
+
+    const abbr = this.cityAbbr(ciudad);
+
+    if (!seg || !ruta || !r) {
+      this.napNombrePreview = '—';
+      return;
+    }
+
+    this.napNombrePreview = `${abbr}-NAP-${seg}-P${ruta}-R${r}`;
+  }
   // ===== SUBMITS =====
   async submitPon() {
     this.serverMsg = '';
@@ -419,43 +515,53 @@ export class MapaCajasControlsComponent implements OnInit, OnChanges {
 
     this.isSaving = true;
     try {
-      const payload: Partial<ICajas> = {
-        caja_ciudad: this.formPon.get('caja_ciudad')!.value as any,
+      const payload: any = {
         caja_segmento: (this.formPon.get('caja_segmento')!.value || '')
           .toString()
           .trim(),
-        caja_root_split: this.formPon.get('caja_root_split')!.value as any,
-        caja_estado: this.formPon.get('caja_estado')!.value as any,
+        caja_root_split: this.formPon.get('caja_root_split')!.value,
+        caja_estado: this.formPon.get('caja_estado')!.value,
         caja_hilo: (this.formPon.get('caja_hilo')!.value || '').toString(),
-        caja_coordenadas:
-          (this.formPon.get('caja_coordenadas')!.value || '').toString() ||
-          null,
+        caja_coordenadas: (
+          this.formPon.get('caja_coordenadas')!.value || ''
+        ).toString(),
 
-        // ✅ OLT
-        olt_id: this.formPon.get('olt_id')!.value as any,
-        olt_slot: this.formPon.get('olt_slot')!.value as any,
-        olt_pon: this.formPon.get('olt_pon')!.value as any,
+        olt_id: this.formPon.get('olt_id')!.value,
+        olt_slot: this.formPon.get('olt_slot')!.value,
+        olt_pon: this.formPon.get('olt_pon')!.value,
+
+        split_mode: this.formPon.get('split_mode')!.value,
       };
 
-      const res = await this.cajasService.createPon(payload);
-      const created: ICajas = {
-        id: res.data.id,
-        caja_tipo: 'PON',
-        caja_nombre: res.data.caja_nombre,
-        caja_estado: payload.caja_estado as any,
-        caja_ciudad: payload.caja_ciudad,
-        caja_hilo: payload.caja_hilo,
-        caja_coordenadas: payload.caja_coordenadas,
-        caja_root_split: payload.caja_root_split as any,
-        caja_segmento: payload.caja_segmento,
-      };
+      const res: any = await this.cajasService.createPon(payload);
 
-      this.created.emit(created);
+      const createdList =
+        res?.data?.created && Array.isArray(res.data.created)
+          ? res.data.created
+          : [
+              {
+                id: res.data?.id,
+                caja_nombre: res.data?.caja_nombre,
+                caja_segmento: payload.caja_segmento,
+              },
+            ];
+
+      for (const it of createdList) {
+        this.created.emit({
+          id: it.id,
+          caja_tipo: 'PON',
+          caja_nombre: it.caja_nombre,
+          caja_estado: payload.caja_estado,
+          caja_hilo: payload.caja_hilo,
+          caja_coordenadas: payload.caja_coordenadas,
+          caja_root_split: payload.caja_root_split,
+          caja_segmento: it.caja_segmento ?? payload.caja_segmento,
+        });
+      }
+
       this.serverMsg = '✅ PON creada.';
-      await this.loadPones(); // refresca combos
-      this.formPon.patchValue({ caja_segmento: '', caja_coordenadas: '' });
-      this.syncHiloRules(this.formPon);
-      this.syncHiloPreview(this.formPon);
+      await this.loadPones();
+      this.resetPonFormAfterCreate();
     } catch (e: any) {
       console.error(e);
       this.serverMsg = `❌ Error creando PON: ${e?.error?.message || 'revisa el backend'}`;
@@ -483,35 +589,29 @@ export class MapaCajasControlsComponent implements OnInit, OnChanges {
         caja_root_split: this.formNap.get('caja_root_split')!.value as any,
         caja_estado: this.formNap.get('caja_estado')!.value as any,
         caja_hilo: (this.formNap.get('caja_hilo')!.value || '').toString(),
-        caja_coordenadas:
-          (this.formNap.get('caja_coordenadas')!.value || '').toString() ||
-          null,
+        caja_coordenadas: (
+          this.formNap.get('caja_coordenadas')!.value || ''
+        ).toString(),
       };
 
       const res = await this.cajasService.createNap(payload);
-      const created: ICajas = {
+
+      this.created.emit({
         id: res.data.id,
         caja_tipo: 'NAP',
         caja_nombre: res.data.caja_nombre,
         caja_estado: payload.caja_estado as any,
-        caja_ciudad: payload.caja_ciudad,
         caja_hilo: payload.caja_hilo,
         caja_coordenadas: payload.caja_coordenadas,
         caja_root_split: payload.caja_root_split as any,
-        caja_segmento: payload.caja_segmento,
         caja_pon_id: ponId,
         caja_pon_ruta: payload.caja_pon_ruta!,
-      };
+      });
 
-      this.created.emit(created);
       this.serverMsg = '✅ NAP creada.';
-      // refresca rutas y disponibilidad
       await this.refreshRutasDisponibles(ponId);
       await this.refreshDisponibilidad(ponId);
-      // limpia coords
-      this.formNap.patchValue({ caja_coordenadas: '' });
-      this.syncHiloRules(this.formNap);
-      this.syncHiloPreview(this.formNap);
+      this.resetNapFormAfterCreate();
     } catch (e: any) {
       console.error(e);
       this.serverMsg = `❌ Error creando NAP: ${e?.error?.message || 'revisa el backend'}`;
@@ -520,103 +620,60 @@ export class MapaCajasControlsComponent implements OnInit, OnChanges {
     }
   }
 
-  async submitSplitter() {
-    this.serverMsg = '';
-    if (this.formSplitter.invalid) {
-      this.formSplitter.markAllAsTouched();
-      return;
-    }
+  private resetPonFormAfterCreate() {
+    this.formPon.patchValue(
+      {
+        olt_pon: null,
+        split_mode: '',
+        caja_root_split: 8,
+        caja_estado: 'ACTIVO',
+        fibra_tipo: 'DROP',
+        hilo_desconocido: false,
+        simple_hilo: null,
+        buffer: null,
+        hilo_num: null,
+        caja_coordenadas: '',
+      },
+      { emitEvent: false },
+    );
 
-    this.isSaving = true;
-    try {
-      const cajaId = Number(this.formSplitter.get('caja_id')!.value);
-      const path = (this.formSplitter.get('path')!.value || '')
-        .toString()
-        .trim();
-      const factor = this.formSplitter.get('factor')!.value as any;
+    this.formPon.get('caja_hilo')!.setValue('', { emitEvent: false });
+    this.syncHiloRules(this.formPon);
+    this.syncHiloPreview(this.formPon);
+    this.syncSegmentFromOlt();
 
-      await this.cajasService.addSplitter(cajaId, { path, factor });
-      this.serverMsg = `✅ Splitter R${factor} agregado en ${path}`;
-
-      await this.refreshRutasDisponibles(cajaId);
-      await this.refreshDisponibilidad(cajaId);
-    } catch (e: any) {
-      console.error(e);
-      this.serverMsg = `❌ Error agregando splitter: ${e?.error?.message || 'revisa el backend'}`;
-    } finally {
-      this.isSaving = false;
-    }
+    this.formPon.markAsPristine();
+    this.formPon.markAsUntouched();
   }
 
-  // helpers UI
-  isFibraSimplePon() {
-    return this.isFibraSimple(this.formPon);
-  }
-  isFibraSimpleNap() {
-    return this.isFibraSimple(this.formNap);
-  }
-  hiloDesconocidoPon() {
-    return this.hiloDesconocido(this.formPon);
-  }
-  hiloDesconocidoNap() {
-    return this.hiloDesconocido(this.formNap);
-  }
+  private resetNapFormAfterCreate() {
+    this.formNap.patchValue(
+      {
+        caja_pon_id: null,
+        caja_pon_ruta: '',
+        caja_root_split: 16,
+        caja_estado: 'ACTIVO',
+        fibra_tipo: 'DROP',
+        hilo_desconocido: false,
+        simple_hilo: null,
+        buffer: null,
+        hilo_num: null,
+        caja_coordenadas: '',
+        expand_path: '',
+        expand_factor: 2,
+      },
+      { emitEvent: false },
+    );
 
-  private syncSegmentFromOlt() {
-    const oid = this.formPon.get('olt_id')!.value;
-    const slot = this.formPon.get('olt_slot')!.value;
-    const pon = this.formPon.get('olt_pon')!.value;
+    this.formNap.get('caja_hilo')!.setValue('', { emitEvent: false });
+    this.syncHiloRules(this.formNap);
+    this.syncHiloPreview(this.formNap);
 
-    if (!oid || slot == null || pon == null) {
-      this.formPon.get('caja_segmento')!.setValue('', { emitEvent: false });
-      return;
-    }
+    this.rutasDisponibles = [];
+    this.ponInfo = null;
+    this.updateNapNombrePreview();
 
-    const olt = this.olts.find((o) => o.id === Number(oid));
-    const frame = Number(olt?.olt_frame_default ?? 0);
-
-    const sp = (this.formPon.get('espliteo')!.value || '').toString().trim(); // '' | 'S2/1' | 'S2/2'
-    const base = `${frame}/${Number(slot)}/${Number(pon)}`;
-
-    this.formPon.get('caja_segmento')!.setValue(sp ? `${base}/${sp}` : base, {
-      emitEvent: false,
-    });
-
-    this.formPon.get('caja_segmento')!.setValue(sp ? `${base}/${sp}` : base, {
-      emitEvent: false,
-    });
-
-    // ✅ actualizar preview después de setear SEG
-    this.updatePonNombrePreview();
-  }
-
-  private updatePonNombrePreview() {
-    const ciudad = (this.formPon.get('caja_ciudad')!.value || '')
-      .toString()
-      .trim();
-    const seg = (this.formPon.get('caja_segmento')!.value || '')
-      .toString()
-      .trim();
-    const r = this.formPon.get('caja_root_split')!.value;
-
-    const abbr =
-      ciudad.toUpperCase() === 'LATACUNGA'
-        ? 'LAT'
-        : ciudad.toUpperCase() === 'SALCEDO'
-          ? 'SAL'
-          : ciudad.toUpperCase().slice(0, 3) || 'XXX';
-
-    if (!seg || !r) {
-      this.ponNombrePreview = '—';
-      return;
-    }
-
-    this.ponNombrePreview = `${abbr}-PON-${seg}-R${r}`;
-  }
-
-  private syncOltCiudad() {
-    const oid = this.formPon.get('olt_id')!.value;
-    const olt = this.olts.find((o) => o.id === Number(oid));
-    this.oltCiudad = (olt?.olt_ciudad || '').toString().toUpperCase().trim();
+    this.formNap.markAsPristine();
+    this.formNap.markAsUntouched();
   }
 }
