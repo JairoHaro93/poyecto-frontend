@@ -4,14 +4,11 @@ import { FormsModule } from '@angular/forms';
 
 import { AutenticacionService } from '../../../../services/sistema/autenticacion.service';
 import { UsuariosService } from '../../../../services/sistema/usuarios.service';
-import { DepartamentosService } from '../../../../services/sistema/departamentos.service';
 import {
   TurnosService,
   ITurnoDiario,
 } from '../../../../services/negocio_latacunga/turnos.service';
 import { ReporteAsistenciaService } from '../../../../services/negocio_latacunga/reporte-asistencia.service';
-
-// ✅ NUEVO: servicio separado para justificaciones
 import { JustificacionesService } from '../../../../services/negocio_latacunga/justificaciones.service';
 
 import { Iusuarios } from '../../../../interfaces/sistema/iusuarios.interface';
@@ -46,7 +43,7 @@ export class HorariosComponent implements OnInit {
   filtroSucursal: string | null = null;
   jefeActual?: Iusuarios;
 
-  departamentosSucursal: IDepartamento[] = [];
+  departamentosControlados: IDepartamento[] = [];
   departamentoSeleccionadoId: number | null = null;
 
   usuariosEquipo: UsuarioResumen[] = [];
@@ -101,7 +98,7 @@ export class HorariosComponent implements OnInit {
     const n = Number(min ?? 0);
     if (!Number.isFinite(n) || n === 0) return '';
 
-    const sign = n < 0 ? '-' : ''; // 👈 por si algún día lo usas para saldos negativos
+    const sign = n < 0 ? '-' : '';
     const abs = Math.abs(Math.trunc(n));
     const h = Math.floor(abs / 60);
     const m = abs % 60;
@@ -110,31 +107,28 @@ export class HorariosComponent implements OnInit {
   }
 
   // ==========================
-  //   JUSTIFICACIONES (APROBAR/RECHAZAR + MINUTOS)
+  //   JUSTIFICACIONES
   // ==========================
   procesandoJust: Record<JustKey, boolean> = { atraso: false, salida: false };
-
-  // 👇 Minutos a descontar (ingresados por el Jefe)
   justMinutos: Record<JustKey, number | null> = { atraso: null, salida: null };
 
   constructor(
     private authService: AutenticacionService,
     private usuariosService: UsuariosService,
-    private departamentosService: DepartamentosService,
     private turnosService: TurnosService,
     private reporteAsistenciaService: ReporteAsistenciaService,
-    private justificacionesService: JustificacionesService, // ✅ NUEVO
+    private justificacionesService: JustificacionesService,
   ) {}
 
   // ==========================
   //   GETTERS
   // ==========================
-  get esJefeSucursal(): boolean {
-    return !!this.jefeActual?.sucursal_id && !this.jefeActual?.departamento_id;
+  get debeElegirDepartamento(): boolean {
+    return this.departamentosControlados.length > 1;
   }
 
   get esJefeDepartamento(): boolean {
-    return !!this.jefeActual?.sucursal_id && !!this.jefeActual?.departamento_id;
+    return this.departamentosControlados.length > 0;
   }
 
   get usuariosFiltrados(): UsuarioResumen[] {
@@ -159,10 +153,6 @@ export class HorariosComponent implements OnInit {
           null;
       }
 
-      if (this.esJefeSucursal && this.jefeActual?.sucursal_id) {
-        await this.cargarDepartamentosSucursal(this.jefeActual.sucursal_id);
-      }
-
       const hoy = new Date();
       const hoyStr = this.formatFecha(hoy);
 
@@ -172,6 +162,7 @@ export class HorariosComponent implements OnInit {
 
       this.reporteMes = this.formatMes(new Date());
 
+      await this.cargarDepartamentosControlados();
       await this.cargarUsuariosEquipo();
       await this.buscarTurnos();
     } catch (e: any) {
@@ -207,8 +198,8 @@ export class HorariosComponent implements OnInit {
   private getMonday(date: Date): Date {
     const d = new Date(date);
     d.setHours(0, 0, 0, 0);
-    const day = d.getDay(); // 0 dom ... 6 sáb
-    const diff = day === 0 ? -6 : 1 - day; // lunes
+    const day = d.getDay();
+    const diff = day === 0 ? -6 : 1 - day;
     d.setDate(d.getDate() + diff);
     return d;
   }
@@ -230,7 +221,7 @@ export class HorariosComponent implements OnInit {
   }
 
   // ==========================
-  //   VISTA SEMANA (LUN-DOM)
+  //   VISTA SEMANA
   // ==========================
   private setVistaSemanaFromDateSync(ref: Date): void {
     const lunes = this.getMonday(ref);
@@ -315,7 +306,7 @@ export class HorariosComponent implements OnInit {
   }
 
   // ==========================
-  //   CAMBIO MODO (SEMANA/DÍA)
+  //   CAMBIO MODO
   // ==========================
   async onCambioVistaModo(): Promise<void> {
     const hoy = new Date();
@@ -335,36 +326,43 @@ export class HorariosComponent implements OnInit {
   // ==========================
   //   DEPARTAMENTOS / USUARIOS
   // ==========================
-  private async cargarDepartamentosSucursal(sucursalId: number): Promise<void> {
+  private async cargarDepartamentosControlados(): Promise<void> {
     try {
-      const todos = await this.departamentosService.getAll();
-      this.departamentosSucursal = (todos || []).filter(
-        (d) => d.sucursal_id === sucursalId,
+      const lista = await this.usuariosService.getMisDepartamentosControl();
+
+      this.departamentosControlados = (lista || []).sort((a: any, b: any) =>
+        String(a.nombre || '').localeCompare(String(b.nombre || '')),
       );
+
+      if (this.departamentosControlados.length === 1) {
+        this.departamentoSeleccionadoId = Number(
+          this.departamentosControlados[0].id,
+        );
+      } else {
+        this.departamentoSeleccionadoId = null;
+      }
     } catch (e: any) {
-      this.departamentosSucursal = [];
+      this.departamentosControlados = [];
+      this.departamentoSeleccionadoId = null;
       await SwalStd.error(
         SwalStd.getErrorMessage(e),
-        'Error cargando departamentos',
+        'Error cargando departamentos controlados',
       );
     }
   }
 
   private async cargarUsuariosEquipo(): Promise<void> {
+    if (this.debeElegirDepartamento && !this.departamentoSeleccionadoId) {
+      this.usuariosEquipo = [];
+      this.reporteUsuarioId = null;
+      return;
+    }
+
     this.cargandoUsuarios = true;
     try {
-      if (!this.jefeActual) {
-        this.usuariosEquipo = [];
-        return;
-      }
-
       let departamentoIdFiltro: number | undefined;
 
-      if (this.esJefeSucursal) {
-        if (!this.departamentoSeleccionadoId) {
-          this.usuariosEquipo = [];
-          return;
-        }
+      if (this.departamentoSeleccionadoId) {
         departamentoIdFiltro = this.departamentoSeleccionadoId;
       }
 
@@ -377,6 +375,13 @@ export class HorariosComponent implements OnInit {
           nombre_completo: `${u.nombre} ${u.apellido}`.trim(),
         }))
         .sort((a, b) => a.nombre_completo.localeCompare(b.nombre_completo));
+
+      if (
+        this.reporteUsuarioId &&
+        !this.usuariosEquipo.some((u) => u.id === this.reporteUsuarioId)
+      ) {
+        this.reporteUsuarioId = null;
+      }
     } catch (e: any) {
       this.usuariosEquipo = [];
       await SwalStd.error(
@@ -395,7 +400,7 @@ export class HorariosComponent implements OnInit {
   }
 
   // ==========================
-  //   TURNOS (consulta por rango)
+  //   TURNOS
   // ==========================
   private async buscarTurnos(): Promise<void> {
     if (!this.filtroSucursal || !this.fechaDesde || !this.fechaHasta) {
@@ -404,7 +409,7 @@ export class HorariosComponent implements OnInit {
       return;
     }
 
-    if (this.esJefeSucursal && !this.departamentoSeleccionadoId) {
+    if (this.debeElegirDepartamento && !this.departamentoSeleccionadoId) {
       this.turnos = [];
       this.turnosPorUsuario.clear();
       return;
@@ -614,7 +619,7 @@ export class HorariosComponent implements OnInit {
   }
 
   // ==========================
-  //   FORMATOS (horas)
+  //   FORMATOS
   // ==========================
   private formatHora(valor: any): string | null {
     if (valor === null || valor === undefined) return null;
@@ -657,7 +662,7 @@ export class HorariosComponent implements OnInit {
   }
 
   // ==========================
-  //   REPORTE EXCEL (MES)
+  //   REPORTE EXCEL
   // ==========================
   puedeGenerarReporte(): boolean {
     const mesOk = !!this.reporteMes && /^\d{4}-\d{2}$/.test(this.reporteMes);
@@ -733,7 +738,7 @@ export class HorariosComponent implements OnInit {
   }
 
   // ==========================
-  //   HORAS ACUMULADAS (UI)
+  //   HORAS ACUMULADAS
   // ==========================
   horaAcumuladaVisible(turno?: ITurnoDiario): boolean {
     if (!turno) return false;
@@ -752,7 +757,7 @@ export class HorariosComponent implements OnInit {
 
     if (st === 'NO' || st === '') return '';
 
-    const min = (turno as any).num_minutos_acumulados; // ✅ minutos
+    const min = (turno as any).num_minutos_acumulados;
     const hhmm = this.fmtMinToHHMM(min);
     const extra = hhmm ? ` · ${hhmm}` : '';
 
@@ -779,8 +784,7 @@ export class HorariosComponent implements OnInit {
     const st = String((turno as any).estado_hora_acumulada || 'NO')
       .toUpperCase()
       .trim();
-    const esJefe = this.esJefeSucursal || this.esJefeDepartamento;
-    return esJefe && st === 'SOLICITUD';
+    return this.esJefeDepartamento && st === 'SOLICITUD';
   }
 
   async onAprobarHoraAcumulada(): Promise<void> {
@@ -856,7 +860,7 @@ export class HorariosComponent implements OnInit {
   }
 
   // ==========================
-  //   JUSTIFICACIONES (UI + ACCIONES)
+  //   JUSTIFICACIONES
   // ==========================
   private getJustEstado(key: JustKey, turno?: ITurnoDiario): string {
     if (!turno) return 'NO';
@@ -898,30 +902,8 @@ export class HorariosComponent implements OnInit {
 
   puedeGestionarJust(key: JustKey, turno?: ITurnoDiario): boolean {
     if (!turno) return false;
-    const esJefe = this.esJefeSucursal || this.esJefeDepartamento;
     const st = this.getJustEstado(key, turno);
-    return esJefe && st === 'PENDIENTE';
-  }
-
-  private validarMinutosJustOptional(key: JustKey): {
-    ok: boolean;
-    value: number | null;
-  } {
-    const v: any = this.justMinutos[key];
-
-    // ✅ vacío => se permite aprobar sin minutos
-    if (v === null || v === undefined || v === '')
-      return { ok: true, value: null };
-
-    const n = Number(v);
-    if (!Number.isFinite(n) || n < 0) return { ok: false, value: null };
-
-    const m = Math.floor(n);
-
-    // opcional: si ponen 0, lo tratamos como "sin descuento"
-    if (m <= 0) return { ok: true, value: null };
-
-    return { ok: true, value: m };
+    return this.esJefeDepartamento && st === 'PENDIENTE';
   }
 
   async onAprobarJust(key: JustKey): Promise<void> {
@@ -932,11 +914,7 @@ export class HorariosComponent implements OnInit {
       return;
     }
 
-    // ✅ Minutos opcionales:
-    // - vacío/null/"" => APRUEBA sin minutos (no descuento)
-    // - número >= 0   => si es 0 lo tratamos como "sin descuento"
     const raw: any = this.justMinutos[key];
-
     let minutos: number | null = null;
 
     if (raw !== null && raw !== undefined && raw !== '') {
@@ -946,7 +924,7 @@ export class HorariosComponent implements OnInit {
         return;
       }
       const m = Math.floor(n);
-      minutos = m <= 0 ? null : m; // 0 => sin descuento
+      minutos = m <= 0 ? null : m;
     }
 
     const titulo =
@@ -967,12 +945,11 @@ export class HorariosComponent implements OnInit {
     this.procesandoJust[key] = true;
 
     try {
-      // ✅ Ahora va por servicio separado
       await this.justificacionesService.resolverJustificacion(
         this.detalleTurno.id,
         key,
         'APROBADA',
-        minutos, // 👈 null permitido
+        minutos,
       );
 
       await this.buscarTurnos();
@@ -983,7 +960,6 @@ export class HorariosComponent implements OnInit {
           this.detalleFecha!,
         ) || this.detalleTurno;
 
-      // refresca minutos desde el nuevo turno
       this.syncMinutosDesdeTurno(this.detalleTurno);
 
       await SwalStd.success('Justificación aprobada');

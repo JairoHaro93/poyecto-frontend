@@ -11,24 +11,27 @@
       </div>
 
       <div>
-        Departamento: @if (!esJefeSucursal) {
-        <strong>
-          {{ jefeActual?.departamento_nombre || "Sin departamento asignado" }}
-          @if (jefeActual?.departamento_codigo) { ({{
-            jefeActual?.departamento_codigo
-          }}) }
-        </strong>
+        Departamento:
+        @if (debeElegirDepartamento) {
+          <select
+            class="form-select form-select-sm d-inline-block w-auto ms-1"
+            [(ngModel)]="departamentoSeleccionadoId"
+            (ngModelChange)="onCambioDepartamento()"
+          >
+            <option [ngValue]="null">-- Seleccione departamento --</option>
+            @for (d of departamentosControlados; track d.id) {
+              <option [ngValue]="d.id">{{ d.nombre }} ({{ d.codigo }})</option>
+            }
+          </select>
+        } @else if (departamentosControlados.length === 1) {
+          <strong>
+            {{ departamentosControlados[0].nombre }}
+            @if (departamentosControlados[0].codigo) {
+              ({{ departamentosControlados[0].codigo }})
+            }
+          </strong>
         } @else {
-        <select
-          class="form-select form-select-sm d-inline-block w-auto ms-1"
-          [(ngModel)]="departamentoSeleccionadoId"
-          (ngModelChange)="onCambioDepartamento()"
-        >
-          <option [ngValue]="null">-- Seleccione departamento --</option>
-          @for (d of departamentosSucursal; track d.id) {
-          <option [ngValue]="d.id">{{ d.nombre }} ({{ d.codigo }})</option>
-          }
-        </select>
+          <strong>Sin departamentos disponibles</strong>
         }
       </div>
     </div>
@@ -39,7 +42,7 @@
         <div class="card h-100">
           <div class="card-body d-flex flex-column">
             <h6 class="small text-muted mb-2">
-              Colaboradores del equipo
+              Colaboradores del departamento activo
               <strong>{{ usuariosEquipo.length }}</strong>
             </h6>
 
@@ -70,7 +73,7 @@
                 >
                   <option [ngValue]="null">-- Seleccione colaborador --</option>
                   @for (u of usuariosEquipo; track u.id) {
-                  <option [ngValue]="u.id">{{ u.nombre_completo }}</option>
+                    <option [ngValue]="u.id">{{ u.nombre_completo }}</option>
                   }
                 </select>
               </div>
@@ -153,105 +156,108 @@
         </div>
 
         @if (cargandoUsuarios || cargandoTurnos) {
-        <div class="text-center my-3">
-          <div class="spinner-border spinner-border-sm"></div>
-          <div class="small text-muted mt-2">Cargando información...</div>
-        </div>
+          <div class="text-center my-3">
+            <div class="spinner-border spinner-border-sm"></div>
+            <div class="small text-muted mt-2">Cargando información...</div>
+          </div>
         } @else if (!usuariosFiltrados.length || !diasVentana.length) {
-        <div class="text-center my-3 small text-muted">
-          No hay datos para mostrar. Verifique el departamento y la selección.
-        </div>
+          <div class="text-center my-3 small text-muted">
+            No hay datos para mostrar. Verifique el departamento y la selección.
+          </div>
         } @else {
-        <div class="table-responsive horarios-table-scroll">
-          <table class="table table-sm align-middle horarios-table">
-            <thead>
-              <tr>
-                <th class="col-usuario">Colaborador</th>
-                @for (dia of diasVentana; track dia.fecha) {
-                <th
-                  class="text-center col-dia"
-                  [ngClass]="{ 'col-dia-hoy': esHoy(dia.fecha) }"
-                >
-                  <div>{{ dia.etiqueta }}</div>
-                  <div class="small text-muted d-none d-xl-block">
-                    {{ dia.fecha }}
-                  </div>
-                </th>
-                }
-              </tr>
-            </thead>
+          <div class="table-responsive horarios-table-scroll">
+            <table class="table table-sm align-middle horarios-table">
+              <thead>
+                <tr>
+                  <th class="col-usuario">Colaborador</th>
+                  @for (dia of diasVentana; track dia.fecha) {
+                    <th
+                      class="text-center col-dia"
+                      [ngClass]="{ 'col-dia-hoy': esHoy(dia.fecha) }"
+                    >
+                      <div>{{ dia.etiqueta }}</div>
+                      <div class="small text-muted d-none d-xl-block">
+                        {{ dia.fecha }}
+                      </div>
+                    </th>
+                  }
+                </tr>
+              </thead>
 
-            <tbody>
-              @for (u of usuariosFiltrados; track u.id) {
-              <tr>
-                <td class="col-usuario">
-                  <strong>{{ u.nombre_completo }}</strong>
-                </td>
+              <tbody>
+                @for (u of usuariosFiltrados; track u.id) {
+                  <tr>
+                    <td class="col-usuario">
+                      <strong>{{ u.nombre_completo }}</strong>
+                    </td>
 
-                @for (dia of diasVentana; track dia.fecha) {
-                <td
-                  class="text-center celda-estado"
-                  [ngClass]="{ 'col-dia-hoy': esHoy(dia.fecha) }"
-                  (click)="onClickCelda(u, dia.fecha)"
-                >
-                  @let turno = getTurno(u.id, dia.fecha); @let estado =
-                  estadoUI(turno, dia.fecha);
-
-                  <div [ngClass]="estadoClassUI(turno, dia.fecha)">
-                    {{ estado }}
-
-                    <!-- Horas acumuladas badge (en celda) -->
-                    @if (horaAcumuladaVisible(turno)) {
-                    <div class="small mt-1">
-                      <span
-                        class="badge badge-ha"
-                        [ngClass]="horaAcumuladaBadgeClass(turno)"
+                    @for (dia of diasVentana; track dia.fecha) {
+                      <td
+                        class="text-center celda-estado"
+                        [ngClass]="{ 'col-dia-hoy': esHoy(dia.fecha) }"
+                        (click)="onClickCelda(u, dia.fecha)"
                       >
-                        {{ horaAcumuladaLabel(turno) }}
-                      </span>
-                    </div>
+                        @let turno = getTurno(u.id, dia.fecha);
+                        @let estado = estadoUI(turno, dia.fecha);
+
+                        <div [ngClass]="estadoClassUI(turno, dia.fecha)">
+                          {{ estado }}
+
+                          @if (horaAcumuladaVisible(turno)) {
+                            <div class="small mt-1">
+                              <span
+                                class="badge badge-ha"
+                                [ngClass]="horaAcumuladaBadgeClass(turno)"
+                              >
+                                {{ horaAcumuladaLabel(turno) }}
+                              </span>
+                            </div>
+                          }
+
+                          @if (
+                            justVisible("atraso", turno) ||
+                            justVisible("salida", turno)
+                          ) {
+                            <div class="small mt-1 d-flex flex-column gap-1">
+                              @if (justVisible("atraso", turno)) {
+                                <span
+                                  class="badge badge-just"
+                                  [ngClass]="justBadgeClass('atraso', turno)"
+                                >
+                                  ATRASO: {{ justLabel("atraso", turno) }}
+                                </span>
+                              }
+                              @if (justVisible("salida", turno)) {
+                                <span
+                                  class="badge badge-just"
+                                  [ngClass]="justBadgeClass('salida', turno)"
+                                >
+                                  SALIDA: {{ justLabel("salida", turno) }}
+                                </span>
+                              }
+                            </div>
+                          }
+                        </div>
+
+                        <div class="small horario-text">
+                          {{ rangoHorario(turno) }}
+                        </div>
+
+                        <div
+                          class="small asistencia-text"
+                          *ngIf="
+                            turno?.hora_entrada_real || turno?.hora_salida_real
+                          "
+                        >
+                          {{ asistenciaResumen(turno) }}
+                        </div>
+                      </td>
                     }
-
-                    <!-- Justificaciones badges (en celda) -->
-                    @if (justVisible('atraso', turno) || justVisible('salida',
-                    turno)) {
-                    <div class="small mt-1 d-flex flex-column gap-1">
-                      @if (justVisible('atraso', turno)) {
-                      <span
-                        class="badge badge-just"
-                        [ngClass]="justBadgeClass('atraso', turno)"
-                      >
-                        ATRASO: {{ justLabel("atraso", turno) }}
-                      </span>
-                      } @if (justVisible('salida', turno)) {
-                      <span
-                        class="badge badge-just"
-                        [ngClass]="justBadgeClass('salida', turno)"
-                      >
-                        SALIDA: {{ justLabel("salida", turno) }}
-                      </span>
-                      }
-                    </div>
-                    }
-                  </div>
-
-                  <div class="small horario-text">
-                    {{ rangoHorario(turno) }}
-                  </div>
-
-                  <div
-                    class="small asistencia-text"
-                    *ngIf="turno?.hora_entrada_real || turno?.hora_salida_real"
-                  >
-                    {{ asistenciaResumen(turno) }}
-                  </div>
-                </td>
+                  </tr>
                 }
-              </tr>
-              }
-            </tbody>
-          </table>
-        </div>
+              </tbody>
+            </table>
+          </div>
         }
       </div>
     </div>
@@ -306,9 +312,6 @@
 
             <hr class="my-2" />
 
-            <!-- =========================
-                 JUSTIFICACIÓN ATRASO
-                 ========================= -->
             <div *ngIf="justVisible('atraso', detalleTurno)" class="soli-block">
               <div
                 class="d-flex justify-content-between align-items-start gap-3"
@@ -328,7 +331,6 @@
                     {{ justMotivo("atraso", detalleTurno) || "—" }}
                   </div>
 
-                  <!-- Input minutos: SOLO cuando el jefe puede resolver -->
                   <div
                     *ngIf="puedeGestionarJust('atraso', detalleTurno)"
                     class="mt-2"
@@ -352,7 +354,6 @@
                   </div>
                 </div>
 
-                <!-- Botones al mismo nivel -->
                 <div
                   *ngIf="puedeGestionarJust('atraso', detalleTurno)"
                   class="d-flex flex-column gap-2"
@@ -377,9 +378,6 @@
               </div>
             </div>
 
-            <!-- =========================
-                 JUSTIFICACIÓN SALIDA TEMPRANA
-                 ========================= -->
             <div
               *ngIf="justVisible('salida', detalleTurno)"
               class="soli-block mt-3"
@@ -449,9 +447,6 @@
               </div>
             </div>
 
-            <!-- =========================
-                 HORAS ACUMULADAS
-                 ========================= -->
             <div
               *ngIf="horaAcumuladaVisible(detalleTurno)"
               class="soli-block mt-3"
@@ -470,7 +465,6 @@
                     </span>
                   </div>
 
-                  <!-- Motivo HA: usamos observacion SOLO para horas -->
                   <div class="text-muted mt-1 obs-preline">
                     {{ (detalleTurno?.observacion || "").trim() || "—" }}
                   </div>
@@ -514,6 +508,5 @@
         </div>
       </div>
     </div>
-    <!-- FIN MODAL -->
   </div>
 </section>
