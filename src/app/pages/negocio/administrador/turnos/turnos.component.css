@@ -135,3 +135,8 @@
 .horarios-table-wrapper .form-control-sm {
   height: 31px;
 }
+
+.estado-campo {
+  background: #cff4fc;
+  color: #055160;
+}

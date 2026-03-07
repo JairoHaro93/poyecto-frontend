@@ -482,12 +482,16 @@ export class TurnosComponent implements OnInit {
     if (!turno) return false;
 
     const tipoDia = (turno.tipo_dia ?? 'NORMAL') as TipoDia;
-    if (tipoDia !== 'NORMAL') return false;
+
+    // ✅ se permite editar NORMAL y CAMPO
+    if (!['NORMAL', 'CAMPO'].includes(tipoDia)) return false;
 
     const hoyStr = this.formatFecha(new Date());
     const fechaTurno = (turno.fecha || '').slice(0, 10);
 
     if (fechaTurno < hoyStr) return false;
+
+    // ✅ si CAMPO no exige marcas, igual mantenemos protección:
     if ((turno as any).hora_entrada_real) return false;
 
     return true;
