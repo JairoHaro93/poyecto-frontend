@@ -14,6 +14,7 @@ export interface GenerarTurnosPayload {
   min_toler_atraso: number;
   min_toler_salida: number;
   excluir_fines_semana: boolean;
+  tipo_dia?: 'NORMAL' | 'CAMPO';
 }
 
 export interface GenerarTurnosResponse {

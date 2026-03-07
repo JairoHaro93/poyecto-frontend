@@ -25,7 +25,7 @@ import { environment } from '../../../../../environments/environment';
 
 type TipoDia = 'NORMAL' | 'DEVOLUCION' | 'VACACIONES' | 'PERMISO';
 type GenerarModo = 'SEMANA' | 'DIA';
-
+type TipoDiaGeneracion = 'NORMAL' | 'CAMPO';
 interface UsuarioResumen {
   id: number;
   nombre_completo: string;
@@ -83,7 +83,7 @@ export class TurnosComponent implements OnInit {
 
   generarModo: GenerarModo = 'SEMANA';
   generarDia: string | null = null;
-
+  tipoDiaGeneracion: TipoDiaGeneracion = 'NORMAL';
   jefeActual?: Iusuarios;
 
   departamentosControlados: IDepartamento[] = [];
@@ -159,6 +159,8 @@ export class TurnosComponent implements OnInit {
   }
 
   async ngOnInit(): Promise<void> {
+    this.tipoDiaGeneracion = 'NORMAL';
+
     try {
       this.jefeActual = await this.authService.getUsuarioAutenticado();
 
@@ -559,6 +561,7 @@ export class TurnosComponent implements OnInit {
       min_toler_atraso: 1,
       min_toler_salida: 0,
       excluir_fines_semana: this.excluirFinesSemana,
+      tipo_dia: this.tipoDiaGeneracion,
     };
 
     this.generandoTurnos = true;
@@ -579,6 +582,7 @@ export class TurnosComponent implements OnInit {
   }
 
   limpiarFormulario(): void {
+    this.tipoDiaGeneracion = 'NORMAL';
     this.setSemanaActualSync();
 
     this.horaEntradaProg = '08:00';

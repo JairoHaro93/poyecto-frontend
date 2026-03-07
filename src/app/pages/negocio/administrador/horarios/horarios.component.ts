@@ -496,6 +496,7 @@ export class HorariosComponent implements OnInit {
     if (td === 'DEVOLUCION') return 'DEVOLUCIÓN';
     if (td === 'VACACIONES') return 'VACACIONES';
     if (td === 'PERMISO') return 'PERMISO';
+    if (td === 'CAMPO') return 'CAMPO';
     return 'NORMAL';
   }
 
@@ -563,6 +564,8 @@ export class HorariosComponent implements OnInit {
         return 'estado-permiso';
       case 'SIN TURNO':
         return 'estado-sin-turno';
+      case 'CAMPO':
+        return 'estado-campo';
       case 'PROGRAMADO':
         return 'estado-programado';
       case 'EN CURSO':
