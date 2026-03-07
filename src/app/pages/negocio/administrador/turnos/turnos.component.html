@@ -216,50 +216,40 @@
                   </label>
                 </div>
 
-                <div class="mt-2 text-md-end">
-                  <div class="small fw-semibold mb-1">
-                    Tipo de día a generar
-                  </div>
-
-                  <div class="btn-group btn-group-sm" role="group">
-                    <button
-                      type="button"
-                      class="btn"
-                      [ngClass]="
-                        tipoDiaGeneracion === 'NORMAL'
-                          ? 'btn-primary'
-                          : 'btn-outline-primary'
-                      "
-                      (click)="tipoDiaGeneracion = 'NORMAL'"
-                    >
-                      NORMAL
-                    </button>
-
-                    <button
-                      type="button"
-                      class="btn"
-                      [ngClass]="
-                        tipoDiaGeneracion === 'CAMPO'
-                          ? 'btn-primary'
-                          : 'btn-outline-primary'
-                      "
-                      (click)="tipoDiaGeneracion = 'CAMPO'"
-                    >
-                      CAMPO
-                    </button>
-                  </div>
-
-                  <div class="small text-muted mt-1">
-                    @if (tipoDiaGeneracion === "CAMPO") {
-                      Día especial sin marcación obligatoria, pero permite horas
-                      acumuladas.
-                    } @else {
-                      Día normal con lógica habitual de asistencia.
-                    }
-                  </div>
-                </div>
                 <div class="small text-muted text-md-end">
                   Se aplicará este horario a cada día del rango.
+                </div>
+              </div>
+
+              <div class="mt-2 text-md-end">
+                <div class="small fw-semibold mb-1">Tipo de día a generar</div>
+
+                <div class="btn-group btn-group-sm" role="group">
+                  <button
+                    type="button"
+                    class="btn"
+                    [ngClass]="
+                      tipoDiaGeneracion === 'NORMAL'
+                        ? 'btn-primary'
+                        : 'btn-outline-primary'
+                    "
+                    (click)="tipoDiaGeneracion = 'NORMAL'"
+                  >
+                    NORMAL
+                  </button>
+
+                  <button
+                    type="button"
+                    class="btn"
+                    [ngClass]="
+                      tipoDiaGeneracion === 'CAMPO'
+                        ? 'btn-primary'
+                        : 'btn-outline-primary'
+                    "
+                    (click)="tipoDiaGeneracion = 'CAMPO'"
+                  >
+                    CAMPO
+                  </button>
                 </div>
               </div>
             </div>
