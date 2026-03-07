@@ -208,7 +208,13 @@ export class MiHorarioComponent implements OnInit {
   // -------------------------
   estadoUILabel(d: DiaHorarioSemanaApi): string {
     const tipo = (d.tipo_dia ?? 'NORMAL').toUpperCase();
-    if (tipo !== 'NORMAL') return tipo;
+    if (tipo !== 'NORMAL') {
+      if (tipo === 'DEVOLUCION') return 'DEVOLUCIÓN';
+      if (tipo === 'VACACIONES') return 'VACACIONES';
+      if (tipo === 'PERMISO') return 'PERMISO';
+      if (tipo === 'CAMPO') return 'CAMPO';
+      return tipo;
+    }
 
     if (!d.tiene_turno) return 'SIN TURNO';
 
@@ -268,10 +274,12 @@ export class MiHorarioComponent implements OnInit {
     if (['PROGRAMADO'].includes(s)) return 'chip-info';
     if (['EN CURSO'].includes(s)) return 'chip-warn';
 
-    // el resto
+    if (['CAMPO'].includes(s)) return 'chip-campo';
+
     if (['FALTA', 'INCOMPLETO'].includes(s)) return 'chip-bad';
-    if (['ATRASO', 'SIN MARCA', 'SOLO ENTRADA', 'SOLO SALIDA'].includes(s))
+    if (['ATRASO', 'SIN MARCA', 'SOLO ENTRADA', 'SOLO SALIDA'].includes(s)) {
       return 'chip-warn';
+    }
 
     return 'chip-muted';
   }
@@ -382,7 +390,9 @@ export class MiHorarioComponent implements OnInit {
   puedeEditar(d: DiaHorarioSemanaApi): boolean {
     const isToday = this.isTodayYmd(d.fecha);
     const tipo = (d.tipo_dia ?? 'NORMAL').toUpperCase().trim();
-    return isToday && !!d.tiene_turno && tipo === 'NORMAL';
+    return (
+      isToday && !!d.tiene_turno && (tipo === 'NORMAL' || tipo === 'CAMPO')
+    );
   }
 
   puedeSolicitarJustAtraso(d: DiaHorarioSemanaApi): boolean {
@@ -407,7 +417,13 @@ export class MiHorarioComponent implements OnInit {
     const isToday = this.isTodayYmd(d.fecha);
     const tipo = (d.tipo_dia ?? 'NORMAL').toUpperCase().trim();
     const stHA = (d.estado_hora_acumulada ?? 'NO').toUpperCase().trim();
-    return isToday && d.tiene_turno && tipo === 'NORMAL' && stHA !== 'APROBADO';
+
+    return (
+      isToday &&
+      d.tiene_turno &&
+      (tipo === 'NORMAL' || tipo === 'CAMPO') &&
+      stHA !== 'APROBADO'
+    );
   }
 
   // =========================

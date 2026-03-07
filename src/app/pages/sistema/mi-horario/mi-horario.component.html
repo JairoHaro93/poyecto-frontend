@@ -168,7 +168,7 @@
         [placeholder]="
           puedeObsHA
             ? 'DESCRIBE UN MOTIVO PARA SOLICITAR HORAS ACUMULADAS...'
-            : 'NO DISPONIBLE (SOLO HOY / DÍA NORMAL / NO APROBADO)'
+            : 'NO DISPONIBLE (SOLO HOY / DÍA NORMAL O CAMPO / NO APROBADO)'
         "
       ></textarea>
 
@@ -200,7 +200,8 @@
         class="info"
         *ngIf="diaEdit && isTodayYmd(diaEdit.fecha) && !puedeObsHA"
       >
-        ⚠️ NO SE PUEDE MODIFICAR: YA ESTÁ APROBADO O NO ES DÍA NORMAL.
+        ⚠️⚠️ NO SE PUEDE MODIFICAR: YA ESTÁ APROBADO O EL DÍA NO PERMITE HORAS
+        ACUMULADAS.
       </div>
 
       <hr class="sep" />

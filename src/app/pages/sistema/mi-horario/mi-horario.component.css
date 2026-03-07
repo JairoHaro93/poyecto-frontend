@@ -233,3 +233,7 @@
   justify-content: flex-end;
   gap: 10px;
 }
+.chip-campo {
+  background: rgba(13, 202, 240, 0.12);
+  border-color: rgba(13, 202, 240, 0.35);
+}
