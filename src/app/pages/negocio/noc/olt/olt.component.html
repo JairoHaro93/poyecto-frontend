@@ -20,11 +20,7 @@
             <button
               type="button"
               class="btn"
-              [ngClass]="
-                tab === 'INGRESO'
-                  ? 'btn-outline-success'
-                  : 'btn-outline-secondary'
-              "
+              [ngClass]="tab === 'INGRESO' ? 'btn-dark' : 'btn-outline-dark'"
               (click)="setTab('INGRESO')"
               [disabled]="isBusy && tab !== 'INGRESO'"
             >
@@ -67,46 +63,8 @@
                   }
                 </select>
               </div>
-
-              <div class="col-12 col-md-5">
-                <div class="d-flex gap-2">
-                  <button
-                    type="button"
-                    class="btn btn-outline-primary flex-fill"
-                    (click)="warmupReady()"
-                    [disabled]="isBusy || !hasSelectedOlt"
-                  >
-                    @if (estado === "READYING") {
-                      <span
-                        class="spinner-border spinner-border-sm me-2"
-                        role="status"
-                        aria-hidden="true"
-                      ></span>
-                      Conectando...
-                    } @else {
-                      🔌 Conectar
-                    }
-                  </button>
-
-                  <button
-                    type="button"
-                    class="btn btn-outline-secondary"
-                    (click)="limpiarConsultas()"
-                    [disabled]="isBusy"
-                  >
-                    🧹 Limpiar
-                  </button>
-                </div>
-              </div>
             </div>
           </div>
-
-          @if (!hasSelectedOlt) {
-            <div class="alert alert-warning py-2 mb-3">
-              Debes seleccionar primero una caja en el flujo de ingreso para
-              dejar una OLT activa.
-            </div>
-          }
 
           <form [formGroup]="oltForm" (ngSubmit)="consultarOnt()">
             <div class="row g-2 align-items-end">
@@ -161,7 +119,7 @@
 
                 @if (estado === "IDLE" && hasSelectedOlt) {
                   <small class="text-muted fw-semibold d-block mt-2">
-                    Presiona conectar o consulta directamente.
+                    Esperando conexión automática...
                   </small>
                 }
               </div>
@@ -256,7 +214,7 @@
                 <button
                   type="button"
                   class="btn btn-danger"
-                  (click)="eliminarOnt()"
+                  (click)="abrirModalEliminarOnt()"
                   [disabled]="disableEliminar"
                 >
                   @if (estado === "ELIMINANDO") {
@@ -358,6 +316,8 @@
                       <th>Dirección</th>
                       <th>Referencia</th>
                       <th>Plan contratado</th>
+                      <th>ONU</th>
+                      <th style="min-width: 140px">Estado</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -365,6 +325,12 @@
                       <tr
                         [class.table-active]="
                           servicioSeleccionado?.ord_ins === item.ord_ins
+                        "
+                        [class.row-blocked]="!canSelectServicio(item)"
+                        (dblclick)="
+                          !canSelectServicio(item)
+                            ? showServicioBloqueado(item)
+                            : null
                         "
                       >
                         <td>
@@ -374,13 +340,25 @@
                             [checked]="
                               servicioSeleccionado?.ord_ins === item.ord_ins
                             "
+                            [disabled]="!canSelectServicio(item)"
                             (change)="seleccionarServicio(item)"
                           />
                         </td>
+
                         <td>{{ item.ord_ins }}</td>
                         <td>{{ item.direccion || "—" }}</td>
                         <td>{{ item.referencia || "—" }}</td>
                         <td>{{ item.plan_contratado || "—" }}</td>
+                        <td class="nowrap">{{ item.onu || "—" }}</td>
+
+                        <td>
+                          <span
+                            class="badge"
+                            [ngClass]="getServicioEstadoBadgeClass(item)"
+                          >
+                            {{ item.controlMensaje }}
+                          </span>
+                        </td>
                       </tr>
                     }
                   </tbody>
@@ -392,9 +370,20 @@
               <div class="small text-muted mt-3">
                 No se encontraron servicios para esa búsqueda.
               </div>
+            } @else if (
+              !loadingServicios && (busquedaCtrl.value ?? "").trim().length >= 2
+            ) {
+              <div class="small text-muted mt-3">
+                No se encontraron servicios para esa búsqueda.
+              </div>
             }
           </div>
-
+          @if (serviciosEncontrados.length && !hasServiciosSeleccionables) {
+            <div class="alert alert-warning py-2 mt-3 mb-0">
+              Ningún servicio está disponible para ingreso. Todos se encuentran
+              bloqueados o ya controlados.
+            </div>
+          }
           <!-- BLOQUE 2 -->
           <div class="result-card mb-3">
             <div class="fw-bold mb-2">2. Seleccione la caja</div>
@@ -540,4 +529,125 @@
       </div>
     </div>
   }
+}
+
+@if (showDeleteModal && result) {
+  <div class="olt-modal-backdrop">
+    <div class="olt-modal-card olt-modal-card--delete">
+      <div class="olt-modal-card__head">
+        <div class="fw-bold">Motivo de eliminación</div>
+
+        <button
+          type="button"
+          class="btn btn-sm btn-outline-dark"
+          (click)="cerrarModalEliminarOnt()"
+        >
+          Cerrar
+        </button>
+      </div>
+
+      <div class="olt-modal-card__body">
+        <div class="result-card mb-3">
+          <div class="row g-2">
+            <div class="col-12 col-md-6">
+              <div class="kv">
+                <span>SN</span><b>{{ result.sn }}</b>
+              </div>
+              <div class="kv">
+                <span>F/S/P</span><b>{{ result.fsp || "—" }}</b>
+              </div>
+              <div class="kv">
+                <span>ONT-ID</span><b>{{ result.ontId ?? "—" }}</b>
+              </div>
+            </div>
+
+            <div class="col-12 col-md-6">
+              <div class="kv">
+                <span>OLT</span><b>{{ currentOltLabel }}</b>
+              </div>
+              <div class="kv">
+                <span>Estado</span><b>{{ result.runState || "—" }}</b>
+              </div>
+              <div class="kv">
+                <span>Descripción</span><b>{{ result.description || "—" }}</b>
+              </div>
+            </div>
+          </div>
+
+          @if ((result.runState || "").toLowerCase() === "online") {
+            <div class="alert alert-warning py-2 mt-3 mb-0">
+              ⚠️ La ONT está ONLINE.
+            </div>
+          }
+        </div>
+
+        <div class="result-card">
+          <div class="row g-3">
+            <div class="col-12">
+              <label class="form-label mb-1">Razón</label>
+              <select
+                class="form-select"
+                [ngModel]="deleteMotivoBase"
+                [ngModelOptions]="{ standalone: true }"
+                (ngModelChange)="onDeleteMotivoBaseChange($event)"
+              >
+                <option value="">SELECCIONE UNA RAZÓN</option>
+                <option value="SUSPENSIÓN DEL SERVICIO">
+                  SUSPENSIÓN DEL SERVICIO
+                </option>
+                <option value="TRASLADO EXTERNO">TRASLADO EXTERNO</option>
+                <option value="REEMPLAZO DE ONT">REEMPLAZO DE ONT</option>
+                <option value="OTRO">OTRO</option>
+              </select>
+            </div>
+
+            @if (deleteEsOtro) {
+              <div class="col-12">
+                <label class="form-label mb-1">Detalle del motivo</label>
+                <input
+                  type="text"
+                  class="form-control text-uppercase"
+                  [ngModel]="deleteMotivoOtro"
+                  [ngModelOptions]="{ standalone: true }"
+                  (ngModelChange)="onDeleteMotivoOtroInput($event)"
+                  placeholder="ESCRIBA EL MOTIVO"
+                />
+              </div>
+            }
+
+            <div class="col-12">
+              <label class="form-label mb-1">Observación adicional</label>
+              <textarea
+                rows="3"
+                class="form-control text-uppercase"
+                [ngModel]="deleteObservacion"
+                [ngModelOptions]="{ standalone: true }"
+                (ngModelChange)="onDeleteObservacionInput($event)"
+                placeholder="OPCIONAL"
+              ></textarea>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="olt-modal-card__foot">
+        <button
+          type="button"
+          class="btn btn-outline-secondary"
+          (click)="cerrarModalEliminarOnt()"
+        >
+          Cancelar
+        </button>
+
+        <button
+          type="button"
+          class="btn btn-danger"
+          [disabled]="!canContinuarDeleteModal"
+          (click)="confirmarEliminarOntDesdeModal()"
+        >
+          Continuar
+        </button>
+      </div>
+    </div>
+  </div>
 }

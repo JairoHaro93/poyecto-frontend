@@ -68,24 +68,37 @@ export interface ServicePortFailed {
 
 export interface OntDeleteResponse {
   ok: boolean;
-  cmdId: string;
-  message: string;
+  cmdId?: string;
+  message?: string;
   sn: string;
-  snLabel?: string | null;
-  snInput?: string | null;
-  fsp: string;
-  ontId: number;
-  description: string | null;
-  wasOnline: boolean;
+  snLabel?: string;
+  snInput?: string;
+  fsp?: string;
+  ontId?: number;
+  description?: string | null;
+  wasOnline?: boolean;
   warning?: string;
-  olt?: OltMeta | null;
-  servicePorts: {
+  servicePorts?: {
     deleted: ServicePortDeleted[];
     failed: ServicePortFailed[];
   };
-  rawInfo?: string;
-  rawSp?: string;
-  rawDelete?: string;
+  localControl?: {
+    found: boolean;
+    released: boolean;
+    onu: string | null;
+    ord_ins: number | null;
+    nap_id: number | null;
+    puerto: number | null;
+    message: string | null;
+  };
+  olt?: {
+    id?: number;
+    nombre?: string;
+    ip?: string;
+    vendor?: string;
+    ciudad?: string;
+    sucursalId?: number;
+  };
 }
 
 export interface OntAutofindAllItem {
@@ -190,17 +203,26 @@ export class OltService {
     );
   }
 
-  ontDelete(oltId: number, sn: string): Observable<OntDeleteResponse> {
+  ontDelete(
+    oltId: number,
+    sn: string,
+    motivoLiberacion?: string | null,
+    observacionLiberacion?: string | null,
+  ) {
     return this.http.post<OntDeleteResponse>(
       `${this.baseUrl}/exec`,
       {
+        oltId,
         cmdId: 'ONT_DELETE',
-        args: { oltId, sn },
+        args: {
+          sn,
+          motivoLiberacion: motivoLiberacion ?? null,
+          observacionLiberacion: observacionLiberacion ?? null,
+        },
       },
       { withCredentials: true },
     );
   }
-
   ontAutofindAll(oltId: number): Observable<OntAutofindAllResponse> {
     return this.http.post<OntAutofindAllResponse>(
       `${this.baseUrl}/exec`,
