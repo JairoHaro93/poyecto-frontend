@@ -1,0 +1,334 @@
+import {
+  AfterViewInit,
+  Component,
+  EventEmitter,
+  OnInit,
+  Output,
+  ViewChild,
+  signal,
+} from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { GoogleMap, MapMarker } from '@angular/google-maps';
+import { environment } from '../../../../../../environments/environment.development';
+
+import { CajasService } from '../../../../../services/negocio_latacunga/cajas.services';
+import { ICajas } from '../../../../../interfaces/negocio/infraestructura/icajas.interface';
+
+type LatLngLiteral = google.maps.LatLngLiteral;
+
+export interface IOltMapSelection {
+  cajaId: number;
+  cajaNombre: string;
+  cajaTipo: string;
+  oltId: number | null;
+  oltNombre?: string | null;
+  coords?: string | null;
+}
+
+type MarkerVm = {
+  id: number;
+  position: google.maps.LatLngLiteral;
+  title: string;
+  label: string;
+  caja: ICajas;
+  options: google.maps.MarkerOptions;
+};
+
+@Component({
+  selector: 'app-mapa-olt',
+  standalone: true,
+  imports: [CommonModule, GoogleMap, MapMarker],
+  templateUrl: './mapa-olt.component.html',
+  styleUrls: ['./mapa-olt.component.css'],
+})
+export class MapaOltComponent implements OnInit, AfterViewInit {
+  @Output() cajaSelected = new EventEmitter<IOltMapSelection>();
+
+  @ViewChild(GoogleMap) mapRef!: GoogleMap;
+
+  constructor(private cajasService: CajasService) {}
+
+  isGoogleMapsLoaded = false;
+  isReady = false;
+  cargando = false;
+
+  myposition = signal<google.maps.LatLng | null>(null);
+  zoom = signal<number>(13);
+
+  cajas: ICajas[] = [];
+  markers: MarkerVm[] = [];
+
+  selectedCaja = signal<ICajas | null>(null);
+
+  private readonly DEFAULT_CENTER: LatLngLiteral = {
+    lat: -0.9398,
+    lng: -78.616569,
+  };
+
+  private iconCache = new Map<string, google.maps.Icon>();
+
+  async ngOnInit(): Promise<void> {
+    try {
+      this.isReady = false;
+      await this.loadGoogleMapsIfNeeded();
+      this.initializeMap();
+      await this.loadNapCajas();
+      this.isReady = true;
+    } catch (e) {
+      console.error('Error iniciando mapa OLT:', e);
+      this.isReady = true;
+    }
+  }
+
+  ngAfterViewInit(): void {
+    setTimeout(() => {
+      const map = this.mapRef?.googleMap;
+      if (!map) return;
+      map.setOptions({
+        mapTypeId: 'satellite',
+        streetViewControl: false,
+        mapTypeControl: false,
+        fullscreenControl: false,
+      });
+    }, 0);
+  }
+
+  async reload(): Promise<void> {
+    await this.loadNapCajas();
+  }
+
+  async centerOnCaja(cajaId: number): Promise<void> {
+    const found = this.cajas.find((c) => c.id === cajaId);
+    if (!found) return;
+
+    const ll = this.parseCoords(found.caja_coordenadas || '');
+    if (!ll) return;
+
+    this.selectedCaja.set(found);
+    this.myposition.set(new google.maps.LatLng(ll.lat, ll.lng));
+    this.zoom.set(18);
+  }
+
+  onMarkerClick(marker: MarkerVm): void {
+    this.selectedCaja.set(marker.caja);
+
+    this.cajaSelected.emit({
+      cajaId: marker.caja.id,
+      cajaNombre: marker.caja.caja_nombre || `Caja ${marker.caja.id}`,
+      cajaTipo: marker.caja.caja_tipo || 'NAP',
+      oltId:
+        (marker.caja as any).olt_id != null
+          ? Number((marker.caja as any).olt_id)
+          : null,
+      oltNombre: (marker.caja as any).olt_nombre ?? null,
+      coords: marker.caja.caja_coordenadas ?? null,
+    });
+
+    const ll = this.parseCoords(marker.caja.caja_coordenadas || '');
+    if (ll) {
+      this.myposition.set(new google.maps.LatLng(ll.lat, ll.lng));
+      this.zoom.set(18);
+    }
+  }
+
+  usarCajaSeleccionada(): void {
+    const caja = this.selectedCaja();
+    if (!caja) return;
+
+    this.cajaSelected.emit({
+      cajaId: caja.id,
+      cajaNombre: caja.caja_nombre || `Caja ${caja.id}`,
+      cajaTipo: caja.caja_tipo || 'NAP',
+      oltId: (caja as any).olt_id != null ? Number((caja as any).olt_id) : null,
+      oltNombre: (caja as any).olt_nombre ?? null,
+      coords: caja.caja_coordenadas ?? null,
+    });
+  }
+
+  hasOlt(caja: ICajas | null): boolean {
+    return !!caja && Number.isFinite(Number((caja as any).olt_id));
+  }
+
+  private async loadNapCajas(): Promise<void> {
+    this.cargando = true;
+    try {
+      const data = await this.cajasService.getCajas({
+        tipo: 'NAP',
+        limit: 5000,
+      });
+
+      const cajas = (data || []).filter((c) => {
+        const tipo = String(c.caja_tipo || '').toUpperCase();
+        return tipo === 'NAP';
+      });
+
+      this.cajas = cajas;
+      this.markers = cajas
+        .map((c) => this.mapCajaToMarker(c))
+        .filter(Boolean) as MarkerVm[];
+
+      if (this.markers.length) {
+        const first = this.markers[0].position;
+        this.myposition.set(new google.maps.LatLng(first.lat, first.lng));
+      } else {
+        this.myposition.set(
+          new google.maps.LatLng(
+            this.DEFAULT_CENTER.lat,
+            this.DEFAULT_CENTER.lng,
+          ),
+        );
+      }
+    } catch (e) {
+      console.error('Error cargando NAPs para mapa OLT:', e);
+      this.cajas = [];
+      this.markers = [];
+      this.myposition.set(
+        new google.maps.LatLng(
+          this.DEFAULT_CENTER.lat,
+          this.DEFAULT_CENTER.lng,
+        ),
+      );
+    } finally {
+      this.cargando = false;
+    }
+  }
+
+  private initializeMap(): void {
+    if (!this.isGoogleMapsLoaded) return;
+    this.myposition.set(
+      new google.maps.LatLng(this.DEFAULT_CENTER.lat, this.DEFAULT_CENTER.lng),
+    );
+    this.zoom.set(13);
+  }
+
+  private loadGoogleMapsIfNeeded(): Promise<void> {
+    return new Promise((resolve, reject) => {
+      if ((window as any).google?.maps) {
+        this.isGoogleMapsLoaded = true;
+        resolve();
+        return;
+      }
+
+      const existing = document.querySelector<HTMLScriptElement>(
+        'script[src*="maps.googleapis.com/maps/api/js"]',
+      );
+
+      const onReady = () => {
+        this.isGoogleMapsLoaded = true;
+        resolve();
+      };
+      const onError = () => reject(new Error('No se pudo cargar Google Maps'));
+
+      if (existing) {
+        existing.addEventListener('load', onReady, { once: true });
+        existing.addEventListener('error', onError, { once: true });
+
+        const start = Date.now();
+        const iv = setInterval(() => {
+          if ((window as any).google?.maps) {
+            clearInterval(iv);
+            onReady();
+          } else if (Date.now() - start > 15000) {
+            clearInterval(iv);
+            onError();
+          }
+        }, 150);
+        return;
+      }
+
+      const script = document.createElement('script');
+      script.src = `https://maps.googleapis.com/maps/api/js?key=${environment.token_map}`;
+      script.defer = true;
+      script.async = true;
+      script.onload = onReady;
+      script.onerror = onError;
+      document.head.appendChild(script);
+    });
+  }
+
+  private parseCoords(coords: string): LatLngLiteral | null {
+    const [la, ln] = String(coords || '')
+      .split(',')
+      .map((s) => Number((s || '').trim()));
+
+    if (!Number.isFinite(la) || !Number.isFinite(ln)) return null;
+    return { lat: la, lng: ln };
+  }
+
+  private mapCajaToMarker(c: ICajas): MarkerVm | null {
+    let lat = Number((c as any).lat);
+    let lng = Number((c as any).lng);
+
+    if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
+      const parsed = this.parseCoords(c.caja_coordenadas || '');
+      if (!parsed) return null;
+      lat = parsed.lat;
+      lng = parsed.lng;
+    }
+
+    return {
+      id: c.id,
+      position: { lat, lng },
+      title: String(c.caja_nombre || `Caja ${c.id}`),
+      label: String(c.caja_nombre || `Caja ${c.id}`),
+      caja: c,
+      options: {
+        icon: this.makeIcon(c),
+        optimized: false,
+        zIndex: 10,
+      },
+    };
+  }
+  private makeIcon(c: ICajas): google.maps.Icon {
+    const hasOlt = this.hasOlt(c);
+    const estado = String(c.caja_estado || '').toUpperCase();
+    const px = 28;
+
+    let fill = '#6b7280'; // gris
+    let stroke = '#111827';
+
+    if (hasOlt) {
+      fill = '#16a34a'; // verde si tiene OLT
+      stroke = '#14532d';
+    }
+
+    if (estado === 'DISEÑO') {
+      fill = hasOlt ? '#f59e0b' : '#9ca3af';
+      stroke = '#78350f';
+    }
+
+    if (estado === 'FULL') {
+      fill = '#dc2626';
+      stroke = '#7f1d1d';
+    }
+
+    const key = `${fill}|${stroke}|${px}`;
+    const cached = this.iconCache.get(key);
+    if (cached) return cached;
+
+    const svg = `
+<svg xmlns="http://www.w3.org/2000/svg" width="${px}" height="${px}" viewBox="0 0 48 48">
+  <defs>
+    <filter id="shadow" x="-50%" y="-50%" width="200%" height="200%">
+      <feDropShadow dx="0" dy="1" stdDeviation="1.5" flood-color="rgba(0,0,0,0.35)"/>
+    </filter>
+  </defs>
+  <rect x="10" y="10" width="28" height="28" rx="5" ry="5"
+        fill="${fill}" stroke="${stroke}" stroke-width="3" filter="url(#shadow)"/>
+</svg>`.trim();
+
+    const url = 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(svg);
+
+    const icon: google.maps.Icon = {
+      url,
+      size: new google.maps.Size(px, px),
+      scaledSize: new google.maps.Size(px, px),
+      origin: new google.maps.Point(0, 0),
+      anchor: new google.maps.Point(px / 2, px / 2),
+      labelOrigin: new google.maps.Point(px / 2, -2),
+    };
+
+    this.iconCache.set(key, icon);
+    return icon;
+  }
+}

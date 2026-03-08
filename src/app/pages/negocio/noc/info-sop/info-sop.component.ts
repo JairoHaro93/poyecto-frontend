@@ -28,11 +28,6 @@ import { AgendaService } from '../../../../services/negocio_latacunga/agenda.ser
 import { ImagesService } from '../../../../services/negocio_latacunga/images.service';
 import { VisService } from '../../../../services/negocio_latacunga/vis.service';
 import { SoketService } from '../../../../services/socket_io/soket.service';
-import {
-  OltService,
-  OntInfoBySnResponse,
-} from '../../../../services/negocio_latacunga/olt.services';
-import { lastValueFrom } from 'rxjs';
 
 type TabKey = 'instalacion' | 'soportes' | 'visitas';
 
@@ -138,13 +133,11 @@ export class InfoSopComponent implements OnInit, OnDestroy {
 
   ontEstado: EstadoOnt = 'IDLE';
   ontMensaje = '';
-  ontResult: OntInfoBySnResponse | null = null;
 
   cooldownSecOnt = 0;
   private cooldownTimerOnt: any = null;
 
   private fb = inject(FormBuilder);
-  private oltService = inject(OltService);
 
   ontForm: FormGroup = this.fb.group({
     sn: new FormControl<string>('', {
@@ -235,49 +228,6 @@ export class InfoSopComponent implements OnInit, OnDestroy {
         .replace(/\s+/g, ' ')
         .trim() || s
     );
-  }
-
-  // ✅ Getter para tu template (InfoSop usa ontResult)
-  get lastUpTimeUI(): string {
-    const d = this.parseOltDate(this.ontResult?.lastUpTime);
-    return d ? this.formatLocalDateTime(d) : '—';
-  }
-
-  get lastDyingGaspTimeUI(): string {
-    const d = this.parseOltDate(this.ontResult?.lastDyingGaspTime);
-    return d ? this.formatLocalDateTime(d) : '—';
-  }
-
-  get lastDownTimeUI(): string {
-    const d = this.parseOltDate(this.ontResult?.lastDownTime);
-    return d ? this.formatLocalDateTime(d) : '—';
-  }
-
-  get onlineDurationUI(): string {
-    return this.compactDuration(this.ontResult?.onlineDuration);
-  }
-
-  // ✅ dBm con unidad incluida SOLO si hay número (evita "sin dato dBm")
-  private dbmUI(value: unknown, offset = 0): string {
-    if (value === null || value === undefined || value === '')
-      return 'sin dato';
-
-    const n = typeof value === 'number' ? value : Number(String(value).trim());
-    if (!Number.isFinite(n)) return 'sin dato';
-
-    return `${(n + offset).toFixed(2)} dBm`;
-  }
-
-  get rxOntUI(): string {
-    return this.dbmUI(this.ontResult?.optical?.rxDbm, this.DBM_OFFSET_RX);
-  }
-
-  get txOntUI(): string {
-    return this.dbmUI(this.ontResult?.optical?.txDbm, 0);
-  }
-
-  get oltRxUI(): string {
-    return this.dbmUI(this.ontResult?.optical?.oltRxDbm, 0);
   }
 
   toggleOntPanel(): void {
@@ -867,220 +817,5 @@ export class InfoSopComponent implements OnInit, OnDestroy {
       this.ontEstado === 'CONECTANDO' ||
       this.ontEstado === 'COOLDOWN'
     );
-  }
-
-  async warmupOntReady(): Promise<void> {
-    if (!this.onuSn) return;
-    if (this.disableOntConectar) return;
-
-    this.showOntPanel = true;
-    this.ontEstado = 'READYING';
-    this.ontMensaje = '';
-    this.ontResult = null;
-
-    try {
-      // ✅ 1) precarga ONU en el input (solo si está vacío o distinto)
-      const cur = String(this.ontForm.value.sn ?? '').trim();
-      if (!cur || cur !== this.onuSn) {
-        this.ontForm.patchValue({ sn: this.onuSn }, { emitEvent: false });
-        this.normalizeOntInput('sn');
-      }
-
-      // ✅ 2) aquí debes llamar al "READY" que ya usas en tu otro componente (OltComponent)
-      // Si en tu OltService aún no existe, más abajo te dejo cómo agregarlo.
-      await lastValueFrom(this.oltService.ready());
-
-      this.ontReady = true;
-      this.ontEstado = 'READY';
-      this.ontMensaje = '';
-    } catch (err: any) {
-      const backendMsg =
-        err?.error?.error?.message ||
-        err?.error?.message ||
-        err?.error?.error ||
-        err?.message;
-
-      this.ontReady = false;
-      this.ontEstado = 'ERROR';
-      this.ontMensaje = backendMsg || 'No se pudo preparar la sesión OLT';
-      await Swal.fire('Error', this.ontMensaje, 'error');
-    }
-  }
-
-  limpiarOntPanel(): void {
-    this.ontResult = null;
-    this.ontMensaje = '';
-    this.clearCooldownOnt();
-    this.showOntPanel = false;
-
-    // si ya estaba ready, vuelve a READY; si no, vuelve a IDLE
-    this.ontEstado = this.ontReady ? 'READY' : 'IDLE';
-  }
-
-  private async ensureOntReady(): Promise<boolean> {
-    if (this.ontReady) return true;
-
-    this.ontEstado = 'READYING';
-    this.ontMensaje = '';
-    this.ontResult = null;
-
-    try {
-      await lastValueFrom(this.oltService.ready()); // 🔥 warmup backend
-      this.ontReady = true;
-      this.ontEstado = 'READY';
-      return true;
-    } catch (err: any) {
-      const backendMsg =
-        err?.error?.error?.message ||
-        err?.error?.message ||
-        err?.error?.error ||
-        err?.message;
-
-      this.ontReady = false;
-      this.ontEstado = 'ERROR';
-      this.ontMensaje = backendMsg || 'No se pudo preparar la sesión OLT';
-      await Swal.fire('Error', this.ontMensaje, 'error');
-      return false;
-    }
-  }
-
-  async consultarOntConOnu(): Promise<void> {
-    await this.consultarOnt();
-  }
-
-  async consultarOnt(): Promise<void> {
-    if (!this.onuSn) return;
-    if (this.disableOntAccion) return;
-
-    // ✅ siempre muestra panel de resultados
-    this.showOntPanel = true;
-
-    // ✅ precarga ONU en input
-    this.ontForm.patchValue({ sn: this.onuSn }, { emitEvent: false });
-    this.normalizeOntInput('sn');
-
-    // ✅ asegura sesión sin pedir “Conectar”
-    const okReady = await this.ensureOntReady();
-    if (!okReady) return;
-
-    if (this.ontForm.invalid) {
-      this.ontForm.markAllAsTouched();
-      return;
-    }
-
-    this.ontEstado = 'CONECTANDO';
-    this.ontMensaje = '';
-    this.ontResult = null;
-
-    try {
-      const snInput = String(this.ontForm.value.sn || '');
-      const snHex16 = this.toHex16(snInput);
-
-      const data = await lastValueFrom(this.oltService.ontInfoBySn(snHex16));
-      if (!data?.ok) throw { error: data };
-
-      this.ontEstado = 'OK';
-      this.ontResult = data;
-    } catch (err: any) {
-      const status = err?.status;
-      const backendMsg =
-        err?.error?.error?.message ||
-        err?.error?.message ||
-        err?.error?.error ||
-        err?.message;
-
-      if (status === 429) {
-        this.ontEstado = 'COOLDOWN';
-        this.ontMensaje = backendMsg || 'Espera antes de reintentar';
-        this.ontResult = null;
-        this.startCooldownFromMessageOnt(this.ontMensaje);
-        return;
-      }
-
-      this.ontEstado = 'ERROR';
-      this.ontMensaje = backendMsg || 'No se pudo consultar la ONT';
-      this.ontResult = null;
-    }
-  }
-
-  get ontEstadoTexto(): string {
-    switch (this.ontEstado) {
-      case 'READY':
-        return 'LISTO';
-      case 'READYING':
-        return 'PREPARANDO';
-      case 'OK':
-        return 'OK';
-      case 'ERROR':
-        return 'ERROR';
-      case 'COOLDOWN':
-        return 'ESPERA';
-      case 'CONECTANDO':
-        return 'CONSULTANDO';
-      default:
-        return 'IDLE';
-    }
-  }
-
-  get runStateClass(): string {
-    const v = String(this.ontResult?.runState ?? '')
-      .toLowerCase()
-      .trim();
-
-    if (!v) return 'ont-pill--neutral';
-
-    // ✅ estados “buenos”
-    if (v.includes('online') || v === 'up' || v.includes('active')) {
-      return 'ont-pill--ok';
-    }
-
-    // ⚠️ estados “warning”
-    if (v.includes('unknown') || v.includes('standby') || v.includes('init')) {
-      return 'ont-pill--warn';
-    }
-
-    // ❌ estados “malos”
-    if (
-      v.includes('offline') ||
-      v.includes('down') ||
-      v.includes('los') ||
-      v.includes('dying') ||
-      v.includes('power') ||
-      v.includes('deregister')
-    ) {
-      return 'ont-pill--bad';
-    }
-
-    return 'ont-pill--neutral';
-  }
-
-  get runStateBadgeClass(): string {
-    const v = String(this.ontResult?.runState ?? '')
-      .toLowerCase()
-      .trim();
-
-    // ✅ “buenos”
-    if (v.includes('online') || v === 'up' || v.includes('active')) {
-      return 'bg-success text-white';
-    }
-
-    // ❌ “malos”
-    if (
-      v.includes('offline') ||
-      v.includes('down') ||
-      v.includes('los') ||
-      v.includes('dying') ||
-      v.includes('deregister') ||
-      v.includes('power')
-    ) {
-      return 'bg-danger text-white';
-    }
-
-    // ⚠️ “warning”
-    if (v.includes('unknown') || v.includes('standby') || v.includes('init')) {
-      return 'bg-warning text-dark';
-    }
-
-    return 'bg-secondary text-white';
   }
 }

@@ -1,0 +1,82 @@
+<div class="mapa-olt">
+  <div class="card-body">
+    @if (selectedCaja()) {
+      <div class="caja-banner">
+        <div class="caja-banner__info">
+          <div class="fw-bold">{{ selectedCaja()?.caja_nombre }}</div>
+          <div class="small text-muted">
+            {{ selectedCaja()?.caja_tipo }} • {{ selectedCaja()?.caja_estado }}
+          </div>
+
+          <div class="small mt-1">
+            <strong>OLT:</strong>
+            @if (hasOlt(selectedCaja())) {
+              {{ selectedCaja()?.olt_id }}
+              @if (selectedCaja()?.olt_nombre) {
+                — {{ selectedCaja()?.olt_nombre }}
+              }
+            } @else {
+              <span class="text-danger">Sin OLT asociada</span>
+            }
+          </div>
+        </div>
+
+        <div class="caja-banner__actions">
+          <button
+            type="button"
+            class="btn btn-sm btn-danger"
+            [disabled]="!hasOlt(selectedCaja())"
+            (click)="usarCajaSeleccionada()"
+          >
+            Usar esta caja
+          </button>
+        </div>
+      </div>
+    }
+
+    <section class="mapa-container">
+      @if (!isReady || !isGoogleMapsLoaded || !myposition()) {
+        <div class="loading-overlay">
+          <div class="spinner"></div>
+          <p>Cargando mapa…</p>
+        </div>
+      } @else {
+        @if (cargando) {
+          <div class="loading-overlay inner">
+            <div class="spinner"></div>
+            <p>Cargando NAPs…</p>
+          </div>
+        }
+
+        <google-map
+          width="100%"
+          height="100%"
+          [zoom]="zoom()"
+          [center]="myposition()!"
+          [options]="{
+            mapTypeId: 'satellite',
+            streetViewControl: false,
+            mapTypeControl: false,
+            fullscreenControl: false,
+            gestureHandling: 'greedy',
+          }"
+        >
+          @for (m of markers; track m.id) {
+            <map-marker
+              [position]="m.position"
+              [title]="m.title"
+              [label]="{
+                text: m.label,
+                color: '#ffeb3b',
+                fontWeight: '900',
+                fontSize: '15px',
+              }"
+              [options]="m.options"
+              (mapClick)="onMarkerClick(m)"
+            ></map-marker>
+          }
+        </google-map>
+      }
+    </section>
+  </div>
+</div>

@@ -3,6 +3,15 @@ import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 
+export interface OltMeta {
+  id: number;
+  nombre: string | null;
+  ip: string | null;
+  vendor?: string | null;
+  ciudad?: string | null;
+  sucursalId?: number | null;
+}
+
 export interface OntOpticalInfo {
   available: boolean;
   reason?: string;
@@ -17,13 +26,17 @@ export interface OltReadyResponse {
   message?: string;
   time?: string | null;
   status?: any;
+  olt?: OltMeta | null;
   error?: any;
+  raw?: string;
 }
 
 export interface OntInfoBySnResponse {
   ok: boolean;
   cmdId: string;
   sn: string;
+  snLabel?: string | null;
+  snInput?: string | null;
   fsp: string | null;
   ontId: number | null;
   runState: string | null;
@@ -35,6 +48,7 @@ export interface OntInfoBySnResponse {
   lastDyingGaspTime: string | null;
   onlineDuration: string | null;
   optical?: OntOpticalInfo;
+  olt?: OltMeta | null;
   raw?: string;
   rawOpt?: string;
 }
@@ -57,11 +71,14 @@ export interface OntDeleteResponse {
   cmdId: string;
   message: string;
   sn: string;
+  snLabel?: string | null;
+  snInput?: string | null;
   fsp: string;
   ontId: number;
   description: string | null;
   wasOnline: boolean;
   warning?: string;
+  olt?: OltMeta | null;
   servicePorts: {
     deleted: ServicePortDeleted[];
     failed: ServicePortFailed[];
@@ -71,7 +88,6 @@ export interface OntDeleteResponse {
   rawDelete?: string;
 }
 
-/** ====== NUEVO: AUTOFIND ====== */
 export interface OntAutofindAllItem {
   number: number;
   fsp: string;
@@ -88,10 +104,10 @@ export interface OntAutofindAllResponse {
   cmdId: string;
   total: number;
   items: OntAutofindAllItem[];
+  olt?: OltMeta | null;
   raw?: string;
 }
 
-/** ====== NUEVO: PROVISION ====== */
 export interface ServicePortInfo {
   index: number;
   vlanId: number;
@@ -105,6 +121,8 @@ export interface OntProvisionAutofindResponse {
   ok: boolean;
   cmdId: string;
   sn: string;
+  snLabel?: string | null;
+  snInput?: string | null;
   fsp: string;
   ontId: number;
   desc: string;
@@ -114,7 +132,8 @@ export interface OntProvisionAutofindResponse {
   traffic: { inbound: number; outbound: number };
   servicePorts: ServicePortInfo[];
   profiles?: { line: string; srv: string };
-  ontType?: string;
+  ontType?: string | null;
+  olt?: OltMeta | null;
   rawAdd?: string;
   rawNative?: string;
   rawSpCreate?: string;
@@ -127,50 +146,137 @@ export class OltService {
 
   constructor(private http: HttpClient) {}
 
-  ready(): Observable<OltReadyResponse> {
+  ready(oltId: number): Observable<OltReadyResponse> {
     return this.http.get<OltReadyResponse>(`${this.baseUrl}/ready`, {
+      params: { oltId: String(oltId) },
       withCredentials: true,
     });
   }
 
+  status(oltId: number): Observable<any> {
+    return this.http.get<any>(`${this.baseUrl}/status`, {
+      params: { oltId: String(oltId) },
+      withCredentials: true,
+    });
+  }
+
+  testTime(oltId: number): Observable<any> {
+    return this.http.get<any>(`${this.baseUrl}/test`, {
+      params: { oltId: String(oltId) },
+      withCredentials: true,
+    });
+  }
+
+  close(oltId: number): Observable<any> {
+    return this.http.post<any>(
+      `${this.baseUrl}/close`,
+      { oltId },
+      { withCredentials: true },
+    );
+  }
+
   ontInfoBySn(
+    oltId: number,
     sn: string,
     includeOptical: boolean = true,
   ): Observable<OntInfoBySnResponse> {
-    return this.http.post<OntInfoBySnResponse>(`${this.baseUrl}/exec`, {
-      cmdId: 'ONT_INFO_BY_SN',
-      args: { sn, includeOptical },
-    });
+    return this.http.post<OntInfoBySnResponse>(
+      `${this.baseUrl}/exec`,
+      {
+        cmdId: 'ONT_INFO_BY_SN',
+        args: { oltId, sn, includeOptical },
+      },
+      { withCredentials: true },
+    );
   }
 
-  ontDelete(sn: string): Observable<OntDeleteResponse> {
-    return this.http.post<OntDeleteResponse>(`${this.baseUrl}/exec`, {
-      cmdId: 'ONT_DELETE',
-      args: { sn },
-    });
+  ontDelete(oltId: number, sn: string): Observable<OntDeleteResponse> {
+    return this.http.post<OntDeleteResponse>(
+      `${this.baseUrl}/exec`,
+      {
+        cmdId: 'ONT_DELETE',
+        args: { oltId, sn },
+      },
+      { withCredentials: true },
+    );
   }
 
-  // ✅ NUEVO
-  ontAutofindAll(): Observable<OntAutofindAllResponse> {
-    return this.http.post<OntAutofindAllResponse>(`${this.baseUrl}/exec`, {
-      cmdId: 'ONT_AUTOFIND_ALL',
-      args: {},
-    });
+  ontAutofindAll(oltId: number): Observable<OntAutofindAllResponse> {
+    return this.http.post<OntAutofindAllResponse>(
+      `${this.baseUrl}/exec`,
+      {
+        cmdId: 'ONT_AUTOFIND_ALL',
+        args: { oltId },
+      },
+      { withCredentials: true },
+    );
   }
 
-  // ✅ NUEVO
   ontProvisionAutofind(
+    oltId: number,
     sn: string,
     desc: string,
     trafficIn: number,
     trafficOut: number,
+    ontType?: string,
   ): Observable<OntProvisionAutofindResponse> {
     return this.http.post<OntProvisionAutofindResponse>(
       `${this.baseUrl}/exec`,
       {
         cmdId: 'ONT_PROVISION_AUTOFIND',
-        args: { sn, desc, trafficIn, trafficOut },
+        args: { oltId, sn, desc, trafficIn, trafficOut, ontType },
       },
+      { withCredentials: true },
+    );
+  }
+
+  ontNextFreeIdByFsp(
+    oltId: number,
+    fsp: string,
+  ): Observable<{
+    ok: boolean;
+    cmdId: string;
+    fsp: string;
+    range: { min: number; max: number };
+    usedCount: number;
+    usedIds?: number[];
+    freeId: number | null;
+    olt?: OltMeta | null;
+    rawList?: string;
+  }> {
+    return this.http.post<any>(
+      `${this.baseUrl}/exec`,
+      {
+        cmdId: 'ONT_NEXT_FREE_ID',
+        args: { oltId, fsp },
+      },
+      { withCredentials: true },
+    );
+  }
+
+  ontNextFreeIdByPort(
+    oltId: number,
+    f: number,
+    s: number,
+    pon: number,
+  ): Observable<{
+    ok: boolean;
+    cmdId: string;
+    fsp: string;
+    range: { min: number; max: number };
+    usedCount: number;
+    usedIds?: number[];
+    freeId: number | null;
+    olt?: OltMeta | null;
+    rawList?: string;
+  }> {
+    return this.http.post<any>(
+      `${this.baseUrl}/exec`,
+      {
+        cmdId: 'ONT_NEXT_FREE_ID',
+        args: { oltId, f, s, pon },
+      },
+      { withCredentials: true },
     );
   }
 }

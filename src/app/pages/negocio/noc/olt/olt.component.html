@@ -1,27 +1,12 @@
 @if (isReady) {
-  <main class="container mt-3">
+  <main class="container mt-1 olt-page">
     <div class="card">
       <div class="card-body">
-        <!-- HEADER: Tabs + Estado -->
-        <!-- HEADER: Tabs (estilo anterior) + Estado -->
+        <!-- HEADER -->
         <div
           class="d-flex align-items-center justify-content-between gap-2 flex-wrap"
         >
           <div class="d-flex gap-2 flex-wrap">
-            <button
-              type="button"
-              class="btn"
-              [ngClass]="
-                tab === 'CONECTAR'
-                  ? 'btn-outline-primary'
-                  : 'btn-outline-secondary'
-              "
-              (click)="setTab('CONECTAR')"
-              [disabled]="isBusy && tab !== 'CONECTAR'"
-            >
-              🔌 Conectar
-            </button>
-
             <button
               type="button"
               class="btn"
@@ -55,79 +40,73 @@
         <hr class="my-3" />
 
         <!-- =========================
-             TAB: CONECTAR
-        ========================== -->
-        @if (tab === "CONECTAR") {
-          <div class="d-flex justify-content-end mb-2">
-            <button
-              type="button"
-              class="btn btn-outline-secondary"
-              (click)="limpiarTodo()"
-              [disabled]="isBusy"
-            >
-              🧹 Limpiar
-            </button>
-          </div>
-
-          <div class="p-3 rounded border bg-light">
-            <div
-              class="d-flex align-items-center justify-content-between flex-wrap gap-2"
-            >
-              <div>
-                <div class="fw-bold">Sesión OLT</div>
-                <div class="text-muted small">
-                  Presiona conectar para preparar la sesión (evita prompts
-                  viejos).
-                </div>
-              </div>
-
-              <button
-                type="button"
-                class="btn btn-outline-primary"
-                (click)="warmupReady()"
-                [disabled]="disableConectar"
-              >
-                @if (estado === "READYING") {
-                  <span
-                    class="spinner-border spinner-border-sm me-2"
-                    role="status"
-                    aria-hidden="true"
-                  ></span>
-                  Conectando...
-                } @else {
-                  🔌 Conectar
-                }
-              </button>
-            </div>
-
-            @if (estado === "COOLDOWN") {
-              <div class="text-warning fw-semibold mt-2">
-                Reintento en {{ cooldownSec }}s
-              </div>
-            }
-
-            @if (estado === "ERROR") {
-              <div class="text-danger fw-semibold mt-2">
-                {{ mensaje || "Error con OLT. Reintenta conexión." }}
-              </div>
-            }
-          </div>
-        }
-
-        <!-- =========================
              TAB: CONSULTAS
         ========================== -->
         @if (tab === "CONSULTAS") {
-          <div class="d-flex justify-content-end mb-2">
-            <button
-              type="button"
-              class="btn btn-outline-secondary"
-              (click)="limpiarConsultas()"
-              [disabled]="isBusy"
-            >
-              🧹 Limpiar
-            </button>
+          <div class="result-card mb-3">
+            <div class="fw-bold mb-2">OLT para consulta</div>
+
+            <div class="row g-2 align-items-end">
+              <div class="col-12 col-md-7">
+                <label class="form-label mb-1">Seleccione OLT</label>
+                <select
+                  class="form-select"
+                  [ngModel]="selectedOltId"
+                  [ngModelOptions]="{ standalone: true }"
+                  (ngModelChange)="onConsultaOltChange($event)"
+                  [disabled]="isBusy || loadingOlts"
+                >
+                  <option [ngValue]="null">— Seleccione una OLT —</option>
+                  @for (o of oltsDisponibles; track o.id) {
+                    <option [ngValue]="o.id">
+                      {{ o.olt_nombre }}
+                      @if (o.olt_ciudad) {
+                        - {{ o.olt_ciudad }}
+                      }
+                    </option>
+                  }
+                </select>
+              </div>
+
+              <div class="col-12 col-md-5">
+                <div class="d-flex gap-2">
+                  <button
+                    type="button"
+                    class="btn btn-outline-primary flex-fill"
+                    (click)="warmupReady()"
+                    [disabled]="isBusy || !hasSelectedOlt"
+                  >
+                    @if (estado === "READYING") {
+                      <span
+                        class="spinner-border spinner-border-sm me-2"
+                        role="status"
+                        aria-hidden="true"
+                      ></span>
+                      Conectando...
+                    } @else {
+                      🔌 Conectar
+                    }
+                  </button>
+
+                  <button
+                    type="button"
+                    class="btn btn-outline-secondary"
+                    (click)="limpiarConsultas()"
+                    [disabled]="isBusy"
+                  >
+                    🧹 Limpiar
+                  </button>
+                </div>
+              </div>
+            </div>
           </div>
+
+          @if (!hasSelectedOlt) {
+            <div class="alert alert-warning py-2 mb-3">
+              Debes seleccionar primero una caja en el flujo de ingreso para
+              dejar una OLT activa.
+            </div>
+          }
 
           <form [formGroup]="oltForm" (ngSubmit)="consultarOnt()">
             <div class="row g-2 align-items-end">
@@ -138,14 +117,14 @@
                   class="form-control"
                   formControlName="sn"
                   (input)="normalizeInput('sn')"
-                  [disabled]="isBusy"
+                  [disabled]="isBusy || !hasSelectedOlt"
                 />
 
                 @if (checkError("sn", "required")) {
                   <small class="text-danger">Requerido</small>
                 }
                 @if (checkError("sn", "snInvalid")) {
-                  <small class="text-danger">Formato inválido..</small>
+                  <small class="text-danger">Formato inválido.</small>
                 }
               </div>
 
@@ -156,7 +135,7 @@
                   [disabled]="disableConsultar"
                 >
                   @if (estado === "CONECTANDO") {
-                    Conectando...
+                    Consultando...
                   } @else if (estado === "COOLDOWN") {
                     Espera...
                   } @else if (estado === "ELIMINANDO") {
@@ -180,9 +159,9 @@
                   </small>
                 }
 
-                @if (estado === "IDLE") {
+                @if (estado === "IDLE" && hasSelectedOlt) {
                   <small class="text-muted fw-semibold d-block mt-2">
-                    Ve a “Conectar” o presiona conectar para preparar la sesión.
+                    Presiona conectar o consulta directamente.
                   </small>
                 }
               </div>
@@ -193,6 +172,9 @@
             <div class="mt-3 result-card">
               <div class="row g-2">
                 <div class="col-12 col-md-6">
+                  <div class="kv">
+                    <span>OLT</span><b>{{ currentOltLabel }}</b>
+                  </div>
                   <div class="kv">
                     <span>SN</span><b>{{ result.sn }}</b>
                   </div>
@@ -306,199 +288,256 @@
              TAB: INGRESO DE ONT
         ========================== -->
         @if (tab === "INGRESO") {
-          <div
-            class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-2"
-          >
-            <div class="d-flex gap-2 flex-wrap">
-              <button
-                type="button"
-                class="btn btn-outline-dark"
-                (click)="buscarAutofind()"
-                [disabled]="isBusy"
-              >
-                🔎 Buscar Autofind
-              </button>
+          <!-- BLOQUE 1 -->
+          <div class="result-card mb-3">
+            <div class="fw-bold mb-2">1. Seleccione el servicio</div>
+
+            <div class="row g-2 align-items-end">
+              <div class="col-12">
+                <label class="form-label mb-1">Buscar por nombre</label>
+
+                <div class="sugerencias-wrap">
+                  <input
+                    type="text"
+                    class="form-control"
+                    [formControl]="busquedaCtrl"
+                    (keydown)="onNombreKeydown($event)"
+                    (blur)="onInputBlur()"
+                    (focus)="onInputFocus()"
+                    placeholder="Ingrese el nombre del cliente"
+                    autocomplete="off"
+                    [attr.aria-autocomplete]="'list'"
+                    [attr.aria-expanded]="
+                      showSugerencias && nombresFiltrados.length > 0
+                        ? 'true'
+                        : 'false'
+                    "
+                    [attr.aria-controls]="'lista-sugerencias-olt'"
+                    [disabled]="isBusy"
+                  />
+
+                  @if (showSugerencias && nombresFiltrados.length > 0) {
+                    <div
+                      id="lista-sugerencias-olt"
+                      class="sugerencias"
+                      role="listbox"
+                    >
+                      @for (
+                        c of nombresFiltrados;
+                        track c.cedula;
+                        let i = $index
+                      ) {
+                        <div
+                          role="option"
+                          [attr.aria-selected]="i === highlightedIndex"
+                          class="sugerencia-item"
+                          [class.active]="i === highlightedIndex"
+                          (mouseenter)="highlightedIndex = i"
+                          (mousedown)="seleccionarNombre(c)"
+                        >
+                          {{ c.nombre_completo }}
+                        </div>
+                      }
+                    </div>
+                  }
+                </div>
+              </div>
             </div>
 
-            <button
-              type="button"
-              class="btn btn-outline-secondary"
-              (click)="limpiarIngreso()"
-              [disabled]="isBusy"
-            >
-              🧹 Limpiar
-            </button>
-          </div>
+            @if (loadingServicios) {
+              <div class="small text-muted mt-2">Buscando servicios...</div>
+            }
 
-          @if (autofindItems?.length) {
-            <div class="p-2 border rounded mb-3 bg-white">
-              <div class="fw-bold mb-2">Autofind detectadas</div>
-              <div class="table-responsive">
-                <table class="table table-sm table-striped mb-0">
+            @if (serviciosEncontrados.length) {
+              <div class="table-responsive mt-3">
+                <table class="table table-sm table-striped align-middle mb-0">
                   <thead>
                     <tr>
-                      <th>#</th>
-                      <th>F/S/P</th>
-                      <th>SN</th>
-                      <th>ONT-Type</th>
-                      <th>Hora</th>
-                      <th></th>
+                      <th style="width: 60px">Sel.</th>
+                      <th>Orden</th>
+                      <th>Dirección</th>
+                      <th>Referencia</th>
+                      <th>Plan contratado</th>
                     </tr>
                   </thead>
                   <tbody>
-                    @for (it of autofindItems; track it.number) {
-                      <tr>
-                        <td>{{ it.number }}</td>
-                        <td>{{ it.fsp }}</td>
-                        <td class="nowrap">{{ it.snHex }}</td>
-                        <td>{{ it.ontEquipmentId || "—" }}</td>
-                        <td class="nowrap">{{ it.autofindTime || "—" }}</td>
-                        <td class="text-end">
-                          <button
-                            type="button"
-                            class="btn btn-sm btn-dark"
-                            (click)="selectAutofind(it)"
-                            [disabled]="isBusy"
-                          >
-                            Usar
-                          </button>
+                    @for (item of serviciosEncontrados; track item.ord_ins) {
+                      <tr
+                        [class.table-active]="
+                          servicioSeleccionado?.ord_ins === item.ord_ins
+                        "
+                      >
+                        <td>
+                          <input
+                            type="radio"
+                            name="servicioSeleccionado"
+                            [checked]="
+                              servicioSeleccionado?.ord_ins === item.ord_ins
+                            "
+                            (change)="seleccionarServicio(item)"
+                          />
                         </td>
+                        <td>{{ item.ord_ins }}</td>
+                        <td>{{ item.direccion || "—" }}</td>
+                        <td>{{ item.referencia || "—" }}</td>
+                        <td>{{ item.plan_contratado || "—" }}</td>
                       </tr>
                     }
                   </tbody>
                 </table>
               </div>
-            </div>
-          }
+            } @else if (
+              !loadingServicios && (busquedaCtrl.value ?? "").trim().length >= 2
+            ) {
+              <div class="small text-muted mt-3">
+                No se encontraron servicios para esa búsqueda.
+              </div>
+            }
+          </div>
 
-          <form [formGroup]="ingresoForm" (ngSubmit)="ingresarOnt()">
+          <!-- BLOQUE 2 -->
+          <div class="result-card mb-3">
+            <div class="fw-bold mb-2">2. Seleccione la caja</div>
+
             <div class="row g-2">
               <div class="col-12 col-md-6">
-                <label class="form-label mb-1">Serie ONT</label>
-                <input
-                  type="text"
-                  class="form-control"
-                  formControlName="sn"
-                  (input)="normalizeIngresoSn()"
-                  [disabled]="isBusy"
-                />
-                @if (checkIngresoError("sn", "required")) {
-                  <small class="text-danger">Requerido</small>
-                }
-                @if (checkIngresoError("sn", "snInvalid")) {
-                  <small class="text-danger">Formato inválido..</small>
-                }
+                <div class="kv">
+                  <span>Servicio</span>
+                  <b>
+                    @if (servicioSeleccionado) {
+                      {{ servicioSeleccionado.ord_ins }} -
+                      {{ servicioSeleccionado.nombre_completo }}
+                    } @else {
+                      Sin seleccionar
+                    }
+                  </b>
+                </div>
               </div>
 
               <div class="col-12 col-md-6">
-                <label class="form-label mb-1">Descripción</label>
-                <input
-                  type="text"
-                  class="form-control"
-                  formControlName="desc"
-                  (input)="normalizeIngresoDesc()"
-                  [disabled]="isBusy"
-                  placeholder="138608_OFICINA_OPERATIVA"
-                />
-                @if (checkIngresoError("desc", "required")) {
-                  <small class="text-danger">Requerido</small>
-                }
-              </div>
-
-              <div class="col-12 col-md-3">
-                <label class="form-label mb-1">Traffic IN</label>
-                <input
-                  type="number"
-                  class="form-control"
-                  formControlName="trafficIn"
-                  [disabled]="isBusy"
-                />
-              </div>
-
-              <div class="col-12 col-md-3">
-                <label class="form-label mb-1">Traffic OUT</label>
-                <input
-                  type="number"
-                  class="form-control"
-                  formControlName="trafficOut"
-                  [disabled]="isBusy"
-                />
-              </div>
-
-              <div class="col-12 col-md-6 d-flex align-items-end">
-                <button
-                  type="submit"
-                  class="btn btn-dark w-100 btn-big"
-                  [disabled]="disableIngresar"
-                >
-                  @if (estado === "INGRESANDO") {
-                    Ingresando...
-                  } @else if (estado === "READYING") {
-                    Conectando...
-                  } @else if (estado === "COOLDOWN") {
-                    Espera...
-                  } @else {
-                    Ingresar ONT
-                  }
-                </button>
+                <div class="kv">
+                  <span>Caja / OLT</span>
+                  <b>
+                    @if (cajaSeleccionada) {
+                      {{ cajaSeleccionada.cajaNombre }} / {{ currentOltLabel }}
+                    } @else {
+                      Sin seleccionar
+                    }
+                  </b>
+                </div>
               </div>
             </div>
-          </form>
 
-          @if (provisionResult) {
-            <div class="mt-3 result-card">
-              <div class="fw-bold mb-2">Resultado ingreso</div>
-              <div class="row g-2">
-                <div class="col-12 col-md-6">
-                  <div class="kv">
-                    <span>SN</span><b>{{ provisionResult.sn }}</b>
-                  </div>
-                  <div class="kv">
-                    <span>F/S/P</span><b>{{ provisionResult.fsp }}</b>
-                  </div>
-                  <div class="kv">
-                    <span>ONT-ID</span><b>{{ provisionResult.ontId }}</b>
-                  </div>
-                </div>
-                <div class="col-12 col-md-6">
-                  <div class="kv">
-                    <span>VLAN</span><b>{{ provisionResult.vlan }}</b>
-                  </div>
-                  <div class="kv">
-                    <span>Service-port</span
-                    ><b>{{
-                      provisionResult.servicePorts?.[0]?.index || "—"
-                    }}</b>
-                  </div>
-                  <div class="kv">
-                    <span>Estado SP</span
-                    ><b>{{
-                      provisionResult.servicePorts?.[0]?.state || "—"
-                    }}</b>
-                  </div>
-                </div>
-                <div class="col-12">
-                  <div class="kv">
-                    <span>Descripción</span><b>{{ provisionResult.desc }}</b>
-                  </div>
-                </div>
-              </div>
-
-              <hr class="my-3" />
-              <div class="d-flex justify-content-end gap-2 flex-wrap">
-                <button
-                  type="button"
-                  class="btn btn-outline-secondary"
-                  (click)="irAConsultasConSn(provisionResult.sn)"
-                  [disabled]="isBusy"
-                >
-                  🔄 Consultar esta ONT
-                </button>
-              </div>
+            <div class="d-flex justify-content-end mt-3">
+              <button
+                type="button"
+                class="btn btn-outline-danger"
+                (click)="abrirMapaModal()"
+                [disabled]="isBusy || !servicioSeleccionado"
+              >
+                🗺️ Abrir mapa
+              </button>
             </div>
-          }
+          </div>
+
+          <!-- BLOQUE 3 -->
+          <div class="result-card mb-3">
+            <div class="fw-bold mb-2">3. Seleccione SN y FSP</div>
+
+            @if (!cajaSeleccionada) {
+              <div class="text-muted small">
+                Seleccione primero una caja en el mapa para cargar el autofind.
+              </div>
+            } @else if (loadingAutofind) {
+              <div class="text-muted small">Buscando ONTs en autofind...</div>
+            } @else if (autofindItems.length) {
+              <div class="table-responsive">
+                <table class="table table-sm table-striped align-middle mb-0">
+                  <thead>
+                    <tr>
+                      <th style="width: 60px">Sel.</th>
+                      <th>SN</th>
+                      <th>FSP</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    @for (it of autofindItems; track it.snHex) {
+                      <tr
+                        [class.table-active]="
+                          autofindSeleccionada?.snHex === it.snHex
+                        "
+                      >
+                        <td>
+                          <input
+                            type="radio"
+                            name="autofindSeleccionada"
+                            [checked]="autofindSeleccionada?.snHex === it.snHex"
+                            (change)="seleccionarAutofind(it)"
+                          />
+                        </td>
+                        <td class="nowrap">{{ it.snHex }}</td>
+                        <td>{{ it.fsp || "—" }}</td>
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+              </div>
+            } @else if (cajaSeleccionada && !loadingAutofind) {
+              <div class="text-muted small">
+                No se encontraron ONTs en autofind para la OLT seleccionada.
+              </div>
+            }
+          </div>
+
+          <div class="provision-card__actions">
+            <button
+              type="button"
+              class="btn btn-success"
+              (click)="agregarOntDesdeFlujo()"
+              [disabled]="!canAgregarOnt"
+            >
+              @if (estado === "INGRESANDO") {
+                Agregando...
+              } @else {
+                Agregar ONT
+              }
+            </button>
+          </div>
         }
       </div>
     </div>
   </main>
+
+  <!-- MODAL MAPA -->
+  @if (showMapaModal) {
+    <div class="olt-modal-fullscreen">
+      <div class="olt-modal-fullscreen__head">
+        <div class="fw-bold">Seleccione la caja</div>
+
+        <button
+          type="button"
+          class="btn btn-sm btn-outline-dark"
+          (click)="cerrarMapaModal()"
+        >
+          Cerrar
+        </button>
+      </div>
+
+      <div class="olt-modal-fullscreen__body">
+        <app-mapa-olt (cajaSelected)="onCajaOltSelected($event)"></app-mapa-olt>
+      </div>
+    </div>
+  }
+
+  @if (isBusy) {
+    <div class="olt-loading-backdrop">
+      <div class="olt-loading-card">
+        <div class="olt-loading-spinner"></div>
+        <div class="olt-loading-title">Espere...</div>
+        <div class="olt-loading-text">
+          {{ mensaje || "Procesando operación en OLT" }}
+        </div>
+      </div>
+    </div>
+  }
 }
