@@ -242,9 +242,9 @@ export class OltComponent implements OnInit, OnDestroy {
 
           this.loadingServicios = true;
 
-          return from(this.clientesService.buscarClientesActivos(v, 10)).pipe(
-            catchError(() => of([] as ClienteSugerencia[])),
-          );
+          return from(
+            this.clientesService.buscarClientesActivosFibra(v, 10),
+          ).pipe(catchError(() => of([] as ClienteSugerencia[])));
         }),
       )
       .subscribe((list) => {
@@ -671,7 +671,7 @@ export class OltComponent implements OnInit, OnDestroy {
 
     try {
       const detalle =
-        await this.clientesService.getInfoClientesArrayActivos(cedula);
+        await this.clientesService.getInfoClientesArrayActivosFibra(cedula);
 
       if (!detalle?.servicios?.length) {
         this.clienteSeleccionado = null;

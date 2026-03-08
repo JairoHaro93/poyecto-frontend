@@ -109,4 +109,25 @@ export class ClientesService {
       }),
     );
   }
+
+  buscarClientesActivosFibra(q: string, limit = 10) {
+    const params = new HttpParams().set('q', q).set('limit', String(limit));
+    return lastValueFrom(
+      this.httpClient.get<{ cedula: string; nombre_completo: string }[]>(
+        `${this.baseUrl}/activos-fibra`,
+        { params, withCredentials: true },
+      ),
+    );
+  }
+
+  getInfoClientesArrayActivosFibra(cedula: string): Promise<Iclientes> {
+    return lastValueFrom(
+      this.httpClient.get<Iclientes>(
+        `${this.baseUrl}/data-act-fibra/${cedula}`,
+        {
+          withCredentials: true,
+        },
+      ),
+    );
+  }
 }
