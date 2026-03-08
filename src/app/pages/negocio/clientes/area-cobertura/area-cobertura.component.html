@@ -17,9 +17,9 @@
             streetViewControl: false,
             mapTypeControl: false,
             fullscreenControl: false,
+            gestureHandling: 'greedy',
           }"
           (mapClick)="onMapClick($event)"
-          (mapIdle)="onMapIdle()"
         >
           @for (m of markers; track m.id) {
             <map-marker
@@ -38,7 +38,6 @@
       }
     }
 
-    <!-- Panel distancia -->
     @if (measuring()) {
       <div class="distance-panel">
         <div class="d-flex align-items-center gap-2">
@@ -76,7 +75,7 @@
         </div>
       </div>
     }
-    <!-- Botón distancia -->
+
     <div class="fab-toolbar">
       <button
         class="btn-dark"

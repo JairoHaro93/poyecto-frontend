@@ -8,7 +8,7 @@ import {
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { GoogleMap, MapMarker } from '@angular/google-maps';
-import { environment } from '../../../../../environments/environment'; // ajusta si es necesario
+import { environment } from '../../../../../environments/environment';
 import { CajasService } from '../../../../services/negocio_latacunga/cajas.services';
 import { ICajas } from '../../../../interfaces/negocio/infraestructura/icajas.interface';
 
@@ -42,8 +42,8 @@ export class AreaCoberturaComponent implements OnInit, AfterViewInit {
 
   isGoogleMapsLoaded = false;
   isReady = false;
+  cargando = false;
 
-  // mapa
   myposition = signal<google.maps.LatLng | null>(null);
   zoom = signal<number>(13);
 
@@ -52,7 +52,6 @@ export class AreaCoberturaComponent implements OnInit, AfterViewInit {
     lng: -78.616569,
   };
 
-  // data
   markers: MarkerVm[] = [];
   private iconCache = new Map<string, google.maps.Icon>();
 
@@ -63,9 +62,11 @@ export class AreaCoberturaComponent implements OnInit, AfterViewInit {
   distanceMeters = computed(() => {
     const pts = this.measurePoints();
     if (pts.length < 2) return 0;
+
     let sum = 0;
-    for (let i = 1; i < pts.length; i++)
+    for (let i = 1; i < pts.length; i++) {
       sum += this.haversineMeters(pts[i - 1], pts[i]);
+    }
     return sum;
   });
 
@@ -84,33 +85,43 @@ export class AreaCoberturaComponent implements OnInit, AfterViewInit {
     this.measuring.set(true);
     this.measurePoints.set([]);
     this.applyCursor();
-    this.updateMeasureGraphics(); // ✅
+    this.updateMeasureGraphics();
   }
 
   stopMeasuring() {
     this.measuring.set(false);
     this.applyCursor();
-    this.updateMeasureGraphics(); // ✅
+    this.updateMeasureGraphics();
   }
 
   clearMeasure() {
     this.measurePoints.set([]);
-    this.updateMeasureGraphics(); // ✅
+    this.updateMeasureGraphics();
   }
 
   undoMeasure() {
     const arr = this.measurePoints();
     if (!arr.length) return;
     this.measurePoints.set(arr.slice(0, -1));
-    this.updateMeasureGraphics(); // ✅
+    this.updateMeasureGraphics();
   }
 
-  // ===== Linea/puntos (Google Maps objects) =====
+  // =====  PUNTERO =====
+  private readonly cursorTargetRed =
+    "url('data:image/svg+xml;utf8," +
+    '<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2232%22 height=%2232%22 viewBox=%220 0 32 32%22>' +
+    '<circle cx=%2216%22 cy=%2216%22 r=%224%22 fill=%22%23e50914%22/>' +
+    '<circle cx=%2216%22 cy=%2216%22 r=%229%22 fill=%22none%22 stroke=%22%23e50914%22 stroke-width=%222%22/>' +
+    '<path d=%22M16 1v6M16 25v6M1 16h6M25 16h6%22 stroke=%22%23e50914%22 stroke-width=%222%22/>' +
+    "</svg>') 16 16, crosshair";
+
+  // ===== LÍNEA / PUNTOS =====
   private measureLine?: google.maps.Polyline;
   private measurePointMarkers: google.maps.Marker[] = [];
 
   private ensureMeasureLine() {
     if (this.measureLine) return;
+
     this.measureLine = new google.maps.Polyline({
       geodesic: true,
       strokeOpacity: 0.95,
@@ -132,6 +143,7 @@ export class AreaCoberturaComponent implements OnInit, AfterViewInit {
     this.ensureMeasureLine();
 
     const pts = this.measurePoints();
+
     if (!this.measuring() || !pts.length) {
       this.measureLine!.setMap(null);
       this.clearMeasureMarkers();
@@ -160,6 +172,7 @@ export class AreaCoberturaComponent implements OnInit, AfterViewInit {
         }),
       );
     }
+
     while (this.measurePointMarkers.length > pts.length) {
       const mk = this.measurePointMarkers.pop()!;
       mk.setMap(null);
@@ -170,15 +183,16 @@ export class AreaCoberturaComponent implements OnInit, AfterViewInit {
     }
   }
 
-  // ===== CARGA CAJAS (solo NAP disponibles) =====
-  private idleTimer?: any;
-  private inFlight = 0;
-
+  // ===== CICLO =====
   async ngOnInit() {
     try {
       this.isReady = false;
       await this.loadGoogleMapsIfNeeded();
       this.initializeMap();
+
+      // ✅ CARGA ÚNICA
+      await this.loadNapDisponibles();
+
       this.isReady = true;
     } catch (e) {
       console.error('Error iniciando AreaCobertura:', e);
@@ -194,18 +208,20 @@ export class AreaCoberturaComponent implements OnInit, AfterViewInit {
         return;
       }
 
-      // cursor inicial
+      gmap.setOptions({
+        mapTypeId: 'satellite',
+        streetViewControl: false,
+        mapTypeControl: false,
+        fullscreenControl: false,
+        gestureHandling: 'greedy',
+        draggableCursor: this.measuring() ? this.cursorTargetRed : undefined,
+        draggingCursor: this.measuring() ? this.cursorTargetRed : undefined,
+      });
+
       this.applyCursor();
-
-      // repintar línea/puntos en cuanto haya mapa
       this.updateMeasureGraphics();
-
-      // primera carga
-      setTimeout(() => this.onMapIdle(), 0);
-
-      // si cambias zoom, no hace falta extra, pero puedes recargar si quieres:
-      gmap.addListener('zoom_changed', () => this.onMapIdle());
     };
+
     wait();
   }
 
@@ -221,9 +237,10 @@ export class AreaCoberturaComponent implements OnInit, AfterViewInit {
   private applyCursor() {
     const gmap = this.mapRef?.googleMap;
     if (!gmap) return;
+
     gmap.setOptions({
-      draggableCursor: this.measuring() ? 'crosshair' : undefined,
-      draggingCursor: this.measuring() ? 'crosshair' : undefined,
+      draggableCursor: this.measuring() ? this.cursorTargetRed : undefined,
+      draggingCursor: this.measuring() ? this.cursorTargetRed : undefined,
     });
   }
 
@@ -240,55 +257,57 @@ export class AreaCoberturaComponent implements OnInit, AfterViewInit {
   }
 
   onMarkerClick(m: MarkerVm) {
-    // En modo distancia: marker también agrega punto (comodísimo)
-    if (this.measuring()) {
-      const lat = Number(m.position.lat.toFixed(6));
-      const lng = Number(m.position.lng.toFixed(6));
-      this.measurePoints.set([...this.measurePoints(), { lat, lng }]);
-      this.updateMeasureGraphics();
-    }
+    if (!this.measuring()) return;
+
+    const lat = Number(m.position.lat.toFixed(6));
+    const lng = Number(m.position.lng.toFixed(6));
+    this.measurePoints.set([...this.measurePoints(), { lat, lng }]);
+    this.updateMeasureGraphics();
   }
 
-  async onMapIdle() {
-    const gmap = this.mapRef?.googleMap;
-    if (!gmap) return;
+  // ===== CARGA ÚNICA DE NAP DISPONIBLES =====
+  private async loadNapDisponibles() {
+    this.cargando = true;
 
-    clearTimeout(this.idleTimer);
-    this.idleTimer = setTimeout(async () => {
-      const bounds = gmap.getBounds();
-      if (!bounds) return;
+    try {
+      const cajas = await this.cajasService.getCajas({
+        tipo: 'NAP',
+        limit: 5000,
+      });
 
-      const ne = bounds.getNorthEast();
-      const sw = bounds.getSouthWest();
+      const napes = (cajas as CajaNap[]).filter((c) => {
+        const tipo = String(c.caja_tipo || '').toUpperCase();
+        const full = (c as any).full === true;
+        const disp = Number((c as any).disponibles ?? 0);
 
-      const stamp = ++this.inFlight;
+        return tipo === 'NAP' && !full && disp > 0;
+      });
 
-      try {
-        // ✅ Pedimos SOLO NAP por bounds
-        const cajas = await this.cajasService.getCajasInBounds(
-          { lat: ne.lat(), lng: ne.lng() },
-          { lat: sw.lat(), lng: sw.lng() },
-          { tipo: 'NAP', limit: 5000 },
+      this.iconCache.clear();
+
+      this.markers = napes
+        .map((c) => this.mapCajaToMarker(c))
+        .filter(Boolean) as MarkerVm[];
+
+      if (this.markers.length > 0) {
+        const first = this.markers[0].position;
+        this.myposition.set(new google.maps.LatLng(first.lat, first.lng));
+        this.zoom.set(13);
+      } else {
+        this.myposition.set(
+          new google.maps.LatLng(
+            this.DEFAULT_CENTER.lat,
+            this.DEFAULT_CENTER.lng,
+          ),
         );
-
-        if (stamp !== this.inFlight) return;
-
-        // ✅ Filtrar SOLO disponibles
-        const napes = (cajas as CajaNap[]).filter((c) => {
-          const full = (c as any).full === true;
-          const disp = Number((c as any).disponibles ?? 0);
-          return !full && disp > 0;
-        });
-
-        this.iconCache.clear();
-
-        this.markers = napes
-          .map((c) => this.mapCajaToMarker(c))
-          .filter(Boolean) as MarkerVm[];
-      } catch (e) {
-        console.error('Error cargando NAP disponibles:', e);
+        this.zoom.set(13);
       }
-    }, 200);
+    } catch (e) {
+      console.error('Error cargando NAP disponibles:', e);
+      this.markers = [];
+    } finally {
+      this.cargando = false;
+    }
   }
 
   private mapCajaToMarker(c: CajaNap): MarkerVm | null {
@@ -305,6 +324,7 @@ export class AreaCoberturaComponent implements OnInit, AfterViewInit {
       lat = la;
       lng = ln;
     }
+
     if (!Number.isFinite(lat) || !Number.isFinite(lng)) return null;
 
     const disp = Number((c as any).disponibles ?? 0);
@@ -322,11 +342,9 @@ export class AreaCoberturaComponent implements OnInit, AfterViewInit {
   }
 
   private makeNapIcon(disponibles: number): google.maps.Icon {
-    // icono cuadrado simple (NAP)
     const px = 30;
     const dpr = Math.max(1, window.devicePixelRatio || 1);
 
-    // verde para disponible
     const fill = '#16a34a';
     const stroke = '#0b3b16';
 
@@ -359,7 +377,7 @@ export class AreaCoberturaComponent implements OnInit, AfterViewInit {
     return icon;
   }
 
-  // ===== Google Maps loader =====
+  // ===== GOOGLE MAPS LOADER =====
   private loadGoogleMapsIfNeeded(): Promise<void> {
     return new Promise((resolve, reject) => {
       if ((window as any).google?.maps) {
@@ -376,11 +394,13 @@ export class AreaCoberturaComponent implements OnInit, AfterViewInit {
         this.isGoogleMapsLoaded = true;
         resolve();
       };
+
       const onError = () => reject(new Error('No se pudo cargar Google Maps'));
 
       if (existing) {
         existing.addEventListener('load', onReady, { once: true });
         existing.addEventListener('error', onError, { once: true });
+
         const start = Date.now();
         const iv = setInterval(() => {
           if ((window as any).google?.maps) {
@@ -391,6 +411,7 @@ export class AreaCoberturaComponent implements OnInit, AfterViewInit {
             onError();
           }
         }, 150);
+
         return;
       }
 
@@ -404,10 +425,11 @@ export class AreaCoberturaComponent implements OnInit, AfterViewInit {
     });
   }
 
-  // ===== Haversine (metros) =====
+  // ===== HAVERSINE =====
   private haversineMeters(a: LatLngLiteral, b: LatLngLiteral) {
     const R = 6371000;
     const toRad = (x: number) => (x * Math.PI) / 180;
+
     const dLat = toRad(b.lat - a.lat);
     const dLng = toRad(b.lng - a.lng);
     const lat1 = toRad(a.lat);

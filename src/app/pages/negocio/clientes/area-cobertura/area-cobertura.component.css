@@ -17,7 +17,6 @@
   background: transparent;
 }
 
-/* Overlay carga */
 .loading-overlay {
   position: absolute;
   inset: 0;
@@ -29,6 +28,7 @@
   background: rgba(255, 255, 255, 0.9);
   z-index: 5;
 }
+
 .spinner {
   width: 50px;
   height: 50px;
@@ -38,13 +38,13 @@
   animation: spin 0.8s linear infinite;
   margin-bottom: 12px;
 }
+
 @keyframes spin {
   to {
     transform: rotate(360deg);
   }
 }
 
-/* Botón flotante */
 .fab-toolbar {
   position: absolute;
   top: 12px;
@@ -70,17 +70,24 @@
     filter 0.2s ease,
     box-shadow 0.2s ease;
 }
+
 .btn-dark:hover {
   filter: brightness(1.08);
 }
+
 .btn-dark:active {
   transform: translateY(1px) scale(0.99);
 }
+
 .btn-dark.active {
   outline: 2px solid rgba(229, 9, 20, 0.45);
 }
 
-/* Panel distancia */
+.btn-dark:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
 .distance-panel {
   position: absolute;
   left: 12px;
@@ -92,36 +99,11 @@
   box-shadow: 0 12px 30px rgba(0, 0, 0, 0.18);
   padding: 10px;
   z-index: 17000;
+  pointer-events: auto;
 }
 
-.hint {
-  position: absolute;
-  top: 58px;
-  left: 12px;
-  background: rgba(0, 0, 0, 0.65);
-  color: #fff;
-  padding: 6px 10px;
-  border-radius: 8px;
-  font-size: 12px;
-  z-index: 17500;
-  pointer-events: none;
-}
-
-/* Evita reglas globales que alteren imágenes del mapa */
 .gm-style img,
 .gm-style svg {
   max-width: none !important;
   transform: none !important;
-}
-
-.distance-panel {
-  position: absolute;
-  left: 12px;
-  top: 12px;
-  z-index: 17000;
-  pointer-events: auto; /* ✅ importante */
-}
-
-.distance-panel .btn {
-  white-space: nowrap;
 }
