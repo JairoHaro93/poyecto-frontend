@@ -447,10 +447,7 @@ export class MapaCajasControlsComponent implements OnInit, OnChanges {
       return;
     }
 
-    const olt = this.olts.find((o) => o.id === Number(oid));
-    const frame = Number(olt?.olt_frame_default ?? 0);
-
-    const base = `${frame}/${Number(slot)}/${Number(pon)}`;
+    const base = `${Number(slot)}/${Number(pon)}`; // sin frame
     this.formPon.get('caja_segmento')!.setValue(base, { emitEvent: false });
 
     this.updatePonNombrePreview();
