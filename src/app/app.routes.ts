@@ -39,6 +39,7 @@ import { HorasExtrasService } from './services/negocio_latacunga/horas-extras.se
 import { HorasextraComponent } from './pages/negocio/administrador/horasextra/horasextra.component';
 import { MiHorarioComponent } from './pages/sistema/mi-horario/mi-horario.component';
 import { OltComponent } from './pages/negocio/noc/olt/olt.component';
+import { AreaCoberturaComponent } from './pages/negocio/clientes/area-cobertura/area-cobertura.component';
 
 export const routes: Routes = [
   { path: '', pathMatch: 'full', redirectTo: 'login' },
@@ -144,6 +145,11 @@ export const routes: Routes = [
             path: 'datos',
             component: DatosclientesComponent,
             canActivate: [permisosGuard('CDatos de Clientes')],
+          },
+          {
+            path: 'cobertura',
+            component: AreaCoberturaComponent,
+            canActivate: [permisosGuard('CCobertura')],
           },
         ],
       },

@@ -160,6 +160,14 @@
               Datos clientes
             </li>
           }
+          @if (arrClientes.includes("CCobertura")) {
+            <li
+              (click)="onClickMenu()"
+              [routerLink]="['/home/clientes/cobertura']"
+            >
+              Cobertura
+            </li>
+          }
         </ul>
       </div>
 
@@ -251,11 +259,8 @@
               Mapeo cajas
             </li>
           }
-           @if (arrNoc.includes("NOLT")) {
-            <li
-              (click)="onClickMenu()"
-              [routerLink]="['/home/noc/olt']"
-            >
+          @if (arrNoc.includes("NOLT")) {
+            <li (click)="onClickMenu()" [routerLink]="['/home/noc/olt']">
               OLT
             </li>
           }
