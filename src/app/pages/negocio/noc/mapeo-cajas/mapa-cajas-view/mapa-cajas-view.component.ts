@@ -93,9 +93,6 @@ export class MapaCajasViewComponent
   markers: Marker[] = [];
   private fetched: Marker[] = [];
   private local: Marker[] = [];
-  private selectedBadgeMarker?: google.maps.Marker;
-  private dispById = new Map<number, { disponibles: number }>();
-  private fetchedCajasRaw: ICajas[] = [];
 
   /** Cache de iconos SVG ya generados */
   private iconCache = new Map<string, google.maps.Icon>();

@@ -26,7 +26,6 @@ type MarkerVm = {
   id: number;
   position: LatLngLiteral;
   title: string;
-  label: string | google.maps.MarkerLabel;
   options: google.maps.MarkerOptions;
 };
 
@@ -56,6 +55,7 @@ export class AreaCoberturaComponent
     lng: -78.616569,
   };
 
+  private readonly ICON_SIZE_PX = 32;
   private readonly LABEL_FONT_SIZE_PX = 12;
   private readonly LABEL_PAD_Y_PX = 5;
   private readonly LABEL_PAD_X_PX = 10;
@@ -65,7 +65,7 @@ export class AreaCoberturaComponent
   markers: MarkerVm[] = [];
   private iconCache = new Map<string, google.maps.Icon>();
 
-  private selectedBadgeMarker?: google.maps.Marker;
+  private selectedBadgeOverlay?: google.maps.OverlayView;
 
   // ===== DISTANCIA =====
   measuring = signal<boolean>(false);
@@ -132,9 +132,9 @@ export class AreaCoberturaComponent
   private measurePointMarkers: google.maps.Marker[] = [];
 
   private hideMarkerBadge() {
-    if (this.selectedBadgeMarker) {
-      this.selectedBadgeMarker.setMap(null);
-      this.selectedBadgeMarker = undefined;
+    if (this.selectedBadgeOverlay) {
+      this.selectedBadgeOverlay.setMap(null as any);
+      this.selectedBadgeOverlay = undefined;
     }
   }
 
@@ -153,8 +153,6 @@ export class AreaCoberturaComponent
       clickable: false,
     });
   }
-
-  private selectedMarkerId: number | null = null;
 
   private clearMeasureMarkers() {
     for (const m of this.measurePointMarkers) m.setMap(null);
@@ -366,7 +364,7 @@ export class AreaCoberturaComponent
       id: c.id,
       position: { lat, lng },
       title: `${c.caja_nombre} • Disp: ${disp}`,
-      label: '',
+
       options: {
         icon: this.makeNapIcon(disp),
         optimized: false,
@@ -376,7 +374,7 @@ export class AreaCoberturaComponent
   }
 
   private makeNapIcon(disponibles: number): google.maps.Icon {
-    const px = 30;
+    const px = this.ICON_SIZE_PX;
     const dpr = Math.max(1, window.devicePixelRatio || 1);
 
     const fill = '#16a34a';
@@ -405,7 +403,6 @@ export class AreaCoberturaComponent
       scaledSize: new google.maps.Size(px, px),
       origin: new google.maps.Point(0, 0),
       anchor: new google.maps.Point(px / 2, px * 0.94),
-      labelOrigin: new google.maps.Point(px / 2, -8),
     };
 
     this.iconCache.set(key, icon);
@@ -486,11 +483,22 @@ export class AreaCoberturaComponent
     const clean = String(text || '')
       .trim()
       .toUpperCase();
-    const chars = Math.max(clean.length, 6);
-    const width = Math.max(90, chars * 9 + 24);
-    const height = 25;
 
-    const key = `BADGE|${clean}|${width}|${height}`;
+    const fontSize = this.LABEL_FONT_SIZE_PX;
+    const padY = this.LABEL_PAD_Y_PX;
+    const padX = this.LABEL_PAD_X_PX;
+    const borderPx = this.LABEL_BORDER_PX;
+
+    const charPx = Math.round(fontSize * 0.72);
+    const width = Math.max(
+      90,
+      clean.length * charPx + padX * 2 + borderPx * 2 + 8,
+    );
+    const height = fontSize + padY * 2 + borderPx * 2 + 2;
+
+    const offsetFromPoint = this.getLabelOffsetPx(this.ICON_SIZE_PX);
+
+    const key = `BADGE|${clean}|${width}|${height}|${fontSize}|${padY}|${padX}|${borderPx}`;
     const cached = this.iconCache.get(key);
     if (cached) return cached;
 
@@ -503,15 +511,15 @@ export class AreaCoberturaComponent
   </defs>
 
   <rect
-    x="1.5"
-    y="1.5"
-    width="${width - 3}"
-    height="${height - 3}"
-    rx="9"
-    ry="9"
+    x="${borderPx / 2}"
+    y="${borderPx / 2}"
+    width="${width - borderPx}"
+    height="${height - borderPx}"
+    rx="999"
+    ry="999"
     fill="#ce2929"
     stroke="#ffffff"
-    stroke-width="2"
+    stroke-width="${borderPx}"
     filter="url(#shadow)"
   />
 
@@ -521,7 +529,7 @@ export class AreaCoberturaComponent
     dominant-baseline="middle"
     text-anchor="middle"
     fill="#ffffff"
-    font-size="15"
+    font-size="${fontSize}"
     font-weight="700"
     font-family="Arial, sans-serif"
   >${clean}</text>
@@ -530,10 +538,7 @@ export class AreaCoberturaComponent
     const icon: google.maps.Icon = {
       url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(svg),
       scaledSize: new google.maps.Size(width, height),
-
-      // centro horizontal
-      // y más grande que la altura para que aparezca ARRIBA del cuadrado
-      anchor: new google.maps.Point(width / 2, height + 22),
+      anchor: new google.maps.Point(width / 2, height + offsetFromPoint),
     };
 
     this.iconCache.set(key, icon);
@@ -546,13 +551,78 @@ export class AreaCoberturaComponent
 
     this.hideMarkerBadge();
 
-    this.selectedBadgeMarker = new google.maps.Marker({
-      map: gmap,
-      position,
-      clickable: false,
-      optimized: false,
-      zIndex: 99999,
-      icon: this.makeBadgeIcon(text),
-    });
+    const offsetPx = this.getLabelOffsetPx(this.ICON_SIZE_PX);
+    const overlay = this.createNameOverlay(position, text, offsetPx);
+
+    overlay.setMap(gmap);
+    this.selectedBadgeOverlay = overlay;
+  }
+
+  private createNameOverlay(
+    pos: google.maps.LatLngLiteral,
+    text: string,
+    offsetY: number,
+  ) {
+    const fontSize = this.LABEL_FONT_SIZE_PX;
+    const padY = this.LABEL_PAD_Y_PX;
+    const padX = this.LABEL_PAD_X_PX;
+    const borderPx = this.LABEL_BORDER_PX;
+
+    class NameOverlay extends google.maps.OverlayView {
+      private div?: HTMLDivElement;
+      private position: google.maps.LatLngLiteral = pos;
+      private label: string = text;
+
+      override onAdd(): void {
+        this.div = document.createElement('div');
+        this.div.textContent = this.label;
+
+        Object.assign(this.div.style, {
+          position: 'absolute',
+          pointerEvents: 'none',
+          background: '#ce2929',
+          color: '#ffffff',
+          fontSize: `${fontSize}px`,
+          fontWeight: '700',
+          lineHeight: '1',
+          padding: `${padY}px ${padX}px`,
+          border: `${borderPx}px solid #ffffff`,
+          borderRadius: '999px',
+          whiteSpace: 'nowrap',
+          boxShadow: '0 4px 10px rgba(0,0,0,0.22)',
+          userSelect: 'none',
+          zIndex: '300',
+          transform: 'translate(-50%, -100%)',
+          textTransform: 'uppercase',
+          fontFamily: 'Arial, sans-serif',
+        } as CSSStyleDeclaration);
+
+        const panes = this.getPanes();
+        panes?.floatPane.appendChild(this.div);
+      }
+
+      override draw(): void {
+        if (!this.div) return;
+
+        const projection = this.getProjection();
+        if (!projection) return;
+
+        const ll = new google.maps.LatLng(this.position.lat, this.position.lng);
+        const point = projection.fromLatLngToDivPixel(ll);
+        if (!point) return;
+
+        this.div.style.left = `${Math.round(point.x)}px`;
+        this.div.style.top = `${Math.round(point.y - offsetY)}px`;
+      }
+
+      override onRemove(): void {
+        if (this.div?.parentNode) {
+          this.div.parentNode.removeChild(this.div);
+        }
+        this.div = undefined;
+      }
+    }
+
+    return new NameOverlay();
   }
 }
