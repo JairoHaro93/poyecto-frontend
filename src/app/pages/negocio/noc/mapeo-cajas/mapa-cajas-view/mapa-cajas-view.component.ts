@@ -25,8 +25,8 @@ type Marker = {
   id: number;
   position: google.maps.LatLngLiteral;
   title: string;
-  labelTop: string; // 👈 texto que mostraremos arriba
-  options: google.maps.MarkerOptions; // icono (hex/square) sin texto
+  labelTop: string;
+  options: google.maps.MarkerOptions;
 };
 
 @Component({
@@ -93,7 +93,7 @@ export class MapaCajasViewComponent
   markers: Marker[] = [];
   private fetched: Marker[] = [];
   private local: Marker[] = [];
-
+  private selectedBadgeMarker?: google.maps.Marker;
   private dispById = new Map<number, { disponibles: number }>();
   private fetchedCajasRaw: ICajas[] = [];
 
@@ -110,6 +110,12 @@ export class MapaCajasViewComponent
     MANTENIMIENTO: { fill: '#f97316', stroke: '#7c2d12', text: '#000000ff' }, // naranja
     FULL: { fill: '#ff0000ff', stroke: '#000000ff', text: '#000000ff' }, // gris
   };
+
+  private readonly LABEL_FONT_SIZE_PX = 12;
+  private readonly LABEL_PAD_Y_PX = 5;
+  private readonly LABEL_PAD_X_PX = 10;
+  private readonly LABEL_BORDER_PX = 2;
+  private readonly LABEL_OFFSET_EXTRA_PX = 15;
 
   myposition = signal<any>(''); // center (google.maps.LatLng)
   zoom = signal<number>(12);
@@ -139,6 +145,10 @@ export class MapaCajasViewComponent
   private clearMeasureMarkers() {
     for (const m of this.measurePointMarkers) m.setMap(null);
     this.measurePointMarkers = [];
+  }
+
+  private getLabelOffsetPx(iconPx: number): number {
+    return Math.round(iconPx / 2 + this.LABEL_OFFSET_EXTRA_PX);
   }
 
   private updateMeasureGraphics() {
@@ -282,11 +292,7 @@ export class MapaCajasViewComponent
   }
 
   ngOnDestroy(): void {
-    // Limpia overlays
     this.clearLabelOverlays();
-
-    this.measureLine?.setMap(null as any);
-    this.clearMeasureMarkers();
 
     this.measureLine?.setMap(null as any);
     this.clearMeasureMarkers();
@@ -522,11 +528,10 @@ export class MapaCajasViewComponent
   // ===== Fusión de marcadores + etiquetas =====
   private rebuildMarkers() {
     const map = new Map<number, Marker>();
-    for (const m of this.local) map.set(m.id, m); // locales primero
-    for (const m of this.fetched) map.set(m.id, m); // luego remotos
+    for (const m of this.local) map.set(m.id, m);
+    for (const m of this.fetched) map.set(m.id, m);
     this.markers = Array.from(map.values());
 
-    // (re)crear overlays de etiquetas
     this.refreshLabelOverlays();
   }
 
@@ -542,10 +547,10 @@ export class MapaCajasViewComponent
     const gmap = this.mapRef?.googleMap;
     if (!gmap) return;
 
-    // Limpia todo y recrea (simple y robusto)
     this.clearLabelOverlays();
 
-    const offsetPx = Math.max(10, this.iconSizePx / 2 + 14); // arriba del icono
+    const offsetPx = this.getLabelOffsetPx(this.iconSizePx);
+
     for (const m of this.markers) {
       const overlay = this.createNameOverlay(m.position, m.labelTop, offsetPx);
       overlay.setMap(gmap);
@@ -559,6 +564,11 @@ export class MapaCajasViewComponent
     text: string,
     offsetY: number,
   ) {
+    const fontSize = this.LABEL_FONT_SIZE_PX;
+    const padY = this.LABEL_PAD_Y_PX;
+    const padX = this.LABEL_PAD_X_PX;
+    const borderPx = this.LABEL_BORDER_PX;
+
     class NameOverlay extends google.maps.OverlayView {
       private div?: HTMLDivElement;
       private position: google.maps.LatLngLiteral = pos;
@@ -568,33 +578,36 @@ export class MapaCajasViewComponent
         this.div = document.createElement('div');
         this.div.textContent = this.label;
 
-        // ✅ Estilos INLINE (no dependen del CSS del componente)
         Object.assign(this.div.style, {
           position: 'absolute',
           pointerEvents: 'none',
-          background: 'rgba(255,255,255,0.95)',
-          color: '#111',
-          fontSize: '12px',
-          lineHeight: '1.1',
-          padding: '2px 6px',
-          border: '1px solid rgba(0,0,0,0.25)',
-          borderRadius: '4px',
+          background: '#ce2929',
+          color: '#ffffff',
+          fontSize: `${fontSize}px`,
+          fontWeight: '700',
+          lineHeight: '1',
+          padding: `${padY}px ${padX}px`,
+          border: `${borderPx}px solid #ffffff`,
+          borderRadius: '999px',
           whiteSpace: 'nowrap',
-          boxShadow: '0 2px 6px rgba(0,0,0,.15)',
+          boxShadow: '0 4px 10px rgba(0,0,0,0.22)',
           userSelect: 'none',
-          zIndex: '200',
+          zIndex: '300',
           transform: 'translate(-50%, -100%)',
+          textTransform: 'uppercase',
+          fontFamily: 'Arial, sans-serif',
         } as CSSStyleDeclaration);
 
         const panes = this.getPanes();
-        // ✅ flotando por encima de marcadores
         panes?.floatPane.appendChild(this.div);
       }
 
       override draw(): void {
         if (!this.div) return;
+
         const projection = this.getProjection();
         if (!projection) return;
+
         const ll = new google.maps.LatLng(this.position.lat, this.position.lng);
         const point = projection.fromLatLngToDivPixel(ll);
         if (!point) return;
@@ -604,7 +617,9 @@ export class MapaCajasViewComponent
       }
 
       override onRemove(): void {
-        if (this.div?.parentNode) this.div.parentNode.removeChild(this.div);
+        if (this.div?.parentNode) {
+          this.div.parentNode.removeChild(this.div);
+        }
         this.div = undefined;
       }
 
@@ -612,6 +627,7 @@ export class MapaCajasViewComponent
         this.label = t;
         if (this.div) this.div.textContent = t;
       }
+
       setPosition(p: google.maps.LatLngLiteral) {
         this.position = p;
         this.draw();
@@ -620,7 +636,6 @@ export class MapaCajasViewComponent
 
     return new NameOverlay();
   }
-
   private mapCajaToMarker(c: ICajas): Marker | null {
     let lat = c.lat != null ? Number(c.lat) : NaN;
     let lng = c.lng != null ? Number(c.lng) : NaN;
@@ -635,6 +650,7 @@ export class MapaCajasViewComponent
       lat = la;
       lng = ln;
     }
+
     if (!Number.isFinite(lat) || !Number.isFinite(lng)) return null;
 
     return {
@@ -643,8 +659,8 @@ export class MapaCajasViewComponent
       title: `${c.caja_nombre} • ${c.caja_estado}`,
       labelTop: c.caja_nombre,
       options: {
-        icon: this.makeIcon(c), // <- ya fija scaledSize en px
-        optimized: false, // <- fuerza DOM, tamaño más consistente
+        icon: this.makeIcon(c),
+        optimized: false,
         zIndex: 10,
       },
     };

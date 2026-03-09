@@ -2,6 +2,7 @@ import {
   AfterViewInit,
   Component,
   EventEmitter,
+  OnDestroy,
   OnInit,
   Output,
   ViewChild,
@@ -29,7 +30,7 @@ type MarkerVm = {
   id: number;
   position: google.maps.LatLngLiteral;
   title: string;
-  label: string;
+  labelTop: string;
   caja: ICajas;
   options: google.maps.MarkerOptions;
 };
@@ -41,7 +42,7 @@ type MarkerVm = {
   templateUrl: './mapa-olt.component.html',
   styleUrls: ['./mapa-olt.component.css'],
 })
-export class MapaOltComponent implements OnInit, AfterViewInit {
+export class MapaOltComponent implements OnInit, AfterViewInit, OnDestroy {
   @Output() cajaSelected = new EventEmitter<IOltMapSelection>();
 
   @ViewChild(GoogleMap) mapRef!: GoogleMap;
@@ -60,12 +61,24 @@ export class MapaOltComponent implements OnInit, AfterViewInit {
 
   selectedCaja = signal<ICajas | null>(null);
 
+  private readonly ICON_SIZE_PX = 32;
+  private readonly LABEL_FONT_SIZE_PX = 12;
+  private readonly LABEL_PAD_Y_PX = 5;
+  private readonly LABEL_PAD_X_PX = 10;
+  private readonly LABEL_BORDER_PX = 2;
+  private readonly LABEL_OFFSET_EXTRA_PX = 15;
+
   private readonly DEFAULT_CENTER: LatLngLiteral = {
     lat: -0.9398,
     lng: -78.616569,
   };
 
+  private getLabelOffsetPx(iconPx: number): number {
+    return Math.round(iconPx / 2 + this.LABEL_OFFSET_EXTRA_PX);
+  }
+
   private iconCache = new Map<string, google.maps.Icon>();
+  private labelOverlays = new Map<number, google.maps.OverlayView>();
 
   async ngOnInit(): Promise<void> {
     try {
@@ -81,16 +94,35 @@ export class MapaOltComponent implements OnInit, AfterViewInit {
   }
 
   ngAfterViewInit(): void {
-    setTimeout(() => {
+    const waitForMap = () => {
       const map = this.mapRef?.googleMap;
-      if (!map) return;
+      if (!map) {
+        requestAnimationFrame(waitForMap);
+        return;
+      }
+
       map.setOptions({
         mapTypeId: 'satellite',
         streetViewControl: false,
         mapTypeControl: false,
         fullscreenControl: false,
+        gestureHandling: 'greedy',
       });
-    }, 0);
+
+      map.addListener('zoom_changed', () => {
+        this.refreshLabelOverlays();
+      });
+
+      setTimeout(() => {
+        this.refreshLabelOverlays();
+      }, 0);
+    };
+
+    waitForMap();
+  }
+
+  ngOnDestroy(): void {
+    this.clearLabelOverlays();
   }
 
   async reload(): Promise<void> {
@@ -178,10 +210,14 @@ export class MapaOltComponent implements OnInit, AfterViewInit {
           ),
         );
       }
+
+      this.refreshLabelOverlays();
     } catch (e) {
       console.error('Error cargando NAPs para mapa OLT:', e);
       this.cajas = [];
       this.markers = [];
+      this.clearLabelOverlays();
+
       this.myposition.set(
         new google.maps.LatLng(
           this.DEFAULT_CENTER.lat,
@@ -270,7 +306,7 @@ export class MapaOltComponent implements OnInit, AfterViewInit {
       id: c.id,
       position: { lat, lng },
       title: String(c.caja_nombre || `Caja ${c.id}`),
-      label: String(c.caja_nombre || `Caja ${c.id}`),
+      labelTop: String(c.caja_nombre || `Caja ${c.id}`),
       caja: c,
       options: {
         icon: this.makeIcon(c),
@@ -279,16 +315,17 @@ export class MapaOltComponent implements OnInit, AfterViewInit {
       },
     };
   }
+
   private makeIcon(c: ICajas): google.maps.Icon {
     const hasOlt = this.hasOlt(c);
     const estado = String(c.caja_estado || '').toUpperCase();
-    const px = 28;
+    const px = this.ICON_SIZE_PX;
 
-    let fill = '#6b7280'; // gris
+    let fill = '#6b7280';
     let stroke = '#111827';
 
     if (hasOlt) {
-      fill = '#16a34a'; // verde si tiene OLT
+      fill = '#16a34a';
       stroke = '#14532d';
     }
 
@@ -324,11 +361,107 @@ export class MapaOltComponent implements OnInit, AfterViewInit {
       size: new google.maps.Size(px, px),
       scaledSize: new google.maps.Size(px, px),
       origin: new google.maps.Point(0, 0),
-      anchor: new google.maps.Point(px / 2, px / 2),
-      labelOrigin: new google.maps.Point(px / 2, -2),
+      anchor: new google.maps.Point(px / 2, px / 0.94),
     };
 
     this.iconCache.set(key, icon);
     return icon;
+  }
+
+  private clearLabelOverlays() {
+    this.labelOverlays.forEach((ov) => ov.setMap(null as any));
+    this.labelOverlays.clear();
+  }
+
+  private refreshLabelOverlays() {
+    const gmap = this.mapRef?.googleMap;
+    if (!gmap) return;
+
+    this.clearLabelOverlays();
+
+    const offsetPx = this.getLabelOffsetPx(this.ICON_SIZE_PX);
+
+    for (const m of this.markers) {
+      const overlay = this.createNameOverlay(m.position, m.labelTop, offsetPx);
+      overlay.setMap(gmap);
+      this.labelOverlays.set(m.id, overlay);
+    }
+  }
+  private createNameOverlay(
+    pos: google.maps.LatLngLiteral,
+    text: string,
+    offsetY: number,
+  ) {
+    const fontSize = this.LABEL_FONT_SIZE_PX;
+    const padY = this.LABEL_PAD_Y_PX;
+    const padX = this.LABEL_PAD_X_PX;
+    const borderPx = this.LABEL_BORDER_PX;
+
+    class NameOverlay extends google.maps.OverlayView {
+      private div?: HTMLDivElement;
+      private position: google.maps.LatLngLiteral = pos;
+      private label: string = text;
+
+      override onAdd(): void {
+        this.div = document.createElement('div');
+        this.div.textContent = this.label;
+
+        Object.assign(this.div.style, {
+          position: 'absolute',
+          pointerEvents: 'none',
+          background: '#ce2929',
+          color: '#ffffff',
+          fontSize: `${fontSize}px`,
+          fontWeight: '700',
+          lineHeight: '1',
+          padding: `${padY}px ${padX}px`,
+          border: `${borderPx}px solid #ffffff`,
+          borderRadius: '999px',
+          whiteSpace: 'nowrap',
+          boxShadow: '0 4px 10px rgba(0,0,0,0.22)',
+          userSelect: 'none',
+          zIndex: '300',
+          transform: 'translate(-50%, -100%)',
+          textTransform: 'uppercase',
+          fontFamily: 'Arial, sans-serif',
+        } as CSSStyleDeclaration);
+
+        const panes = this.getPanes();
+        panes?.floatPane.appendChild(this.div);
+      }
+
+      override draw(): void {
+        if (!this.div) return;
+
+        const projection = this.getProjection();
+        if (!projection) return;
+
+        const ll = new google.maps.LatLng(this.position.lat, this.position.lng);
+        const point = projection.fromLatLngToDivPixel(ll);
+        if (!point) return;
+
+        this.div.style.left = `${Math.round(point.x)}px`;
+        this.div.style.top = `${Math.round(point.y - offsetY)}px`;
+      }
+
+      override onRemove(): void {
+        if (this.div?.parentNode) {
+          this.div.parentNode.removeChild(this.div);
+        }
+        this.div = undefined;
+      }
+
+      setText(t: string) {
+        this.label = t;
+        if (this.div) this.div.textContent = t;
+      }
+
+      setPosition(p: google.maps.LatLngLiteral) {
+        this.position = p;
+        this.draw();
+      }
+    }
+
+    return new NameOverlay();
   }
 }

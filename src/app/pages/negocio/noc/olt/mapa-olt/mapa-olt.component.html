@@ -62,18 +62,14 @@
           }"
         >
           @for (m of markers; track m.id) {
-            <map-marker
-              [position]="m.position"
-              [title]="m.title"
-              [label]="{
-                text: m.label,
-                color: '#ffeb3b',
-                fontWeight: '900',
-                fontSize: '15px',
-              }"
-              [options]="m.options"
-              (mapClick)="onMarkerClick(m)"
-            ></map-marker>
+            @for (m of markers; track m.id) {
+              <map-marker
+                [position]="m.position"
+                [title]="m.title"
+                [options]="m.options"
+                (mapClick)="onMarkerClick(m)"
+              ></map-marker>
+            }
           }
         </google-map>
       }

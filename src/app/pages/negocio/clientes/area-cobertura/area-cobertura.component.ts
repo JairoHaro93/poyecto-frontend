@@ -5,6 +5,7 @@ import {
   ViewChild,
   signal,
   computed,
+  OnDestroy,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { GoogleMap, MapMarker } from '@angular/google-maps';
@@ -25,6 +26,7 @@ type MarkerVm = {
   id: number;
   position: LatLngLiteral;
   title: string;
+  label: string | google.maps.MarkerLabel;
   options: google.maps.MarkerOptions;
 };
 
@@ -35,7 +37,9 @@ type MarkerVm = {
   templateUrl: './area-cobertura.component.html',
   styleUrl: './area-cobertura.component.css',
 })
-export class AreaCoberturaComponent implements OnInit, AfterViewInit {
+export class AreaCoberturaComponent
+  implements OnInit, AfterViewInit, OnDestroy
+{
   constructor(private cajasService: CajasService) {}
 
   @ViewChild(GoogleMap) mapRef!: GoogleMap;
@@ -52,8 +56,16 @@ export class AreaCoberturaComponent implements OnInit, AfterViewInit {
     lng: -78.616569,
   };
 
+  private readonly LABEL_FONT_SIZE_PX = 12;
+  private readonly LABEL_PAD_Y_PX = 5;
+  private readonly LABEL_PAD_X_PX = 10;
+  private readonly LABEL_BORDER_PX = 2;
+  private readonly LABEL_OFFSET_EXTRA_PX = 15;
+
   markers: MarkerVm[] = [];
   private iconCache = new Map<string, google.maps.Icon>();
+
+  private selectedBadgeMarker?: google.maps.Marker;
 
   // ===== DISTANCIA =====
   measuring = signal<boolean>(false);
@@ -119,6 +131,17 @@ export class AreaCoberturaComponent implements OnInit, AfterViewInit {
   private measureLine?: google.maps.Polyline;
   private measurePointMarkers: google.maps.Marker[] = [];
 
+  private hideMarkerBadge() {
+    if (this.selectedBadgeMarker) {
+      this.selectedBadgeMarker.setMap(null);
+      this.selectedBadgeMarker = undefined;
+    }
+  }
+
+  private getLabelOffsetPx(iconPx: number): number {
+    return Math.round(iconPx / 2 + this.LABEL_OFFSET_EXTRA_PX);
+  }
+
   private ensureMeasureLine() {
     if (this.measureLine) return;
 
@@ -130,6 +153,8 @@ export class AreaCoberturaComponent implements OnInit, AfterViewInit {
       clickable: false,
     });
   }
+
+  private selectedMarkerId: number | null = null;
 
   private clearMeasureMarkers() {
     for (const m of this.measurePointMarkers) m.setMap(null);
@@ -245,24 +270,32 @@ export class AreaCoberturaComponent implements OnInit, AfterViewInit {
   }
 
   onMapClick(ev: google.maps.MapMouseEvent) {
-    if (!this.measuring()) return;
+    if (this.measuring()) {
+      const ll = ev?.latLng?.toJSON?.();
+      if (ll && Number.isFinite(ll.lat) && Number.isFinite(ll.lng)) {
+        const lat = Number(ll.lat.toFixed(6));
+        const lng = Number(ll.lng.toFixed(6));
+        this.measurePoints.set([...this.measurePoints(), { lat, lng }]);
+        this.updateMeasureGraphics();
+      }
+      return;
+    }
 
-    const ll = ev?.latLng?.toJSON?.();
-    if (ll && Number.isFinite(ll.lat) && Number.isFinite(ll.lng)) {
-      const lat = Number(ll.lat.toFixed(6));
-      const lng = Number(ll.lng.toFixed(6));
+    this.hideMarkerBadge();
+  }
+  onMarkerClick(m: MarkerVm) {
+    if (this.measuring()) {
+      const lat = Number(m.position.lat.toFixed(6));
+      const lng = Number(m.position.lng.toFixed(6));
       this.measurePoints.set([...this.measurePoints(), { lat, lng }]);
       this.updateMeasureGraphics();
+      return;
     }
-  }
 
-  onMarkerClick(m: MarkerVm) {
-    if (!this.measuring()) return;
-
-    const lat = Number(m.position.lat.toFixed(6));
-    const lng = Number(m.position.lng.toFixed(6));
-    this.measurePoints.set([...this.measurePoints(), { lat, lng }]);
-    this.updateMeasureGraphics();
+    const nombre = String(m.title || '')
+      .split('•')[0]
+      .trim();
+    this.showMarkerBadge(m.position, nombre);
   }
 
   // ===== CARGA ÚNICA DE NAP DISPONIBLES =====
@@ -272,7 +305,7 @@ export class AreaCoberturaComponent implements OnInit, AfterViewInit {
     try {
       const cajas = await this.cajasService.getCajas({
         tipo: 'NAP',
-        limit: 5000,
+        limit: 10000,
       });
 
       const napes = (cajas as CajaNap[]).filter((c) => {
@@ -333,6 +366,7 @@ export class AreaCoberturaComponent implements OnInit, AfterViewInit {
       id: c.id,
       position: { lat, lng },
       title: `${c.caja_nombre} • Disp: ${disp}`,
+      label: '',
       options: {
         icon: this.makeNapIcon(disp),
         optimized: false,
@@ -371,6 +405,7 @@ export class AreaCoberturaComponent implements OnInit, AfterViewInit {
       scaledSize: new google.maps.Size(px, px),
       origin: new google.maps.Point(0, 0),
       anchor: new google.maps.Point(px / 2, px * 0.94),
+      labelOrigin: new google.maps.Point(px / 2, -8),
     };
 
     this.iconCache.set(key, icon);
@@ -440,5 +475,84 @@ export class AreaCoberturaComponent implements OnInit, AfterViewInit {
       Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLng / 2) ** 2;
 
     return 2 * R * Math.atan2(Math.sqrt(h), Math.sqrt(1 - h));
+  }
+
+  ngOnDestroy() {
+    this.hideMarkerBadge();
+    this.measureLine?.setMap(null as any);
+    this.clearMeasureMarkers();
+  }
+  private makeBadgeIcon(text: string): google.maps.Icon {
+    const clean = String(text || '')
+      .trim()
+      .toUpperCase();
+    const chars = Math.max(clean.length, 6);
+    const width = Math.max(90, chars * 9 + 24);
+    const height = 25;
+
+    const key = `BADGE|${clean}|${width}|${height}`;
+    const cached = this.iconCache.get(key);
+    if (cached) return cached;
+
+    const svg = `
+<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">
+  <defs>
+    <filter id="shadow" x="-50%" y="-50%" width="200%" height="200%">
+      <feDropShadow dx="0" dy="1" stdDeviation="1.5" flood-color="rgba(0,0,0,0.30)"/>
+    </filter>
+  </defs>
+
+  <rect
+    x="1.5"
+    y="1.5"
+    width="${width - 3}"
+    height="${height - 3}"
+    rx="9"
+    ry="9"
+    fill="#ce2929"
+    stroke="#ffffff"
+    stroke-width="2"
+    filter="url(#shadow)"
+  />
+
+  <text
+    x="50%"
+    y="50%"
+    dominant-baseline="middle"
+    text-anchor="middle"
+    fill="#ffffff"
+    font-size="15"
+    font-weight="700"
+    font-family="Arial, sans-serif"
+  >${clean}</text>
+</svg>`.trim();
+
+    const icon: google.maps.Icon = {
+      url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(svg),
+      scaledSize: new google.maps.Size(width, height),
+
+      // centro horizontal
+      // y más grande que la altura para que aparezca ARRIBA del cuadrado
+      anchor: new google.maps.Point(width / 2, height + 22),
+    };
+
+    this.iconCache.set(key, icon);
+    return icon;
+  }
+
+  private showMarkerBadge(position: LatLngLiteral, text: string) {
+    const gmap = this.mapRef?.googleMap;
+    if (!gmap) return;
+
+    this.hideMarkerBadge();
+
+    this.selectedBadgeMarker = new google.maps.Marker({
+      map: gmap,
+      position,
+      clickable: false,
+      optimized: false,
+      zIndex: 99999,
+      icon: this.makeBadgeIcon(text),
+    });
   }
 }
