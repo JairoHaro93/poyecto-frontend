@@ -60,7 +60,7 @@ export class AreaCoberturaComponent
   private readonly LABEL_PAD_Y_PX = 5;
   private readonly LABEL_PAD_X_PX = 10;
   private readonly LABEL_BORDER_PX = 2;
-  private readonly LABEL_OFFSET_EXTRA_PX = 15;
+  private readonly LABEL_OFFSET_EXTRA_PX = 9;
 
   markers: MarkerVm[] = [];
   private iconCache = new Map<string, google.maps.Icon>();

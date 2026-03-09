@@ -115,7 +115,7 @@ export class MapaCajasViewComponent
   private readonly LABEL_PAD_Y_PX = 5;
   private readonly LABEL_PAD_X_PX = 10;
   private readonly LABEL_BORDER_PX = 2;
-  private readonly LABEL_OFFSET_EXTRA_PX = 15;
+  private readonly LABEL_OFFSET_EXTRA_PX = 9;
 
   myposition = signal<any>(''); // center (google.maps.LatLng)
   zoom = signal<number>(12);
