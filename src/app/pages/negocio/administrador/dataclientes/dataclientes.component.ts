@@ -12,8 +12,10 @@ type EnlaceFiltro = 'TODOS' | 'WIFI' | 'FTTH';
 type MorosidadModo = 'GTE' | 'EQ';
 type CategoriaFiltro =
   | 'TODOS'
+  | 'ACTIVOS'
   | 'ACTIVO_PAGADO'
   | 'ACTIVO_CON_DEUDA'
+  | 'ELIMINADOS'
   | 'ELIMINADO_SIN_DEUDA'
   | 'ELIMINADO_CON_DEUDA';
 
@@ -50,6 +52,8 @@ export class DataclientesComponent {
   // ===== FILTROS FRONT (rápidos, no recargan) =====
   enlaceFiltro: EnlaceFiltro = 'TODOS';
   categoriaFiltro: CategoriaFiltro = 'TODOS';
+  // si quieres que por defecto arranque mostrando solo activos:
+  // categoriaFiltro: CategoriaFiltro = 'ACTIVOS';
 
   // ===== FILTROS BACK (recargan desde SQL) =====
   sucursalId = 2;
@@ -58,7 +62,6 @@ export class DataclientesComponent {
   incluirEliminados = true;
 
   // ===== VERIFICADOR (opcional) =====
-  // ✅ ponlo en false y desaparece del HTML (sin comentar bloques)
   enableVerificador = false;
 
   verifOrdIns = '';
@@ -66,10 +69,10 @@ export class DataclientesComponent {
   verifError = '';
   verifData: any = null;
 
-  // ===== helpers render =====
   private nextFrame(): Promise<void> {
     return new Promise((r) => requestAnimationFrame(() => r()));
   }
+
   private async settleFrames(): Promise<void> {
     await this.nextFrame();
     await this.nextFrame();
@@ -82,7 +85,6 @@ export class DataclientesComponent {
 
       this.loadGoogleMapsScript();
 
-      // carga inicial desde backend con filtros (sucursal/morosidad)
       await this.cargarClientesMapaDesdeBack();
 
       await this.settleFrames();
@@ -128,7 +130,6 @@ export class DataclientesComponent {
     this.zoom.set(12);
   }
 
-  // ======== BACKEND: RECARGA DATA ========
   async cargarClientesMapaDesdeBack() {
     try {
       this.cargando = true;
@@ -140,7 +141,6 @@ export class DataclientesComponent {
         incluir_eliminados: this.incluirEliminados,
       });
 
-      // cuando llega data nueva: recalcular sugerencias y marcas
       this.actualizarSugerencias();
       this.aplicarFiltrosLocales();
     } catch (e) {
@@ -150,25 +150,18 @@ export class DataclientesComponent {
     }
   }
 
-  // ======== FRONT: FILTROS RÁPIDOS ========
   filtrarClientes() {
-    // solo filtra lo ya cargado (no llama al backend)
     this.aplicarFiltrosLocales();
   }
 
   private aplicarFiltrosLocales() {
-    // para evitar bloqueo si hay miles de puntos
     this.cargando = true;
 
     setTimeout(() => {
       this.marcasList = this.clientelista.flatMap((cliente) =>
         cliente.servicios
           .filter((servicio) => {
-            const categoria = this.getCategoria(servicio);
-
-            const pasaCategoria =
-              this.categoriaFiltro === 'TODOS' ||
-              categoria === this.categoriaFiltro;
+            const pasaCategoria = this.cumpleCategoriaFiltro(servicio);
 
             const pasaEnlace =
               this.enlaceFiltro === 'TODOS' ||
@@ -198,6 +191,30 @@ export class DataclientesComponent {
       this.cargando = false;
     }, 150);
   }
+
+  private cumpleCategoriaFiltro(s: any): boolean {
+    const categoria = this.getCategoria(s);
+
+    switch (this.categoriaFiltro) {
+      case 'TODOS':
+        return true;
+
+      case 'ACTIVOS':
+        return (
+          categoria === 'ACTIVO_PAGADO' || categoria === 'ACTIVO_CON_DEUDA'
+        );
+
+      case 'ELIMINADOS':
+        return (
+          categoria === 'ELIMINADO_SIN_DEUDA' ||
+          categoria === 'ELIMINADO_CON_DEUDA'
+        );
+
+      default:
+        return categoria === this.categoriaFiltro;
+    }
+  }
+
   actualizarSugerencias() {
     const texto = this.busquedaInput.trim().toLowerCase();
 
@@ -215,7 +232,6 @@ export class DataclientesComponent {
   buscarClienteSeleccionado() {
     const nombre = this.busquedaInput.trim();
 
-    // Si borró el input: limpiar selección y mostrar todo
     if (nombre === '') {
       this.busquedaSeleccionada = '';
       this.nombresFiltrados = [];
@@ -224,10 +240,8 @@ export class DataclientesComponent {
       return;
     }
 
-    // Solo si coincide EXACTO con un cliente, aplicamos al mapa
     const cliente = this.clientelista.find((c) => c.nombre_completo === nombre);
     if (!cliente || !cliente.servicios?.length) {
-      // no hacer nada: solo era escritura / texto incompleto
       return;
     }
 
@@ -258,7 +272,6 @@ export class DataclientesComponent {
     return 'ELIMINADO_CON_DEUDA';
   }
 
-  // ======== VERIFICADOR (prueba) ========
   async verificarServicio() {
     const ord = Number(String(this.verifOrdIns).trim());
 
@@ -309,5 +322,21 @@ export class DataclientesComponent {
     } finally {
       this.verifLoading = false;
     }
+  }
+
+  mapOptions: google.maps.MapOptions = {
+    mapTypeId: 'satellite',
+    gestureHandling: 'greedy', // permite zoom con rueda sin pedir Ctrl
+    scrollwheel: true,
+    clickableIcons: false,
+    streetViewControl: false,
+    mapTypeControl: true,
+    fullscreenControl: true,
+  };
+
+  mostrarFiltros = true;
+
+  toggleFiltros() {
+    this.mostrarFiltros = !this.mostrarFiltros;
   }
 }

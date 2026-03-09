@@ -112,8 +112,10 @@
                     (change)="filtrarClientes()"
                   >
                     <option value="TODOS">Todos</option>
+                    <option value="ACTIVOS">Activos (todos)</option>
                     <option value="ACTIVO_PAGADO">Activos pagados</option>
                     <option value="ACTIVO_CON_DEUDA">Activos con deuda</option>
+                    <option value="ELIMINADOS">Eliminados (todos)</option>
                     <option value="ELIMINADO_SIN_DEUDA">
                       Eliminados sin deuda
                     </option>
@@ -258,13 +260,13 @@
           }
 
           <google-map
-            width="100%"
-            height="80vh"
-            [zoom]="zoom()"
             [center]="myposition()"
-            [options]="{ mapTypeId: 'satellite' }"
+            [zoom]="zoom()"
+            [options]="mapOptions"
+            width="100%"
+            height="70vh"
           >
-            @for (marca of marcasList; track $index) {
+            @for (marca of marcasList; track marca.id) {
               <app-mapaclientes [myCoordenada]="marca"></app-mapaclientes>
             }
           </google-map>
